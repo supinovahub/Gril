@@ -13,6 +13,7 @@ import {
   revokeIntegrationAction,
 } from "@/app/app/integration-actions";
 import { requireActiveViewer } from "@/lib/auth/session";
+import { metaWebhookVerifyToken } from "@/lib/integrations/whatsapp-runtime";
 import { createClient } from "@/lib/supabase/server";
 import {
   changeConnectionStateAction,
@@ -44,6 +45,7 @@ export default async function WhatsappSettingsPage({
   ]);
   const accountById = new Map(accounts?.map((account) => [account.id, account]));
   const isOwner = viewer.membership?.role === "owner";
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000").replace(/\/$/, "");
 
   return (
     <div className={styles.page}>
@@ -83,6 +85,16 @@ export default async function WhatsappSettingsPage({
                     Credencial {account?.credential_hint ?? "legada/não vinculada"} ·{" "}
                     {account?.status ?? "pendente"}
                   </small>
+                  {isOwner && account ? (
+                    <small>
+                      Callback: <code>{appUrl}/api/webhooks/whatsapp/{connection.id}</code>
+                    </small>
+                  ) : null}
+                  {isOwner && account && connection.provider === "meta_cloud" ? (
+                    <small>
+                      Token de verificação: <code>{metaWebhookVerifyToken(connection.id)}</code>
+                    </small>
+                  ) : null}
                 </span>
                 <span className={styles.contextBadge}>{connection.status}</span>
                 {isOwner && account ? (

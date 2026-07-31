@@ -6,10 +6,12 @@ import {
   readBodyWithinLimit,
   sha256,
   verifyWebhookSecret,
+  verifyWorkerAuthorization,
 } from "./security";
 
 afterEach(() => {
   delete process.env.GRIL_WEBHOOK_INGEST_SECRET;
+  delete process.env.GRIL_WORKER_SECRET;
 });
 
 describe("segurança dos adapters internos", () => {
@@ -18,6 +20,13 @@ describe("segurança dos adapters internos", () => {
     expect(verifyWebhookSecret("segredo-completo")).toBe(true);
     expect(verifyWebhookSecret("segredo")).toBe(false);
     expect(verifyWebhookSecret(null)).toBe(false);
+  });
+
+  it("protege o worker com bearer independente", () => {
+    process.env.GRIL_WORKER_SECRET = "worker-secret-completo-com-mais-de-32-caracteres";
+    expect(verifyWorkerAuthorization("Bearer worker-secret-completo-com-mais-de-32-caracteres")).toBe(true);
+    expect(verifyWorkerAuthorization("Bearer worker-secret")).toBe(false);
+    expect(verifyWorkerAuthorization(null)).toBe(false);
   });
 
   it("limita o corpo mesmo quando content-length não é enviado", async () => {

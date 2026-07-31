@@ -10,6 +10,15 @@ export function verifyWebhookSecret(received: string | null) {
   return left.length === right.length && timingSafeEqual(left, right);
 }
 
+export function verifyWorkerAuthorization(received: string | null) {
+  const expected = process.env.GRIL_WORKER_SECRET;
+  const token = received?.startsWith("Bearer ") ? received.slice(7) : null;
+  if (!expected || !token) return false;
+  const left = Buffer.from(expected);
+  const right = Buffer.from(token);
+  return left.length === right.length && timingSafeEqual(left, right);
+}
+
 export function sha256(value: string) {
   return createHash("sha256").update(value).digest("hex");
 }

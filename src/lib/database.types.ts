@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -4657,6 +4657,7 @@ export type Database = {
           read_at: string | null
           recipient_membership_id: string
           sent_at: string | null
+          source_event_id: string | null
           status: string
           title: string
         }
@@ -4670,6 +4671,7 @@ export type Database = {
           read_at?: string | null
           recipient_membership_id: string
           sent_at?: string | null
+          source_event_id?: string | null
           status?: string
           title: string
         }
@@ -4683,6 +4685,7 @@ export type Database = {
           read_at?: string | null
           recipient_membership_id?: string
           sent_at?: string | null
+          source_event_id?: string | null
           status?: string
           title?: string
         }
@@ -7650,9 +7653,108 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      apply_inbound_control_intent: {
+        Args: { p_intent: string; p_message_id: string }
+        Returns: Json
+      }
+      apply_provider_message_status: {
+        Args: {
+          p_connection_id: string
+          p_error_redacted?: string
+          p_provider_message_id: string
+          p_provider_timestamp?: string
+          p_status: string
+        }
+        Returns: boolean
+      }
+      claim_outbound_message: { Args: { p_message_id: string }; Returns: Json }
+      claim_retention_purge: {
+        Args: { p_limit?: number }
+        Returns: {
+          action: string
+          entity_id: string
+          entity_type: string
+          id: string
+          org_id: string
+          storage_bucket: string
+          storage_path: string
+        }[]
+      }
+      complete_ai_execution: {
+        Args: {
+          p_execution_id: string
+          p_input_tokens: number
+          p_latency_ms: number
+          p_model_returned: string
+          p_output_structured: Json
+          p_output_text: string
+          p_output_tokens: number
+          p_response_id: string
+        }
+        Returns: Json
+      }
+      complete_outbound_message: {
+        Args: {
+          p_message_id: string
+          p_provider_message_id: string
+          p_provider_timestamp?: string
+        }
+        Returns: undefined
+      }
+      configure_runtime_worker: {
+        Args: { p_base_url: string; p_worker_secret: string }
+        Returns: undefined
+      }
+      consume_runtime_event: { Args: { p_event: Json }; Returns: Json }
+      dispatch_runtime_sources: {
+        Args: { p_batch_size?: number }
+        Returns: Json
+      }
+      ensure_inbound_ai_execution: {
+        Args: { p_message_id: string }
+        Returns: Json
+      }
+      execute_runtime_job: { Args: { p_job_id: string }; Returns: Json }
+      fail_ai_execution: {
+        Args: {
+          p_error_code: string
+          p_error_redacted: string
+          p_execution_id: string
+        }
+        Returns: undefined
+      }
+      fail_outbound_message: {
+        Args: {
+          p_error_code: string
+          p_error_redacted: string
+          p_message_id: string
+        }
+        Returns: undefined
+      }
+      finish_retention_purge: {
+        Args: { p_error_redacted?: string; p_id: string; p_success: boolean }
+        Returns: undefined
+      }
+      finish_runtime_job: {
+        Args: {
+          p_error_redacted?: string
+          p_job_id: string
+          p_retry_seconds?: number
+          p_success: boolean
+        }
+        Returns: string
+      }
       get_integration_secret: {
         Args: { p_integration_account_id: string }
         Returns: string
+      }
+      retry_ai_execution: {
+        Args: {
+          p_error_code: string
+          p_error_redacted: string
+          p_execution_id: string
+        }
+        Returns: boolean
       }
       revoke_integration_account: {
         Args: {
@@ -7662,6 +7764,33 @@ export type Database = {
         }
         Returns: undefined
       }
+      runtime_queue_archive: {
+        Args: { p_msg_id: number; p_queue_name: string }
+        Returns: boolean
+      }
+      runtime_queue_read: {
+        Args: {
+          p_limit?: number
+          p_queue_name: string
+          p_visibility_timeout?: number
+        }
+        Returns: {
+          enqueued_at: string
+          message: Json
+          msg_id: number
+          read_ct: number
+          vt: string
+        }[]
+      }
+      runtime_queue_retry: {
+        Args: {
+          p_delay_seconds: number
+          p_msg_id: number
+          p_queue_name: string
+        }
+        Returns: boolean
+      }
+      start_ai_execution: { Args: { p_execution_id: string }; Returns: boolean }
       store_openai_integration: {
         Args: {
           p_actor_user_id: string

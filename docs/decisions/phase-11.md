@@ -19,6 +19,6 @@
 - todas as tabelas públicas continuam com RLS;
 - 33 testes, lint e build passaram sem teste visual.
 
-## Limite atual
+## Limite na conclusão da fase
 
-O autosserviço de credenciais está pronto, mas tráfego real ainda exige URL HTTPS pública e homologação dos adapters Uazapi/Meta e do worker OpenAI. Nenhum deploy na Vercel foi realizado.
+Na conclusão desta fase, o tráfego real ainda exigia adapters e worker. A Fase 12 implementou esse runtime; URL HTTPS, configuração do cron e homologação com contas reais continuam vinculadas ao deploy final.

@@ -4,9 +4,9 @@ MVP do sistema operacional imobiliário com o Pedro, implementado a partir dos s
 
 ## Estado atual
 
-As dez fases locais e o autosserviço de integrações estão implementados: identidade e tenancy, CRM, inbox, filas, Pedro, conhecimento, campanhas, calls, operações, hardening do piloto e credenciais por organização. O banco remoto de desenvolvimento é `frslhzwhaooqtivkzdez`. Não há deploy na Vercel.
+As doze fases estão implementadas: identidade e tenancy, CRM, inbox, filas, Pedro, conhecimento, campanhas, calls, operações, hardening do piloto, credenciais por organização e execução real dos adapters/workers. O banco remoto de desenvolvimento é `frslhzwhaooqtivkzdez`. Ainda não há deploy na Vercel.
 
-O dono pode validar, armazenar, retestar, rotacionar e revogar sua Uazapi, Meta Cloud API e chave OpenAI. Os segredos ficam criptografados no Supabase Vault e nunca são reexibidos. Os efeitos externos ainda dependem de homologar os adapters de WhatsApp, o worker OpenAI e o purge físico do Storage. Consulte `docs/operations/READINESS.md`.
+O dono pode validar, armazenar, retestar, rotacionar e revogar sua Uazapi, Meta Cloud API e chave OpenAI. Os segredos ficam criptografados no Supabase Vault e nunca são reexibidos. Webhooks nativos, recibos, envio real, Responses API, filas, jobs e purge físico do Storage estão implementados; o que falta para declarar operação real é publicar a URL HTTPS e homologar uma credencial/número reais. Consulte `docs/operations/READINESS.md`.
 
 ## Requisitos
 
@@ -15,7 +15,7 @@ O dono pode validar, armazenar, retestar, rotacionar e revogar sua Uazapi, Meta 
 - acesso ao projeto Supabase;
 - arquivo `.env.local` baseado em `.env.example`.
 
-As chaves `SUPABASE_SERVICE_ROLE_KEY` e `GRIL_WEBHOOK_INGEST_SECRET` são exclusivamente server-side e nunca podem usar o prefixo `NEXT_PUBLIC_`. `META_GRAPH_API_VERSION` seleciona a versão da Graph API e `UAZAPI_ALLOWED_HOSTS` permite, de forma explícita, hosts Uazapi privados fora de `*.uazapi.com`.
+As chaves `SUPABASE_SERVICE_ROLE_KEY`, `GRIL_WEBHOOK_INGEST_SECRET` e `GRIL_WORKER_SECRET` são exclusivamente server-side e nunca podem usar o prefixo `NEXT_PUBLIC_`. `META_GRAPH_API_VERSION` seleciona a versão da Graph API e `UAZAPI_ALLOWED_HOSTS` permite, de forma explícita, hosts Uazapi privados fora de `*.uazapi.com`.
 
 ## Executar em localhost
 
