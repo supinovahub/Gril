@@ -2,7 +2,7 @@
 
 ## Antes de liberar
 
-- [ ] credenciais de OpenAI e do provedor de WhatsApp cadastradas fora do banco;
+- [ ] credenciais de OpenAI e do provedor de WhatsApp validadas pelo autosserviço e armazenadas somente no Supabase Vault;
 - [ ] adapter do provedor validado com payload real e assinatura original;
 - [ ] envio e recebimento real testados em um número autorizado;
 - [ ] health check recente visível antes da ativação;
@@ -11,7 +11,7 @@
 - [ ] capacidade 10/25/30 e retomada após 5/2 minutos confirmadas;
 - [ ] backup do banco confirmado e procedimento de restauração ensaiado;
 - [ ] dono e ao menos um corretor aprovados na organização;
-- [ ] nenhuma credencial presente em Git ou em tabela pública.
+- [ ] nenhuma credencial presente em Git ou em tabela pública; somente hint mascarado visível.
 
 ## Liberação controlada
 

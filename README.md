@@ -4,9 +4,9 @@ MVP do sistema operacional imobiliário com o Pedro, implementado a partir dos s
 
 ## Estado atual
 
-As dez fases locais estão implementadas: identidade e tenancy, CRM, inbox, filas, Pedro, conhecimento, campanhas, calls, operações e hardening do piloto. O banco remoto de desenvolvimento é `frslhzwhaooqtivkzdez`. Não há deploy na Vercel.
+As dez fases locais e o autosserviço de integrações estão implementados: identidade e tenancy, CRM, inbox, filas, Pedro, conhecimento, campanhas, calls, operações, hardening do piloto e credenciais por organização. O banco remoto de desenvolvimento é `frslhzwhaooqtivkzdez`. Não há deploy na Vercel.
 
-Os efeitos que dependem de fornecedores permanecem desativados até existirem credenciais reais: adapter Uazapi/Meta, envio de WhatsApp, worker OpenAI e purge físico do Storage. Consulte `docs/operations/READINESS.md`.
+O dono pode validar, armazenar, retestar, rotacionar e revogar sua Uazapi, Meta Cloud API e chave OpenAI. Os segredos ficam criptografados no Supabase Vault e nunca são reexibidos. Os efeitos externos ainda dependem de homologar os adapters de WhatsApp, o worker OpenAI e o purge físico do Storage. Consulte `docs/operations/READINESS.md`.
 
 ## Requisitos
 
@@ -15,7 +15,7 @@ Os efeitos que dependem de fornecedores permanecem desativados até existirem cr
 - acesso ao projeto Supabase;
 - arquivo `.env.local` baseado em `.env.example`.
 
-As chaves `SUPABASE_SERVICE_ROLE_KEY` e `GRIL_WEBHOOK_INGEST_SECRET` são exclusivamente server-side e nunca podem usar o prefixo `NEXT_PUBLIC_`.
+As chaves `SUPABASE_SERVICE_ROLE_KEY` e `GRIL_WEBHOOK_INGEST_SECRET` são exclusivamente server-side e nunca podem usar o prefixo `NEXT_PUBLIC_`. `META_GRAPH_API_VERSION` seleciona a versão da Graph API e `UAZAPI_ALLOWED_HOSTS` permite, de forma explícita, hosts Uazapi privados fora de `*.uazapi.com`.
 
 ## Executar em localhost
 

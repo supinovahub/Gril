@@ -1,8 +1,9 @@
-import { Bot, BrainCircuit, CheckCircle2, CircleDashed, ShieldCheck, Sparkles } from "lucide-react";
+import { Bot, BrainCircuit, CheckCircle2, CircleDashed, KeyRound, RefreshCw, ShieldCheck, Sparkles, Trash2 } from "lucide-react";
 
+import { retestIntegrationAction, revokeIntegrationAction } from "@/app/app/integration-actions";
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { changeGlobalAiModeAction, configureModelAction, createPersonaDraftAction, publishPersonaAction } from "./actions";
+import { changeGlobalAiModeAction, configureModelAction, connectOpenAiAction, createPersonaDraftAction, publishPersonaAction } from "./actions";
 import styles from "./pedro.module.css";
 
 export default async function PedroPage({
@@ -13,24 +14,26 @@ export default async function PedroPage({
   const viewer = await requireActiveViewer();
   const feedback = await searchParams;
   const supabase = await createClient();
-  const [settingsResult, personasResult, versionsResult, modelsResult, rulesResult, executionsResult] = await Promise.all([
+  const [settingsResult, personasResult, versionsResult, modelsResult, rulesResult, executionsResult, integrationsResult] = await Promise.all([
     supabase.from("organization_settings").select("*").eq("org_id", viewer.organization!.id).single(),
     supabase.from("personas").select("*").eq("org_id", viewer.organization!.id).eq("status", "active").order("name"),
     supabase.from("persona_versions").select("*").eq("org_id", viewer.organization!.id).order("version", { ascending: false }),
     supabase.from("model_profiles").select("*").eq("org_id", viewer.organization!.id).order("workload_role"),
     supabase.from("rule_versions").select("id,version,status,checksum,published_at").eq("org_id", viewer.organization!.id).order("version", { ascending: false }),
     supabase.from("ai_executions").select("id,mode,status,model_returned,error_code,created_at").eq("org_id", viewer.organization!.id).order("created_at", { ascending: false }).limit(10),
+    supabase.from("integration_accounts").select("*").eq("org_id", viewer.organization!.id).eq("provider", "openai").order("created_at", { ascending: false }),
   ]);
   const settings = settingsResult.data;
   const defaultPersona = personasResult.data?.[0];
   const published = versionsResult.data?.find((item) => item.persona_id === defaultPersona?.id && item.status === "published");
   const drafts = versionsResult.data?.filter((item) => item.persona_id === defaultPersona?.id && item.status === "draft") ?? [];
+  const openAiAccount = integrationsResult.data?.find((item) => item.status !== "revoked");
 
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}><div><p className={styles.eyebrow}>Motor versionado</p><h1>Pedro</h1><p>Persona, regras, modelo e modos de execução com snapshots reproduzíveis.</p></div><span className={styles.modeBadge}><Bot size={15} /> {settings?.ai_global_mode ?? "off"}</span></header>
       {feedback.erro ? <p className={styles.errorBanner}>{feedback.erro}</p> : null}
-      {feedback.sucesso ? <p className={styles.successBanner}>Configuração salva com auditoria e versionamento.</p> : null}
+      {feedback.sucesso ? <p className={styles.successBanner}>{feedback.sucesso}</p> : null}
 
       <section className={styles.statusStrip}>
         <div><BrainCircuit size={18} /><span><small>Persona publicada</small><strong>v{published?.version ?? "—"}</strong></span></div>
@@ -55,13 +58,28 @@ export default async function PedroPage({
 
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>BYOK</p><h2>Perfis de modelo</h2></span></div>
+            {viewer.membership?.role === "owner" ? <div className={styles.credentialPanel}>
+              <div className={styles.credentialSummary}>
+                <span className={styles.modelState}>{openAiAccount?.status === "verified" ? <CheckCircle2 size={19} /> : <CircleDashed size={19} />}</span>
+                <span><strong>{openAiAccount ? "OpenAI conectada" : "Conecte sua chave da OpenAI"}</strong><small>{openAiAccount ? `${openAiAccount.credential_hint} · ${openAiAccount.status}` : "A chave será testada antes de entrar no Vault."}</small></span>
+                {openAiAccount ? <div className={styles.credentialActions}>
+                  <form action={retestIntegrationAction}><input name="integrationAccountId" type="hidden" value={openAiAccount.id}/><input name="returnTo" type="hidden" value="/app/pedro"/><button type="submit"><RefreshCw size={13}/> Testar</button></form>
+                  <form action={revokeIntegrationAction}><input name="integrationAccountId" type="hidden" value={openAiAccount.id}/><input name="returnTo" type="hidden" value="/app/pedro"/><button className={styles.dangerAction} type="submit"><Trash2 size={13}/> Revogar</button></form>
+                </div> : null}
+              </div>
+              <form action={connectOpenAiAction} className={styles.keyForm}>
+                <label><span>{openAiAccount ? "Nova chave para rotação" : "Chave de API"}</span><input autoComplete="new-password" name="apiKey" placeholder="sk-..." spellCheck={false} type="password" required /></label>
+                <button type="submit"><KeyRound size={14}/> {openAiAccount ? "Validar e trocar" : "Validar e conectar"}</button>
+              </form>
+              <p className={styles.credentialNotice}><ShieldCheck size={14}/> A chave nunca é reexibida e só workers server-side podem recuperá-la.</p>
+            </div> : null}
             <div className={styles.modelList}>
               {modelsResult.data?.map((profile) => (
                 <form action={configureModelAction} className={styles.modelRow} key={profile.id}>
                   <input name="profileId" type="hidden" value={profile.id} />
                   <span className={styles.modelState}>{profile.status === "active" ? <CheckCircle2 size={18} /> : <CircleDashed size={18} />}</span>
                   <span className={styles.modelCopy}><strong>{profile.name}</strong><small>{profile.workload_role} · Responses API · {profile.status}</small></span>
-                  <input defaultValue={profile.secret_reference ?? ""} disabled={profile.status !== "draft"} name="secretReference" placeholder="OPENAI_API_KEY_ORG" required />
+                  <span className={styles.keyState}>{profile.secret_reference ? "chave vinculada" : "sem chave"}</span>
                   <select defaultValue={profile.reasoning_effort ?? "medium"} disabled={profile.status !== "draft"} name="reasoningEffort"><option value="none">none</option><option value="low">low</option><option value="medium">medium</option><option value="high">high</option><option value="xhigh">xhigh</option><option value="max">max</option></select>
                   <select defaultValue={profile.text_verbosity} disabled={profile.status !== "draft"} name="textVerbosity"><option value="low">low</option><option value="medium">medium</option><option value="high">high</option></select>
                   {profile.status === "draft" ? <label className={styles.activateCheck}><input name="activate" type="checkbox" /> ativar</label> : <span className={styles.activeLabel}>ativo</span>}
@@ -89,4 +107,3 @@ export default async function PedroPage({
     </div>
   );
 }
-

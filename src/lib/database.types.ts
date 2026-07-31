@@ -1,4 +1,4 @@
-﻿export type Json =
+export type Json =
   | string
   | number
   | boolean
@@ -11,31 +11,6 @@ export type Database = {
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
     PostgrestVersion: "14.15"
-  }
-  graphql_public: {
-    Tables: {
-      [_ in never]: never
-    }
-    Views: {
-      [_ in never]: never
-    }
-    Functions: {
-      graphql: {
-        Args: {
-          extensions?: Json
-          operationName?: string
-          query?: string
-          variables?: Json
-        }
-        Returns: Json
-      }
-    }
-    Enums: {
-      [_ in never]: never
-    }
-    CompositeTypes: {
-      [_ in never]: never
-    }
   }
   public: {
     Tables: {
@@ -3289,6 +3264,80 @@ export type Database = {
           },
         ]
       }
+      integration_accounts: {
+        Row: {
+          base_url: string | null
+          connected_by: string | null
+          created_at: string
+          credential_hint: string
+          external_account_id: string | null
+          external_business_id: string | null
+          external_phone_number_id: string | null
+          id: string
+          label: string
+          last_checked_at: string | null
+          last_error_redacted: string | null
+          metadata: Json
+          org_id: string
+          phone_e164: string | null
+          provider: string
+          revoked_at: string | null
+          status: string
+          updated_at: string
+          verified_at: string | null
+        }
+        Insert: {
+          base_url?: string | null
+          connected_by?: string | null
+          created_at?: string
+          credential_hint: string
+          external_account_id?: string | null
+          external_business_id?: string | null
+          external_phone_number_id?: string | null
+          id?: string
+          label: string
+          last_checked_at?: string | null
+          last_error_redacted?: string | null
+          metadata?: Json
+          org_id: string
+          phone_e164?: string | null
+          provider: string
+          revoked_at?: string | null
+          status?: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Update: {
+          base_url?: string | null
+          connected_by?: string | null
+          created_at?: string
+          credential_hint?: string
+          external_account_id?: string | null
+          external_business_id?: string | null
+          external_phone_number_id?: string | null
+          id?: string
+          label?: string
+          last_checked_at?: string | null
+          last_error_redacted?: string | null
+          metadata?: Json
+          org_id?: string
+          phone_e164?: string | null
+          provider?: string
+          revoked_at?: string | null
+          status?: string
+          updated_at?: string
+          verified_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_accounts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       integration_health_checks: {
         Row: {
           checked_at: string
@@ -4454,6 +4503,7 @@ export type Database = {
           created_by: string | null
           endpoint: string
           id: string
+          integration_account_id: string | null
           is_default: boolean
           model_identifier: string
           name: string
@@ -4472,6 +4522,7 @@ export type Database = {
           created_by?: string | null
           endpoint?: string
           id?: string
+          integration_account_id?: string | null
           is_default?: boolean
           model_identifier: string
           name: string
@@ -4490,6 +4541,7 @@ export type Database = {
           created_by?: string | null
           endpoint?: string
           id?: string
+          integration_account_id?: string | null
           is_default?: boolean
           model_identifier?: string
           name?: string
@@ -4504,6 +4556,13 @@ export type Database = {
           workload_role?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "model_profiles_integration_account_id_fkey"
+            columns: ["integration_account_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id", "org_id"]
+          },
           {
             foreignKeyName: "model_profiles_org_id_fkey"
             columns: ["org_id"]
@@ -7506,6 +7565,7 @@ export type Database = {
           endpoint_url: string | null
           id: string
           inbound_enabled: boolean
+          integration_account_id: string | null
           last_error_redacted: string | null
           last_health_at: string | null
           name: string
@@ -7526,6 +7586,7 @@ export type Database = {
           endpoint_url?: string | null
           id?: string
           inbound_enabled?: boolean
+          integration_account_id?: string | null
           last_error_redacted?: string | null
           last_health_at?: string | null
           name: string
@@ -7546,6 +7607,7 @@ export type Database = {
           endpoint_url?: string | null
           id?: string
           inbound_enabled?: boolean
+          integration_account_id?: string | null
           last_error_redacted?: string | null
           last_health_at?: string | null
           name?: string
@@ -7560,6 +7622,13 @@ export type Database = {
           visible_profile_name?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "whatsapp_connections_integration_account_id_fkey"
+            columns: ["integration_account_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "integration_accounts"
+            referencedColumns: ["id", "org_id"]
+          },
           {
             foreignKeyName: "whatsapp_connections_operation_id_org_id_fkey"
             columns: ["operation_id", "org_id"]
@@ -7581,7 +7650,49 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      get_integration_secret: {
+        Args: { p_integration_account_id: string }
+        Returns: string
+      }
+      revoke_integration_account: {
+        Args: {
+          p_actor_user_id: string
+          p_integration_account_id: string
+          p_org_id: string
+        }
+        Returns: undefined
+      }
+      store_openai_integration: {
+        Args: {
+          p_actor_user_id: string
+          p_credential_hint: string
+          p_latency_ms: number
+          p_model_count: number
+          p_org_id: string
+          p_secret: string
+        }
+        Returns: string
+      }
+      store_whatsapp_integration: {
+        Args: {
+          p_actor_user_id: string
+          p_base_url: string
+          p_credential_hint: string
+          p_external_account_id: string
+          p_external_business_id: string
+          p_external_phone_number_id: string
+          p_label: string
+          p_latency_ms: number
+          p_metadata: Json
+          p_operation_id: string
+          p_org_id: string
+          p_phone_e164: string
+          p_provider: string
+          p_secret: string
+          p_visible_profile_name: string
+        }
+        Returns: string
+      }
     }
     Enums: {
       [_ in never]: never
@@ -7710,9 +7821,6 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
-  graphql_public: {
-    Enums: {},
-  },
   public: {
     Enums: {},
   },

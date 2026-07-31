@@ -36,6 +36,19 @@
 .modelCopy strong { font-size: 10px; }
 .modelCopy small { color: var(--ink-muted); font-size: 8px; }
 .modelRow input:not([type=checkbox]),.modelRow select { min-width: 0; padding: 8px; border: 1px solid var(--border); border-radius: 8px; background: white; font-size: 9px; }
+.credentialPanel { display: grid; gap: 12px; padding: 16px 18px; border-bottom: 1px solid var(--border); background: var(--surface-muted); }
+.credentialSummary { display: grid; grid-template-columns: auto minmax(0,1fr) auto; align-items: center; gap: 10px; }
+.credentialSummary > span:nth-child(2) { display: grid; gap: 3px; }
+.credentialSummary strong { font-size: 11px; }
+.credentialSummary small,.credentialNotice { color: var(--ink-muted); font-size: 9px; }
+.credentialActions,.credentialActions form,.keyForm { display: flex; align-items: end; gap: 7px; }
+.credentialActions button,.keyForm button { display: inline-flex; min-height: 35px; align-items: center; gap: 5px; padding: 0 11px; border: 1px solid var(--border); border-radius: 8px; background: white; color: var(--ink); font-size: 9px; font-weight: 720; }
+.credentialActions .dangerAction { border-color: #e2bab4; background: #fff1ef; color: var(--danger); }
+.keyForm label { display: grid; flex: 1; gap: 5px; }
+.keyForm label span { color: var(--ink-muted); font-size: 9px; font-weight: 700; }
+.keyForm input { width: 100%; min-height: 36px; padding: 8px 10px; border: 1px solid var(--border); border-radius: 8px; background: white; font-size: 10px; }
+.credentialNotice { display: flex; align-items: center; gap: 6px; margin: 0; }
+.keyState { color: var(--ink-muted); font-size: 9px; }
 .activateCheck { display: flex; align-items: center; gap: 4px; color: var(--ink-muted); font-size: 8px; }
 .activeLabel { color: var(--positive); font-size: 9px; font-weight: 720; }
 .modeForm { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; padding: 16px; }
@@ -48,5 +61,4 @@
 .executionList strong { font-size: 9px; }
 .executionList small { color: var(--ink-muted); font-size: 8px; }
 @media (max-width: 1050px) { .grid { grid-template-columns: 1fr; } .modelRow { grid-template-columns: auto 1fr; } .modelRow > :not(.modelState):not(.modelCopy) { grid-column: 2; } }
-@media (max-width: 650px) { .pageHeader { align-items: flex-start; flex-direction: column; } .statusStrip { grid-template-columns: 1fr; } }
-
+@media (max-width: 650px) { .pageHeader { align-items: flex-start; flex-direction: column; } .statusStrip { grid-template-columns: 1fr; } .credentialSummary { grid-template-columns: auto 1fr; } .credentialActions { grid-column: 2; flex-wrap: wrap; } .keyForm { align-items: stretch; flex-direction: column; } }

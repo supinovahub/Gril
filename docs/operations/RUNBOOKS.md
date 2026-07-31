@@ -26,7 +26,7 @@
 1. Mudar o modo para sombra ou desligado e assumir a conversa por humano.
 2. Registrar revisão com evidência e classificar a falha.
 3. Criar regra apenas como rascunho; publicar só após regressão aprovada.
-4. Revogar a referência de secret se houver suspeita de vazamento.
+4. Usar a ação **Revogar** da integração se houver suspeita de vazamento; isso remove o secret do Vault e pausa os usos vinculados.
 
 ## Privacidade e retenção
 

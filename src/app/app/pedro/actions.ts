@@ -6,19 +6,57 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireActiveViewer } from "@/lib/auth/session";
+import { validateOpenAiCredential } from "@/lib/integrations/openai";
+import { IntegrationProviderError } from "@/lib/integrations/provider-http";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 const profileSchema = z.object({
   profileId: z.string().uuid(),
-  secretReference: z.string().trim().min(3).max(160),
   reasoningEffort: z.enum(["none", "low", "medium", "high", "xhigh", "max"]),
   textVerbosity: z.enum(["low", "medium", "high"]),
 });
 
+export async function connectOpenAiAction(formData: FormData) {
+  const parsed = z
+    .object({ apiKey: z.string().trim().min(20).max(4000) })
+    .safeParse(Object.fromEntries(formData));
+  if (!parsed.success) {
+    redirect(`/app/pedro?erro=${encodeURIComponent("Informe a chave completa da OpenAI.")}`);
+  }
+
+  const viewer = await requireActiveViewer();
+  if (viewer.membership?.role !== "owner") {
+    redirect(`/app/pedro?erro=${encodeURIComponent("Somente o dono pode conectar a chave da OpenAI.")}`);
+  }
+
+  try {
+    const verified = await validateOpenAiCredential(parsed.data.apiKey);
+    const admin = createAdminClient();
+    const { error } = await admin.rpc("store_openai_integration", {
+      p_actor_user_id: viewer.userId,
+      p_credential_hint: verified.credentialHint,
+      p_latency_ms: verified.latencyMs,
+      p_model_count: verified.modelIds.length,
+      p_org_id: viewer.organization!.id,
+      p_secret: verified.apiKey,
+    });
+    if (error) throw error;
+  } catch (error) {
+    const message =
+      error instanceof IntegrationProviderError
+        ? error.userMessage
+        : "Não foi possível salvar a chave da OpenAI.";
+    redirect(`/app/pedro?erro=${encodeURIComponent(message)}`);
+  }
+
+  revalidatePath("/app/pedro");
+  redirect(`/app/pedro?sucesso=${encodeURIComponent("Chave da OpenAI validada e armazenada no Vault.")}`);
+}
+
 export async function configureModelAction(formData: FormData) {
   const parsed = profileSchema.safeParse({
     profileId: formData.get("profileId"),
-    secretReference: formData.get("secretReference"),
     reasoningEffort: formData.get("reasoningEffort"),
     textVerbosity: formData.get("textVerbosity"),
   });
@@ -29,16 +67,18 @@ export async function configureModelAction(formData: FormData) {
   const supabase = await createClient();
   const { data: profile } = await supabase
     .from("model_profiles")
-    .select("id,org_id,status")
+    .select("id,org_id,status,secret_reference,integration_account_id")
     .eq("id", parsed.data.profileId)
     .eq("org_id", viewer.organization!.id)
     .maybeSingle();
   if (!profile || profile.status !== "draft") return;
+  if (!profile.secret_reference || !profile.integration_account_id) {
+    redirect(`/app/pedro?erro=${encodeURIComponent("Conecte primeiro a chave da OpenAI.")}`);
+  }
 
   const { error } = await supabase
     .from("model_profiles")
     .update({
-      secret_reference: parsed.data.secretReference,
       reasoning_effort: parsed.data.reasoningEffort,
       text_verbosity: parsed.data.textVerbosity,
     })
@@ -144,4 +184,3 @@ export async function changeGlobalAiModeAction(formData: FormData) {
   await supabase.from("organization_settings").update({ ai_global_mode: mode.data }).eq("org_id", viewer.organization!.id);
   revalidatePath("/app/pedro");
 }
-
