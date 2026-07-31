@@ -10,6 +10,7 @@ import {
 import { createClient } from "@/lib/supabase/server";
 import {
   changeMembershipAction,
+  updateMemberCallSettingsAction,
   updateManagerPermissionsAction,
 } from "./actions";
 import { permissionOptions } from "./constants";
@@ -74,9 +75,10 @@ export default async function TeamPage() {
 
   let profiles: Pick<Tables<"profiles">, "user_id" | "full_name" | "whatsapp_e164">[] = [];
   let permissions: Pick<Tables<"membership_permissions">, "membership_id" | "permission">[] = [];
+  let callSettings: Tables<"membership_call_settings">[] = [];
 
   if (memberRows.length) {
-    const [profileResult, permissionResult] = await Promise.all([
+    const [profileResult, permissionResult, callSettingsResult] = await Promise.all([
       supabase
         .from("profiles")
         .select("user_id, full_name, whatsapp_e164")
@@ -85,13 +87,16 @@ export default async function TeamPage() {
         .from("membership_permissions")
         .select("membership_id, permission")
         .in("membership_id", memberIds),
+      supabase.from("membership_call_settings").select("*").in("membership_id", memberIds),
     ]);
     profiles = profileResult.data ?? [];
     permissions = permissionResult.data ?? [];
+    callSettings = callSettingsResult.data ?? [];
   }
 
   const profilesByUser = new Map(profiles.map((profile) => [profile.user_id, profile]));
   const permissionsByMembership = new Map<string, Set<string>>();
+  const callSettingsByMembership = new Map(callSettings.map((item) => [item.membership_id, item]));
   permissions.forEach((permission) => {
     const set = permissionsByMembership.get(permission.membership_id) ?? new Set<string>();
     set.add(permission.permission);
@@ -138,6 +143,7 @@ export default async function TeamPage() {
               const isSelf = member.user_id === viewer.userId;
               const canAct = member.role !== "owner" && !isSelf;
               const assignedPermissions = permissionsByMembership.get(member.id) ?? new Set<string>();
+              const memberCallSettings = callSettingsByMembership.get(member.id);
 
               return (
                 <li className={styles.member} key={member.id}>
@@ -212,6 +218,18 @@ export default async function TeamPage() {
                           </label>
                         ))}
                         <button className={styles.savePermissions} type="submit">Salvar permissões</button>
+                      </form>
+                    </details>
+                  ) : null}
+                  {member.status === "active" ? (
+                    <details className={styles.permissions}>
+                      <summary>Distribuição de calls</summary>
+                      <form action={updateMemberCallSettingsAction.bind(null, member.id)} className={styles.permissionForm}>
+                        <input name="operationId" type="hidden" value={(viewer.operations.find((item) => item.is_default) ?? viewer.operations[0])?.id} />
+                        <label><input defaultChecked={memberCallSettings?.can_receive_calls} name="canReceiveCalls" type="checkbox" /> Recebe calls</label>
+                        <label><input defaultChecked={memberCallSettings?.is_preferred_receiver} name="preferredReceiver" type="checkbox" /> Corretor preferencial</label>
+                        <label><input defaultChecked={memberCallSettings?.receive_urgent_call_alerts} name="urgentAlerts" type="checkbox" /> Alertas urgentes</label>
+                        <button className={styles.savePermissions} type="submit">Salvar distribuição</button>
                       </form>
                     </details>
                   ) : null}

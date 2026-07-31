@@ -2,11 +2,12 @@
 
 ## Publicação do runtime
 
-1. Definir na Vercel todas as variáveis de `.env.example`; `NEXT_PUBLIC_APP_URL` deve ser a origem HTTPS final, sem barra no fim.
+1. Definir na Vercel todas as variáveis de `.env.example`; `NEXT_PUBLIC_APP_URL` deve ser a origem HTTPS final, sem barra no fim. Gerar um par VAPID e manter somente a chave pública em `NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY`.
 2. Gerar segredos diferentes para `GRIL_WEBHOOK_INGEST_SECRET` e `GRIL_WORKER_SECRET`, ambos server-only; manter o primeiro estável porque ele deriva o token de verificação da Meta.
 3. Depois do deploy, chamar `configure_runtime_worker(base_url, worker_secret)` com `service_role`; conferir `gril-runtime-worker` em `cron.job` e uma resposta 200 de `/api/internal/workers/drain`.
 4. Copiar da tela de WhatsApp a URL de callback. Na Uazapi, assinar `messages`, `messages_update` e excluir mensagens `wasSentByApi`; na Meta, usar a mesma URL e o token de verificação exibido.
 5. Ativar primeiro inbound, validar recibos e só depois habilitar campanhas ou modo produção.
+6. Habilitar proteção contra senhas vazadas no Supabase Auth e repetir o advisor de segurança.
 
 ## Provedor indisponível
 

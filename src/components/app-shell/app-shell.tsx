@@ -17,6 +17,7 @@ import {
   MessagesSquare,
   Sparkles,
   Settings2,
+  Search,
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
@@ -77,6 +78,10 @@ export function AppShell({
         </div>
 
         <nav className={styles.nav} aria-label="Navegação principal">
+          <form action="/app/busca" className={styles.globalSearch}>
+            <Search size={15} aria-hidden="true" />
+            <input aria-label="Busca global" name="q" placeholder="Buscar na operação" />
+          </form>
           <p className={styles.navLabel}>Agora</p>
           <Link className={styles.navItem} href="/app">
             <LayoutDashboard size={18} aria-hidden="true" /> Visão geral

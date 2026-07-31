@@ -4,9 +4,9 @@ MVP do sistema operacional imobiliário com o Pedro, implementado a partir dos s
 
 ## Estado atual
 
-As doze fases estão implementadas: identidade e tenancy, CRM, inbox, filas, Pedro, conhecimento, campanhas, calls, operações, hardening do piloto, credenciais por organização e execução real dos adapters/workers. O banco remoto de desenvolvimento é `frslhzwhaooqtivkzdez`. Ainda não há deploy na Vercel.
+As 23 fases estão implementadas: fundação multi-tenant, CRM, inbox, filas, Pedro autônomo, conhecimento, campanhas, calls, mídia, templates Meta, regressão, integridade comercial, push, mutações de mensagens e reconciliação dos eventos. O banco remoto de desenvolvimento é `frslhzwhaooqtivkzdez`. Ainda não há deploy na Vercel.
 
-O dono pode validar, armazenar, retestar, rotacionar e revogar sua Uazapi, Meta Cloud API e chave OpenAI. Os segredos ficam criptografados no Supabase Vault e nunca são reexibidos. Webhooks nativos, recibos, envio real, Responses API, filas, jobs e purge físico do Storage estão implementados; o que falta para declarar operação real é publicar a URL HTTPS e homologar uma credencial/número reais. Consulte `docs/operations/READINESS.md`.
+O dono pode validar, armazenar, retestar, rotacionar e revogar sua Uazapi, Meta Cloud API e chave OpenAI. Também pode criar uma instância Uazapi, parear o número e configurar o webhook depois do deploy. Os segredos ficam criptografados no Supabase Vault e nunca são reexibidos. Webhooks nativos, recibos, Responses API, mídia, filas, jobs, push e purge físico do Storage estão implementados; o que falta para declarar operação real é publicar a URL HTTPS e homologar credenciais/números reais. Consulte `docs/operations/READINESS.md` e `docs/operations/MVP_VALIDATION_FLOWS.md`.
 
 ## Requisitos
 
@@ -15,7 +15,7 @@ O dono pode validar, armazenar, retestar, rotacionar e revogar sua Uazapi, Meta 
 - acesso ao projeto Supabase;
 - arquivo `.env.local` baseado em `.env.example`.
 
-As chaves `SUPABASE_SERVICE_ROLE_KEY`, `GRIL_WEBHOOK_INGEST_SECRET` e `GRIL_WORKER_SECRET` são exclusivamente server-side e nunca podem usar o prefixo `NEXT_PUBLIC_`. `META_GRAPH_API_VERSION` seleciona a versão da Graph API e `UAZAPI_ALLOWED_HOSTS` permite, de forma explícita, hosts Uazapi privados fora de `*.uazapi.com`.
+As chaves `SUPABASE_SERVICE_ROLE_KEY`, `GRIL_WEBHOOK_INGEST_SECRET`, `GRIL_WORKER_SECRET` e `WEB_PUSH_PRIVATE_KEY` são exclusivamente server-side e nunca podem usar o prefixo `NEXT_PUBLIC_`. `META_GRAPH_API_VERSION` seleciona a versão da Graph API e `UAZAPI_ALLOWED_HOSTS` permite, de forma explícita, hosts Uazapi privados fora de `*.uazapi.com`.
 
 ## Executar em localhost
 

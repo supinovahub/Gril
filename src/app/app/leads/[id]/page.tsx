@@ -10,9 +10,20 @@ import {
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { requireActiveViewer } from "@/lib/auth/session";
+import { canManageTeam, requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { changeStageAction, completeNextActionAction, matchProjectsAction, recordQualificationAction } from "../actions";
+import {
+  addContactPhoneAction,
+  changeStageAction,
+  completeNextActionAction,
+  matchProjectsAction,
+  mergeContactAction,
+  recordQualificationAction,
+  updateChecklistAction,
+  updateContactPhoneAction,
+  updateParticipantAction,
+  updatePurchaseStructureAction,
+} from "../actions";
 import styles from "../leads.module.css";
 
 const allowedNext: Record<string, string[]> = {
@@ -38,7 +49,8 @@ export default async function LeadDetailPage({
   const feedback = await searchParams;
   const supabase = await createClient();
 
-  const [opportunityResult, stagesResult, reasonsResult, historyResult, actionsResult, sourcesResult, salesResult, definitionsResult, qualificationResult, matchesResult] = await Promise.all([
+  const canManage = canManageTeam(viewer);
+  const [opportunityResult, stagesResult, reasonsResult, historyResult, actionsResult, sourcesResult, salesResult, definitionsResult, qualificationResult, matchesResult, participantsResult, contactsResult, scoresResult, checklistsResult] = await Promise.all([
     supabase
       .from("opportunities")
       .select("*, contacts!inner(id,name,status,contact_phones(*)), pipeline_stages!inner(id,name,code,position)")
@@ -53,6 +65,10 @@ export default async function LeadDetailPage({
     supabase.from("qualification_definitions").select("*").eq("org_id", viewer.organization!.id).eq("active", true).order("suggested_order"),
     supabase.from("qualification_values").select("*").eq("opportunity_id", id),
     supabase.from("project_matches").select("*,projects!inner(name,region,neighborhood,min_price,min_down_payment,cover_storage_path)").eq("opportunity_id", id).eq("eligible", true).order("created_at", { ascending: false }).limit(4),
+    supabase.from("opportunity_participants").select("id,contact_id,role,contacts!inner(id,name,contact_phones(e164,is_primary,status))").eq("opportunity_id", id).order("created_at"),
+    canManage ? supabase.from("contacts").select("id,name,contact_phones(e164,is_primary,status)").eq("org_id", viewer.organization!.id).eq("status", "active").order("name").limit(500) : Promise.resolve({ data: [] }),
+    supabase.from("opportunity_scores").select("score,explanation,created_at").eq("opportunity_id", id).order("created_at", { ascending: false }).limit(1),
+    supabase.from("opportunity_checklists").select("*,checklist_templates!inner(name,stage_code)").eq("opportunity_id", id).order("created_at"),
   ]);
 
   const opportunity = opportunityResult.data;
@@ -61,12 +77,19 @@ export default async function LeadDetailPage({
   const contact = Array.isArray(opportunity.contacts) ? opportunity.contacts[0] : opportunity.contacts;
   const stage = Array.isArray(opportunity.pipeline_stages) ? opportunity.pipeline_stages[0] : opportunity.pipeline_stages;
   const phones = (contact?.contact_phones ?? []) as Array<{
+    id: string;
     e164: string;
     is_primary: boolean;
+    status: string;
   }>;
   const nextCodes = new Set(allowedNext[stage?.code ?? ""] ?? []);
   const availableStages = stagesResult.data?.filter((item) => nextCodes.has(item.code)) ?? [];
   const isTerminal = opportunity.status === "won";
+  const latestScore = scoresResult.data?.[0];
+  const scoreExplanation = latestScore?.explanation as { band?: string; missing?: string[] } | null | undefined;
+  const bandLabel: Record<string, string> = { high: "Alta", normal: "Normal", followup: "Follow-up", outside_profile: "Fora do perfil" };
+  const participantContactIds = new Set(participantsResult.data?.map((item) => item.contact_id));
+  const mergeTargets = contactsResult.data?.filter((item) => item.id !== contact?.id) ?? [];
 
   return (
     <div className={styles.page}>
@@ -94,9 +117,24 @@ export default async function LeadDetailPage({
             <dl className={styles.factGrid}>
               <div><dt>WhatsApp</dt><dd><Phone size={14} /> {phones.find((item) => item.is_primary)?.e164 ?? "Não informado"}</dd></div>
               <div><dt>Responsável</dt><dd>{opportunity.assigned_membership_id ? opportunity.assigned_membership_id.slice(0, 8) : "Sem responsável"}</dd></div>
+              <div><dt>Faixa determinística</dt><dd>{latestScore ? `${bandLabel[scoreExplanation?.band ?? ""] ?? scoreExplanation?.band ?? "Em cálculo"} · ${latestScore.score}/100` : "Ainda sem sinais"}</dd></div>
+              <div><dt>Estrutura da compra</dt><dd>{opportunity.unit_quantity} unidade(s) · valores {opportunity.amount_scope === "per_unit" ? "por unidade" : "totais"}</dd></div>
+              <div><dt>Dados ainda desconhecidos</dt><dd>{scoreExplanation?.missing?.length ? scoreExplanation.missing.join(", ") : "Nenhum mínimo pendente"}</dd></div>
               <div><dt>Contexto para Pedro</dt><dd>{opportunity.ai_context || "Não informado"}</dd></div>
               <div><dt>Nota interna</dt><dd>{opportunity.internal_note || "Não informada"}</dd></div>
             </dl>
+            {!isTerminal ? <form action={updatePurchaseStructureAction} className={styles.matchAction}><input name="opportunityId" type="hidden" value={opportunity.id}/><input defaultValue={opportunity.unit_quantity} max="100" min="1" name="unitQuantity" type="number"/><select defaultValue={opportunity.amount_scope} name="amountScope"><option value="total">Valores totais</option><option value="per_unit">Valores por unidade</option></select><button type="submit">Atualizar estrutura</button></form> : null}
+          </section>
+
+          <section className={styles.detailCard}>
+            <div className={styles.cardTitle}><UserRound size={18} /><h2>Participantes da compra</h2></div>
+            <div className={styles.actionList}>
+              {participantsResult.data?.map((participant) => {
+                const person = Array.isArray(participant.contacts) ? participant.contacts[0] : participant.contacts;
+                return <div className={styles.actionRow} key={participant.id}><span><strong>{person?.name ?? "Contato"}</strong><small>{participant.role}</small></span>{canManage && participant.role !== "primary" ? <form action={updateParticipantAction}><input name="opportunityId" type="hidden" value={opportunity.id}/><input name="contactId" type="hidden" value={participant.contact_id}/><input name="role" type="hidden" value={participant.role}/><input name="action" type="hidden" value="remove"/><button type="submit">Remover</button></form> : null}</div>;
+              })}
+            </div>
+            {canManage ? <form action={updateParticipantAction} className={styles.matchAction}><input name="opportunityId" type="hidden" value={opportunity.id}/><input name="action" type="hidden" value="add"/><select name="contactId" required><option value="">Adicionar contato existente</option>{contactsResult.data?.filter((item) => item.id !== contact?.id && !participantContactIds.has(item.id)).map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select><select name="role"><option value="co_buyer">Co-comprador</option><option value="influencer">Influenciador</option><option value="other">Outro</option></select><button type="submit">Adicionar</button></form> : null}
           </section>
 
           <section className={styles.detailCard}>
@@ -173,6 +211,13 @@ export default async function LeadDetailPage({
               })}
             </ol>
           </section>
+
+          {checklistsResult.data?.map((checklist) => {
+            const template = Array.isArray(checklist.checklist_templates) ? checklist.checklist_templates[0] : checklist.checklist_templates;
+            const items = Array.isArray(checklist.items_snapshot) ? checklist.items_snapshot as Array<{ id: string; label: string; required: boolean }> : [];
+            const completion = (checklist.completion ?? {}) as Record<string, { status?: string; note?: string }>;
+            return <section className={styles.detailCard} key={checklist.id}><div className={styles.cardTitle}><Check size={18}/><h2>{template?.name ?? "Checklist"}</h2></div><div className={styles.actionList}>{items.map((item) => { const state=completion[item.id]; return <div className={styles.actionRow} key={item.id}><span><strong>{item.label}</strong><small>{item.required ? "Obrigatório" : "Opcional"} · {state?.status ?? "pendente"}{state?.note ? ` · ${state.note}` : ""}</small></span><form action={updateChecklistAction}><input name="opportunityId" type="hidden" value={opportunity.id}/><input name="checklistId" type="hidden" value={checklist.id}/><input name="itemId" type="hidden" value={item.id}/>{state ? <><input name="action" type="hidden" value="reopen"/><button type="submit">Reabrir</button></> : <><select name="action"><option value="complete">Concluir</option>{canManage ? <option value="waive">Dispensar</option> : null}</select><input name="note" placeholder="Observação / motivo"/><button type="submit">Salvar</button></>}</form></div>; })}</div></section>;
+          })}
         </div>
 
         <aside className={styles.detailAside}>
@@ -192,6 +237,7 @@ export default async function LeadDetailPage({
                   <label><span>Ano</span><input min="2020" name="saleYear" type="number" /></label>
                 </div>
                 <label><span>Empreendimento vendido</span><input name="saleProjectName" /></label>
+                <div className={styles.inlineFields}><label><span>Unidade</span><input name="saleUnitReference" /></label><label><span>Quantidade</span><input min="1" name="saleUnitQuantity" type="number" /></label></div>
                 <label><span>Valor</span><input inputMode="decimal" name="saleValue" /></label>
                 <label><span>Próxima ação</span><input name="nextActionDescription" /></label>
                 <label><span>Prazo</span><input name="nextActionDueAt" type="datetime-local" /></label>
@@ -204,6 +250,10 @@ export default async function LeadDetailPage({
             <h3>Origem</h3>
             {sourcesResult.data?.map((source) => <p key={source.id}><strong>{source.source}</strong><span>{source.attribution_type} · {new Date(source.attributed_at).toLocaleDateString("pt-BR")}</span></p>)}
           </section>
+
+          {canManage ? <section className={styles.stageFormCard}><div className={styles.cardTitle}><Phone size={18}/><h2>Telefones</h2></div><div className={styles.actionList}>{phones.filter((phone) => phone.status === "active").map((phone) => <div className={styles.actionRow} key={phone.e164}><span><strong>{phone.e164}</strong><small>{phone.is_primary ? "Principal" : "Alternativo"}</small></span><form action={updateContactPhoneAction}><input name="opportunityId" type="hidden" value={opportunity.id}/><input name="contactId" type="hidden" value={contact?.id}/><input name="phoneId" type="hidden" value={phone.id}/><select name="action"><option value="set_primary">Tornar principal</option><option value="deactivate">Desativar</option><option value="mark_wrong">Número errado</option></select><button type="submit">Aplicar</button></form></div>)}</div><form action={addContactPhoneAction} className={styles.stageForm}><input name="opportunityId" type="hidden" value={opportunity.id}/><input name="contactId" type="hidden" value={contact?.id}/><label><span>Novo telefone</span><input name="phone" placeholder="(11) 99999-9999" required/></label><label><input name="makePrimary" type="checkbox"/> Tornar principal</label><button type="submit">Adicionar telefone</button></form></section> : null}
+
+          {canManage && mergeTargets.length ? <section className={styles.stageFormCard}><div className={styles.cardTitle}><UserRound size={18}/><h2>Fundir duplicado</h2></div><p className={styles.terminalMessage}>Move telefones, oportunidades e conversas para o contato escolhido. Opt-out sempre prevalece e dois contatos com conversa ativa não podem ser fundidos.</p><form action={mergeContactAction} className={styles.stageForm}><input name="opportunityId" type="hidden" value={opportunity.id}/><input name="sourceContactId" type="hidden" value={contact?.id}/><label><span>Contato canônico</span><select name="targetContactId" required><option value="">Selecione</option>{mergeTargets.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label><label><span>Motivo auditável</span><textarea name="reason" required rows={2}/></label><button type="submit">Confirmar fusão</button></form></section> : null}
 
           {salesResult.data ? (
             <section className={styles.saleCard}><strong>Venda registrada</strong><span>{salesResult.data.sale_month}/{salesResult.data.sale_year}</span><span>{salesResult.data.project_name || "Empreendimento não informado"}</span></section>

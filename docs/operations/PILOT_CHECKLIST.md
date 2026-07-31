@@ -6,12 +6,15 @@
 - [ ] adapter do provedor validado com payload real e assinatura original;
 - [ ] envio e recebimento real testados em um número autorizado;
 - [ ] health check recente visível antes da ativação;
-- [ ] cinquenta casos de regressão executados, com 100% dos críticos aprovados;
+- [ ] cem casos de regressão executados, com 100% dos 52 críticos aprovados;
 - [ ] opt-out, número errado, privacidade e handoff humano testados ponta a ponta;
 - [ ] capacidade 10/25/30 e retomada após 5/2 minutos confirmadas;
 - [ ] backup do banco confirmado e procedimento de restauração ensaiado;
 - [ ] dono e ao menos um corretor aprovados na organização;
 - [ ] nenhuma credencial presente em Git ou em tabela pública; somente hint mascarado visível.
+- [ ] push habilitado com VAPID e alerta persistente confirmado mesmo quando o push é negado;
+- [ ] template de lembrete Meta com variável de link, quando videochamada for usada fora da janela de 24 horas;
+- [ ] proteção contra senhas vazadas habilitada no Supabase Auth.
 
 ## Liberação controlada
 
@@ -19,8 +22,9 @@
 2. Rodar atendimentos internos nos modos sombra e assistido.
 3. Autorizar produção apenas após revisar os casos críticos.
 4. Liberar a primeira onda com no máximo 20 contatos e revisar 100% das conversas.
-5. Liberar manualmente a segunda onda com no máximo 50 contatos somente se os gates estiverem verdes.
-6. Interromper imediatamente diante de promessa proibida, violação de opt-out, dado sensível exposto, duplicidade de envio ou divergência de capacidade.
+5. Liberar manualmente a segunda onda com no máximo 50 contatos, revisando ao menos 30%, somente se os gates estiverem verdes.
+6. Nas ondas posteriores, revisar ao menos 10% mais todos os casos obrigatórios de risco.
+7. Interromper imediatamente diante de promessa proibida, violação de opt-out, dado sensível exposto, duplicidade de envio ou divergência de capacidade.
 
 ## Saída do piloto
 
