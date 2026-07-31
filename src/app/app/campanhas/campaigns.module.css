@@ -1,0 +1,39 @@
+.page { display: grid; gap: 20px; }
+.header { display: flex; justify-content: space-between; align-items: end; gap: 20px; }
+.header h1, .createForm h2, .empty h2 { margin: 0; letter-spacing: -.035em; }
+.header p { color: var(--ink-muted); }
+.eyebrow { margin: 0 0 5px !important; color: var(--accent) !important; font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.limit, .warning { display: flex; align-items: center; gap: 7px; }
+.limit { border: 1px solid var(--border); border-radius: 999px; padding: 8px 11px; font-size: 12px; }
+.error, .success, .warning { border-radius: 12px; padding: 12px 14px; }
+.error { background: #fff0ee; color: #982c21; }
+.success { background: #eef8f1; color: #22653a; }
+.warning { background: #fff7e7; color: #795817; }
+.layout { display: grid; grid-template-columns: minmax(0,1.6fr) minmax(300px,.7fr); gap: 18px; align-items: start; }
+.list { display: grid; gap: 12px; }
+.card, .createForm, .empty { border: 1px solid var(--border); background: var(--surface); border-radius: 18px; padding: 18px; }
+.cardHeader { display: grid; grid-template-columns: auto minmax(0,1fr) auto; gap: 12px; align-items: center; }
+.cardHeader > span { display: grid; gap: 3px; }
+.cardHeader small, .importSummary, .importForm label span, .createForm label span { color: var(--ink-muted); }
+.icon { display: grid !important; place-items: center; width: 38px; height: 38px; border-radius: 11px; background: var(--surface-muted); color: var(--accent); }
+.cardHeader b { border-radius: 999px; background: var(--surface-muted); padding: 6px 9px; font-size: 10px; letter-spacing: .08em; text-transform: uppercase; }
+.metrics { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin: 15px 0; }
+.metrics span { display: grid; gap: 2px; border-radius: 10px; background: var(--surface-muted); padding: 10px; }
+.metrics small { color: var(--ink-muted); font-size: 10px; text-transform: uppercase; }
+.importSummary { font-size: 12px; }
+.importForm, .createForm { display: grid; gap: 12px; }
+.importForm { border-top: 1px solid var(--border); padding-top: 14px; }
+.importForm label, .createForm label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; }
+.importForm input, .importForm textarea, .createForm input, .createForm textarea, .createForm select, .actions input { border: 1px solid var(--border); border-radius: 9px; background: #fff; padding: 9px 10px; font: inherit; }
+.importForm button, .createForm button, .actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 9px; background: var(--ink); color: #fff; padding: 10px 12px; font-weight: 800; cursor: pointer; }
+.actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+.actions form { display: flex; gap: 7px; }
+.actions input { width: 75px; }
+.actions .secondary { background: var(--surface-muted); color: var(--ink); }
+.check { display: flex !important; align-items: flex-start; gap: 8px; }
+.check input { width: auto; }
+.createForm button:disabled { cursor: not-allowed; opacity: .45; }
+.empty { text-align: center; }
+.empty svg { color: var(--accent); }
+@media (max-width: 1000px) { .layout { grid-template-columns: 1fr; } }
+@media (max-width: 650px) { .metrics { grid-template-columns: 1fr 1fr; } .cardHeader { grid-template-columns: auto 1fr; } .cardHeader b { grid-column: 2; } }

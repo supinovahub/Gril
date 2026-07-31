@@ -8,6 +8,7 @@ import {
   LayoutDashboard,
   LockKeyhole,
   LogOut,
+  Megaphone,
   MessagesSquare,
   Sparkles,
   Settings2,
@@ -23,7 +24,7 @@ import {
 } from "@/lib/auth/session";
 import styles from "./app-shell.module.css";
 
-const futureItems = ["Campanhas", "Agenda"];
+const futureItems = ["Agenda"];
 
 function initials(name: string | undefined, email: string) {
   const source = name?.trim() || email;
@@ -94,6 +95,9 @@ export function AppShell({
           </Link>
           <Link className={styles.navItem} href="/app/inbox">
             <MessagesSquare size={18} aria-hidden="true" /> Inbox
+          </Link>
+          <Link className={styles.navItem} href="/app/campanhas">
+            <Megaphone size={18} aria-hidden="true" /> Campanhas
           </Link>
 
           <p className={styles.navLabel}>Inteligência</p>

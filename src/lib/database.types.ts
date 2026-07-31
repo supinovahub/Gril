@@ -472,6 +472,627 @@ export type Database = {
           },
         ]
       }
+      campaign_contacts: {
+        Row: {
+          attempts: number
+          campaign_id: string
+          contact_id: string
+          created_at: string
+          id: string
+          import_row_id: string | null
+          last_revalidated_at: string | null
+          next_send_at: string | null
+          opportunity_id: string
+          org_id: string
+          priority: number
+          status: string
+          suppression_reason: string | null
+          updated_at: string
+          variant: string | null
+        }
+        Insert: {
+          attempts?: number
+          campaign_id: string
+          contact_id: string
+          created_at?: string
+          id?: string
+          import_row_id?: string | null
+          last_revalidated_at?: string | null
+          next_send_at?: string | null
+          opportunity_id: string
+          org_id: string
+          priority?: number
+          status?: string
+          suppression_reason?: string | null
+          updated_at?: string
+          variant?: string | null
+        }
+        Update: {
+          attempts?: number
+          campaign_id?: string
+          contact_id?: string
+          created_at?: string
+          id?: string
+          import_row_id?: string | null
+          last_revalidated_at?: string | null
+          next_send_at?: string | null
+          opportunity_id?: string
+          org_id?: string
+          priority?: number
+          status?: string
+          suppression_reason?: string | null
+          updated_at?: string
+          variant?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_contacts_campaign_id_org_id_fkey"
+            columns: ["campaign_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_contacts_contact_id_org_id_fkey"
+            columns: ["contact_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_contacts_import_row_id_org_id_fkey"
+            columns: ["import_row_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_import_rows"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_contacts_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_contacts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_creation_requests: {
+        Row: {
+          actor_user_id: string
+          ai_mode: string
+          campaign_id: string | null
+          connection_id: string
+          consent_source: string
+          consent_statement: string
+          created_at: string
+          id: string
+          name: string
+          opening_template: string
+          operation_id: string
+          org_id: string
+          processed_at: string
+        }
+        Insert: {
+          actor_user_id?: string
+          ai_mode: string
+          campaign_id?: string | null
+          connection_id: string
+          consent_source: string
+          consent_statement: string
+          created_at?: string
+          id?: string
+          name: string
+          opening_template: string
+          operation_id: string
+          org_id: string
+          processed_at?: string
+        }
+        Update: {
+          actor_user_id?: string
+          ai_mode?: string
+          campaign_id?: string | null
+          connection_id?: string
+          consent_source?: string
+          consent_statement?: string
+          created_at?: string
+          id?: string
+          name?: string
+          opening_template?: string
+          operation_id?: string
+          org_id?: string
+          processed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_creation_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_import_requests: {
+        Row: {
+          actor_user_id: string
+          campaign_id: string
+          created_at: string
+          duplicate_rows: number
+          error_rows: number
+          filename: string
+          id: string
+          import_id: string | null
+          org_id: string
+          processed_at: string
+          rows: Json
+          valid_rows: number
+        }
+        Insert: {
+          actor_user_id?: string
+          campaign_id: string
+          created_at?: string
+          duplicate_rows?: number
+          error_rows?: number
+          filename: string
+          id?: string
+          import_id?: string | null
+          org_id: string
+          processed_at?: string
+          rows: Json
+          valid_rows?: number
+        }
+        Update: {
+          actor_user_id?: string
+          campaign_id?: string
+          created_at?: string
+          duplicate_rows?: number
+          error_rows?: number
+          filename?: string
+          id?: string
+          import_id?: string | null
+          org_id?: string
+          processed_at?: string
+          rows?: Json
+          valid_rows?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_import_requests_campaign_id_org_id_fkey"
+            columns: ["campaign_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_import_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_import_rows: {
+        Row: {
+          contact_id: string | null
+          created_at: string
+          error_code: string | null
+          id: string
+          import_id: string
+          normalized_name: string | null
+          normalized_phone: string | null
+          opportunity_id: string | null
+          org_id: string
+          raw_data: Json
+          row_number: number
+          status: string
+        }
+        Insert: {
+          contact_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          import_id: string
+          normalized_name?: string | null
+          normalized_phone?: string | null
+          opportunity_id?: string | null
+          org_id: string
+          raw_data: Json
+          row_number: number
+          status: string
+        }
+        Update: {
+          contact_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          id?: string
+          import_id?: string
+          normalized_name?: string | null
+          normalized_phone?: string | null
+          opportunity_id?: string | null
+          org_id?: string
+          raw_data?: Json
+          row_number?: number
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_import_rows_contact_id_org_id_fkey"
+            columns: ["contact_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_import_rows_import_id_org_id_fkey"
+            columns: ["import_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "campaign_imports"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_import_rows_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_import_rows_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_imports: {
+        Row: {
+          campaign_id: string
+          completed_at: string | null
+          created_at: string
+          duplicate_rows: number
+          error_rows: number
+          filename: string
+          id: string
+          imported_by: string
+          mapping: Json
+          org_id: string
+          status: string
+          total_rows: number
+          valid_rows: number
+        }
+        Insert: {
+          campaign_id: string
+          completed_at?: string | null
+          created_at?: string
+          duplicate_rows?: number
+          error_rows?: number
+          filename: string
+          id?: string
+          imported_by: string
+          mapping?: Json
+          org_id: string
+          status?: string
+          total_rows?: number
+          valid_rows?: number
+        }
+        Update: {
+          campaign_id?: string
+          completed_at?: string | null
+          created_at?: string
+          duplicate_rows?: number
+          error_rows?: number
+          filename?: string
+          id?: string
+          imported_by?: string
+          mapping?: Json
+          org_id?: string
+          status?: string
+          total_rows?: number
+          valid_rows?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_imports_campaign_id_org_id_fkey"
+            columns: ["campaign_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_imports_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_transition_requests: {
+        Row: {
+          actor_user_id: string
+          campaign_id: string
+          created_at: string
+          expected_version: number
+          id: string
+          org_id: string
+          processed_at: string
+          reason: string | null
+          requested_action: string
+          resulting_status: string | null
+        }
+        Insert: {
+          actor_user_id?: string
+          campaign_id: string
+          created_at?: string
+          expected_version: number
+          id?: string
+          org_id: string
+          processed_at?: string
+          reason?: string | null
+          requested_action: string
+          resulting_status?: string | null
+        }
+        Update: {
+          actor_user_id?: string
+          campaign_id?: string
+          created_at?: string
+          expected_version?: number
+          id?: string
+          org_id?: string
+          processed_at?: string
+          reason?: string | null
+          requested_action?: string
+          resulting_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_transition_requests_campaign_id_org_id_fkey"
+            columns: ["campaign_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_transition_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_wave_release_requests: {
+        Row: {
+          actor_user_id: string
+          campaign_id: string
+          created_at: string
+          id: string
+          org_id: string
+          processed_at: string
+          released_count: number
+          requested_count: number
+          suppressed_count: number
+          wave_id: string | null
+        }
+        Insert: {
+          actor_user_id?: string
+          campaign_id: string
+          created_at?: string
+          id?: string
+          org_id: string
+          processed_at?: string
+          released_count?: number
+          requested_count: number
+          suppressed_count?: number
+          wave_id?: string | null
+        }
+        Update: {
+          actor_user_id?: string
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          org_id?: string
+          processed_at?: string
+          released_count?: number
+          requested_count?: number
+          suppressed_count?: number
+          wave_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_wave_release_requests_campaign_id_org_id_fkey"
+            columns: ["campaign_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_wave_release_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_waves: {
+        Row: {
+          approved_at: string | null
+          approved_by: string | null
+          campaign_id: string
+          created_at: string
+          id: string
+          metrics: Json
+          org_id: string
+          released_at: string | null
+          released_count: number
+          requested_count: number
+          status: string
+          suppressed_count: number
+          wave_number: number
+        }
+        Insert: {
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_id: string
+          created_at?: string
+          id?: string
+          metrics?: Json
+          org_id: string
+          released_at?: string | null
+          released_count?: number
+          requested_count: number
+          status?: string
+          suppressed_count?: number
+          wave_number: number
+        }
+        Update: {
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_id?: string
+          created_at?: string
+          id?: string
+          metrics?: Json
+          org_id?: string
+          released_at?: string | null
+          released_count?: number
+          requested_count?: number
+          status?: string
+          suppressed_count?: number
+          wave_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_waves_campaign_id_org_id_fkey"
+            columns: ["campaign_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_waves_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaigns: {
+        Row: {
+          ai_mode: string
+          approved_at: string | null
+          approved_by: string | null
+          campaign_type: string
+          completed_at: string | null
+          connection_id: string
+          consent_declaration_id: string
+          created_at: string
+          created_by: string
+          id: string
+          max_contacts: number
+          name: string
+          opening_template: string
+          operation_id: string
+          org_id: string
+          paused_reason: string | null
+          priority: number
+          send_window_end: string
+          send_window_start: string
+          status: string
+          timezone: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          ai_mode?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_type?: string
+          completed_at?: string | null
+          connection_id: string
+          consent_declaration_id: string
+          created_at?: string
+          created_by: string
+          id?: string
+          max_contacts?: number
+          name: string
+          opening_template: string
+          operation_id: string
+          org_id: string
+          paused_reason?: string | null
+          priority?: number
+          send_window_end?: string
+          send_window_start?: string
+          status?: string
+          timezone?: string
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          ai_mode?: string
+          approved_at?: string | null
+          approved_by?: string | null
+          campaign_type?: string
+          completed_at?: string | null
+          connection_id?: string
+          consent_declaration_id?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          max_contacts?: number
+          name?: string
+          opening_template?: string
+          operation_id?: string
+          org_id?: string
+          paused_reason?: string | null
+          priority?: number
+          send_window_end?: string
+          send_window_start?: string
+          status?: string
+          timezone?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaigns_connection_id_org_id_fkey"
+            columns: ["connection_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaigns_consent_declaration_id_org_id_fkey"
+            columns: ["consent_declaration_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "consent_declarations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaigns_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaigns_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       capacity_reservation_requests: {
         Row: {
           action: string
@@ -571,6 +1192,60 @@ export type Database = {
           },
           {
             foreignKeyName: "capacity_snapshots_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      consent_declarations: {
+        Row: {
+          confirmed_at: string
+          confirmed_by: string
+          created_at: string
+          id: string
+          operation_id: string
+          org_id: string
+          revoked_at: string | null
+          source_description: string
+          statement_text: string
+          statement_version: number
+        }
+        Insert: {
+          confirmed_at?: string
+          confirmed_by: string
+          created_at?: string
+          id?: string
+          operation_id: string
+          org_id: string
+          revoked_at?: string | null
+          source_description: string
+          statement_text: string
+          statement_version?: number
+        }
+        Update: {
+          confirmed_at?: string
+          confirmed_by?: string
+          created_at?: string
+          id?: string
+          operation_id?: string
+          org_id?: string
+          revoked_at?: string | null
+          source_description?: string
+          statement_text?: string
+          statement_version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "consent_declarations_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "consent_declarations_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1352,6 +2027,111 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      followup_plans: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          horizon_days: number
+          id: string
+          max_attempts: number
+          name: string
+          operation_id: string
+          org_id: string
+          published_at: string | null
+          status: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          horizon_days?: number
+          id?: string
+          max_attempts?: number
+          name: string
+          operation_id: string
+          org_id: string
+          published_at?: string | null
+          status?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          horizon_days?: number
+          id?: string
+          max_attempts?: number
+          name?: string
+          operation_id?: string
+          org_id?: string
+          published_at?: string | null
+          status?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followup_plans_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "followup_plans_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      followup_steps: {
+        Row: {
+          channel: string
+          created_at: string
+          delay_minutes: number
+          id: string
+          instruction: string
+          org_id: string
+          plan_id: string
+          step_number: number
+        }
+        Insert: {
+          channel?: string
+          created_at?: string
+          delay_minutes: number
+          id?: string
+          instruction: string
+          org_id: string
+          plan_id: string
+          step_number: number
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          delay_minutes?: number
+          id?: string
+          instruction?: string
+          org_id?: string
+          plan_id?: string
+          step_number?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "followup_steps_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "followup_steps_plan_id_org_id_fkey"
+            columns: ["plan_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "followup_plans"
+            referencedColumns: ["id", "org_id"]
           },
         ]
       }
