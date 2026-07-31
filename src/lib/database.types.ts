@@ -39,6 +39,78 @@ export type Database = {
   }
   public: {
     Tables: {
+      alerts: {
+        Row: {
+          acknowledged_at: string | null
+          acknowledged_by: string | null
+          body: string
+          category: string
+          created_at: string
+          dedupe_key: string | null
+          entity_id: string | null
+          entity_type: string | null
+          id: string
+          operation_id: string | null
+          org_id: string
+          resolved_at: string | null
+          severity: string
+          status: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          body: string
+          category: string
+          created_at?: string
+          dedupe_key?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          operation_id?: string | null
+          org_id: string
+          resolved_at?: string | null
+          severity: string
+          status?: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          acknowledged_at?: string | null
+          acknowledged_by?: string | null
+          body?: string
+          category?: string
+          created_at?: string
+          dedupe_key?: string | null
+          entity_id?: string | null
+          entity_type?: string | null
+          id?: string
+          operation_id?: string | null
+          org_id?: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "alerts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       attachments: {
         Row: {
           created_at: string
@@ -83,6 +155,112 @@ export type Database = {
           },
           {
             foreignKeyName: "attachments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capacity_reservation_requests: {
+        Row: {
+          action: string
+          active_count: number | null
+          conversation_id: string
+          created_at: string
+          id: string
+          operation_id: string
+          org_id: string
+          processed_at: string
+          result: string | null
+          source: string
+        }
+        Insert: {
+          action: string
+          active_count?: number | null
+          conversation_id: string
+          created_at?: string
+          id?: string
+          operation_id: string
+          org_id: string
+          processed_at?: string
+          result?: string | null
+          source: string
+        }
+        Update: {
+          action?: string
+          active_count?: number | null
+          conversation_id?: string
+          created_at?: string
+          id?: string
+          operation_id?: string
+          org_id?: string
+          processed_at?: string
+          result?: string | null
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capacity_reservation_requests_conversation_id_org_id_fkey"
+            columns: ["conversation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "capacity_reservation_requests_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "capacity_reservation_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      capacity_snapshots: {
+        Row: {
+          active_count: number
+          backlog_count: number
+          captured_at: string
+          id: number
+          operation_id: string
+          org_id: string
+          proactive_paused: boolean
+        }
+        Insert: {
+          active_count: number
+          backlog_count?: number
+          captured_at?: string
+          id?: never
+          operation_id: string
+          org_id: string
+          proactive_paused: boolean
+        }
+        Update: {
+          active_count?: number
+          backlog_count?: number
+          captured_at?: string
+          id?: never
+          operation_id?: string
+          org_id?: string
+          proactive_paused?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "capacity_snapshots_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "capacity_snapshots_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -470,6 +648,60 @@ export type Database = {
           },
           {
             foreignKeyName: "conversations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integration_health_checks: {
+        Row: {
+          checked_at: string
+          component: string
+          error_redacted: string | null
+          id: number
+          latency_ms: number | null
+          metadata: Json
+          operation_id: string | null
+          org_id: string | null
+          status: string
+          target_id: string | null
+        }
+        Insert: {
+          checked_at?: string
+          component: string
+          error_redacted?: string | null
+          id?: never
+          latency_ms?: number | null
+          metadata?: Json
+          operation_id?: string | null
+          org_id?: string | null
+          status: string
+          target_id?: string | null
+        }
+        Update: {
+          checked_at?: string
+          component?: string
+          error_redacted?: string | null
+          id?: never
+          latency_ms?: number | null
+          metadata?: Json
+          operation_id?: string | null
+          org_id?: string | null
+          status?: string
+          target_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integration_health_checks_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "integration_health_checks_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1112,6 +1344,111 @@ export type Database = {
             columns: ["owner_membership_id", "org_id"]
             isOneToOne: false
             referencedRelation: "memberships"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      notifications: {
+        Row: {
+          alert_id: string | null
+          body: string
+          channel: string
+          created_at: string
+          id: string
+          org_id: string
+          read_at: string | null
+          recipient_membership_id: string
+          sent_at: string | null
+          status: string
+          title: string
+        }
+        Insert: {
+          alert_id?: string | null
+          body: string
+          channel: string
+          created_at?: string
+          id?: string
+          org_id: string
+          read_at?: string | null
+          recipient_membership_id: string
+          sent_at?: string | null
+          status?: string
+          title: string
+        }
+        Update: {
+          alert_id?: string | null
+          body?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          org_id?: string
+          read_at?: string | null
+          recipient_membership_id?: string
+          sent_at?: string | null
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notifications_alert_id_fkey"
+            columns: ["alert_id"]
+            isOneToOne: false
+            referencedRelation: "alerts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notifications_recipient_membership_id_org_id_fkey"
+            columns: ["recipient_membership_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      operation_capacity: {
+        Row: {
+          active_count: number
+          below_ten_since: string | null
+          last_inbound_at: string | null
+          operation_id: string
+          org_id: string
+          proactive_paused: boolean
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          active_count?: number
+          below_ten_since?: string | null
+          last_inbound_at?: string | null
+          operation_id: string
+          org_id: string
+          proactive_paused?: boolean
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          active_count?: number
+          below_ten_since?: string | null
+          last_inbound_at?: string | null
+          operation_id?: string
+          org_id?: string
+          proactive_paused?: boolean
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operation_capacity_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
             referencedColumns: ["id", "org_id"]
           },
         ]
@@ -1778,6 +2115,163 @@ export type Database = {
           },
         ]
       }
+      scheduled_job_requests: {
+        Row: {
+          actor_user_id: string
+          aggregate_id: string | null
+          aggregate_type: string
+          created_at: string
+          dedupe_key: string
+          id: string
+          job_id: string | null
+          job_type: string
+          max_attempts: number
+          operation_id: string | null
+          org_id: string
+          payload: Json
+          processed_at: string
+          run_at: string
+          target_queue: string
+        }
+        Insert: {
+          actor_user_id?: string
+          aggregate_id?: string | null
+          aggregate_type: string
+          created_at?: string
+          dedupe_key: string
+          id?: string
+          job_id?: string | null
+          job_type: string
+          max_attempts?: number
+          operation_id?: string | null
+          org_id: string
+          payload?: Json
+          processed_at?: string
+          run_at: string
+          target_queue: string
+        }
+        Update: {
+          actor_user_id?: string
+          aggregate_id?: string | null
+          aggregate_type?: string
+          created_at?: string
+          dedupe_key?: string
+          id?: string
+          job_id?: string | null
+          job_type?: string
+          max_attempts?: number
+          operation_id?: string | null
+          org_id?: string
+          payload?: Json
+          processed_at?: string
+          run_at?: string
+          target_queue?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_job_requests_job_id_fkey"
+            columns: ["job_id"]
+            isOneToOne: false
+            referencedRelation: "scheduled_jobs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "scheduled_job_requests_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "scheduled_job_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      scheduled_jobs: {
+        Row: {
+          aggregate_id: string | null
+          aggregate_type: string
+          attempts: number
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          dedupe_key: string
+          id: string
+          job_type: string
+          last_error: string | null
+          lease_until: string | null
+          max_attempts: number
+          operation_id: string | null
+          org_id: string
+          payload: Json
+          run_at: string
+          status: string
+          target_queue: string
+          updated_at: string
+        }
+        Insert: {
+          aggregate_id?: string | null
+          aggregate_type: string
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          dedupe_key: string
+          id?: string
+          job_type: string
+          last_error?: string | null
+          lease_until?: string | null
+          max_attempts?: number
+          operation_id?: string | null
+          org_id: string
+          payload?: Json
+          run_at: string
+          status?: string
+          target_queue: string
+          updated_at?: string
+        }
+        Update: {
+          aggregate_id?: string | null
+          aggregate_type?: string
+          attempts?: number
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          dedupe_key?: string
+          id?: string
+          job_type?: string
+          last_error?: string | null
+          lease_until?: string | null
+          max_attempts?: number
+          operation_id?: string | null
+          org_id?: string
+          payload?: Json
+          run_at?: string
+          status?: string
+          target_queue?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "scheduled_jobs_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "scheduled_jobs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       source_attributions: {
         Row: {
           attributed_at: string
@@ -1899,6 +2393,69 @@ export type Database = {
           },
           {
             foreignKeyName: "suppression_entries_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_pauses: {
+        Row: {
+          active: boolean
+          id: string
+          metadata: Json
+          operation_id: string | null
+          org_id: string
+          paused_at: string
+          paused_by: string | null
+          reason: string
+          resumed_at: string | null
+          resumed_by: string | null
+          scope_id: string | null
+          scope_type: string
+          source: string
+        }
+        Insert: {
+          active?: boolean
+          id?: string
+          metadata?: Json
+          operation_id?: string | null
+          org_id: string
+          paused_at?: string
+          paused_by?: string | null
+          reason: string
+          resumed_at?: string | null
+          resumed_by?: string | null
+          scope_id?: string | null
+          scope_type: string
+          source: string
+        }
+        Update: {
+          active?: boolean
+          id?: string
+          metadata?: Json
+          operation_id?: string | null
+          org_id?: string
+          paused_at?: string
+          paused_by?: string | null
+          reason?: string
+          resumed_at?: string | null
+          resumed_by?: string | null
+          scope_id?: string | null
+          scope_type?: string
+          source?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_pauses_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "system_pauses_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
