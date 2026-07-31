@@ -39,6 +39,275 @@ export type Database = {
   }
   public: {
     Tables: {
+      ai_execution_requests: {
+        Row: {
+          actor_user_id: string | null
+          conversation_id: string | null
+          created_at: string
+          execution_id: string | null
+          expected_conversation_version: number | null
+          id: string
+          idempotency_key: string
+          input_snapshot: Json
+          mode: string
+          operation_id: string | null
+          org_id: string
+          processed_at: string
+          request_message_id: string | null
+          result: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          execution_id?: string | null
+          expected_conversation_version?: number | null
+          id?: string
+          idempotency_key: string
+          input_snapshot?: Json
+          mode: string
+          operation_id?: string | null
+          org_id: string
+          processed_at?: string
+          request_message_id?: string | null
+          result?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          execution_id?: string | null
+          expected_conversation_version?: number | null
+          id?: string
+          idempotency_key?: string
+          input_snapshot?: Json
+          mode?: string
+          operation_id?: string | null
+          org_id?: string
+          processed_at?: string
+          request_message_id?: string | null
+          result?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_execution_requests_conversation_id_org_id_fkey"
+            columns: ["conversation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "ai_execution_requests_execution_id_org_id_fkey"
+            columns: ["execution_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "ai_executions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "ai_execution_requests_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "ai_execution_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_execution_requests_request_message_id_org_id_fkey"
+            columns: ["request_message_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      ai_executions: {
+        Row: {
+          completed_at: string | null
+          context_version_id: string | null
+          conversation_id: string | null
+          created_at: string
+          error_code: string | null
+          error_redacted: string | null
+          estimated_cost: number | null
+          expected_conversation_version: number | null
+          id: string
+          input_snapshot: Json
+          input_tokens: number | null
+          latency_ms: number | null
+          mode: string
+          model_profile_id: string | null
+          model_returned: string | null
+          operation_id: string | null
+          org_id: string
+          output_structured: Json | null
+          output_text: string | null
+          output_tokens: number | null
+          request_message_id: string | null
+          response_id: string | null
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          context_version_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_redacted?: string | null
+          estimated_cost?: number | null
+          expected_conversation_version?: number | null
+          id?: string
+          input_snapshot?: Json
+          input_tokens?: number | null
+          latency_ms?: number | null
+          mode: string
+          model_profile_id?: string | null
+          model_returned?: string | null
+          operation_id?: string | null
+          org_id: string
+          output_structured?: Json | null
+          output_text?: string | null
+          output_tokens?: number | null
+          request_message_id?: string | null
+          response_id?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          context_version_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          error_code?: string | null
+          error_redacted?: string | null
+          estimated_cost?: number | null
+          expected_conversation_version?: number | null
+          id?: string
+          input_snapshot?: Json
+          input_tokens?: number | null
+          latency_ms?: number | null
+          mode?: string
+          model_profile_id?: string | null
+          model_returned?: string | null
+          operation_id?: string | null
+          org_id?: string
+          output_structured?: Json | null
+          output_text?: string | null
+          output_tokens?: number | null
+          request_message_id?: string | null
+          response_id?: string | null
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_executions_context_version_id_org_id_fkey"
+            columns: ["context_version_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "conversation_context_versions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "ai_executions_conversation_id_org_id_fkey"
+            columns: ["conversation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "ai_executions_model_profile_id_org_id_fkey"
+            columns: ["model_profile_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "model_profiles"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "ai_executions_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "ai_executions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "ai_executions_request_message_id_org_id_fkey"
+            columns: ["request_message_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      ai_suggestions: {
+        Row: {
+          body: string
+          conversation_id: string | null
+          created_at: string
+          execution_id: string
+          id: string
+          org_id: string
+          reviewed_at: string | null
+          reviewed_by: string | null
+          status: string
+        }
+        Insert: {
+          body: string
+          conversation_id?: string | null
+          created_at?: string
+          execution_id: string
+          id?: string
+          org_id: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Update: {
+          body?: string
+          conversation_id?: string | null
+          created_at?: string
+          execution_id?: string
+          id?: string
+          org_id?: string
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ai_suggestions_conversation_id_org_id_fkey"
+            columns: ["conversation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "ai_suggestions_execution_id_org_id_fkey"
+            columns: ["execution_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "ai_executions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "ai_suggestions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       alerts: {
         Row: {
           acknowledged_at: string | null
@@ -162,6 +431,47 @@ export type Database = {
           },
         ]
       }
+      budget_alerts: {
+        Row: {
+          budget: number
+          created_at: string
+          current_cost: number
+          id: string
+          org_id: string
+          period_start: string
+          status: string
+          threshold_percent: number
+        }
+        Insert: {
+          budget: number
+          created_at?: string
+          current_cost: number
+          id?: string
+          org_id: string
+          period_start: string
+          status?: string
+          threshold_percent: number
+        }
+        Update: {
+          budget?: number
+          created_at?: string
+          current_cost?: number
+          id?: string
+          org_id?: string
+          period_start?: string
+          status?: string
+          threshold_percent?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "budget_alerts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       capacity_reservation_requests: {
         Row: {
           action: string
@@ -265,6 +575,58 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      contact_persona_bindings: {
+        Row: {
+          bound_at: string
+          contact_id: string
+          id: string
+          org_id: string
+          persona_id: string
+          source: string
+          unbound_at: string | null
+        }
+        Insert: {
+          bound_at?: string
+          contact_id: string
+          id?: string
+          org_id: string
+          persona_id: string
+          source: string
+          unbound_at?: string | null
+        }
+        Update: {
+          bound_at?: string
+          contact_id?: string
+          id?: string
+          org_id?: string
+          persona_id?: string
+          source?: string
+          unbound_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_persona_bindings_contact_id_org_id_fkey"
+            columns: ["contact_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "contact_persona_bindings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "contact_persona_bindings_persona_id_org_id_fkey"
+            columns: ["persona_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id", "org_id"]
           },
         ]
       }
@@ -431,6 +793,77 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      conversation_context_versions: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          frozen: boolean
+          id: string
+          institutional_snapshot: Json
+          org_id: string
+          persona_version_id: string
+          project_snapshot_ids: string[]
+          qualification_version_id: string | null
+          rule_version_id: string
+          version: number
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          frozen?: boolean
+          id?: string
+          institutional_snapshot?: Json
+          org_id: string
+          persona_version_id: string
+          project_snapshot_ids?: string[]
+          qualification_version_id?: string | null
+          rule_version_id: string
+          version: number
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          frozen?: boolean
+          id?: string
+          institutional_snapshot?: Json
+          org_id?: string
+          persona_version_id?: string
+          project_snapshot_ids?: string[]
+          qualification_version_id?: string | null
+          rule_version_id?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_context_versions_conversation_id_org_id_fkey"
+            columns: ["conversation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "conversation_context_versions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "conversation_context_versions_persona_version_id_org_id_fkey"
+            columns: ["persona_version_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "persona_versions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "conversation_context_versions_rule_version_id_org_id_fkey"
+            columns: ["rule_version_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "rule_versions"
+            referencedColumns: ["id", "org_id"]
           },
         ]
       }
@@ -648,6 +1081,90 @@ export type Database = {
           },
           {
             foreignKeyName: "conversations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      escalations: {
+        Row: {
+          category: string
+          claimed_at: string | null
+          claimed_by: string | null
+          conversation_id: string | null
+          created_at: string
+          id: string
+          operation_id: string
+          opportunity_id: string | null
+          org_id: string
+          reason: string
+          resolved_at: string | null
+          severity: string
+          status: string
+        }
+        Insert: {
+          category: string
+          claimed_at?: string | null
+          claimed_by?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          operation_id: string
+          opportunity_id?: string | null
+          org_id: string
+          reason: string
+          resolved_at?: string | null
+          severity: string
+          status?: string
+        }
+        Update: {
+          category?: string
+          claimed_at?: string | null
+          claimed_by?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          id?: string
+          operation_id?: string
+          opportunity_id?: string | null
+          org_id?: string
+          reason?: string
+          resolved_at?: string | null
+          severity?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "escalations_claimed_by_fkey"
+            columns: ["claimed_by"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escalations_conversation_id_org_id_fkey"
+            columns: ["conversation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "escalations_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "escalations_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "escalations_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1274,6 +1791,113 @@ export type Database = {
           },
         ]
       }
+      model_activation_requests: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          id: string
+          model_profile_id: string
+          org_id: string
+          processed_at: string
+        }
+        Insert: {
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          model_profile_id: string
+          org_id: string
+          processed_at?: string
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          model_profile_id?: string
+          org_id?: string
+          processed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_activation_requests_model_profile_id_org_id_fkey"
+            columns: ["model_profile_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "model_profiles"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "model_activation_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      model_profiles: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          endpoint: string
+          id: string
+          is_default: boolean
+          model_identifier: string
+          name: string
+          org_id: string
+          provider: string
+          reasoning_effort: string | null
+          secret_reference: string | null
+          settings: Json
+          status: string
+          text_verbosity: string
+          updated_at: string
+          workload_role: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          endpoint?: string
+          id?: string
+          is_default?: boolean
+          model_identifier: string
+          name: string
+          org_id: string
+          provider?: string
+          reasoning_effort?: string | null
+          secret_reference?: string | null
+          settings?: Json
+          status?: string
+          text_verbosity?: string
+          updated_at?: string
+          workload_role: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          endpoint?: string
+          id?: string
+          is_default?: boolean
+          model_identifier?: string
+          name?: string
+          org_id?: string
+          provider?: string
+          reasoning_effort?: string | null
+          secret_reference?: string | null
+          settings?: Json
+          status?: string
+          text_verbosity?: string
+          updated_at?: string
+          workload_role?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "model_profiles_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       next_actions: {
         Row: {
           completed_at: string | null
@@ -1446,6 +2070,51 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "operation_capacity_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      operation_settings: {
+        Row: {
+          business_hours: Json
+          created_at: string
+          default_persona_id: string | null
+          operation_id: string
+          org_id: string
+          proactive_openings_per_minute: number
+          updated_at: string
+        }
+        Insert: {
+          business_hours?: Json
+          created_at?: string
+          default_persona_id?: string | null
+          operation_id: string
+          org_id: string
+          proactive_openings_per_minute?: number
+          updated_at?: string
+        }
+        Update: {
+          business_hours?: Json
+          created_at?: string
+          default_persona_id?: string | null
+          operation_id?: string
+          org_id?: string
+          proactive_openings_per_minute?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "operation_settings_default_persona_id_fkey"
+            columns: ["default_persona_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "operation_settings_operation_id_org_id_fkey"
             columns: ["operation_id", "org_id"]
             isOneToOne: false
             referencedRelation: "operations"
@@ -1937,6 +2606,44 @@ export type Database = {
           },
         ]
       }
+      organization_settings: {
+        Row: {
+          ai_global_mode: string
+          ai_monthly_budget: number | null
+          brand_settings: Json
+          created_at: string
+          institutional_profile: Json
+          org_id: string
+          updated_at: string
+        }
+        Insert: {
+          ai_global_mode?: string
+          ai_monthly_budget?: number | null
+          brand_settings?: Json
+          created_at?: string
+          institutional_profile?: Json
+          org_id: string
+          updated_at?: string
+        }
+        Update: {
+          ai_global_mode?: string
+          ai_monthly_budget?: number | null
+          brand_settings?: Json
+          created_at?: string
+          institutional_profile?: Json
+          org_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "organization_settings_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: true
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       organizations: {
         Row: {
           created_at: string
@@ -1966,6 +2673,177 @@ export type Database = {
           updated_at?: string
         }
         Relationships: []
+      }
+      persona_publish_requests: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          id: string
+          org_id: string
+          persona_version_id: string
+          processed_at: string
+        }
+        Insert: {
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          org_id: string
+          persona_version_id: string
+          processed_at?: string
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          org_id?: string
+          persona_version_id?: string
+          processed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "persona_publish_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "persona_publish_requests_persona_version_id_org_id_fkey"
+            columns: ["persona_version_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "persona_versions"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      persona_versions: {
+        Row: {
+          boundaries: Json
+          checksum: string
+          compiled_prompt: string
+          created_at: string
+          created_by: string | null
+          escalation_rules: Json
+          examples: Json
+          id: string
+          identity: Json
+          org_id: string
+          persona_id: string
+          published_at: string | null
+          published_by: string | null
+          source_version_id: string | null
+          status: string
+          style: Json
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          boundaries?: Json
+          checksum: string
+          compiled_prompt: string
+          created_at?: string
+          created_by?: string | null
+          escalation_rules?: Json
+          examples?: Json
+          id?: string
+          identity?: Json
+          org_id: string
+          persona_id: string
+          published_at?: string | null
+          published_by?: string | null
+          source_version_id?: string | null
+          status?: string
+          style?: Json
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          boundaries?: Json
+          checksum?: string
+          compiled_prompt?: string
+          created_at?: string
+          created_by?: string | null
+          escalation_rules?: Json
+          examples?: Json
+          id?: string
+          identity?: Json
+          org_id?: string
+          persona_id?: string
+          published_at?: string | null
+          published_by?: string | null
+          source_version_id?: string | null
+          status?: string
+          style?: Json
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "persona_versions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "persona_versions_persona_id_org_id_fkey"
+            columns: ["persona_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "personas"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "persona_versions_source_version_id_fkey"
+            columns: ["source_version_id"]
+            isOneToOne: false
+            referencedRelation: "persona_versions"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      personas: {
+        Row: {
+          code: string
+          created_at: string
+          created_by: string | null
+          id: string
+          identity_name: string
+          name: string
+          org_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          identity_name: string
+          name: string
+          org_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          identity_name?: string
+          name?: string
+          org_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "personas_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       pipeline_stages: {
         Row: {
@@ -2034,6 +2912,107 @@ export type Database = {
           whatsapp_e164?: string | null
         }
         Relationships: []
+      }
+      rule_sets: {
+        Row: {
+          code: string
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rule_sets_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      rule_versions: {
+        Row: {
+          checksum: string
+          compiled_rules: Json
+          created_at: string
+          created_by: string | null
+          id: string
+          org_id: string
+          published_at: string | null
+          published_by: string | null
+          rule_set_id: string
+          rules: Json
+          status: string
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          checksum: string
+          compiled_rules: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id: string
+          published_at?: string | null
+          published_by?: string | null
+          rule_set_id: string
+          rules: Json
+          status?: string
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          checksum?: string
+          compiled_rules?: Json
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id?: string
+          published_at?: string | null
+          published_by?: string | null
+          rule_set_id?: string
+          rules?: Json
+          status?: string
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rule_versions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rule_versions_rule_set_id_org_id_fkey"
+            columns: ["rule_set_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "rule_sets"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
       }
       sales: {
         Row: {
@@ -2456,6 +3435,67 @@ export type Database = {
           },
           {
             foreignKeyName: "system_pauses_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      usage_ledger: {
+        Row: {
+          estimated_cost: number
+          execution_id: string | null
+          id: number
+          input_tokens: number
+          model_identifier: string
+          operation_id: string | null
+          org_id: string
+          output_tokens: number
+          recorded_at: string
+          usage_type: string
+        }
+        Insert: {
+          estimated_cost?: number
+          execution_id?: string | null
+          id?: never
+          input_tokens?: number
+          model_identifier: string
+          operation_id?: string | null
+          org_id: string
+          output_tokens?: number
+          recorded_at?: string
+          usage_type: string
+        }
+        Update: {
+          estimated_cost?: number
+          execution_id?: string | null
+          id?: never
+          input_tokens?: number
+          model_identifier?: string
+          operation_id?: string | null
+          org_id?: string
+          output_tokens?: number
+          recorded_at?: string
+          usage_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "usage_ledger_execution_id_org_id_fkey"
+            columns: ["execution_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "ai_executions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "usage_ledger_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "usage_ledger_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"

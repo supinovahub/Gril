@@ -1,0 +1,147 @@
+"use server";
+
+import { createHash } from "node:crypto";
+import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
+import { z } from "zod";
+
+import { requireActiveViewer } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
+
+const profileSchema = z.object({
+  profileId: z.string().uuid(),
+  secretReference: z.string().trim().min(3).max(160),
+  reasoningEffort: z.enum(["none", "low", "medium", "high", "xhigh", "max"]),
+  textVerbosity: z.enum(["low", "medium", "high"]),
+});
+
+export async function configureModelAction(formData: FormData) {
+  const parsed = profileSchema.safeParse({
+    profileId: formData.get("profileId"),
+    secretReference: formData.get("secretReference"),
+    reasoningEffort: formData.get("reasoningEffort"),
+    textVerbosity: formData.get("textVerbosity"),
+  });
+  if (!parsed.success) return;
+
+  const viewer = await requireActiveViewer();
+  if (viewer.membership?.role !== "owner") return;
+  const supabase = await createClient();
+  const { data: profile } = await supabase
+    .from("model_profiles")
+    .select("id,org_id,status")
+    .eq("id", parsed.data.profileId)
+    .eq("org_id", viewer.organization!.id)
+    .maybeSingle();
+  if (!profile || profile.status !== "draft") return;
+
+  const { error } = await supabase
+    .from("model_profiles")
+    .update({
+      secret_reference: parsed.data.secretReference,
+      reasoning_effort: parsed.data.reasoningEffort,
+      text_verbosity: parsed.data.textVerbosity,
+    })
+    .eq("id", profile.id)
+    .eq("status", "draft");
+  if (error) return;
+
+  if (formData.get("activate") === "on") {
+    const { error: activationError } = await supabase
+      .from("model_activation_requests")
+      .insert({
+        org_id: viewer.organization!.id,
+        model_profile_id: profile.id,
+        actor_user_id: viewer.userId,
+      });
+    if (activationError) {
+      redirect(`/app/pedro?erro=${encodeURIComponent("A referência foi salva, mas a ativação falhou.")}`);
+    }
+  }
+
+  revalidatePath("/app/pedro");
+  redirect("/app/pedro?sucesso=modelo-configurado");
+}
+
+export async function createPersonaDraftAction(formData: FormData) {
+  const personaId = z.string().uuid().safeParse(formData.get("personaId"));
+  const prompt = z.string().trim().min(100).max(30000).safeParse(formData.get("compiledPrompt"));
+  if (!personaId.success || !prompt.success) return;
+
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { data: published } = await supabase
+    .from("persona_versions")
+    .select("*")
+    .eq("persona_id", personaId.data)
+    .eq("org_id", viewer.organization!.id)
+    .eq("status", "published")
+    .maybeSingle();
+  if (!published) return;
+
+  const { data: latest } = await supabase
+    .from("persona_versions")
+    .select("version")
+    .eq("persona_id", personaId.data)
+    .order("version", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+
+  const checksum = createHash("sha256").update(prompt.data).digest("hex");
+  const { error } = await supabase.from("persona_versions").insert({
+    org_id: viewer.organization!.id,
+    persona_id: personaId.data,
+    version: (latest?.version ?? 0) + 1,
+    status: "draft",
+    identity: published.identity,
+    style: published.style,
+    boundaries: published.boundaries,
+    escalation_rules: published.escalation_rules,
+    examples: published.examples,
+    compiled_prompt: prompt.data,
+    checksum,
+    source_version_id: published.id,
+    created_by: viewer.userId,
+  });
+  if (error) return;
+  revalidatePath("/app/pedro");
+  redirect("/app/pedro?sucesso=rascunho-criado");
+}
+
+export async function publishPersonaAction(formData: FormData) {
+  const versionId = z.string().uuid().safeParse(formData.get("personaVersionId"));
+  if (!versionId.success) return;
+  const viewer = await requireActiveViewer();
+  if (viewer.membership?.role !== "owner") return;
+  const supabase = await createClient();
+  const { error } = await supabase.from("persona_publish_requests").insert({
+    org_id: viewer.organization!.id,
+    persona_version_id: versionId.data,
+    actor_user_id: viewer.userId,
+  });
+  if (error) return;
+  revalidatePath("/app/pedro");
+  redirect("/app/pedro?sucesso=persona-publicada");
+}
+
+export async function changeGlobalAiModeAction(formData: FormData) {
+  const mode = z.enum(["off", "shadow", "assisted", "production"]).safeParse(formData.get("mode"));
+  if (!mode.success) return;
+  const viewer = await requireActiveViewer();
+  if (viewer.membership?.role !== "owner") return;
+  const supabase = await createClient();
+
+  if (mode.data === "production") {
+    const [{ count: modelCount }, { count: connectionCount }] = await Promise.all([
+      supabase.from("model_profiles").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).eq("status", "active").eq("is_default", true),
+      supabase.from("whatsapp_connections").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).eq("status", "active").eq("inbound_enabled", true),
+    ]);
+    if (!modelCount || !connectionCount) {
+      redirect(`/app/pedro?erro=${encodeURIComponent("Produção exige modelo ativo e ao menos um WhatsApp inbound ativo.")}`);
+    }
+  }
+
+  await supabase.from("organization_settings").update({ ai_global_mode: mode.data }).eq("org_id", viewer.organization!.id);
+  revalidatePath("/app/pedro");
+}
+

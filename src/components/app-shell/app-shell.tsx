@@ -8,6 +8,7 @@ import {
   LockKeyhole,
   LogOut,
   MessagesSquare,
+  Sparkles,
   Settings2,
   UsersRound,
 } from "lucide-react";
@@ -21,7 +22,7 @@ import {
 } from "@/lib/auth/session";
 import styles from "./app-shell.module.css";
 
-const futureItems = ["Campanhas", "Agenda", "Pedro"];
+const futureItems = ["Campanhas", "Agenda"];
 
 function initials(name: string | undefined, email: string) {
   const source = name?.trim() || email;
@@ -94,6 +95,11 @@ export function AppShell({
             <MessagesSquare size={18} aria-hidden="true" /> Inbox
           </Link>
 
+          <p className={styles.navLabel}>Inteligência</p>
+          <Link className={styles.navItem} href="/app/pedro">
+            <Sparkles size={18} aria-hidden="true" /> Pedro
+          </Link>
+
           <p className={styles.navLabel}>Próximas fases</p>
           {futureItems.map((item) => (
             <span className={styles.navItemDisabled} key={item}>
@@ -132,6 +138,7 @@ export function AppShell({
         <Link href="/app/inbox"><MessagesSquare size={20} /><span>Inbox</span></Link>
         <Link href="/app/leads"><ContactRound size={20} /><span>Leads</span></Link>
         <Link href="/app/kanban"><KanbanSquare size={20} /><span>Kanban</span></Link>
+        <Link href="/app/pedro"><Sparkles size={20} /><span>Pedro</span></Link>
       </nav>
     </div>
   );
