@@ -1,0 +1,24 @@
+import { BarChart3 } from "lucide-react";
+import { requireActiveViewer } from "@/lib/auth/session";
+import { createClient } from "@/lib/supabase/server";
+import styles from "../operations.module.css";
+
+export default async function ReportsPage(){
+  const viewer=await requireActiveViewer();const supabase=await createClient();const owner=viewer.membership?.role==="owner";const[{data:opportunities},{data:campaignContacts},{data:calls},{data:results},{data:executions},{data:usage},{data:capacity}]=await Promise.all([
+    supabase.from("opportunities").select("id,status,pipeline_stages(code,name)").eq("org_id",viewer.organization!.id),
+    supabase.from("campaign_contacts").select("status").eq("org_id",viewer.organization!.id),
+    supabase.from("calls").select("id,status,assigned_membership_id").eq("org_id",viewer.organization!.id),
+    supabase.from("call_results").select("result").eq("org_id",viewer.organization!.id),
+    supabase.from("ai_executions").select("mode,status").eq("org_id",viewer.organization!.id),
+    owner?supabase.from("usage_ledger").select("usage_type,input_tokens,output_tokens,estimated_cost").eq("org_id",viewer.organization!.id):Promise.resolve({data:[]}),
+    supabase.from("operation_capacity").select("active_count,proactive_paused,updated_at").eq("org_id",viewer.organization!.id),
+  ]);
+  const group=<T extends string>(rows:Array<Record<string,unknown>>|null|undefined,key:string)=>Object.entries((rows??[]).reduce<Record<string,number>>((acc,row)=>{const value=String(row[key]??"unknown") as T;acc[value]=(acc[value]??0)+1;return acc;},{}));
+  const cost=(usage??[]).reduce((sum,item)=>sum+Number(item.estimated_cost),0);const completed=results?.filter((item)=>item.result!=="no_result").length??0;
+  return <div className={styles.page}><header className={styles.header}><div><p className={styles.eyebrow}>Definições auditáveis</p><h1>Relatórios</h1><p>Qualificação/agendamento e conversão comercial permanecem métricas separadas.</p></div><span className={styles.badge}><BarChart3 size={13}/> dados do tenant</span></header>
+    <section className={styles.metrics}><div className={styles.metric}><small>Oportunidades</small><strong>{opportunities?.length??0}</strong></div><div className={styles.metric}><small>Calls com resultado</small><strong>{completed}</strong></div><div className={styles.metric}><small>Contatos de campanha</small><strong>{campaignContacts?.length??0}</strong></div><div className={styles.metric}><small>Custo estimado</small><strong>{owner?cost.toLocaleString("pt-BR",{style:"currency",currency:"USD"}):"Restrito"}</strong></div></section>
+    <div className={styles.grid}><Report title="Funil" rows={group(opportunities as unknown as Array<Record<string,unknown>>,"status")} definition="Contagem pelo estado comercial atual; call realizada não é uma etapa."/><Report title="Campanhas" rows={group(campaignContacts as unknown as Array<Record<string,unknown>>,"status")} definition="Contatos únicos por estado terminal/operacional; revalidações e opt-outs não são escondidos."/><Report title="Calls" rows={group(calls as unknown as Array<Record<string,unknown>>,"status")} definition="Call realizada exige resultado humano; silêncio no WhatsApp não conta como no-show."/><Report title="Resultados" rows={group(results as unknown as Array<Record<string,unknown>>,"result")} definition="Negociação, perdido, no-show e sem resultado são contabilizados separadamente."/><Report title="Autonomia Pedro" rows={group(executions as unknown as Array<Record<string,unknown>>,"mode")} definition="Modos shadow, assisted, production, simulator e regression não são misturados."/><Report title="Capacidade" rows={(capacity??[]).map((item,index)=>[`operação ${index+1}`,item.active_count])} definition="Conversas ativas; 25 pausa proativo e 30 é o limite duro."/></div>
+  </div>;
+}
+
+function Report({title,rows,definition}:{title:string;rows:Array<[string,number]>;definition:string}){return <section className={styles.panel}><div className={styles.panelHeader}><h2>{title}</h2><span>{rows.reduce((sum,row)=>sum+row[1],0)}</span></div><table className={styles.table}><tbody>{rows.map(([name,value])=><tr key={name}><td>{name}</td><td>{value}</td></tr>)}</tbody></table>{!rows.length?<p className={styles.empty}>Sem dados.</p>:null}<p className={styles.definition}>{definition}</p></section>}

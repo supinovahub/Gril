@@ -2693,6 +2693,258 @@ export type Database = {
           },
         ]
       }
+      experiment_assignments: {
+        Row: {
+          assigned_at: string
+          assignment_key: string
+          conversation_id: string | null
+          experiment_id: string
+          id: string
+          opportunity_id: string
+          org_id: string
+          variant_id: string
+        }
+        Insert: {
+          assigned_at?: string
+          assignment_key: string
+          conversation_id?: string | null
+          experiment_id: string
+          id?: string
+          opportunity_id: string
+          org_id: string
+          variant_id: string
+        }
+        Update: {
+          assigned_at?: string
+          assignment_key?: string
+          conversation_id?: string | null
+          experiment_id?: string
+          id?: string
+          opportunity_id?: string
+          org_id?: string
+          variant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiment_assignments_conversation_id_org_id_fkey"
+            columns: ["conversation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "experiment_assignments_experiment_id_org_id_fkey"
+            columns: ["experiment_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "experiments"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "experiment_assignments_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "experiment_assignments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experiment_assignments_variant_id_org_id_fkey"
+            columns: ["variant_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "experiment_variants"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      experiment_events: {
+        Row: {
+          event_type: string
+          experiment_id: string
+          id: number
+          metadata: Json
+          occurred_at: string
+          org_id: string
+          severity: string
+          variant_id: string | null
+        }
+        Insert: {
+          event_type: string
+          experiment_id: string
+          id?: never
+          metadata?: Json
+          occurred_at?: string
+          org_id: string
+          severity: string
+          variant_id?: string | null
+        }
+        Update: {
+          event_type?: string
+          experiment_id?: string
+          id?: never
+          metadata?: Json
+          occurred_at?: string
+          org_id?: string
+          severity?: string
+          variant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiment_events_experiment_id_org_id_fkey"
+            columns: ["experiment_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "experiments"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "experiment_events_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experiment_events_variant_id_org_id_fkey"
+            columns: ["variant_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "experiment_variants"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      experiment_variants: {
+        Row: {
+          allocation_percent: number
+          created_at: string
+          critical_errors: number
+          experiment_id: string
+          id: string
+          name: string
+          org_id: string
+          persona_version_id: string
+          rule_version_id: string
+          status: string
+        }
+        Insert: {
+          allocation_percent: number
+          created_at?: string
+          critical_errors?: number
+          experiment_id: string
+          id?: string
+          name: string
+          org_id: string
+          persona_version_id: string
+          rule_version_id: string
+          status?: string
+        }
+        Update: {
+          allocation_percent?: number
+          created_at?: string
+          critical_errors?: number
+          experiment_id?: string
+          id?: string
+          name?: string
+          org_id?: string
+          persona_version_id?: string
+          rule_version_id?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiment_variants_experiment_id_org_id_fkey"
+            columns: ["experiment_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "experiments"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "experiment_variants_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "experiment_variants_persona_version_id_org_id_fkey"
+            columns: ["persona_version_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "persona_versions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "experiment_variants_rule_version_id_org_id_fkey"
+            columns: ["rule_version_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "rule_versions"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      experiments: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          eligibility: Json
+          ends_at: string | null
+          id: string
+          name: string
+          operation_id: string | null
+          org_id: string
+          scope: string
+          starts_at: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          eligibility?: Json
+          ends_at?: string | null
+          id?: string
+          name: string
+          operation_id?: string | null
+          org_id: string
+          scope: string
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          eligibility?: Json
+          ends_at?: string | null
+          id?: string
+          name?: string
+          operation_id?: string | null
+          org_id?: string
+          scope?: string
+          starts_at?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "experiments_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "experiments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       faq_creation_requests: {
         Row: {
           actor_user_id: string
@@ -3238,6 +3490,172 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_review_requests: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          decision: string
+          draft_rule_version_id: string | null
+          id: string
+          learning_suggestion_id: string
+          org_id: string
+          processed_at: string
+          reason: string | null
+          regression_case_id: string | null
+        }
+        Insert: {
+          actor_user_id?: string
+          created_at?: string
+          decision: string
+          draft_rule_version_id?: string | null
+          id?: string
+          learning_suggestion_id: string
+          org_id: string
+          processed_at?: string
+          reason?: string | null
+          regression_case_id?: string | null
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          decision?: string
+          draft_rule_version_id?: string | null
+          id?: string
+          learning_suggestion_id?: string
+          org_id?: string
+          processed_at?: string
+          reason?: string | null
+          regression_case_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_review_requests_learning_suggestion_id_org_id_fkey"
+            columns: ["learning_suggestion_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "learning_suggestions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "learning_review_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      learning_suggestions: {
+        Row: {
+          conflict_details: string | null
+          conversation_id: string | null
+          created_at: string
+          created_by: string
+          draft_rule_version_id: string | null
+          evidence: Json
+          human_observation: string
+          id: string
+          message_id: string | null
+          observed_response: string | null
+          operation_id: string | null
+          org_id: string
+          regression_case_id: string | null
+          reviewed_at: string | null
+          reviewed_by: string | null
+          scope: string
+          source: string
+          status: string
+          suggested_change: string
+          updated_at: string
+        }
+        Insert: {
+          conflict_details?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string
+          draft_rule_version_id?: string | null
+          evidence?: Json
+          human_observation: string
+          id?: string
+          message_id?: string | null
+          observed_response?: string | null
+          operation_id?: string | null
+          org_id: string
+          regression_case_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scope: string
+          source: string
+          status?: string
+          suggested_change: string
+          updated_at?: string
+        }
+        Update: {
+          conflict_details?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          created_by?: string
+          draft_rule_version_id?: string | null
+          evidence?: Json
+          human_observation?: string
+          id?: string
+          message_id?: string | null
+          observed_response?: string | null
+          operation_id?: string | null
+          org_id?: string
+          regression_case_id?: string | null
+          reviewed_at?: string | null
+          reviewed_by?: string | null
+          scope?: string
+          source?: string
+          status?: string
+          suggested_change?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "learning_suggestions_conversation_id_org_id_fkey"
+            columns: ["conversation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "learning_suggestions_draft_rule_version_id_org_id_fkey"
+            columns: ["draft_rule_version_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "rule_versions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "learning_suggestions_message_id_org_id_fkey"
+            columns: ["message_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "learning_suggestions_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "learning_suggestions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "learning_suggestions_regression_case_fkey"
+            columns: ["regression_case_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "regression_cases"
+            referencedColumns: ["id", "org_id"]
           },
         ]
       }
@@ -5603,6 +6021,167 @@ export type Database = {
           },
         ]
       }
+      regression_cases: {
+        Row: {
+          active: boolean
+          allowed_actions: string[]
+          created_at: string
+          created_by: string | null
+          expected_response: string | null
+          id: string
+          initial_state: Json
+          org_id: string
+          prohibited_actions: string[]
+          rubric: Json
+          severity: string
+          simulated_input: string
+          source: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          allowed_actions?: string[]
+          created_at?: string
+          created_by?: string | null
+          expected_response?: string | null
+          id?: string
+          initial_state?: Json
+          org_id: string
+          prohibited_actions?: string[]
+          rubric?: Json
+          severity?: string
+          simulated_input: string
+          source: string
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          allowed_actions?: string[]
+          created_at?: string
+          created_by?: string | null
+          expected_response?: string | null
+          id?: string
+          initial_state?: Json
+          org_id?: string
+          prohibited_actions?: string[]
+          rubric?: Json
+          severity?: string
+          simulated_input?: string
+          source?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regression_cases_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      regression_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string | null
+          critical_failures: number
+          id: string
+          org_id: string
+          passed_cases: number
+          results: Json
+          rule_version_id: string
+          status: string
+          total_cases: number
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          critical_failures?: number
+          id?: string
+          org_id: string
+          passed_cases?: number
+          results?: Json
+          rule_version_id: string
+          status?: string
+          total_cases?: number
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string | null
+          critical_failures?: number
+          id?: string
+          org_id?: string
+          passed_cases?: number
+          results?: Json
+          rule_version_id?: string
+          status?: string
+          total_cases?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "regression_runs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "regression_runs_rule_version_id_org_id_fkey"
+            columns: ["rule_version_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "rule_versions"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      rule_publish_requests: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          id: string
+          org_id: string
+          processed_at: string
+          rule_version_id: string
+        }
+        Insert: {
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          org_id: string
+          processed_at?: string
+          rule_version_id: string
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          org_id?: string
+          processed_at?: string
+          rule_version_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "rule_publish_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "rule_publish_requests_rule_version_id_org_id_fkey"
+            columns: ["rule_version_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "rule_versions"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
       rule_sets: {
         Row: {
           code: string
@@ -5934,6 +6513,123 @@ export type Database = {
           },
           {
             foreignKeyName: "scheduled_jobs_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulator_run_requests: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          id: string
+          initial_state: Json
+          operation_id: string | null
+          org_id: string
+          processed_at: string
+          simulated_input: string
+          simulator_run_id: string | null
+          title: string
+        }
+        Insert: {
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          initial_state?: Json
+          operation_id?: string | null
+          org_id: string
+          processed_at?: string
+          simulated_input: string
+          simulator_run_id?: string | null
+          title: string
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          initial_state?: Json
+          operation_id?: string | null
+          org_id?: string
+          processed_at?: string
+          simulated_input?: string
+          simulator_run_id?: string | null
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulator_run_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      simulator_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          created_by: string
+          execution_id: string | null
+          id: string
+          initial_state: Json
+          operation_id: string | null
+          org_id: string
+          output_structured: Json | null
+          output_text: string | null
+          simulated_input: string
+          status: string
+          title: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          created_by: string
+          execution_id?: string | null
+          id?: string
+          initial_state?: Json
+          operation_id?: string | null
+          org_id: string
+          output_structured?: Json | null
+          output_text?: string | null
+          simulated_input: string
+          status: string
+          title: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          created_by?: string
+          execution_id?: string | null
+          id?: string
+          initial_state?: Json
+          operation_id?: string | null
+          org_id?: string
+          output_structured?: Json | null
+          output_text?: string | null
+          simulated_input?: string
+          status?: string
+          title?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulator_runs_execution_id_org_id_fkey"
+            columns: ["execution_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "ai_executions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "simulator_runs_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "simulator_runs_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"

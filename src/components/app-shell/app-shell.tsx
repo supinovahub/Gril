@@ -1,13 +1,16 @@
 import {
+  Activity,
+  BarChart3,
+  BookMarked,
   BookOpenCheck,
   Building2,
   CalendarClock,
   ChevronDown,
   CircleUserRound,
   ContactRound,
+  FlaskConical,
   KanbanSquare,
   LayoutDashboard,
-  LockKeyhole,
   LogOut,
   Megaphone,
   MessagesSquare,
@@ -24,8 +27,6 @@ import {
   type Viewer,
 } from "@/lib/auth/session";
 import styles from "./app-shell.module.css";
-
-const futureItems = ["Central e relatórios"];
 
 function initials(name: string | undefined, email: string) {
   const source = name?.trim() || email;
@@ -78,6 +79,9 @@ export function AppShell({
           <Link className={styles.navItem} href="/app">
             <LayoutDashboard size={18} aria-hidden="true" /> Visão geral
           </Link>
+          <Link className={styles.navItem} href="/app/central">
+            <Activity size={18} aria-hidden="true" /> Central
+          </Link>
           {canManageTeam(viewer) ? (
             <Link className={styles.navItem} href="/app/equipe">
               <UsersRound size={18} aria-hidden="true" /> Equipe e acessos
@@ -111,13 +115,15 @@ export function AppShell({
           <Link className={styles.navItem} href="/app/conhecimento">
             <BookOpenCheck size={18} aria-hidden="true" /> Conhecimento
           </Link>
-
-          <p className={styles.navLabel}>Próximas fases</p>
-          {futureItems.map((item) => (
-            <span className={styles.navItemDisabled} key={item}>
-              <LockKeyhole size={16} aria-hidden="true" /> {item}
-            </span>
-          ))}
+          <Link className={styles.navItem} href="/app/aprendizados">
+            <BookMarked size={18} aria-hidden="true" /> Aprendizados
+          </Link>
+          <Link className={styles.navItem} href="/app/simulador">
+            <FlaskConical size={18} aria-hidden="true" /> Simulador
+          </Link>
+          <Link className={styles.navItem} href="/app/relatorios">
+            <BarChart3 size={18} aria-hidden="true" /> Relatórios
+          </Link>
         </nav>
 
         <div className={styles.sidebarFooter}>
