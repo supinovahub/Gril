@@ -1,0 +1,11 @@
+-- Gate manual da Fase 10, executado contra o banco de desenvolvimento remoto.
+-- 1. Existem exatamente 50 casos iniciais por organização e todos os críticos estão ativos.
+-- 2. Repetir external_submission_id no mesmo formulário retorna duplicate sem novo prelead.
+-- 3. Meta tardio só completa nome ausente e nunca cria lead/oportunidade sozinho.
+-- 4. Corretor não cria formulário Meta, não altera retenção e não vê custos globais.
+-- 5. Ativação de conexão sem health check saudável e recente é rejeitada.
+-- 6. Alteração direta de status/inbound/campaign da conexão é rejeitada fora do comando.
+-- 7. Service role consegue inserir o comando de ingest, mas anon/authenticated não.
+-- 8. Solicitação de privacidade gera due_at e permanece auditável.
+-- 9. Fila de purge não é exposta pelas APIs públicas.
+-- 10. Advisors de segurança e desempenho não apresentam erro de schema novo.

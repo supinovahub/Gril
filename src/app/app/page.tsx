@@ -48,12 +48,12 @@ export default async function DashboardPage() {
     <div className={styles.page}>
       <header className={styles.pageHeader}>
         <div>
-          <p className={styles.eyebrow}>Fundação da operação</p>
+          <p className={styles.eyebrow}>Operação local</p>
           <h1>Bom dia, {viewer.profile?.full_name.split(" ")[0] ?? "time"}</h1>
-          <p>{viewer.organization!.name} está isolada e pronta para a próxima vertical.</p>
+          <p>{viewer.organization!.name} está isolada e pronta para o piloto monitorado.</p>
         </div>
         <span className={styles.phaseBadge}>
-          <CheckCircle2 size={15} aria-hidden="true" /> Fase 1 em validação
+          <CheckCircle2 size={15} aria-hidden="true" /> MVP local concluído
         </span>
       </header>
 
@@ -99,7 +99,7 @@ export default async function DashboardPage() {
         </section>
 
         <aside className={styles.sidePanel}>
-          <h2>Gate da fundação</h2>
+          <h2>Gate do piloto</h2>
           <ul className={styles.checklist}>
             <li>
               <ShieldCheck size={18} />
@@ -111,11 +111,11 @@ export default async function DashboardPage() {
             </li>
             <li>
               <CheckCircle2 size={18} />
-              <span><strong>Auditoria ligada</strong>Mudanças administrativas registram ator e entidade.</span>
+              <span><strong>Hardening ligado</strong>Ativação, opt-out, IA e privacidade passam por gates auditáveis.</span>
             </li>
           </ul>
           <p className={styles.nextStep}>
-            Próximo passo: validar login, perfil, convite geral pendente e isolamento entre usuários.
+            Próximo passo: conectar credenciais reais, executar os casos críticos e liberar uma conexão sem campanhas.
           </p>
         </aside>
       </div>

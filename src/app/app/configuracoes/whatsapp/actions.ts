@@ -63,3 +63,25 @@ export async function createConnectionAction(formData: FormData) {
   redirect("/app/configuracoes/whatsapp?sucesso=rascunho-criado");
 }
 
+export async function changeConnectionStateAction(formData: FormData) {
+  const parsed = z.object({
+    connectionId: z.string().uuid(),
+    action: z.enum(["activate", "pause", "revoke"]),
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect("/app/configuracoes/whatsapp?erro=acao-invalida");
+  const viewer = await requireActiveViewer();
+  if (viewer.membership?.role !== "owner") redirect("/app/configuracoes/whatsapp?erro=acao-exclusiva-do-dono");
+  const supabase = await createClient();
+  const { error } = await supabase.from("connection_activation_requests").insert({
+    org_id: viewer.organization!.id,
+    connection_id: parsed.data.connectionId,
+    action: parsed.data.action,
+    inbound_enabled: formData.get("inboundEnabled") === "on",
+    campaign_enabled: formData.get("campaignEnabled") === "on",
+    reason: String(formData.get("reason") ?? "").trim() || null,
+    actor_user_id: viewer.userId,
+  });
+  if (error) redirect(`/app/configuracoes/whatsapp?erro=${encodeURIComponent("Ativação exige configuração completa e health check saudável nos últimos 15 minutos.")}`);
+  revalidatePath("/app/configuracoes/whatsapp");
+  redirect("/app/configuracoes/whatsapp?sucesso=estado-atualizado");
+}

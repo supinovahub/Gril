@@ -8,6 +8,7 @@ import {
   ChevronDown,
   CircleUserRound,
   ContactRound,
+  Webhook,
   FlaskConical,
   KanbanSquare,
   LayoutDashboard,
@@ -16,6 +17,7 @@ import {
   MessagesSquare,
   Sparkles,
   Settings2,
+  ShieldCheck,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -123,6 +125,16 @@ export function AppShell({
           </Link>
           <Link className={styles.navItem} href="/app/relatorios">
             <BarChart3 size={18} aria-hidden="true" /> Relatórios
+          </Link>
+          <p className={styles.navLabel}>Configurações</p>
+          <Link className={styles.navItem} href="/app/configuracoes/whatsapp">
+            <Settings2 size={18} aria-hidden="true" /> WhatsApp
+          </Link>
+          <Link className={styles.navItem} href="/app/configuracoes/meta">
+            <Webhook size={18} aria-hidden="true" /> Meta
+          </Link>
+          <Link className={styles.navItem} href="/app/configuracoes/privacidade">
+            <ShieldCheck size={18} aria-hidden="true" /> Privacidade
           </Link>
         </nav>
 

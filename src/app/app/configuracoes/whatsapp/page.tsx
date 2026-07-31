@@ -2,7 +2,7 @@ import { Cable, CheckCircle2, CircleDashed, ShieldCheck } from "lucide-react";
 
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { createConnectionAction } from "./actions";
+import { changeConnectionStateAction, createConnectionAction } from "./actions";
 import styles from "../../inbox/inbox.module.css";
 
 export default async function WhatsappSettingsPage({
@@ -33,6 +33,12 @@ export default async function WhatsappSettingsPage({
               <span className={styles.connectionIcon}>{connection.status === "active" ? <CheckCircle2 size={20} /> : <CircleDashed size={20} />}</span>
               <span><strong>{connection.name}</strong><small>{connection.provider} · {connection.phone_e164 || "número pendente"}</small></span>
               <span className={styles.contextBadge}>{connection.status}</span>
+              {viewer.membership?.role === "owner" ? <form action={changeConnectionStateAction}>
+                <input name="connectionId" type="hidden" value={connection.id} />
+                <input name="action" type="hidden" value={connection.status === "active" ? "pause" : "activate"} />
+                {connection.status !== "active" ? <><label><input name="inboundEnabled" type="checkbox" /> inbound</label><label><input name="campaignEnabled" type="checkbox" /> campanhas</label></> : null}
+                <button type="submit">{connection.status === "active" ? "Pausar" : "Ativar"}</button>
+              </form> : null}
             </article>
           ))}
           {!connections?.length ? <div className={styles.empty}><Cable size={28} /><span>Nenhuma conexão cadastrada.</span></div> : null}
@@ -54,4 +60,3 @@ export default async function WhatsappSettingsPage({
     </div>
   );
 }
-

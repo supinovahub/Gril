@@ -387,6 +387,8 @@ export type Database = {
           message_id: string
           mime_type: string | null
           org_id: string
+          purge_after: string | null
+          sensitivity: string
           sha256: string | null
           size_bytes: number | null
           storage_bucket: string
@@ -398,6 +400,8 @@ export type Database = {
           message_id: string
           mime_type?: string | null
           org_id: string
+          purge_after?: string | null
+          sensitivity?: string
           sha256?: string | null
           size_bytes?: number | null
           storage_bucket: string
@@ -409,6 +413,8 @@ export type Database = {
           message_id?: string
           mime_type?: string | null
           org_id?: string
+          purge_after?: string | null
+          sensitivity?: string
           sha256?: string | null
           size_bytes?: number | null
           storage_bucket?: string
@@ -2031,6 +2037,63 @@ export type Database = {
           },
           {
             foreignKeyName: "checklist_templates_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      connection_activation_requests: {
+        Row: {
+          action: string
+          actor_user_id: string
+          campaign_enabled: boolean
+          connection_id: string
+          created_at: string
+          id: string
+          inbound_enabled: boolean
+          org_id: string
+          processed_at: string
+          reason: string | null
+          resulting_status: string | null
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string
+          campaign_enabled?: boolean
+          connection_id: string
+          created_at?: string
+          id?: string
+          inbound_enabled?: boolean
+          org_id: string
+          processed_at?: string
+          reason?: string | null
+          resulting_status?: string | null
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string
+          campaign_enabled?: boolean
+          connection_id?: string
+          created_at?: string
+          id?: string
+          inbound_enabled?: boolean
+          org_id?: string
+          processed_at?: string
+          reason?: string | null
+          resulting_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "connection_activation_requests_connection_id_org_id_fkey"
+            columns: ["connection_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "connection_activation_requests_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -4068,6 +4131,281 @@ export type Database = {
           },
         ]
       }
+      meta_form_creation_requests: {
+        Row: {
+          actor_user_id: string
+          connection_id: string
+          consent_text: string
+          created_at: string
+          external_form_id: string
+          field_mapping: Json
+          form_id: string | null
+          id: string
+          name: string
+          operation_id: string
+          org_id: string
+          processed_at: string
+        }
+        Insert: {
+          actor_user_id?: string
+          connection_id: string
+          consent_text: string
+          created_at?: string
+          external_form_id: string
+          field_mapping: Json
+          form_id?: string | null
+          id?: string
+          name: string
+          operation_id: string
+          org_id: string
+          processed_at?: string
+        }
+        Update: {
+          actor_user_id?: string
+          connection_id?: string
+          consent_text?: string
+          created_at?: string
+          external_form_id?: string
+          field_mapping?: Json
+          form_id?: string | null
+          id?: string
+          name?: string
+          operation_id?: string
+          org_id?: string
+          processed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_form_creation_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_form_ingest_requests: {
+        Row: {
+          created_at: string
+          external_submission_id: string
+          form_id: string
+          id: string
+          org_id: string
+          payload: Json
+          payload_sha256: string
+          prelead_id: string | null
+          processed_at: string
+          result: string | null
+          submission_id: string | null
+          submitted_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          external_submission_id: string
+          form_id: string
+          id?: string
+          org_id: string
+          payload: Json
+          payload_sha256: string
+          prelead_id?: string | null
+          processed_at?: string
+          result?: string | null
+          submission_id?: string | null
+          submitted_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          external_submission_id?: string
+          form_id?: string
+          id?: string
+          org_id?: string
+          payload?: Json
+          payload_sha256?: string
+          prelead_id?: string | null
+          processed_at?: string
+          result?: string | null
+          submission_id?: string | null
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_form_ingest_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_form_versions: {
+        Row: {
+          checksum: string
+          form_id: string
+          id: string
+          org_id: string
+          published_at: string
+          published_by: string | null
+          snapshot: Json
+          version: number
+        }
+        Insert: {
+          checksum: string
+          form_id: string
+          id?: string
+          org_id: string
+          published_at?: string
+          published_by?: string | null
+          snapshot: Json
+          version: number
+        }
+        Update: {
+          checksum?: string
+          form_id?: string
+          id?: string
+          org_id?: string
+          published_at?: string
+          published_by?: string | null
+          snapshot?: Json
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_form_versions_form_id_org_id_fkey"
+            columns: ["form_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "meta_lead_forms"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "meta_form_versions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_lead_forms: {
+        Row: {
+          connection_id: string
+          consent_text: string
+          consent_version: number
+          created_at: string
+          created_by: string | null
+          external_form_id: string
+          field_mapping: Json
+          id: string
+          name: string
+          operation_id: string
+          org_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          connection_id: string
+          consent_text: string
+          consent_version?: number
+          created_at?: string
+          created_by?: string | null
+          external_form_id: string
+          field_mapping: Json
+          id?: string
+          name: string
+          operation_id: string
+          org_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          connection_id?: string
+          consent_text?: string
+          consent_version?: number
+          created_at?: string
+          created_by?: string | null
+          external_form_id?: string
+          field_mapping?: Json
+          id?: string
+          name?: string
+          operation_id?: string
+          org_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_lead_forms_connection_id_org_id_fkey"
+            columns: ["connection_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "meta_lead_forms_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "meta_lead_forms_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      meta_lead_submissions: {
+        Row: {
+          external_submission_id: string
+          form_id: string
+          id: string
+          org_id: string
+          payload: Json
+          payload_sha256: string
+          received_at: string
+          status: string
+          submitted_at: string | null
+        }
+        Insert: {
+          external_submission_id: string
+          form_id: string
+          id?: string
+          org_id: string
+          payload: Json
+          payload_sha256: string
+          received_at?: string
+          status?: string
+          submitted_at?: string | null
+        }
+        Update: {
+          external_submission_id?: string
+          form_id?: string
+          id?: string
+          org_id?: string
+          payload?: Json
+          payload_sha256?: string
+          received_at?: string
+          status?: string
+          submitted_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "meta_lead_submissions_form_id_org_id_fkey"
+            columns: ["form_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "meta_lead_forms"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "meta_lead_submissions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       model_activation_requests: {
         Row: {
           actor_user_id: string
@@ -5221,6 +5559,147 @@ export type Database = {
           },
         ]
       }
+      preleads: {
+        Row: {
+          consent_snapshot: Json
+          contact_id: string | null
+          created_at: string
+          fields: Json
+          id: string
+          matched_at: string | null
+          name: string | null
+          operation_id: string
+          opportunity_id: string | null
+          org_id: string
+          phone_e164: string | null
+          status: string
+          submission_id: string
+        }
+        Insert: {
+          consent_snapshot: Json
+          contact_id?: string | null
+          created_at?: string
+          fields?: Json
+          id?: string
+          matched_at?: string | null
+          name?: string | null
+          operation_id: string
+          opportunity_id?: string | null
+          org_id: string
+          phone_e164?: string | null
+          status: string
+          submission_id: string
+        }
+        Update: {
+          consent_snapshot?: Json
+          contact_id?: string | null
+          created_at?: string
+          fields?: Json
+          id?: string
+          matched_at?: string | null
+          name?: string | null
+          operation_id?: string
+          opportunity_id?: string | null
+          org_id?: string
+          phone_e164?: string | null
+          status?: string
+          submission_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "preleads_contact_id_org_id_fkey"
+            columns: ["contact_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "preleads_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "preleads_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "preleads_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "preleads_submission_id_org_id_fkey"
+            columns: ["submission_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "meta_lead_submissions"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      privacy_requests: {
+        Row: {
+          completed_at: string | null
+          contact_id: string
+          created_at: string
+          due_at: string
+          id: string
+          legal_hold_reason: string | null
+          org_id: string
+          request_type: string
+          requested_by: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          completed_at?: string | null
+          contact_id: string
+          created_at?: string
+          due_at?: string
+          id?: string
+          legal_hold_reason?: string | null
+          org_id: string
+          request_type: string
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          completed_at?: string | null
+          contact_id?: string
+          created_at?: string
+          due_at?: string
+          id?: string
+          legal_hold_reason?: string | null
+          org_id?: string
+          request_type?: string
+          requested_by?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "privacy_requests_contact_id_org_id_fkey"
+            columns: ["contact_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "privacy_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -6137,6 +6616,47 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "rule_versions"
             referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      retention_policies: {
+        Row: {
+          action: string
+          active: boolean
+          created_at: string
+          data_class: string
+          id: string
+          org_id: string
+          retention_days: number
+          updated_at: string
+        }
+        Insert: {
+          action: string
+          active?: boolean
+          created_at?: string
+          data_class: string
+          id?: string
+          org_id: string
+          retention_days: number
+          updated_at?: string
+        }
+        Update: {
+          action?: string
+          active?: boolean
+          created_at?: string
+          data_class?: string
+          id?: string
+          org_id?: string
+          retention_days?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "retention_policies_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
           },
         ]
       }
