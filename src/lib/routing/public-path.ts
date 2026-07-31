@@ -9,9 +9,11 @@ const publicPrefixes = [
   "/api/internal/workers",
 ];
 
+const publicExactPaths = new Set(["/", "/manifest.webmanifest", "/sw.js"]);
+
 export function isPublicPath(pathname: string) {
   return (
-    pathname === "/" ||
+    publicExactPaths.has(pathname) ||
     publicPrefixes.some(
       (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
     )
