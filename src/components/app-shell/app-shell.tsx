@@ -7,6 +7,7 @@ import {
   LayoutDashboard,
   LockKeyhole,
   LogOut,
+  MessagesSquare,
   Settings2,
   UsersRound,
 } from "lucide-react";
@@ -89,6 +90,9 @@ export function AppShell({
           <Link className={styles.navItem} href="/app/kanban">
             <KanbanSquare size={18} aria-hidden="true" /> Kanban
           </Link>
+          <Link className={styles.navItem} href="/app/inbox">
+            <MessagesSquare size={18} aria-hidden="true" /> Inbox
+          </Link>
 
           <p className={styles.navLabel}>Próximas fases</p>
           {futureItems.map((item) => (
@@ -124,10 +128,8 @@ export function AppShell({
 
       <nav className={styles.mobileNav} aria-label="Navegação móvel">
         <Link href="/app"><LayoutDashboard size={20} /><span>Visão geral</span></Link>
-        {canManageTeam(viewer) ? (
-          <Link href="/app/equipe"><UsersRound size={20} /><span>Equipe</span></Link>
-        ) : null}
         <Link href="/app/perfil"><Settings2 size={20} /><span>Perfil</span></Link>
+        <Link href="/app/inbox"><MessagesSquare size={20} /><span>Inbox</span></Link>
         <Link href="/app/leads"><ContactRound size={20} /><span>Leads</span></Link>
         <Link href="/app/kanban"><KanbanSquare size={20} /><span>Kanban</span></Link>
       </nav>
