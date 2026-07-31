@@ -1,11 +1,23 @@
 import {
+  Activity,
+  BarChart3,
+  BookMarked,
+  BookOpenCheck,
   Building2,
+  CalendarClock,
   ChevronDown,
   CircleUserRound,
+  ContactRound,
+  Webhook,
+  FlaskConical,
+  KanbanSquare,
   LayoutDashboard,
-  LockKeyhole,
   LogOut,
+  Megaphone,
+  MessagesSquare,
+  Sparkles,
   Settings2,
+  ShieldCheck,
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
@@ -17,8 +29,6 @@ import {
   type Viewer,
 } from "@/lib/auth/session";
 import styles from "./app-shell.module.css";
-
-const futureItems = ["Contatos", "Campanhas", "Pipeline", "Agenda"];
 
 function initials(name: string | undefined, email: string) {
   const source = name?.trim() || email;
@@ -71,6 +81,9 @@ export function AppShell({
           <Link className={styles.navItem} href="/app">
             <LayoutDashboard size={18} aria-hidden="true" /> Visão geral
           </Link>
+          <Link className={styles.navItem} href="/app/central">
+            <Activity size={18} aria-hidden="true" /> Central
+          </Link>
           {canManageTeam(viewer) ? (
             <Link className={styles.navItem} href="/app/equipe">
               <UsersRound size={18} aria-hidden="true" /> Equipe e acessos
@@ -80,12 +93,49 @@ export function AppShell({
             <CircleUserRound size={18} aria-hidden="true" /> Meu perfil
           </Link>
 
-          <p className={styles.navLabel}>Próximas fases</p>
-          {futureItems.map((item) => (
-            <span className={styles.navItemDisabled} key={item}>
-              <LockKeyhole size={16} aria-hidden="true" /> {item}
-            </span>
-          ))}
+          <p className={styles.navLabel}>Comercial</p>
+          <Link className={styles.navItem} href="/app/leads">
+            <ContactRound size={18} aria-hidden="true" /> Leads
+          </Link>
+          <Link className={styles.navItem} href="/app/kanban">
+            <KanbanSquare size={18} aria-hidden="true" /> Kanban
+          </Link>
+          <Link className={styles.navItem} href="/app/inbox">
+            <MessagesSquare size={18} aria-hidden="true" /> Inbox
+          </Link>
+          <Link className={styles.navItem} href="/app/campanhas">
+            <Megaphone size={18} aria-hidden="true" /> Campanhas
+          </Link>
+          <Link className={styles.navItem} href="/app/agenda">
+            <CalendarClock size={18} aria-hidden="true" /> Agenda
+          </Link>
+
+          <p className={styles.navLabel}>Inteligência</p>
+          <Link className={styles.navItem} href="/app/pedro">
+            <Sparkles size={18} aria-hidden="true" /> Pedro
+          </Link>
+          <Link className={styles.navItem} href="/app/conhecimento">
+            <BookOpenCheck size={18} aria-hidden="true" /> Conhecimento
+          </Link>
+          <Link className={styles.navItem} href="/app/aprendizados">
+            <BookMarked size={18} aria-hidden="true" /> Aprendizados
+          </Link>
+          <Link className={styles.navItem} href="/app/simulador">
+            <FlaskConical size={18} aria-hidden="true" /> Simulador
+          </Link>
+          <Link className={styles.navItem} href="/app/relatorios">
+            <BarChart3 size={18} aria-hidden="true" /> Relatórios
+          </Link>
+          <p className={styles.navLabel}>Configurações</p>
+          <Link className={styles.navItem} href="/app/configuracoes/whatsapp">
+            <Settings2 size={18} aria-hidden="true" /> WhatsApp
+          </Link>
+          <Link className={styles.navItem} href="/app/configuracoes/meta">
+            <Webhook size={18} aria-hidden="true" /> Meta
+          </Link>
+          <Link className={styles.navItem} href="/app/configuracoes/privacidade">
+            <ShieldCheck size={18} aria-hidden="true" /> Privacidade
+          </Link>
         </nav>
 
         <div className={styles.sidebarFooter}>
@@ -114,10 +164,11 @@ export function AppShell({
 
       <nav className={styles.mobileNav} aria-label="Navegação móvel">
         <Link href="/app"><LayoutDashboard size={20} /><span>Visão geral</span></Link>
-        {canManageTeam(viewer) ? (
-          <Link href="/app/equipe"><UsersRound size={20} /><span>Equipe</span></Link>
-        ) : null}
         <Link href="/app/perfil"><Settings2 size={20} /><span>Perfil</span></Link>
+        <Link href="/app/inbox"><MessagesSquare size={20} /><span>Inbox</span></Link>
+        <Link href="/app/leads"><ContactRound size={20} /><span>Leads</span></Link>
+        <Link href="/app/kanban"><KanbanSquare size={20} /><span>Kanban</span></Link>
+        <Link href="/app/pedro"><Sparkles size={20} /><span>Pedro</span></Link>
       </nav>
     </div>
   );

@@ -258,7 +258,8 @@
     display: flex;
     min-height: 68px;
     align-items: center;
-    justify-content: space-around;
+    justify-content: flex-start;
+    overflow-x: auto;
     border-top: 1px solid var(--border);
     background: rgba(255, 253, 249, 0.96);
   }
@@ -266,6 +267,7 @@
   .mobileNav a {
     display: grid;
     min-width: 74px;
+    flex: 1 0 74px;
     place-items: center;
     gap: 4px;
     color: var(--ink-muted);

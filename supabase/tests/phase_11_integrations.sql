@@ -1,0 +1,9 @@
+-- Gate manual da Fase 11, executado contra o banco de desenvolvimento remoto.
+-- 1. Dono conecta Uazapi, Meta oficial e OpenAI; manager/broker não gravam segredo.
+-- 2. integration_accounts expõe somente metadados mascarados e possui RLS.
+-- 3. private.integration_secret_bindings e vault.decrypted_secrets não têm grant para anon/authenticated.
+-- 4. Funções store/get/revoke só podem ser executadas por service_role.
+-- 5. Revogação apaga o secret do Vault, desativa WhatsApp e pausa modelos ativos.
+-- 6. Modelo e WhatsApp só ativam com integration_account verificada.
+-- 7. Reteste registra health check sem persistir payload ou erro bruto do provedor.
+-- 8. Advisors de segurança e desempenho não apresentam erro de schema novo.
