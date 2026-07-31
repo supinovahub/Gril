@@ -1,6 +1,7 @@
 import {
   BookOpenCheck,
   Building2,
+  CalendarClock,
   ChevronDown,
   CircleUserRound,
   ContactRound,
@@ -24,7 +25,7 @@ import {
 } from "@/lib/auth/session";
 import styles from "./app-shell.module.css";
 
-const futureItems = ["Agenda"];
+const futureItems = ["Central e relatórios"];
 
 function initials(name: string | undefined, email: string) {
   const source = name?.trim() || email;
@@ -98,6 +99,9 @@ export function AppShell({
           </Link>
           <Link className={styles.navItem} href="/app/campanhas">
             <Megaphone size={18} aria-hidden="true" /> Campanhas
+          </Link>
+          <Link className={styles.navItem} href="/app/agenda">
+            <CalendarClock size={18} aria-hidden="true" /> Agenda
           </Link>
 
           <p className={styles.navLabel}>Inteligência</p>

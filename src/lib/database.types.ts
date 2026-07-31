@@ -431,6 +431,140 @@ export type Database = {
           },
         ]
       }
+      availability_exceptions: {
+        Row: {
+          availability: string
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          id: string
+          membership_id: string
+          operation_id: string
+          org_id: string
+          reason: string | null
+          starts_at: string
+        }
+        Insert: {
+          availability: string
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          id?: string
+          membership_id: string
+          operation_id: string
+          org_id: string
+          reason?: string | null
+          starts_at: string
+        }
+        Update: {
+          availability?: string
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          id?: string
+          membership_id?: string
+          operation_id?: string
+          org_id?: string
+          reason?: string | null
+          starts_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_exceptions_membership_id_org_id_fkey"
+            columns: ["membership_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "availability_exceptions_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "availability_exceptions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      availability_rules: {
+        Row: {
+          active: boolean
+          capacity: number
+          created_at: string
+          end_time: string
+          id: string
+          membership_id: string
+          operation_id: string
+          org_id: string
+          start_time: string
+          timezone: string
+          updated_at: string
+          valid_from: string
+          valid_until: string | null
+          weekday: number
+        }
+        Insert: {
+          active?: boolean
+          capacity?: number
+          created_at?: string
+          end_time: string
+          id?: string
+          membership_id: string
+          operation_id: string
+          org_id: string
+          start_time: string
+          timezone?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+          weekday: number
+        }
+        Update: {
+          active?: boolean
+          capacity?: number
+          created_at?: string
+          end_time?: string
+          id?: string
+          membership_id?: string
+          operation_id?: string
+          org_id?: string
+          start_time?: string
+          timezone?: string
+          updated_at?: string
+          valid_from?: string
+          valid_until?: string | null
+          weekday?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "availability_rules_membership_id_org_id_fkey"
+            columns: ["membership_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "availability_rules_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "availability_rules_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       budget_alerts: {
         Row: {
           budget: number
@@ -465,6 +599,618 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "budget_alerts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_assignments: {
+        Row: {
+          active: boolean
+          assigned_at: string
+          assigned_by: string | null
+          assignment_type: string
+          call_id: string
+          id: string
+          membership_id: string
+          offer_id: string | null
+          org_id: string
+          revocation_reason: string | null
+          revoked_at: string | null
+          revoked_by: string | null
+        }
+        Insert: {
+          active?: boolean
+          assigned_at?: string
+          assigned_by?: string | null
+          assignment_type: string
+          call_id: string
+          id?: string
+          membership_id: string
+          offer_id?: string | null
+          org_id: string
+          revocation_reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+        }
+        Update: {
+          active?: boolean
+          assigned_at?: string
+          assigned_by?: string | null
+          assignment_type?: string
+          call_id?: string
+          id?: string
+          membership_id?: string
+          offer_id?: string | null
+          org_id?: string
+          revocation_reason?: string | null
+          revoked_at?: string | null
+          revoked_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_assignments_call_id_org_id_fkey"
+            columns: ["call_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "calls"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "call_assignments_membership_id_org_id_fkey"
+            columns: ["membership_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "call_assignments_offer_id_org_id_fkey"
+            columns: ["offer_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "call_offers"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "call_assignments_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_creation_requests: {
+        Row: {
+          actor_user_id: string | null
+          call_id: string | null
+          created_at: string
+          expected_opportunity_version: number
+          format: string
+          id: string
+          lead_confirmed: boolean
+          operation_id: string
+          opportunity_id: string
+          org_id: string
+          processed_at: string
+          result: string | null
+          starts_at: string
+        }
+        Insert: {
+          actor_user_id?: string | null
+          call_id?: string | null
+          created_at?: string
+          expected_opportunity_version: number
+          format: string
+          id?: string
+          lead_confirmed: boolean
+          operation_id: string
+          opportunity_id: string
+          org_id: string
+          processed_at?: string
+          result?: string | null
+          starts_at: string
+        }
+        Update: {
+          actor_user_id?: string | null
+          call_id?: string | null
+          created_at?: string
+          expected_opportunity_version?: number
+          format?: string
+          id?: string
+          lead_confirmed?: boolean
+          operation_id?: string
+          opportunity_id?: string
+          org_id?: string
+          processed_at?: string
+          result?: string | null
+          starts_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_creation_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_distribution_requests: {
+        Row: {
+          actor_user_id: string | null
+          call_id: string
+          created_at: string
+          id: string
+          offer_count: number
+          org_id: string
+          processed_at: string
+          result: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          call_id: string
+          created_at?: string
+          id?: string
+          offer_count?: number
+          org_id: string
+          processed_at?: string
+          result?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          call_id?: string
+          created_at?: string
+          id?: string
+          offer_count?: number
+          org_id?: string
+          processed_at?: string
+          result?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_distribution_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_holds: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          ends_at: string
+          expires_at: string
+          id: string
+          lead_confirmed: boolean
+          operation_id: string
+          opportunity_id: string
+          org_id: string
+          preferred_format: string
+          starts_at: string
+          status: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          ends_at: string
+          expires_at: string
+          id?: string
+          lead_confirmed?: boolean
+          operation_id: string
+          opportunity_id: string
+          org_id: string
+          preferred_format?: string
+          starts_at: string
+          status?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          ends_at?: string
+          expires_at?: string
+          id?: string
+          lead_confirmed?: boolean
+          operation_id?: string
+          opportunity_id?: string
+          org_id?: string
+          preferred_format?: string
+          starts_at?: string
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_holds_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "call_holds_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "call_holds_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_offer_accept_requests: {
+        Row: {
+          actor_user_id: string
+          assignment_id: string | null
+          call_id: string
+          created_at: string
+          expected_call_version: number
+          id: string
+          offer_id: string
+          org_id: string
+          processed_at: string
+          result: string | null
+        }
+        Insert: {
+          actor_user_id?: string
+          assignment_id?: string | null
+          call_id: string
+          created_at?: string
+          expected_call_version: number
+          id?: string
+          offer_id: string
+          org_id: string
+          processed_at?: string
+          result?: string | null
+        }
+        Update: {
+          actor_user_id?: string
+          assignment_id?: string | null
+          call_id?: string
+          created_at?: string
+          expected_call_version?: number
+          id?: string
+          offer_id?: string
+          org_id?: string
+          processed_at?: string
+          result?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_offer_accept_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_offers: {
+        Row: {
+          call_id: string
+          created_at: string
+          expires_at: string
+          id: string
+          offer_type: string
+          org_id: string
+          provider_response: Json | null
+          recipient_membership_id: string
+          responded_at: string | null
+          round: number
+          sent_at: string | null
+          status: string
+        }
+        Insert: {
+          call_id: string
+          created_at?: string
+          expires_at: string
+          id?: string
+          offer_type: string
+          org_id: string
+          provider_response?: Json | null
+          recipient_membership_id: string
+          responded_at?: string | null
+          round: number
+          sent_at?: string | null
+          status?: string
+        }
+        Update: {
+          call_id?: string
+          created_at?: string
+          expires_at?: string
+          id?: string
+          offer_type?: string
+          org_id?: string
+          provider_response?: Json | null
+          recipient_membership_id?: string
+          responded_at?: string | null
+          round?: number
+          sent_at?: string | null
+          status?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_offers_call_id_org_id_fkey"
+            columns: ["call_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "calls"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "call_offers_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "call_offers_recipient_membership_id_org_id_fkey"
+            columns: ["recipient_membership_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      call_result_requests: {
+        Row: {
+          actor_user_id: string
+          call_id: string
+          call_result_id: string | null
+          context: string | null
+          created_at: string
+          expected_call_version: number
+          id: string
+          next_action: string | null
+          org_id: string
+          processed_at: string
+          reason: string | null
+          result: string
+        }
+        Insert: {
+          actor_user_id?: string
+          call_id: string
+          call_result_id?: string | null
+          context?: string | null
+          created_at?: string
+          expected_call_version: number
+          id?: string
+          next_action?: string | null
+          org_id: string
+          processed_at?: string
+          reason?: string | null
+          result: string
+        }
+        Update: {
+          actor_user_id?: string
+          call_id?: string
+          call_result_id?: string | null
+          context?: string | null
+          created_at?: string
+          expected_call_version?: number
+          id?: string
+          next_action?: string | null
+          org_id?: string
+          processed_at?: string
+          reason?: string | null
+          result?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_result_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_results: {
+        Row: {
+          call_id: string
+          context: string | null
+          id: string
+          next_action: string | null
+          org_id: string
+          reason: string | null
+          recorded_at: string
+          recorded_by: string
+          result: string
+        }
+        Insert: {
+          call_id: string
+          context?: string | null
+          id?: string
+          next_action?: string | null
+          org_id: string
+          reason?: string | null
+          recorded_at?: string
+          recorded_by: string
+          result: string
+        }
+        Update: {
+          call_id?: string
+          context?: string | null
+          id?: string
+          next_action?: string | null
+          org_id?: string
+          reason?: string | null
+          recorded_at?: string
+          recorded_by?: string
+          result?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_results_call_id_org_id_fkey"
+            columns: ["call_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "calls"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "call_results_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      call_settings_requests: {
+        Row: {
+          actor_user_id: string
+          can_receive_calls: boolean
+          created_at: string
+          id: string
+          is_preferred_receiver: boolean
+          membership_id: string
+          operation_id: string
+          org_id: string
+          processed_at: string
+          receive_urgent_call_alerts: boolean
+        }
+        Insert: {
+          actor_user_id?: string
+          can_receive_calls: boolean
+          created_at?: string
+          id?: string
+          is_preferred_receiver?: boolean
+          membership_id: string
+          operation_id: string
+          org_id: string
+          processed_at?: string
+          receive_urgent_call_alerts?: boolean
+        }
+        Update: {
+          actor_user_id?: string
+          can_receive_calls?: boolean
+          created_at?: string
+          id?: string
+          is_preferred_receiver?: boolean
+          membership_id?: string
+          operation_id?: string
+          org_id?: string
+          processed_at?: string
+          receive_urgent_call_alerts?: boolean
+        }
+        Relationships: [
+          {
+            foreignKeyName: "call_settings_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      calls: {
+        Row: {
+          assigned_membership_id: string | null
+          blocked_until: string
+          completed_at: string | null
+          created_at: string
+          ends_at: string
+          format: string
+          hold_id: string
+          id: string
+          nominal_membership_id: string | null
+          nominal_substitution_allowed: boolean
+          operation_id: string
+          opportunity_id: string
+          org_id: string
+          reschedule_count: number
+          starts_at: string
+          status: string
+          updated_at: string
+          version: number
+          video_link: string | null
+        }
+        Insert: {
+          assigned_membership_id?: string | null
+          blocked_until: string
+          completed_at?: string | null
+          created_at?: string
+          ends_at: string
+          format?: string
+          hold_id: string
+          id?: string
+          nominal_membership_id?: string | null
+          nominal_substitution_allowed?: boolean
+          operation_id: string
+          opportunity_id: string
+          org_id: string
+          reschedule_count?: number
+          starts_at: string
+          status?: string
+          updated_at?: string
+          version?: number
+          video_link?: string | null
+        }
+        Update: {
+          assigned_membership_id?: string | null
+          blocked_until?: string
+          completed_at?: string | null
+          created_at?: string
+          ends_at?: string
+          format?: string
+          hold_id?: string
+          id?: string
+          nominal_membership_id?: string | null
+          nominal_substitution_allowed?: boolean
+          operation_id?: string
+          opportunity_id?: string
+          org_id?: string
+          reschedule_count?: number
+          starts_at?: string
+          status?: string
+          updated_at?: string
+          version?: number
+          video_link?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "calls_assigned_membership_id_org_id_fkey"
+            columns: ["assigned_membership_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "calls_hold_id_org_id_fkey"
+            columns: ["hold_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "call_holds"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "calls_nominal_membership_id_org_id_fkey"
+            columns: ["nominal_membership_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "calls_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "calls_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "calls_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -1192,6 +1938,99 @@ export type Database = {
           },
           {
             foreignKeyName: "capacity_snapshots_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      checklist_items: {
+        Row: {
+          created_at: string
+          id: string
+          label: string
+          org_id: string
+          position: number
+          required: boolean
+          template_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          label: string
+          org_id: string
+          position: number
+          required?: boolean
+          template_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          label?: string
+          org_id?: string
+          position?: number
+          required?: boolean
+          template_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_items_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "checklist_items_template_id_org_id_fkey"
+            columns: ["template_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_templates"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      checklist_templates: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          operation_id: string
+          org_id: string
+          stage_code: string
+          status: string
+          version: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          operation_id: string
+          org_id: string
+          stage_code: string
+          status?: string
+          version?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          operation_id?: string
+          org_id?: string
+          stage_code?: string
+          status?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "checklist_templates_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "checklist_templates_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -2446,6 +3285,63 @@ export type Database = {
           },
         ]
       }
+      membership_call_settings: {
+        Row: {
+          can_receive_calls: boolean
+          is_preferred_receiver: boolean
+          membership_id: string
+          operation_id: string
+          org_id: string
+          receive_urgent_call_alerts: boolean
+          temporary_unavailable_from: string | null
+          temporary_unavailable_until: string | null
+          unavailable_reason: string | null
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          can_receive_calls?: boolean
+          is_preferred_receiver?: boolean
+          membership_id: string
+          operation_id: string
+          org_id: string
+          receive_urgent_call_alerts?: boolean
+          temporary_unavailable_from?: string | null
+          temporary_unavailable_until?: string | null
+          unavailable_reason?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Update: {
+          can_receive_calls?: boolean
+          is_preferred_receiver?: boolean
+          membership_id?: string
+          operation_id?: string
+          org_id?: string
+          receive_urgent_call_alerts?: boolean
+          temporary_unavailable_from?: string | null
+          temporary_unavailable_until?: string | null
+          unavailable_reason?: string | null
+          updated_at?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "membership_call_settings_membership_id_org_id_fkey"
+            columns: ["membership_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "memberships"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "membership_call_settings_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
       membership_change_requests: {
         Row: {
           actor_user_id: string
@@ -3237,6 +4133,64 @@ export type Database = {
             columns: ["pipeline_stage_id", "org_id"]
             isOneToOne: false
             referencedRelation: "pipeline_stages"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      opportunity_checklists: {
+        Row: {
+          completion: Json
+          created_at: string
+          id: string
+          items_snapshot: Json
+          opportunity_id: string
+          org_id: string
+          template_id: string
+          template_version: number
+          updated_at: string
+        }
+        Insert: {
+          completion?: Json
+          created_at?: string
+          id?: string
+          items_snapshot: Json
+          opportunity_id: string
+          org_id: string
+          template_id: string
+          template_version: number
+          updated_at?: string
+        }
+        Update: {
+          completion?: Json
+          created_at?: string
+          id?: string
+          items_snapshot?: Json
+          opportunity_id?: string
+          org_id?: string
+          template_id?: string
+          template_version?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "opportunity_checklists_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "opportunity_checklists_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "opportunity_checklists_template_id_org_id_fkey"
+            columns: ["template_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "checklist_templates"
             referencedColumns: ["id", "org_id"]
           },
         ]
