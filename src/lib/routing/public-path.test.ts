@@ -5,6 +5,8 @@ import { isPublicPath } from "./public-path";
 describe("isPublicPath", () => {
   it.each([
     "/",
+    "/manifest.webmanifest",
+    "/sw.js",
     "/login",
     "/auth/callback",
     "/api/webhooks/whatsapp/connection-id",
@@ -14,7 +16,14 @@ describe("isPublicPath", () => {
     expect(isPublicPath(pathname)).toBe(true);
   });
 
-  it.each(["/app", "/api/private", "/api/internal/other", "/api/webhookish"])(
+  it.each([
+    "/app",
+    "/sw.js/other",
+    "/manifest.webmanifest/other",
+    "/api/private",
+    "/api/internal/other",
+    "/api/webhookish",
+  ])(
     "mantem a rota protegida %s",
     (pathname) => {
       expect(isPublicPath(pathname)).toBe(false);
