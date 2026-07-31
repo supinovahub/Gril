@@ -1,0 +1,139 @@
+.page {
+  max-width: 860px;
+  margin: 0 auto;
+}
+
+.header {
+  margin-bottom: 28px;
+}
+
+.header p:first-child {
+  margin: 0 0 8px;
+  color: var(--accent-dark);
+  font-size: 10px;
+  font-weight: 780;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.header h1 {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 42px);
+  letter-spacing: -0.045em;
+}
+
+.header p:last-child {
+  margin: 10px 0 0;
+  color: var(--ink-muted);
+}
+
+.panel {
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.panelHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 20px 22px;
+  border-bottom: 1px solid var(--border);
+}
+
+.panelHeader svg {
+  color: var(--accent);
+}
+
+.panelHeader h2 {
+  margin: 0;
+  font-size: 15px;
+}
+
+.form {
+  display: grid;
+  gap: 22px;
+  padding: 24px 22px;
+}
+
+.field {
+  display: grid;
+  gap: 8px;
+}
+
+.field label {
+  font-size: 12px;
+  font-weight: 720;
+}
+
+.field input {
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  border: 1px solid var(--border);
+  border-radius: 9px;
+  background: #fff;
+}
+
+.field input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(217, 101, 43, 0.12);
+  outline: 0;
+}
+
+.field input:disabled {
+  background: #f5f1eb;
+  color: #817a71;
+}
+
+.field p,
+.field small {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.field small {
+  color: var(--danger);
+}
+
+.formFooter {
+  display: flex;
+  justify-content: flex-end;
+  padding-top: 18px;
+  border-top: 1px solid #ece6de;
+}
+
+.formFooter button {
+  display: inline-flex;
+  height: 42px;
+  align-items: center;
+  gap: 8px;
+  padding: 0 16px;
+  border: 1px solid var(--accent);
+  border-radius: 9px;
+  background: var(--accent);
+  color: #fff;
+  font-weight: 700;
+}
+
+.formFooter button:disabled {
+  opacity: 0.6;
+}
+
+.feedback {
+  padding: 10px 12px;
+  margin: 0;
+  border: 1px solid #e6c0ba;
+  border-radius: 9px;
+  background: #fff6f4;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.success {
+  border-color: #b8d4c7;
+  background: #f2f8f5;
+  color: var(--positive);
+}

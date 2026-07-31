@@ -1,0 +1,96 @@
+.page {
+  display: grid;
+  min-height: 100vh;
+  place-items: center;
+  padding: 28px;
+}
+
+.panel {
+  width: min(100%, 560px);
+  padding: clamp(28px, 6vw, 52px);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.brand {
+  margin-bottom: 46px;
+  font-size: 15px;
+  font-weight: 750;
+}
+
+.eyebrow {
+  margin: 0 0 10px;
+  color: var(--accent-dark);
+  font-size: 11px;
+  font-weight: 750;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.panel h1 {
+  margin: 0;
+  font-size: clamp(30px, 6vw, 43px);
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+}
+
+.lead {
+  margin: 18px 0 30px;
+  color: var(--ink-muted);
+  line-height: 1.65;
+}
+
+.notice {
+  padding: 14px;
+  margin-bottom: 22px;
+  border-left: 3px solid var(--accent);
+  background: #f8eee7;
+  color: #5b4b40;
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.primaryButton,
+.secondaryLink {
+  display: inline-flex;
+  min-height: 46px;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 0 18px;
+  border-radius: var(--radius-control);
+  font-weight: 720;
+}
+
+.primaryButton {
+  width: 100%;
+  border: 1px solid var(--accent);
+  background: var(--accent);
+  color: #fff;
+}
+
+.primaryButton:disabled {
+  opacity: 0.6;
+}
+
+.secondaryLink {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: #fff;
+}
+
+.accountActions {
+  display: grid;
+  gap: 10px;
+}
+
+.error {
+  padding: 11px 13px;
+  border: 1px solid #e6c0ba;
+  border-radius: 10px;
+  background: #fff6f4;
+  color: var(--danger);
+  font-size: 13px;
+}
