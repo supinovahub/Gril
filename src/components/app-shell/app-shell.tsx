@@ -2,6 +2,8 @@ import {
   Building2,
   ChevronDown,
   CircleUserRound,
+  ContactRound,
+  KanbanSquare,
   LayoutDashboard,
   LockKeyhole,
   LogOut,
@@ -18,7 +20,7 @@ import {
 } from "@/lib/auth/session";
 import styles from "./app-shell.module.css";
 
-const futureItems = ["Contatos", "Campanhas", "Pipeline", "Agenda"];
+const futureItems = ["Campanhas", "Agenda", "Pedro"];
 
 function initials(name: string | undefined, email: string) {
   const source = name?.trim() || email;
@@ -80,6 +82,14 @@ export function AppShell({
             <CircleUserRound size={18} aria-hidden="true" /> Meu perfil
           </Link>
 
+          <p className={styles.navLabel}>Comercial</p>
+          <Link className={styles.navItem} href="/app/leads">
+            <ContactRound size={18} aria-hidden="true" /> Leads
+          </Link>
+          <Link className={styles.navItem} href="/app/kanban">
+            <KanbanSquare size={18} aria-hidden="true" /> Kanban
+          </Link>
+
           <p className={styles.navLabel}>Próximas fases</p>
           {futureItems.map((item) => (
             <span className={styles.navItemDisabled} key={item}>
@@ -118,6 +128,8 @@ export function AppShell({
           <Link href="/app/equipe"><UsersRound size={20} /><span>Equipe</span></Link>
         ) : null}
         <Link href="/app/perfil"><Settings2 size={20} /><span>Perfil</span></Link>
+        <Link href="/app/leads"><ContactRound size={20} /><span>Leads</span></Link>
+        <Link href="/app/kanban"><KanbanSquare size={20} /><span>Kanban</span></Link>
       </nav>
     </div>
   );
