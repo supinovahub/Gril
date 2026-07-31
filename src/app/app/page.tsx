@@ -48,12 +48,12 @@ export default async function DashboardPage() {
     <div className={styles.page}>
       <header className={styles.pageHeader}>
         <div>
-          <p className={styles.eyebrow}>Operação local</p>
+          <p className={styles.eyebrow}>Painel operacional</p>
           <h1>Bom dia, {viewer.profile?.full_name.split(" ")[0] ?? "time"}</h1>
-          <p>{viewer.organization!.name} está isolada e pronta para o piloto monitorado.</p>
+          <p>{viewer.organization!.name} está isolada por organização e preparada para homologação controlada.</p>
         </div>
         <span className={styles.phaseBadge}>
-          <CheckCircle2 size={15} aria-hidden="true" /> MVP local concluído
+          <CheckCircle2 size={15} aria-hidden="true" /> Homologação em andamento
         </span>
       </header>
 

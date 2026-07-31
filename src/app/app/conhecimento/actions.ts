@@ -86,3 +86,33 @@ export async function createFaqAction(formData: FormData) {
   revalidatePath("/app/conhecimento");
   redirect("/app/conhecimento?sucesso=faq-publicada");
 }
+
+export async function createProjectFactAction(formData: FormData) {
+  const parsed = z.object({
+    projectId: z.string().uuid(), code: z.string().trim().regex(/^[a-z0-9_]{2,80}$/),
+    valueText: z.string().trim().min(1).max(2000), unit: z.string().trim().max(60).optional(),
+    sourceName: z.string().trim().min(2).max(160), referenceDate: z.string().date(), validUntil: z.string().date(),
+  }).safeParse({ projectId: formData.get("projectId"), code: formData.get("code"), valueText: formData.get("valueText"),
+    unit: formData.get("unit") || undefined, sourceName: formData.get("sourceName"), referenceDate: formData.get("referenceDate"), validUntil: formData.get("validUntil") });
+  if (!parsed.success) redirect(`/app/conhecimento?erro=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Revise o fato.")}`);
+  if (parsed.data.validUntil < parsed.data.referenceDate) redirect(`/app/conhecimento?erro=${encodeURIComponent("A validade deve ser posterior à data de referência.")}`);
+  const viewer = await requireActiveViewer(); const supabase = await createClient();
+  const { error } = await supabase.from("project_facts").insert({ org_id: viewer.organization!.id, project_id: parsed.data.projectId,
+    code: parsed.data.code, value_text: parsed.data.valueText, unit: parsed.data.unit ?? null, source_name: parsed.data.sourceName,
+    reference_date: parsed.data.referenceDate, valid_until: parsed.data.validUntil, confidence: 1, active: true });
+  if (error) redirect(`/app/conhecimento?erro=${encodeURIComponent("Não foi possível salvar o fato aprovado.")}`);
+  revalidatePath("/app/conhecimento"); redirect("/app/conhecimento?sucesso=fato-criado");
+}
+
+export async function createProjectMediaAction(formData: FormData) {
+  const parsed = z.object({ projectId: z.string().uuid(), mediaType: z.enum(["cover","image","pdf","official_link"]),
+    title: z.string().trim().min(2).max(160), externalUrl: z.string().url().refine((value) => value.startsWith("https://")),
+    sortOrder: z.coerce.number().int().min(0).max(1000) }).safeParse({ projectId: formData.get("projectId"), mediaType: formData.get("mediaType"),
+      title: formData.get("title"), externalUrl: formData.get("externalUrl"), sortOrder: formData.get("sortOrder") ?? 0 });
+  if (!parsed.success) redirect(`/app/conhecimento?erro=${encodeURIComponent("Revise a mídia e use uma URL HTTPS.")}`);
+  const viewer = await requireActiveViewer(); const supabase = await createClient();
+  const { error } = await supabase.from("project_media").insert({ org_id: viewer.organization!.id, project_id: parsed.data.projectId,
+    media_type: parsed.data.mediaType, external_url: parsed.data.externalUrl, title: parsed.data.title, sort_order: parsed.data.sortOrder, active: true });
+  if (error) redirect(`/app/conhecimento?erro=${encodeURIComponent("Não foi possível vincular a mídia.")}`);
+  revalidatePath("/app/conhecimento"); redirect("/app/conhecimento?sucesso=midia-criada");
+}

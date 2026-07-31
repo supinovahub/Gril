@@ -36,11 +36,6 @@ const queueMessageSchema = z.object({
   message: z.record(z.string(), z.unknown()),
 });
 
-const executionResultSchema = z.object({
-  status: z.string(),
-  execution_id: z.string().uuid().nullable().optional(),
-});
-
 const outboundClaimSchema = z.object({
   status: z.string(),
   message_id: z.string().uuid().optional(),
@@ -119,6 +114,7 @@ function controlIntent(message: { body: string | null; content_type: string }) {
 
 async function runAiExecution(executionId: string) {
   const admin = createAdminClient();
+  let activeModelProfileId: string | null = null;
   const { data: started, error: startError } = await admin.rpc("start_ai_execution", { p_execution_id: executionId });
   if (startError) throw startError;
   if (!started) return "ignored";
@@ -130,6 +126,7 @@ async function runAiExecution(executionId: string) {
       .eq("id", executionId)
       .single();
     if (executionError || !execution.model_profile_id) throw executionError ?? new Error("model_profile_missing");
+    activeModelProfileId = execution.model_profile_id;
     const { data: model, error: modelError } = await admin
       .from("model_profiles")
       .select("*")
@@ -191,7 +188,7 @@ async function runAiExecution(executionId: string) {
     const opportunityId = execution.conversation_id
       ? (await admin.from("conversations").select("opportunity_id,operation_id").eq("id", execution.conversation_id).single()).data?.opportunity_id
       : null;
-    const [definitionsResult, valuesResult, projectsResult, faqEntriesResult] = await Promise.all([
+    const [definitionsResult, valuesResult, projectsResult, faqEntriesResult, projectFactsResult, projectMediaResult] = await Promise.all([
       admin.from("qualification_definitions")
         .select("id,code,name,intent,answer_type,required,priority,suggested_order")
         .eq("org_id", execution.org_id).eq("active", true).order("suggested_order"),
@@ -204,9 +201,13 @@ async function runAiExecution(executionId: string) {
         .select("id,name,region,neighborhood,summary,delivery_type,min_price,min_down_payment,commercial_priority,valid_until")
         .eq("org_id", execution.org_id).eq("status", "active").eq("recommendable", true).limit(50),
       admin.from("faq_entries").select("id,canonical_question").eq("org_id", execution.org_id).eq("status", "published").limit(50),
+      admin.from("project_facts").select("project_id,code,value_text,value_number,unit,source_name,reference_date,valid_until")
+        .eq("org_id", execution.org_id).eq("active", true),
+      admin.from("project_media").select("project_id,media_type,title,external_url,storage_path,sort_order")
+        .eq("org_id", execution.org_id).eq("active", true).order("sort_order"),
     ]);
-    if (definitionsResult.error || valuesResult.error || projectsResult.error || faqEntriesResult.error) {
-      throw definitionsResult.error ?? valuesResult.error ?? projectsResult.error ?? faqEntriesResult.error;
+    if (definitionsResult.error || valuesResult.error || projectsResult.error || faqEntriesResult.error || projectFactsResult.error || projectMediaResult.error) {
+      throw definitionsResult.error ?? valuesResult.error ?? projectsResult.error ?? faqEntriesResult.error ?? projectFactsResult.error ?? projectMediaResult.error;
     }
     const definitions = definitionsResult.data ?? [];
     const definitionById = new Map(definitions.map((item) => [item.id, item]));
@@ -247,7 +248,9 @@ async function runAiExecution(executionId: string) {
       messages: conversationMessages,
       businessContext: {
         now_iso: new Date().toISOString(),
-        timezone: "America/Sao_Paulo",
+        timezone: execution.operation_id
+          ? (await admin.from("operations").select("timezone").eq("id", execution.operation_id).single()).data?.timezone ?? "America/Sao_Paulo"
+          : "America/Sao_Paulo",
         opportunity_id: opportunityId,
         qualification_definitions: definitions.map((definition) => ({
           code: definition.code,
@@ -259,6 +262,8 @@ async function runAiExecution(executionId: string) {
         current_qualification: currentValues,
         previous_conversation_summary: priorSummary,
         active_projects: projects,
+        approved_project_facts: (projectFactsResult.data ?? []).filter((fact) => !fact.valid_until || fact.valid_until >= new Date().toISOString().slice(0, 10)),
+        approved_project_media: projectMediaResult.data ?? [],
         published_faqs: (faqVersionsResult.data ?? []).map((faq) => ({
           question: faqQuestionById.get(faq.faq_entry_id),
           answer: faq.base_answer,
@@ -315,6 +320,40 @@ async function runAiExecution(executionId: string) {
     return "completed";
   } catch (error) {
     if (error instanceof OpenAiRuntimeError && error.retryable) {
+      const { data: execution } = await admin
+        .from("ai_executions")
+        .select("org_id")
+        .eq("id", executionId)
+        .single();
+      const { data: settings } = execution
+        ? await admin
+          .from("organization_settings")
+          .select("fallback_model_profile_id")
+          .eq("org_id", execution.org_id)
+          .single()
+        : { data: null };
+      const fallbackId = settings?.fallback_model_profile_id ?? null;
+      if (fallbackId && fallbackId !== activeModelProfileId) {
+        const { data: fallback } = await admin
+          .from("model_profiles")
+          .select("id,integration_account_id,secret_reference")
+          .eq("id", fallbackId)
+          .eq("org_id", execution!.org_id)
+          .maybeSingle();
+        if (fallback?.integration_account_id && fallback.secret_reference) {
+          await admin.rpc("retry_ai_execution", {
+            p_error_code: `${error.code}_fallback`,
+            p_error_redacted: "Falha transitória no modelo principal; fallback aprovado acionado.",
+            p_execution_id: executionId,
+          });
+          const { error: fallbackUpdateError } = await admin
+            .from("ai_executions")
+            .update({ model_profile_id: fallback.id })
+            .eq("id", executionId)
+            .eq("status", "queued");
+          if (!fallbackUpdateError) return runAiExecution(executionId);
+        }
+      }
       await admin.rpc("retry_ai_execution", {
         p_error_code: error.code,
         p_error_redacted: error.redactedMessage,
@@ -347,10 +386,8 @@ async function processAiMessage(message: Record<string, unknown>) {
       const { data: media } = await admin.from("message_media_sources").select("status").eq("message_id", messageId).maybeSingle();
       if (!media || ["pending", "processing"].includes(media.status)) return;
     }
-    const { data, error } = await admin.rpc("ensure_inbound_ai_execution", { p_message_id: messageId });
+    const { error } = await admin.rpc("schedule_inbound_ai_aggregation", { p_message_id: messageId });
     if (error) throw error;
-    const parsed = executionResultSchema.parse(data);
-    if (parsed.execution_id && ["queued", "existing"].includes(parsed.status)) await runAiExecution(parsed.execution_id);
     return;
   }
   if (eventType.startsWith("ai.")) {
@@ -680,7 +717,14 @@ async function drainQueue(queue: QueueName) {
         await admin.rpc("runtime_queue_retry", { p_delay_seconds: 60, p_msg_id: item.msg_id, p_queue_name: queue });
         retried += 1;
       } else {
-        await admin.rpc("runtime_queue_archive", { p_msg_id: item.msg_id, p_queue_name: queue });
+        await admin.rpc("runtime_queue_dead_letter", {
+          p_error_code: itemError instanceof Error ? itemError.name : "runtime_queue_error",
+          p_error_redacted: itemError instanceof Error ? itemError.message.slice(0, 500) : "Falha definitiva no processamento da fila.",
+          p_msg_id: item.msg_id,
+          p_payload: item.message as Json,
+          p_queue_name: queue,
+          p_read_count: item.read_ct,
+        });
       }
     }
   }

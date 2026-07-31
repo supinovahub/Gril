@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { conversationAction, sendHumanMessageAction } from "../actions";
+import { conversationAction, reviewAiSuggestionAction, sendHumanMessageAction } from "../actions";
 import styles from "../inbox.module.css";
 
 export default async function ConversationPage({
@@ -18,10 +18,11 @@ export default async function ConversationPage({
   const { id } = await params;
   const feedback = await searchParams;
   const supabase = await createClient();
-  const [{ data: conversation }, { data: messages }, { data: summary }] = await Promise.all([
+  const [{ data: conversation }, { data: messages }, { data: summary }, { data: suggestions }] = await Promise.all([
     supabase.from("conversations").select("*,contacts!inner(name,contact_phones(e164,is_primary,status)),opportunities!inner(id,pipeline_stages!inner(name)),whatsapp_connections!inner(name,provider)").eq("id", id).maybeSingle(),
     supabase.from("messages").select("*").eq("conversation_id", id).order("created_at").limit(300),
     supabase.from("conversation_summaries").select("summary,facts,created_at").eq("conversation_id", id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("ai_suggestions").select("id,body,status,created_at").eq("conversation_id", id).eq("status", "pending").order("created_at", { ascending: false }),
   ]);
   if (!conversation) notFound();
 
@@ -43,6 +44,14 @@ export default async function ConversationPage({
 
       <div className={styles.chatLayout}>
         <section className={styles.chatPanel}>
+          {suggestions?.length ? <div className={styles.suggestionStack}>
+            {suggestions.map((suggestion) => <form action={reviewAiSuggestionAction} className={styles.suggestionCard} key={suggestion.id}>
+              <input name="suggestionId" type="hidden" value={suggestion.id} /><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} />
+              <header><span><Bot size={15} /> Sugestão do Pedro</span><small>{new Date(suggestion.created_at).toLocaleString("pt-BR")}</small></header>
+              <textarea defaultValue={suggestion.body} maxLength={4096} name="body" required rows={4} />
+              <footer><button name="action" type="submit" value="send"><Send size={14} /> Aprovar e enviar</button><button className={styles.discardButton} formNoValidate name="action" type="submit" value="discard"><X size={14} /> Descartar</button></footer>
+            </form>)}
+          </div> : null}
           <div className={styles.messages}>
             {messages?.map((message) => (
               <article className={message.direction === "inbound" ? styles.inbound : styles.outbound} key={message.id}>

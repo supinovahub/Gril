@@ -94,3 +94,30 @@ export async function conversationAction(formData: FormData) {
   revalidatePath("/app/inbox");
 }
 
+export async function reviewAiSuggestionAction(formData: FormData) {
+  const parsed = z.object({
+    suggestionId: z.string().uuid(), conversationId: z.string().uuid(),
+    action: z.enum(["send", "discard"]), body: z.string().trim().max(4096).optional(),
+    expectedVersion: z.coerce.number().int().positive(),
+  }).refine((value) => value.action === "discard" || Boolean(value.body), { message: "A mensagem não pode ficar vazia." })
+    .safeParse({
+      suggestionId: formData.get("suggestionId"), conversationId: formData.get("conversationId"),
+      action: formData.get("action"), body: formData.get("body") || undefined,
+      expectedVersion: formData.get("expectedVersion"),
+    });
+  if (!parsed.success) return;
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { error } = await supabase.from("ai_suggestion_review_requests").insert({
+    org_id: viewer.organization!.id, suggestion_id: parsed.data.suggestionId, action: parsed.data.action,
+    edited_body: parsed.data.body ?? null, expected_conversation_version: parsed.data.expectedVersion,
+    actor_user_id: viewer.userId,
+  });
+  if (error) {
+    redirect(`/app/inbox/${parsed.data.conversationId}?erro=${encodeURIComponent(errorText(error.message))}`);
+  }
+  revalidatePath(`/app/inbox/${parsed.data.conversationId}`);
+  revalidatePath("/app/inbox");
+  redirect(`/app/inbox/${parsed.data.conversationId}?sucesso=sugestao-${parsed.data.action}`);
+}
+

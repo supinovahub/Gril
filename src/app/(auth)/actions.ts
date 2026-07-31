@@ -72,7 +72,7 @@ export async function registerAction(
     options: {
       data: { full_name: parsed.data.fullName },
       emailRedirectTo: `${appUrl()}/auth/callback?next=${encodeURIComponent(
-        safeNextPath(parsed.data.next, "/aguardando-aprovacao"),
+        safeNextPath(parsed.data.next, "/onboarding"),
       )}`,
     },
   });
@@ -85,7 +85,7 @@ export async function registerAction(
   }
 
   if (data.session) {
-    redirect(safeNextPath(parsed.data.next, "/aguardando-aprovacao"));
+    redirect(safeNextPath(parsed.data.next, "/onboarding"));
   }
 
   return {
@@ -149,7 +149,7 @@ export async function resetPasswordAction(
     };
   }
 
-  await supabase.auth.signOut();
+  await supabase.auth.signOut({ scope: "global" });
   redirect("/login?message=senha-atualizada");
 }
 
@@ -157,7 +157,7 @@ export async function signOutAction() {
   const supabase = await createClient();
   const { data } = await supabase.auth.getClaims();
   if (data?.claims?.sub) {
-    await supabase.auth.signOut();
+    await supabase.auth.signOut({ scope: "global" });
   }
   redirect("/login");
 }

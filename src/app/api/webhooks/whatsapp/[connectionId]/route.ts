@@ -113,6 +113,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   let ingested = 0;
   let duplicates = 0;
+  let operational = 0;
   for (const status of normalized.statuses) {
     await admin.rpc("apply_provider_message_status", {
       p_connection_id: connectionId,
@@ -134,6 +135,17 @@ export async function POST(request: Request, { params }: RouteParams) {
     });
   }
   for (const message of normalized.inbound) {
+    const { data: operationalResult, error: operationalError } = await admin.rpc("process_operational_whatsapp_reply", {
+      p_body: message.body ?? "",
+      p_connection_id: connectionId,
+      p_external_event_id: message.externalEventId,
+      p_from_e164: message.fromE164,
+    });
+    if (operationalError) return NextResponse.json({ error: "operational_reply_rejected" }, { status: 409 });
+    if (operationalResult && typeof operationalResult === "object" && !Array.isArray(operationalResult) && operationalResult.operational === true) {
+      operational += 1;
+      continue;
+    }
     const { data, error } = await admin
       .from("webhook_ingest_requests")
       .insert({
@@ -172,5 +184,5 @@ export async function POST(request: Request, { params }: RouteParams) {
       }
     }
   }
-  return NextResponse.json({ received: true, ingested, duplicates, statuses: normalized.statuses.length, mutations: normalized.mutations.length });
+  return NextResponse.json({ received: true, ingested, duplicates, operational, statuses: normalized.statuses.length, mutations: normalized.mutations.length });
 }

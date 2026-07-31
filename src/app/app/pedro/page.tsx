@@ -3,7 +3,7 @@ import { Bot, BrainCircuit, CheckCircle2, CircleDashed, KeyRound, RefreshCw, Shi
 import { retestIntegrationAction, revokeIntegrationAction } from "@/app/app/integration-actions";
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { changeGlobalAiModeAction, configureModelAction, connectOpenAiAction, createPersonaDraftAction, publishPersonaAction } from "./actions";
+import { changeGlobalAiModeAction, configureFallbackModelAction, configureModelAction, connectOpenAiAction, createPersonaDraftAction, publishPersonaAction } from "./actions";
 import styles from "./pedro.module.css";
 
 export default async function PedroPage({
@@ -87,6 +87,10 @@ export default async function PedroPage({
                 </form>
               ))}
             </div>
+            {viewer.membership?.role === "owner" ? <form action={configureFallbackModelAction} className={styles.keyForm}>
+              <label><span>Modelo secundário para falhas transitórias</span><select defaultValue={settings?.fallback_model_profile_id ?? ""} name="fallbackModelProfileId" required><option value="">Selecione</option>{modelsResult.data?.filter((profile) => profile.secret_reference && !profile.is_default).map((profile) => <option key={profile.id} value={profile.id}>{profile.name} · {profile.model_identifier}</option>)}</select></label>
+              <button type="submit">Salvar fallback</button>
+            </form> : null}
           </section>
         </div>
 
@@ -96,7 +100,7 @@ export default async function PedroPage({
             <form action={changeGlobalAiModeAction} className={styles.modeForm}>
               {["off", "shadow", "assisted", "production"].map((mode) => <button className={settings?.ai_global_mode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{mode}</button>)}
             </form>
-            <p className={styles.notice}>Produção exige modelo e WhatsApp ativos. Orçamento atingido gera alerta, mas não pausa Pedro automaticamente.</p>
+            <p className={styles.notice}>Produção exige identidade institucional, persona, regras, qualificação, conhecimento válido, modelo principal e fallback, canal saudável e regressão real aprovada.</p>
           </section>
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Últimas execuções</p><h2>Rastreabilidade</h2></span></div>

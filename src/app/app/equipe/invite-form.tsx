@@ -100,6 +100,7 @@ export function InviteForm({
         <div className={styles.field}>
           <label htmlFor="invite-expires">Validade</label>
           <select id="invite-expires" name="expiresDays" defaultValue={kind === "general" ? "30" : "7"}>
+            {kind === "general" ? <option value="never">Sem expiração</option> : null}
             <option value="1">1 dia</option>
             <option value="7">7 dias</option>
             <option value="15">15 dias</option>

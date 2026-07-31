@@ -11,6 +11,9 @@ export default async function PendingApprovalPage() {
   if (viewer.membership?.status === "active") {
     redirect("/app");
   }
+  if (!viewer.membership) {
+    redirect("/onboarding");
+  }
 
   const status = viewer.membership?.status ?? "sem vínculo";
   const isPending = status === "pending";

@@ -181,6 +181,34 @@ export async function changeGlobalAiModeAction(formData: FormData) {
     }
   }
 
-  await supabase.from("organization_settings").update({ ai_global_mode: mode.data }).eq("org_id", viewer.organization!.id);
+  const { error } = await supabase.from("organization_settings").update({ ai_global_mode: mode.data }).eq("org_id", viewer.organization!.id);
+  if (error) {
+    const reason = error.message.includes("institutional") ? "Complete a identidade institucional."
+      : error.message.includes("knowledge_or_rules") ? "Publique persona, regras, qualificação e ao menos um empreendimento válido."
+      : error.message.includes("models") ? "Configure modelo principal e fallback aprovado."
+      : error.message.includes("channel_unhealthy") ? "Teste um WhatsApp inbound ativo e saudável nos últimos 15 minutos."
+      : error.message.includes("regression") ? "Execute os 100 casos reais: mínimo de 90% geral e nenhum erro crítico."
+      : "O banco recusou a mudança de modo por um gate de segurança.";
+    redirect(`/app/pedro?erro=${encodeURIComponent(reason)}`);
+  }
   revalidatePath("/app/pedro");
+}
+
+export async function configureFallbackModelAction(formData: FormData) {
+  const profileId = z.string().uuid().safeParse(formData.get("fallbackModelProfileId"));
+  if (!profileId.success) redirect(`/app/pedro?erro=${encodeURIComponent("Selecione um modelo secundário aprovado.")}`);
+  const viewer = await requireActiveViewer();
+  if (viewer.membership?.role !== "owner") return;
+  const supabase = await createClient();
+  const { data: profile } = await supabase.from("model_profiles")
+    .select("id,integration_account_id,secret_reference,is_default")
+    .eq("id", profileId.data).eq("org_id", viewer.organization!.id).maybeSingle();
+  if (!profile?.integration_account_id || !profile.secret_reference || profile.is_default) {
+    redirect(`/app/pedro?erro=${encodeURIComponent("O fallback deve ser diferente do principal e possuir chave validada.")}`);
+  }
+  const { error } = await supabase.from("organization_settings")
+    .update({ fallback_model_profile_id: profile.id }).eq("org_id", viewer.organization!.id);
+  if (error) redirect(`/app/pedro?erro=${encodeURIComponent("Não foi possível salvar o fallback.")}`);
+  revalidatePath("/app/pedro");
+  redirect("/app/pedro?sucesso=fallback-configurado");
 }

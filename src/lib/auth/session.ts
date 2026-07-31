@@ -93,6 +93,9 @@ export async function requireViewer() {
 
 export async function requireActiveViewer() {
   const viewer = await requireViewer();
+  if (!viewer.membership) {
+    redirect("/onboarding");
+  }
   if (viewer.membership?.status !== "active" || !viewer.organization) {
     redirect("/aguardando-aprovacao");
   }

@@ -12,6 +12,6 @@ export default async function RegisterPage({
 }) {
   const { next } = await searchParams;
   return (
-    <RegisterForm nextPath={safeNextPath(next, "/aguardando-aprovacao")} />
+    <RegisterForm nextPath={safeNextPath(next, "/onboarding")} />
   );
 }

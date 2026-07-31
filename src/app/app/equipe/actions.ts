@@ -23,7 +23,7 @@ const inviteSchema = z
     email: z.string().trim().toLowerCase().optional(),
     role: z.enum(["manager", "broker"]),
     operationId: z.string().uuid().optional().or(z.literal("")),
-    expiresDays: z.coerce.number().int().min(1).max(30),
+    expiresDays: z.union([z.coerce.number().int().min(1).max(30), z.literal("never")]),
     maxUses: z.coerce.number().int().min(1).max(1000),
   })
   .refine(
@@ -73,9 +73,9 @@ export async function createInvitationAction(
 
   const token = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(token).digest("hex");
-  const expiresAt = new Date(
-    Date.now() + data.expiresDays * 24 * 60 * 60 * 1000,
-  ).toISOString();
+  const expiresAt = data.expiresDays === "never"
+    ? null
+    : new Date(Date.now() + data.expiresDays * 24 * 60 * 60 * 1000).toISOString();
   const supabase = await createClient();
 
   const { data: invitation, error } = await supabase

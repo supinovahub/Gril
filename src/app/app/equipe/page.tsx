@@ -259,7 +259,7 @@ export default async function TeamPage() {
                   <td>{invitation.kind === "general" ? "Link geral" : "Individual"}</td>
                   <td>{invitation.email ?? "Qualquer corretor"}</td>
                   <td>{invitation.used_count}/{invitation.max_uses}</td>
-                  <td>{new Intl.DateTimeFormat("pt-BR").format(new Date(invitation.expires_at))}</td>
+                  <td>{invitation.expires_at ? new Intl.DateTimeFormat("pt-BR").format(new Date(invitation.expires_at)) : "Sem expiração"}</td>
                   <td>{invitation.status}</td>
                 </tr>
               ))}
