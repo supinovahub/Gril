@@ -19,13 +19,23 @@
 - cem casos de regressão ativos, sendo cinquenta e dois críticos;
 - Supabase Cron configurável para chamar o worker HTTPS sem depender do plano de Cron da Vercel.
 
-## Bloqueios externos para operação real
+## Infraestrutura concluída em 31/07/2026
 
-1. Fazer o deploy final em uma URL HTTPS pública e configurar `NEXT_PUBLIC_APP_URL`, `GRIL_WEBHOOK_INGEST_SECRET`, `GRIL_WORKER_SECRET` e as três variáveis de web push.
-2. Conectar uma conta real pelo autosserviço e homologar entrada, assinatura, recibos e envio com payloads reais da Uazapi e/ou Meta Cloud.
-3. Configurar o callback mostrado na tela do WhatsApp e ativar o cron do worker com a mesma URL/secret do deploy.
-4. Homologar uma chave OpenAI real nos modos sombra e assistido antes de liberar produção.
-5. Usar número autorizado e base com consentimento no piloto monitorado; comprovar push, purge real de anexo e restauração de backup antes da saída do piloto.
-6. Habilitar proteção contra senhas vazadas no Supabase Auth; o advisor atual mantém esse item como warning de configuração.
+- produção publicada em `https://gril-lac.vercel.app`;
+- variáveis server-side, URL pública e par VAPID configurados na Vercel;
+- Supabase Cron ativo a cada minuto, com URL e bearer armazenados no Vault;
+- execuções automáticas do worker registradas como `healthy` depois do deploy final;
+- login, redirecionamento da área privada, manifest, service worker e ícone validados por HTTP.
 
-Esses itens são homologação e infraestrutura externa. Não há componente conhecido do caminho crítico da seção 39 ainda por implementar, mas o sistema não deve ser declarado ponta a ponta antes dos testes reais descritos em `MVP_VALIDATION_FLOWS.md`.
+## Homologações externas pendentes
+
+1. Conectar uma conta real pelo autosserviço e homologar entrada, assinatura, recibos e envio com payloads reais da Uazapi e/ou Meta Cloud.
+2. Configurar no provedor o callback mostrado na tela do WhatsApp.
+3. Homologar uma chave OpenAI real nos modos sombra e assistido antes de liberar o modo autônomo.
+4. Usar número autorizado e base com consentimento no piloto monitorado; comprovar push, purge real de anexo e restauração de backup antes da saída do piloto.
+
+## Limitação do plano atual
+
+O advisor mantém o warning de proteção contra senhas vazadas. Segundo a documentação do Supabase, esse recurso está disponível apenas no plano Pro ou superior; o projeto está no plano Free.
+
+Não há componente conhecido do caminho crítico da seção 39 ainda por implementar, mas o sistema não deve ser declarado ponta a ponta antes dos testes reais descritos em `MVP_VALIDATION_FLOWS.md`.
