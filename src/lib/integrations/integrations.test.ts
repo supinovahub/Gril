@@ -5,7 +5,7 @@ vi.mock("server-only", () => ({}));
 import { validateMetaCredential } from "./meta";
 import { validateOpenAiCredential } from "./openai";
 import { maskCredential } from "./provider-http";
-import { normalizeUazapiBaseUrl, validateUazapiCredential } from "./uazapi";
+import { normalizeUazapiBaseUrl, requestUazapiPairing, validateUazapiCredential } from "./uazapi";
 
 afterEach(() => {
   vi.unstubAllGlobals();
@@ -56,6 +56,15 @@ describe("autosserviço de integrações", () => {
     expect(result.externalAccountId).toBe("instance-1");
     expect(result.phoneE164).toBe("+5511999999999");
     expect(result.credentialHint).toBe("••••1234");
+  });
+
+  it("solicita QR Code ou pair code sem persistir o token no navegador", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
+      expect(new Headers(init?.headers).get("token")).toBe("token-seguro-1234");
+      return Response.json({ instance: { qrcode: "aW1hZ2U=" } });
+    }));
+    await expect(requestUazapiPairing({ baseUrl: "https://cliente.uazapi.com", token: "token-seguro-1234" }))
+      .resolves.toMatchObject({ qrImage: "data:image/png;base64,aW1hZ2U=" });
   });
 
   it("confirma que o Phone Number ID pertence ao WABA da Meta", async () => {

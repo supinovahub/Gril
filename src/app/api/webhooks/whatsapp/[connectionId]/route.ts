@@ -21,6 +21,10 @@ const normalizedWebhook = z.object({
   content_type: z.enum(["text", "image", "audio", "video", "document", "location", "unknown"]).default("text"),
   body: z.string().max(4096).nullable().optional(),
   provider_timestamp: z.string().datetime({ offset: true }).optional(),
+  media: z.object({
+    provider_media_id: z.string().max(500).optional(), source_url: z.string().url().optional(),
+    mime_type: z.string().max(200).optional(), file_name: z.string().max(300).optional(), sha256: z.string().max(200).optional(),
+  }).optional(),
   raw_payload: z.record(z.string(), z.unknown()).optional(),
 });
 
@@ -91,9 +95,17 @@ export async function POST(request: Request, { params }: RouteParams) {
           contentType: parsed.data.content_type,
           body: parsed.data.body,
           providerTimestamp: parsed.data.provider_timestamp,
+          media: parsed.data.media ? {
+            providerMediaId: parsed.data.media.provider_media_id,
+            sourceUrl: parsed.data.media.source_url,
+            mimeType: parsed.data.media.mime_type,
+            fileName: parsed.data.media.file_name,
+            sha256: parsed.data.media.sha256,
+          } : undefined,
           rawPayload: (parsed.data.raw_payload ?? json) as Json,
         }],
         statuses: [],
+        mutations: [],
       };
     }
   }
@@ -108,6 +120,17 @@ export async function POST(request: Request, { params }: RouteParams) {
       p_provider_message_id: status.providerMessageId,
       p_provider_timestamp: status.providerTimestamp,
       p_status: status.status,
+    });
+  }
+  for (const mutation of normalized.mutations) {
+    await admin.rpc("apply_provider_message_mutation", {
+      p_body: mutation.body,
+      p_connection_id: connectionId,
+      p_emoji: mutation.emoji,
+      p_external_event_id: mutation.externalEventId,
+      p_kind: mutation.kind,
+      p_provider_timestamp: mutation.providerTimestamp,
+      p_target_provider_message_id: mutation.targetProviderMessageId,
     });
   }
   for (const message of normalized.inbound) {
@@ -126,11 +149,28 @@ export async function POST(request: Request, { params }: RouteParams) {
         body: message.body ?? null,
         provider_timestamp: message.providerTimestamp ?? null,
       })
-      .select("duplicate")
+      .select("duplicate,message_id")
       .single();
     if (error) return NextResponse.json({ error: "ingest_rejected" }, { status: 409 });
     if (data.duplicate) duplicates += 1;
-    else ingested += 1;
+    else {
+      ingested += 1;
+      if (data.message_id && message.media && (message.media.providerMediaId || message.media.sourceUrl)) {
+        const { error: mediaError } = await admin.from("message_media_sources").insert({
+          message_id: data.message_id, org_id: connection.org_id, connection_id: connectionId,
+          provider_media_id: message.media.providerMediaId ?? null, source_url: message.media.sourceUrl ?? null,
+          mime_type: message.media.mimeType ?? null, file_name: message.media.fileName ?? null,
+          provider_sha256: message.media.sha256 ?? null,
+        });
+        if (mediaError) return NextResponse.json({ error: "media_ingest_rejected" }, { status: 409 });
+        const { error: jobError } = await admin.from("scheduled_jobs").insert({
+          org_id: connection.org_id, job_type: "media.inbound.process", aggregate_type: "message",
+          aggregate_id: data.message_id, target_queue: "media-processing", run_at: new Date().toISOString(),
+          dedupe_key: `media-process:${data.message_id}`, payload: { message_id: data.message_id },
+        });
+        if (jobError) return NextResponse.json({ error: "media_job_rejected" }, { status: 409 });
+      }
+    }
   }
-  return NextResponse.json({ received: true, ingested, duplicates, statuses: normalized.statuses.length });
+  return NextResponse.json({ received: true, ingested, duplicates, statuses: normalized.statuses.length, mutations: normalized.mutations.length });
 }

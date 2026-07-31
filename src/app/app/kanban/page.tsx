@@ -10,7 +10,7 @@ export default async function KanbanPage() {
   const supabase = await createClient();
   const [{ data: stages }, { data: opportunities }] = await Promise.all([
     supabase.from("pipeline_stages").select("*").eq("org_id", viewer.organization!.id).eq("is_active", true).order("position"),
-    supabase.from("opportunities").select("id,status,source,last_activity_at,pipeline_stage_id,assigned_membership_id,contacts!inner(name,contact_phones(e164,is_primary,status))").eq("org_id", viewer.organization!.id).order("last_activity_at", { ascending: false }),
+    supabase.from("opportunities").select("id,status,source,last_activity_at,pipeline_stage_id,assigned_membership_id,unit_quantity,amount_scope,contacts!inner(name,contact_phones(e164,is_primary,status)),opportunity_scores(score,explanation,created_at)").eq("org_id", viewer.organization!.id).order("last_activity_at", { ascending: false }),
   ]);
 
   return (
@@ -35,11 +35,14 @@ export default async function KanbanPage() {
                     status: string;
                   }>;
                   const phone = phones.find((item) => item.is_primary && item.status === "active")?.e164;
+                  const score = [...(card.opportunity_scores ?? [])].sort((a,b)=>b.created_at.localeCompare(a.created_at))[0];
+                  const band = (score?.explanation as { band?: string } | null)?.band;
                   return (
                     <Link className={styles.kanbanCard} href={`/app/leads/${card.id}`} key={card.id}>
                       <strong>{contact?.name ?? "Contato"}</strong>
                       <span>{phone ?? "Telefone oculto"}</span>
-                      <small>{card.source} · {card.assigned_membership_id ? "atribuído" : "sem responsável"}</small>
+                      <small>{card.source} · {card.assigned_membership_id ? "atribuído" : "sem responsável"} · {card.unit_quantity} un.</small>
+                      {score ? <small>{band ?? "score"} · {score.score}/100</small> : null}
                       <time>{new Date(card.last_activity_at).toLocaleDateString("pt-BR")}</time>
                     </Link>
                   );

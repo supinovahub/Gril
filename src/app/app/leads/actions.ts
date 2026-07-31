@@ -18,6 +18,8 @@ const stageChangeSchema = z.object({
   saleValue: z.string().trim().optional(),
   saleMonth: z.string().trim().optional(),
   saleYear: z.string().trim().optional(),
+  saleUnitReference: z.string().trim().max(120).optional(),
+  saleUnitQuantity: z.string().trim().optional(),
   nextActionDescription: z.string().trim().max(500).optional(),
   nextActionDueAt: z.string().trim().optional(),
 });
@@ -39,6 +41,13 @@ function crmError(message: string | undefined) {
   if (message?.includes("sale_month_and_year_required")) {
     return "Informe mês e ano da venda.";
   }
+  if (message?.includes("phone_already_in_use")) return "Esse telefone já pertence a outro contato ativo.";
+  if (message?.includes("contact_requires_active_phone")) return "O contato precisa manter ao menos um telefone ativo.";
+  if (message?.includes("contacts_have_active_conversations")) return "A fusão está bloqueada porque os dois contatos têm conversas ativas.";
+  if (message?.includes("checklist_waiver_reason_required")) return "Informe o motivo da dispensa do item.";
+  if (message?.includes("required_checklist_incomplete")) return "Conclua ou dispense os itens obrigatórios do checklist antes de avançar.";
+  if (message?.includes("sale_confirmation_manager_required")) return "Somente dono ou gestor pode confirmar a venda.";
+  if (message?.includes("sale_unit_and_quantity_required")) return "Informe a unidade e a quantidade vendida.";
   return "Não foi possível concluir a operação.";
 }
 
@@ -115,6 +124,8 @@ export async function changeStageAction(formData: FormData) {
     saleValue: formData.get("saleValue") || undefined,
     saleMonth: formData.get("saleMonth") || undefined,
     saleYear: formData.get("saleYear") || undefined,
+    saleUnitReference: formData.get("saleUnitReference") || undefined,
+    saleUnitQuantity: formData.get("saleUnitQuantity") || undefined,
     nextActionDescription: formData.get("nextActionDescription") || undefined,
     nextActionDueAt: formData.get("nextActionDueAt") || undefined,
   });
@@ -147,6 +158,8 @@ export async function changeStageAction(formData: FormData) {
       sale_value: Number.isFinite(value) ? value : null,
       sale_month: parsed.data.saleMonth ? Number(parsed.data.saleMonth) : null,
       sale_year: parsed.data.saleYear ? Number(parsed.data.saleYear) : null,
+      sale_unit_reference: parsed.data.saleUnitReference || null,
+      sale_unit_quantity: parsed.data.saleUnitQuantity ? Number(parsed.data.saleUnitQuantity) : null,
       next_action_description: parsed.data.nextActionDescription || null,
       next_action_due_at: parsed.data.nextActionDueAt
         ? new Date(parsed.data.nextActionDueAt).toISOString()
@@ -229,4 +242,115 @@ export async function matchProjectsAction(formData: FormData) {
     actor_user_id: viewer.userId,
   });
   revalidatePath(`/app/leads/${opportunityId.data}`);
+}
+
+export async function addContactPhoneAction(formData: FormData) {
+  const parsed = z.object({
+    opportunityId: z.string().uuid(),
+    contactId: z.string().uuid(),
+    phone: z.string().trim().min(8).max(40),
+    makePrimary: z.boolean(),
+  }).safeParse({
+    opportunityId: formData.get("opportunityId"),
+    contactId: formData.get("contactId"),
+    phone: formData.get("phone"),
+    makePrimary: formData.get("makePrimary") === "on",
+  });
+  if (!parsed.success) return;
+  const phoneE164 = normalizePhoneToE164(parsed.data.phone);
+  if (!phoneE164) redirect(`/app/leads/${parsed.data.opportunityId}?erro=${queryMessage("Telefone inválido.")}`);
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { error } = await supabase.from("contact_phone_requests").insert({
+    org_id: viewer.organization!.id,
+    contact_id: parsed.data.contactId,
+    action: "add",
+    phone_e164: phoneE164,
+    phone_original: parsed.data.phone,
+    make_primary: parsed.data.makePrimary,
+    actor_user_id: viewer.userId,
+  });
+  if (error) redirect(`/app/leads/${parsed.data.opportunityId}?erro=${queryMessage(crmError(error.message))}`);
+  revalidatePath(`/app/leads/${parsed.data.opportunityId}`);
+  redirect(`/app/leads/${parsed.data.opportunityId}?sucesso=telefone-adicionado`);
+}
+
+export async function updateContactPhoneAction(formData: FormData) {
+  const parsed = z.object({
+    opportunityId: z.string().uuid(), contactId: z.string().uuid(), phoneId: z.string().uuid(),
+    action: z.enum(["set_primary", "deactivate", "mark_wrong"]),
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { error } = await supabase.from("contact_phone_requests").insert({
+    org_id: viewer.organization!.id, contact_id: parsed.data.contactId, phone_id: parsed.data.phoneId,
+    action: parsed.data.action, actor_user_id: viewer.userId,
+  });
+  if (error) redirect(`/app/leads/${parsed.data.opportunityId}?erro=${queryMessage(crmError(error.message))}`);
+  revalidatePath(`/app/leads/${parsed.data.opportunityId}`);
+  redirect(`/app/leads/${parsed.data.opportunityId}?sucesso=telefone-atualizado`);
+}
+
+export async function updateParticipantAction(formData: FormData) {
+  const parsed = z.object({
+    opportunityId: z.string().uuid(), contactId: z.string().uuid(),
+    action: z.enum(["add", "remove"]), role: z.enum(["co_buyer", "influencer", "other"]),
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { error } = await supabase.from("opportunity_participant_requests").insert({
+    org_id: viewer.organization!.id, opportunity_id: parsed.data.opportunityId, contact_id: parsed.data.contactId,
+    action: parsed.data.action, role: parsed.data.role, actor_user_id: viewer.userId,
+  });
+  if (error) redirect(`/app/leads/${parsed.data.opportunityId}?erro=${queryMessage(crmError(error.message))}`);
+  revalidatePath(`/app/leads/${parsed.data.opportunityId}`);
+  redirect(`/app/leads/${parsed.data.opportunityId}?sucesso=participantes-atualizados`);
+}
+
+export async function mergeContactAction(formData: FormData) {
+  const parsed = z.object({
+    opportunityId: z.string().uuid(), sourceContactId: z.string().uuid(), targetContactId: z.string().uuid(),
+    reason: z.string().trim().min(5).max(500),
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { error } = await supabase.from("contact_merge_requests").insert({
+    org_id: viewer.organization!.id, source_contact_id: parsed.data.sourceContactId,
+    target_contact_id: parsed.data.targetContactId, reason: parsed.data.reason, actor_user_id: viewer.userId,
+  });
+  if (error) redirect(`/app/leads/${parsed.data.opportunityId}?erro=${queryMessage(crmError(error.message))}`);
+  revalidatePath("/app/leads"); revalidatePath("/app/kanban");
+  redirect(`/app/leads?sucesso=contatos-fundidos`);
+}
+
+export async function updateChecklistAction(formData: FormData) {
+  const parsed = z.object({
+    opportunityId: z.string().uuid(), checklistId: z.string().uuid(), itemId: z.string().uuid(),
+    action: z.enum(["complete", "reopen", "waive"]), note: z.string().trim().max(1000).optional(),
+  }).safeParse({ ...Object.fromEntries(formData), note: formData.get("note") || undefined });
+  if (!parsed.success) return;
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { error } = await supabase.from("checklist_update_requests").insert({
+    org_id: viewer.organization!.id, opportunity_checklist_id: parsed.data.checklistId,
+    item_id: parsed.data.itemId, action: parsed.data.action, note: parsed.data.note ?? null, actor_user_id: viewer.userId,
+  });
+  if (error) redirect(`/app/leads/${parsed.data.opportunityId}?erro=${queryMessage(crmError(error.message))}`);
+  revalidatePath(`/app/leads/${parsed.data.opportunityId}`);
+}
+
+export async function updatePurchaseStructureAction(formData: FormData) {
+  const parsed = z.object({ opportunityId: z.string().uuid(), unitQuantity: z.coerce.number().int().min(1).max(100), amountScope: z.enum(["total", "per_unit"]) }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { error } = await supabase.from("opportunity_purchase_structure_requests").insert({
+    org_id: viewer.organization!.id, opportunity_id: parsed.data.opportunityId, unit_quantity: parsed.data.unitQuantity,
+    amount_scope: parsed.data.amountScope, actor_user_id: viewer.userId,
+  });
+  if (error) redirect(`/app/leads/${parsed.data.opportunityId}?erro=${queryMessage(crmError(error.message))}`);
+  revalidatePath(`/app/leads/${parsed.data.opportunityId}`); revalidatePath("/app/kanban");
 }

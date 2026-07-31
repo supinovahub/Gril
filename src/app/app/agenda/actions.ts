@@ -20,7 +20,7 @@ export async function updateCallSettingsAction(formData: FormData) {
   const { error } = await supabase.from("call_settings_requests").insert({
     org_id: viewer.organization!.id, operation_id: operation.id, membership_id: viewer.membership.id,
     can_receive_calls: formData.get("canReceiveCalls") === "on",
-    is_preferred_receiver: false,
+    is_preferred_receiver: formData.get("preferredReceiver") === "on",
     receive_urgent_call_alerts: formData.get("urgentAlerts") === "on",
     actor_user_id: viewer.userId,
   });
@@ -37,6 +37,26 @@ export async function addAvailabilityAction(formData: FormData) {
   const { error } = await supabase.from("availability_rules").insert({ org_id: viewer.organization!.id, operation_id: operation.id, membership_id: viewer.membership.id, weekday: parsed.data.weekday, start_time: parsed.data.startTime, end_time: parsed.data.endTime, timezone: operation.timezone, valid_from: new Date().toISOString().slice(0,10) });
   if (error) agendaRedirect("Não foi possível salvar o período.");
   revalidatePath("/app/agenda"); agendaRedirect("Disponibilidade adicionada.", "sucesso");
+}
+
+export async function addAvailabilityExceptionAction(formData: FormData) {
+  const parsed = z.object({
+    startsAt: z.string().min(16), endsAt: z.string().min(16),
+    availability: z.enum(["available", "unavailable"]), reason: z.string().trim().max(500).optional(),
+  }).safeParse({ startsAt: formData.get("startsAt"), endsAt: formData.get("endsAt"), availability: formData.get("availability"), reason: formData.get("reason") || undefined });
+  if (!parsed.success) agendaRedirect("Revise o período excepcional.");
+  const startsAt = new Date(`${parsed.data.startsAt}:00-03:00`); const endsAt = new Date(`${parsed.data.endsAt}:00-03:00`);
+  if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime()) || endsAt <= startsAt) agendaRedirect("O fim deve ser posterior ao início.");
+  const viewer = await requireActiveViewer(); const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
+  if (!viewer.membership || !operation) agendaRedirect("Operação não encontrada.");
+  const supabase = await createClient();
+  const { error } = await supabase.from("availability_exceptions").insert({
+    org_id: viewer.organization!.id, operation_id: operation.id, membership_id: viewer.membership.id,
+    starts_at: startsAt.toISOString(), ends_at: endsAt.toISOString(), availability: parsed.data.availability,
+    reason: parsed.data.reason ?? null, created_by: viewer.userId,
+  });
+  if (error) agendaRedirect("Não foi possível salvar a exceção de agenda.");
+  revalidatePath("/app/agenda"); agendaRedirect("Exceção de agenda adicionada.", "sucesso");
 }
 
 export async function createCallAction(formData: FormData) {
@@ -61,6 +81,21 @@ export async function distributeCallAction(formData: FormData) {
   revalidatePath("/app/agenda"); agendaRedirect("Distribuição iniciada.", "sucesso");
 }
 
+export async function updateCallVideoLinkAction(formData: FormData) {
+  const parsed = z.object({
+    callId: z.string().uuid(), expectedVersion: z.coerce.number().int().positive(),
+    videoLink: z.string().url().refine((value) => value.startsWith("https://")),
+  }).safeParse({ callId: formData.get("callId"), expectedVersion: formData.get("expectedVersion"), videoLink: formData.get("videoLink") });
+  if (!parsed.success) agendaRedirect("Informe um link HTTPS válido para a videochamada.");
+  const viewer = await requireActiveViewer(); const supabase = await createClient();
+  const { error } = await supabase.from("call_video_link_requests").insert({
+    org_id: viewer.organization!.id, call_id: parsed.data.callId, video_link: parsed.data.videoLink,
+    expected_call_version: parsed.data.expectedVersion, actor_user_id: viewer.userId,
+  });
+  if (error) agendaRedirect(error.message.includes("version") ? "A call mudou. Atualize a página e tente novamente." : "Não foi possível salvar o link desta call.");
+  revalidatePath("/app/agenda"); agendaRedirect("Link da videochamada atualizado.", "sucesso");
+}
+
 export async function acceptOfferAction(formData: FormData) {
   const parsed = z.object({ callId: z.string().uuid(), offerId: z.string().uuid(), expectedVersion: z.coerce.number().int().positive() }).safeParse({ callId: formData.get("callId"), offerId: formData.get("offerId"), expectedVersion: formData.get("expectedVersion") });
   if (!parsed.success) agendaRedirect("Oferta inválida.");
@@ -71,10 +106,10 @@ export async function acceptOfferAction(formData: FormData) {
 }
 
 export async function recordCallResultAction(formData: FormData) {
-  const parsed = z.object({ callId: z.string().uuid(), expectedVersion: z.coerce.number().int().positive(), result: z.enum(["start_negotiation","lost","no_show","no_result","reschedule"]), reason: z.string().trim().max(1000).optional(), context: z.string().trim().max(4000).optional(), nextAction: z.string().trim().max(1000).optional() }).safeParse({ callId: formData.get("callId"), expectedVersion: formData.get("expectedVersion"), result: formData.get("result"), reason: formData.get("reason") || undefined, context: formData.get("context") || undefined, nextAction: formData.get("nextAction") || undefined });
+  const parsed = z.object({ callId: z.string().uuid(), expectedVersion: z.coerce.number().int().positive(), result: z.enum(["start_negotiation","lost","no_show","no_result","reschedule"]), reason: z.string().trim().max(1000).optional(), context: z.string().trim().max(4000).optional(), nextAction: z.string().trim().max(1000).optional(), nextActionDueAt: z.string().trim().optional(), purchaseMonth: z.coerce.number().int().min(1).max(12).optional(), purchaseYear: z.coerce.number().int().min(2020).max(2200).optional() }).safeParse({ callId: formData.get("callId"), expectedVersion: formData.get("expectedVersion"), result: formData.get("result"), reason: formData.get("reason") || undefined, context: formData.get("context") || undefined, nextAction: formData.get("nextAction") || undefined, nextActionDueAt: formData.get("nextActionDueAt") || undefined, purchaseMonth: formData.get("purchaseMonth") || undefined, purchaseYear: formData.get("purchaseYear") || undefined });
   if (!parsed.success) agendaRedirect("Resultado inválido.");
   const viewer = await requireActiveViewer(); const supabase = await createClient();
-  const { error } = await supabase.from("call_result_requests").insert({ org_id: viewer.organization!.id, call_id: parsed.data.callId, expected_call_version: parsed.data.expectedVersion, result: parsed.data.result, reason: parsed.data.reason ?? null, context: parsed.data.context ?? null, next_action: parsed.data.nextAction ?? null, actor_user_id: viewer.userId });
-  if (error) agendaRedirect("Resultado recusado: a call ainda não começou, mudou ou já foi concluída.");
+  const { error } = await supabase.from("call_result_requests").insert({ org_id: viewer.organization!.id, call_id: parsed.data.callId, expected_call_version: parsed.data.expectedVersion, result: parsed.data.result, reason: parsed.data.reason ?? null, context: parsed.data.context ?? null, next_action: parsed.data.nextAction ?? null, next_action_due_at: parsed.data.nextActionDueAt ? new Date(parsed.data.nextActionDueAt).toISOString() : null, purchase_month: parsed.data.purchaseMonth ?? null, purchase_year: parsed.data.purchaseYear ?? null, actor_user_id: viewer.userId });
+  if (error) agendaRedirect(error.message.includes("negotiation_result_requires") ? "Negociação exige resumo, próxima ação com data e previsão de compra." : "Resultado recusado: a call ainda não começou, mudou ou já foi concluída.");
   revalidatePath("/app/agenda"); revalidatePath("/app/kanban"); agendaRedirect("Resultado registrado.", "sucesso");
 }

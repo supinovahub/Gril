@@ -117,3 +117,27 @@ export async function validateMetaCredential(input: {
     },
   };
 }
+
+const templateListSchema = z.object({
+  data: z.array(z.object({
+    name: z.string().min(1), status: z.string().min(1), language: z.string().min(1),
+    category: z.string().optional(), components: z.array(z.record(z.string(), z.unknown())).default([]),
+  })),
+});
+
+export async function listMetaTemplates(input: { accessToken: string; appSecret: string; wabaId: string }) {
+  const version = metaGraphVersion();
+  const proof = createHmac("sha256", input.appSecret).update(input.accessToken).digest("hex");
+  const body = await fetchProviderJson(
+    `https://graph.facebook.com/${version}/${input.wabaId}/message_templates?fields=name,status,language,category,components&limit=100&appsecret_proof=${proof}`,
+    { headers: { authorization: `Bearer ${input.accessToken}`, accept: "application/json" } },
+    { providerLabel: "Meta", maxBytes: 5_000_000 },
+  );
+  const parsed = templateListSchema.safeParse(body);
+  if (!parsed.success) throw new IntegrationProviderError("meta_templates_invalid", "A Meta respondeu, mas a lista de templates não pôde ser interpretada.");
+  return parsed.data.data.map((template) => {
+    const serialized = JSON.stringify(template.components);
+    const variables = new Set(serialized.match(/\{\{\d+\}\}/g) ?? []);
+    return { ...template, variableCount: variables.size };
+  });
+}

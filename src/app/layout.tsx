@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 
+import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -8,7 +9,11 @@ export const metadata: Metadata = {
     template: "%s | Pedro",
   },
   description: "Operação imobiliária assistida pelo Pedro.",
+  applicationName: "Pedro",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Pedro" },
 };
+
+export const viewport = { themeColor: "#1f1b17" };
 
 export default function RootLayout({
   children,
@@ -17,7 +22,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body>{children}</body>
+      <body><PwaRegister />{children}</body>
     </html>
   );
 }

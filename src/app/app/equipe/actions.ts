@@ -213,3 +213,23 @@ export async function updateManagerPermissionsAction(
 
   revalidatePath("/app/equipe");
 }
+
+export async function updateMemberCallSettingsAction(membershipId: string, formData: FormData) {
+  if (!z.string().uuid().safeParse(membershipId).success) return;
+  const viewer = await requireActiveViewer();
+  if (!canManageTeam(viewer)) return;
+  const operation = viewer.operations.find((item) => item.id === formData.get("operationId"));
+  if (!operation) return;
+  const supabase = await createClient();
+  const { data: target } = await supabase.from("memberships").select("id")
+    .eq("id", membershipId).eq("org_id", viewer.organization!.id).eq("status", "active").maybeSingle();
+  if (!target) return;
+  await supabase.from("call_settings_requests").insert({
+    org_id: viewer.organization!.id, operation_id: operation.id, membership_id: membershipId,
+    can_receive_calls: formData.get("canReceiveCalls") === "on",
+    is_preferred_receiver: formData.get("preferredReceiver") === "on",
+    receive_urgent_call_alerts: formData.get("urgentAlerts") === "on",
+    actor_user_id: viewer.userId,
+  });
+  revalidatePath("/app/equipe"); revalidatePath("/app/agenda");
+}

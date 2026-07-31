@@ -2,6 +2,8 @@ import "server-only";
 
 import { z } from "zod";
 
+import { pedroTurnSchema, pedroTurnTool } from "../ai/pedro-turn";
+
 export class OpenAiRuntimeError extends Error {
   constructor(
     public readonly code: string,
@@ -13,12 +15,6 @@ export class OpenAiRuntimeError extends Error {
   }
 }
 
-const structuredTurn = z.object({
-  action: z.enum(["reply", "escalate"]),
-  reply: z.string().trim().max(4096).nullable(),
-  escalation_reason: z.string().trim().max(1000).nullable(),
-});
-
 const responseSchema = z.object({
   id: z.string().min(1),
   status: z.string(),
@@ -26,21 +22,29 @@ const responseSchema = z.object({
   output_text: z.string().optional(),
   output: z.array(z.object({
     type: z.string(),
+    name: z.string().optional(),
+    call_id: z.string().optional(),
+    arguments: z.string().optional(),
     content: z.array(z.object({ type: z.string(), text: z.string().optional(), refusal: z.string().optional() }).passthrough()).optional(),
   }).passthrough()).optional(),
   usage: z.object({ input_tokens: z.number().int().nonnegative().optional(), output_tokens: z.number().int().nonnegative().optional() }).optional(),
   error: z.object({ code: z.string().optional(), message: z.string().optional() }).nullable().optional(),
 });
 
-function outputText(response: z.infer<typeof responseSchema>) {
-  if (response.output_text) return response.output_text;
+function parsePedroTurn(response: z.infer<typeof responseSchema>) {
   for (const item of response.output ?? []) {
+    if (item.type === "function_call" && item.name === pedroTurnTool.name && item.arguments) {
+      try {
+        return pedroTurnSchema.parse(JSON.parse(item.arguments));
+      } catch {
+        throw new OpenAiRuntimeError("openai_tool_arguments_invalid", "A decisão estruturada do Pedro foi rejeitada pelo backend.");
+      }
+    }
     for (const content of item.content ?? []) {
       if (content.refusal) throw new OpenAiRuntimeError("openai_refusal", "O modelo recusou esta resposta; a conversa foi encaminhada para revisão humana.");
-      if (content.type === "output_text" && content.text) return content.text;
     }
   }
-  return null;
+  throw new OpenAiRuntimeError("openai_tool_call_missing", "A OpenAI concluiu sem registrar uma decisão comercial válida.");
 }
 
 export async function createPedroResponse(input: {
@@ -50,6 +54,7 @@ export async function createPedroResponse(input: {
   textVerbosity?: string | null;
   instructions: string;
   messages: Array<{ role: "user" | "assistant"; text: string }>;
+  businessContext: Record<string, unknown>;
 }) {
   let response: Response;
   try {
@@ -69,29 +74,21 @@ export async function createPedroResponse(input: {
         input: input.messages.map((message) => ({
           role: message.role,
           content: [{ type: "input_text", text: message.text }],
-        })),
-        max_output_tokens: 1200,
+        })).concat([{
+          role: "user" as const,
+          content: [{
+            type: "input_text" as const,
+            text: `CONTEXTO OPERACIONAL DO BACKEND (fonte de verdade):\n${JSON.stringify(input.businessContext)}`,
+          }],
+        }]),
+        max_output_tokens: 1600,
+        tools: [pedroTurnTool],
+        tool_choice: { type: "function", name: pedroTurnTool.name },
+        parallel_tool_calls: false,
         ...(input.reasoningEffort && input.reasoningEffort !== "none"
           ? { reasoning: { effort: input.reasoningEffort } }
           : {}),
-        text: {
-          verbosity: input.textVerbosity ?? "low",
-          format: {
-            type: "json_schema",
-            name: "pedro_turn",
-            strict: true,
-            schema: {
-              type: "object",
-              additionalProperties: false,
-              properties: {
-                action: { type: "string", enum: ["reply", "escalate"] },
-                reply: { type: ["string", "null"] },
-                escalation_reason: { type: ["string", "null"] },
-              },
-              required: ["action", "reply", "escalation_reason"],
-            },
-          },
-        },
+        text: { verbosity: input.textVerbosity ?? "low" },
       }),
     });
   } catch {
@@ -117,23 +114,13 @@ export async function createPedroResponse(input: {
   if (!parsed.success || parsed.data.status !== "completed") {
     throw new OpenAiRuntimeError("openai_response_incomplete", "A OpenAI não concluiu a resposta.", true);
   }
-  const text = outputText(parsed.data);
-  if (!text) throw new OpenAiRuntimeError("openai_output_missing", "A OpenAI concluiu sem devolver conteúdo.");
-  let turn: z.infer<typeof structuredTurn>;
-  try {
-    turn = structuredTurn.parse(JSON.parse(text));
-  } catch {
-    throw new OpenAiRuntimeError("openai_structured_output_invalid", "A resposta estruturada do Pedro foi rejeitada pelo backend.");
-  }
-  if (turn.action === "reply" && !turn.reply) {
-    throw new OpenAiRuntimeError("openai_reply_missing", "O Pedro não devolveu uma mensagem utilizável.");
-  }
+  const turn = parsePedroTurn(parsed.data);
   return {
     responseId: parsed.data.id,
     model: parsed.data.model ?? input.model,
     inputTokens: parsed.data.usage?.input_tokens ?? 0,
     outputTokens: parsed.data.usage?.output_tokens ?? 0,
-    outputText: turn.reply ?? "Atendimento humano solicitado.",
+    outputText: turn.reply ?? "Vou encaminhar sua solicitação para a equipe responsável.",
     structured: turn,
   };
 }

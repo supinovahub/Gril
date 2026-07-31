@@ -14,3 +14,10 @@ export async function runSimulationAction(formData:FormData){
   const{error}=await supabase.from("simulator_run_requests").insert({org_id:viewer.organization!.id,operation_id:operation?.id??null,title:parsed.data.title,simulated_input:parsed.data.input,initial_state:state,actor_user_id:viewer.userId});
   if(error)redirect("/app/simulador?erro=modelo-ativo-e-chave-byok-sao-necessarios"); revalidatePath("/app/simulador"); redirect("/app/simulador?sucesso=execucao-registrada");
 }
+
+export async function runRegressionAction(){
+  const viewer=await requireActiveViewer();const supabase=await createClient();
+  const{error}=await supabase.from("regression_run_requests").insert({org_id:viewer.organization!.id,actor_user_id:viewer.userId});
+  if(error)redirect(`/app/simulador?erro=${error.message.includes("already_active")?"regressao-ja-em-execucao":"configure-modelo-e-regras"}`);
+  revalidatePath("/app/simulador");redirect("/app/simulador?sucesso=regressao-iniciada");
+}

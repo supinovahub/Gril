@@ -137,3 +137,66 @@ export async function validateUazapiCredential(input: {
     },
   };
 }
+
+function asRecord(value: unknown): Record<string, unknown> | null {
+  return value && typeof value === "object" && !Array.isArray(value) ? value as Record<string, unknown> : null;
+}
+
+function firstText(source: Record<string, unknown> | null, keys: string[]) {
+  for (const key of keys) if (typeof source?.[key] === "string" && source[key]) return source[key] as string;
+  return undefined;
+}
+
+export async function createUazapiInstance(input: { baseUrl: string; adminToken: string; name: string; systemName: string }) {
+  const baseUrl = normalizeUazapiBaseUrl(input.baseUrl);
+  const adminToken = input.adminToken.trim();
+  if (adminToken.length < 8) throw new IntegrationProviderError("uazapi_admin_token_invalid", "Informe o admintoken completo do servidor Uazapi.");
+  const body = await fetchProviderJson(`${baseUrl}/instance/init`, {
+    method: "POST",
+    headers: { accept: "application/json", "content-type": "application/json", admintoken: adminToken },
+    body: JSON.stringify({ name: input.name.trim(), systemName: input.systemName.trim(), adminField01: "gril", adminField02: "self-service" }),
+  }, { providerLabel: "Uazapi" });
+  const root = asRecord(body); const instance = asRecord(root?.instance);
+  const token = firstText(instance, ["token", "instanceToken", "instance_token"]) ?? firstText(root, ["token", "instanceToken", "instance_token"]);
+  if (!token || token.length < 8) throw new IntegrationProviderError("uazapi_instance_token_missing", "A instância foi criada, mas a Uazapi não devolveu o token no contrato esperado. Consulte o painel do servidor.");
+  return { baseUrl, token, instanceId: firstText(instance, ["id", "instanceId"]) ?? firstText(root, ["id", "instanceId"]) };
+}
+
+export async function requestUazapiPairing(input: { baseUrl: string; token: string; phone?: string | null }) {
+  const baseUrl = normalizeUazapiBaseUrl(input.baseUrl);
+  const token = input.token.trim();
+  if (token.length < 8) throw new IntegrationProviderError("uazapi_token_invalid", "Informe o token completo da instância Uazapi.");
+  const body = await fetchProviderJson(`${baseUrl}/instance/connect`, {
+    method: "POST",
+    headers: { accept: "application/json", "content-type": "application/json", token },
+    body: JSON.stringify(input.phone ? { phone: input.phone.replace(/\D/g, "") } : {}),
+  }, { providerLabel: "Uazapi", maxBytes: 2_000_000 });
+  const root = asRecord(body); const instance = asRecord(root?.instance); const status = asRecord(root?.status);
+  const pairCode = firstText(instance, ["paircode", "pairCode", "code"]) ?? firstText(root, ["paircode", "pairCode", "code"]);
+  const qrCode = firstText(instance, ["qrcode", "qrCode", "qr"]) ?? firstText(status, ["qrcode", "qrCode", "qr"]) ?? firstText(root, ["qrcode", "qrCode", "qr"]);
+  if (!pairCode && !qrCode) throw new IntegrationProviderError("uazapi_pairing_missing", "A Uazapi aceitou a solicitação, mas ainda não devolveu QR ou código de pareamento. Aguarde alguns segundos e tente novamente.");
+  const qrImage = qrCode ? (qrCode.startsWith("data:image/") || qrCode.startsWith("https://") ? qrCode : `data:image/png;base64,${qrCode}`) : undefined;
+  return { baseUrl, pairCode, qrImage };
+}
+
+export async function configureUazapiWebhook(input: { baseUrl: string; token: string; callbackUrl: string }) {
+  const baseUrl = normalizeUazapiBaseUrl(input.baseUrl);
+  const callback = new URL(input.callbackUrl);
+  if (callback.protocol !== "https:" || callback.username || callback.password) {
+    throw new IntegrationProviderError("uazapi_callback_invalid", "O webhook exige a URL HTTPS pública do deploy final.");
+  }
+  await fetchProviderJson(`${baseUrl}/webhook`, {
+    method: "POST",
+    headers: { accept: "application/json", "content-type": "application/json", token: input.token.trim() },
+    body: JSON.stringify({
+      enabled: true,
+      url: callback.toString(),
+      events: ["connection", "messages", "messages_update"],
+      excludeMessages: ["fromMeYes", "isGroupYes"],
+      addUrlEvents: false,
+      addUrlTypesMessages: false,
+      action: "add",
+    }),
+  }, { providerLabel: "Uazapi" });
+  return { callbackUrl: callback.toString() };
+}

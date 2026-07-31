@@ -16,6 +16,13 @@ export type NormalizedInboundMessage = {
   contentType: "text" | "image" | "audio" | "video" | "document" | "location" | "unknown";
   body?: string | null;
   providerTimestamp?: string;
+  media?: {
+    providerMediaId?: string;
+    sourceUrl?: string;
+    mimeType?: string;
+    fileName?: string;
+    sha256?: string;
+  };
   rawPayload: Json;
 };
 
@@ -26,9 +33,19 @@ export type NormalizedStatusUpdate = {
   errorRedacted?: string;
 };
 
+export type NormalizedMessageMutation = {
+  externalEventId: string;
+  targetProviderMessageId: string;
+  kind: "edit" | "delete" | "reaction";
+  body?: string;
+  emoji?: string;
+  providerTimestamp?: string;
+};
+
 export type NormalizedWhatsappWebhook = {
   inbound: NormalizedInboundMessage[];
   statuses: NormalizedStatusUpdate[];
+  mutations: NormalizedMessageMutation[];
 };
 
 export class RuntimeProviderError extends Error {
@@ -122,8 +139,9 @@ export function normalizeMetaWebhook(raw: unknown): NormalizedWhatsappWebhook {
   const root = record(raw);
   const inbound: NormalizedInboundMessage[] = [];
   const statuses: NormalizedStatusUpdate[] = [];
+  const mutations: NormalizedMessageMutation[] = [];
   if (!root || root.object !== "whatsapp_business_account" || !Array.isArray(root.entry)) {
-    return { inbound, statuses };
+    return { inbound, statuses, mutations };
   }
 
   for (const entryValue of root.entry) {
@@ -146,9 +164,15 @@ export function normalizeMetaWebhook(raw: unknown): NormalizedWhatsappWebhook {
           const fromE164 = normalizePhoneToE164(text(message?.from) ?? "");
           if (!message || !providerMessageId || !fromE164) continue;
           const messageType = text(message.type);
+          if (messageType === "reaction") {
+            const reaction = record(message.reaction); const target = text(reaction?.message_id); const emoji = text(reaction?.emoji);
+            if (target && emoji) mutations.push({ externalEventId: `${providerMessageId}:reaction:${target}:${emoji}`, targetProviderMessageId: target, kind: "reaction", emoji, providerTimestamp: timestampFromSeconds(message.timestamp) });
+            continue;
+          }
           const contentType = mapContentType(messageType);
           const textBody = text(record(message.text)?.body);
-          const caption = text(record(message[messageType ?? ""])?.caption);
+          const mediaObject = record(message[messageType ?? ""]);
+          const caption = text(mediaObject?.caption);
           inbound.push({
             externalEventId: providerMessageId,
             providerMessageId,
@@ -157,6 +181,12 @@ export function normalizeMetaWebhook(raw: unknown): NormalizedWhatsappWebhook {
             contentType,
             body: textBody ?? caption ?? null,
             providerTimestamp: timestampFromSeconds(message.timestamp),
+            media: contentType !== "text" ? {
+              providerMediaId: text(mediaObject?.id),
+              mimeType: text(mediaObject?.mime_type),
+              fileName: text(mediaObject?.filename),
+              sha256: text(mediaObject?.sha256),
+            } : undefined,
             rawPayload: redactPayload({ entryId: entry.id, changeField: change.field, message }),
           });
         }
@@ -181,7 +211,7 @@ export function normalizeMetaWebhook(raw: unknown): NormalizedWhatsappWebhook {
       }
     }
   }
-  return { inbound, statuses };
+  return { inbound, statuses, mutations };
 }
 
 function findUazapiMessage(root: Record<string, unknown>) {
@@ -201,10 +231,19 @@ export function verifyAndNormalizeUazapiWebhook(
 
   const inbound: NormalizedInboundMessage[] = [];
   const statuses: NormalizedStatusUpdate[] = [];
+  const mutations: NormalizedMessageMutation[] = [];
   const eventType = (text(root.EventType) ?? text(root.event) ?? text(root.type) ?? "").toLowerCase();
   const message = findUazapiMessage(root);
-  if (!message) return { inbound, statuses };
+  if (!message) return { inbound, statuses, mutations };
   const providerMessageId = text(message.messageid) ?? text(message.messageId) ?? text(message.id) ?? text(record(message.key)?.id);
+  const fromMe = message.fromMe === true || message.wasSentByApi === true;
+  const reaction = record(message.reaction) ?? record(message.reactionMessage);
+  const reactionTarget = text(reaction?.messageid) ?? text(reaction?.messageId) ?? text(reaction?.id) ?? text(record(reaction?.key)?.id) ?? text(message.targetMessageId);
+  const reactionEmoji = text(reaction?.emoji) ?? text(reaction?.text);
+  if (!fromMe && reactionTarget && reactionEmoji) {
+    mutations.push({ externalEventId: `${providerMessageId ?? reactionTarget}:reaction:${reactionEmoji}`, targetProviderMessageId: reactionTarget, kind: "reaction", emoji: reactionEmoji, providerTimestamp: timestampFromSeconds(message.messageTimestamp ?? message.timestamp) });
+    return { inbound, statuses, mutations };
+  }
 
   if (eventType.includes("update") || (!text(message.text) && providerStatus(message.status))) {
     const status = providerStatus(message.status);
@@ -215,16 +254,22 @@ export function verifyAndNormalizeUazapiWebhook(
         providerTimestamp: timestampFromSeconds(message.messageTimestamp ?? message.timestamp),
         errorRedacted: status === "failed" ? "Uazapi informou falha no envio." : undefined,
       });
+    } else if (!fromMe && providerMessageId && (message.deleted === true || eventType.includes("delete") || eventType.includes("revoke"))) {
+      mutations.push({ externalEventId: `${providerMessageId}:delete`, targetProviderMessageId: providerMessageId, kind: "delete", providerTimestamp: timestampFromSeconds(message.messageTimestamp ?? message.timestamp) });
+    } else if (!fromMe && providerMessageId && (text(message.text) ?? text(message.body))) {
+      const editedBody = text(message.text) ?? text(message.body) ?? "";
+      mutations.push({ externalEventId: `${providerMessageId}:edit:${String(message.messageTimestamp ?? message.timestamp ?? editedBody.slice(0,64))}`, targetProviderMessageId: providerMessageId, kind: "edit", body: editedBody, providerTimestamp: timestampFromSeconds(message.messageTimestamp ?? message.timestamp) });
     }
-    return { inbound, statuses };
+    return { inbound, statuses, mutations };
   }
 
-  const fromMe = message.fromMe === true || message.wasSentByApi === true;
   const isGroup = message.isGroup === true || text(message.chatid)?.endsWith("@g.us") === true;
   const rawFrom = text(message.sender) ?? text(message.from) ?? text(message.chatid)?.split("@")[0] ?? "";
   const fromE164 = normalizePhoneToE164(rawFrom);
   if (!fromMe && !isGroup && providerMessageId && fromE164) {
     const contentType = mapContentType(text(message.messageType) ?? text(message.type));
+    const media = record(message.media) ?? record(message.file) ?? record(message.document) ?? record(message.image) ?? record(message.audio) ?? record(message.video);
+    const sourceUrl = text(media?.url) ?? text(media?.URL) ?? text(message.fileURL) ?? text(message.mediaUrl) ?? text(message.url);
     inbound.push({
       externalEventId: providerMessageId,
       providerMessageId,
@@ -233,10 +278,17 @@ export function verifyAndNormalizeUazapiWebhook(
       contentType,
       body: text(message.text) ?? text(message.body) ?? text(message.caption) ?? null,
       providerTimestamp: timestampFromSeconds(message.messageTimestamp ?? message.timestamp),
+      media: contentType !== "text" ? {
+        providerMediaId: text(media?.id) ?? text(message.mediaId),
+        sourceUrl,
+        mimeType: text(media?.mimetype) ?? text(media?.mimeType) ?? text(message.mimetype),
+        fileName: text(media?.fileName) ?? text(media?.filename) ?? text(message.fileName),
+        sha256: text(media?.sha256),
+      } : undefined,
       rawPayload: redactPayload(raw),
     });
   }
-  return { inbound, statuses };
+  return { inbound, statuses, mutations };
 }
 
 async function runtimeFetch(url: string, init: RequestInit) {
@@ -287,6 +339,7 @@ export async function sendWhatsappText(input: {
   toE164: string;
   body: string;
   messageId: string;
+  template?: { name: string; language: string; parameters: string[] } | null;
 }) {
   if (input.provider === "uazapi") {
     const response = await runtimeFetch(`${input.endpointUrl.replace(/\/$/, "")}/send/text`, {
@@ -302,14 +355,69 @@ export async function sendWhatsappText(input: {
 
   const parsedSecret = z.object({ accessToken: z.string().min(1), appSecret: z.string().min(1) }).parse(JSON.parse(input.secret));
   if (!input.externalPhoneNumberId) throw new RuntimeProviderError("meta_phone_id_missing", "O Phone Number ID da Meta não está configurado.");
+  const templatePayload = input.template ? {
+    messaging_product: "whatsapp", recipient_type: "individual", to: input.toE164.replace(/^\+/, ""), type: "template",
+    template: {
+      name: input.template.name, language: { code: input.template.language },
+      ...(input.template.parameters.length ? { components: [{ type: "body", parameters: input.template.parameters.map((textValue) => ({ type: "text", text: textValue })) }] } : {}),
+    },
+  } : {
+    messaging_product: "whatsapp", recipient_type: "individual", to: input.toE164.replace(/^\+/, ""),
+    type: "text", text: { preview_url: false, body: input.body },
+  };
   const response = await runtimeFetch(`${input.endpointUrl.replace(/\/$/, "")}/${input.externalPhoneNumberId}/messages`, {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json", authorization: `Bearer ${parsedSecret.accessToken}` },
-    body: JSON.stringify({ messaging_product: "whatsapp", recipient_type: "individual", to: input.toE164.replace(/^\+/, ""), type: "text", text: { preview_url: false, body: input.body } }),
+    body: JSON.stringify(templatePayload),
   });
   const result = z.object({ messages: z.array(z.object({ id: z.string().min(1) })).min(1) }).safeParse(response);
   if (!result.success) throw new RuntimeProviderError("provider_ack_missing", "A Meta não devolveu o identificador da mensagem.");
   return { providerMessageId: result.data.messages[0].id, providerTimestamp: new Date().toISOString() };
+}
+
+async function downloadBinary(url: string, headers: HeadersInit) {
+  let response: Response;
+  try {
+    response = await fetch(url, { headers, cache: "no-store", redirect: "error", signal: AbortSignal.timeout(20_000) });
+  } catch {
+    throw new RuntimeProviderError("media_download_failed", "O provedor não entregou a mídia para processamento.", true);
+  }
+  if (!response.ok) throw new RuntimeProviderError(`media_http_${response.status}`, "O provedor recusou o download da mídia.", response.status === 429);
+  const declaredSize = Number(response.headers.get("content-length") ?? 0);
+  if (declaredSize > 20 * 1024 * 1024) throw new RuntimeProviderError("media_too_large", "A mídia excede o limite de 20 MB.");
+  const bytes = new Uint8Array(await response.arrayBuffer());
+  if (bytes.byteLength > 20 * 1024 * 1024) throw new RuntimeProviderError("media_too_large", "A mídia excede o limite de 20 MB.");
+  return { bytes, mimeType: response.headers.get("content-type")?.split(";")[0] };
+}
+
+export async function downloadWhatsappMedia(input: {
+  provider: WhatsappProvider;
+  endpointUrl: string;
+  secret: string;
+  providerMediaId?: string | null;
+  sourceUrl?: string | null;
+}) {
+  if (input.provider === "meta_cloud") {
+    if (!input.providerMediaId) throw new RuntimeProviderError("meta_media_id_missing", "A Meta não informou o identificador da mídia.");
+    const parsedSecret = parseMetaSecret(input.secret);
+    const metadata = await runtimeFetch(`${input.endpointUrl.replace(/\/$/, "")}/${encodeURIComponent(input.providerMediaId)}`, {
+      headers: { accept: "application/json", authorization: `Bearer ${parsedSecret.accessToken}` },
+    });
+    const mediaUrl = text(record(metadata)?.url);
+    if (!mediaUrl) throw new RuntimeProviderError("meta_media_url_missing", "A Meta não devolveu a URL temporária da mídia.");
+    return downloadBinary(mediaUrl, { authorization: `Bearer ${parsedSecret.accessToken}` });
+  }
+  if (!input.sourceUrl) throw new RuntimeProviderError("uazapi_media_url_missing", "A Uazapi não informou a URL da mídia.");
+  const mediaUrl = new URL(input.sourceUrl);
+  const endpoint = new URL(input.endpointUrl);
+  const allowedHosts = new Set([
+    endpoint.hostname.toLowerCase(),
+    ...(process.env.UAZAPI_ALLOWED_HOSTS ?? "").split(",").map((item) => item.trim().toLowerCase()).filter(Boolean),
+  ]);
+  if (mediaUrl.protocol !== "https:" || (!allowedHosts.has(mediaUrl.hostname.toLowerCase()) && !mediaUrl.hostname.toLowerCase().endsWith(".uazapi.com"))) {
+    throw new RuntimeProviderError("uazapi_media_url_unsafe", "A Uazapi informou uma origem de mídia não autorizada.");
+  }
+  return downloadBinary(mediaUrl.toString(), { token: input.secret });
 }
 
 export function parseMetaSecret(secret: string) {
