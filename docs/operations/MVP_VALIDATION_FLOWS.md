@@ -1,5 +1,7 @@
 # Fluxos de validação do MVP Gril
 
+Automação concluída antes deste roteiro: 70 testes locais, 127 verificações pgTAP no banco remoto, lint e build aprovados. Consulte `AUTOMATED_VALIDATION_EVIDENCE.md`. Este arquivo começa exatamente onde a automação termina: navegador, operação humana e fornecedores reais.
+
 Este roteiro é a homologação manual final. Ele não substitui os testes automatizados; comprova os comportamentos que dependem de navegador, credenciais, provedores e decisões humanas.
 
 ## 1. Preparação
@@ -231,4 +233,4 @@ Esperado: contagens não misturam call agendada com realizada; gestor não vê c
 
 ## 10. Critério para deploy e piloto
 
-O código pode ser publicado quando lint, 58 testes, build, migrações, RLS e auditoria técnica estiverem verdes. A operação só pode ser declarada ponta a ponta após os fluxos com Uazapi/Meta/OpenAI reais, push, worker, purge e backup/restauração passarem no ambiente publicado.
+O código pode ser publicado quando lint, 70 testes locais, 127 verificações pgTAP, build, migrações, RLS e auditoria técnica estiverem verdes. A operação só pode ser declarada ponta a ponta após os fluxos com Uazapi/Meta/OpenAI reais, push, worker, purge e backup/restauração passarem no ambiente publicado.

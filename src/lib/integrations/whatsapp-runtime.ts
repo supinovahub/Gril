@@ -291,7 +291,11 @@ export function verifyAndNormalizeUazapiWebhook(
   return { inbound, statuses, mutations };
 }
 
-async function runtimeFetch(url: string, init: RequestInit) {
+async function runtimeFetch(
+  url: string,
+  init: RequestInit,
+  options: { idempotent?: boolean } = {},
+) {
   let response: Response;
   try {
     response = await fetch(url, {
@@ -300,6 +304,13 @@ async function runtimeFetch(url: string, init: RequestInit) {
       signal: AbortSignal.timeout(15_000),
     });
   } catch {
+    if (options.idempotent) {
+      throw new RuntimeProviderError(
+        "provider_unreachable",
+        "O provedor não respondeu dentro do limite.",
+        true,
+      );
+    }
     throw new RuntimeProviderError(
       "provider_send_uncertain",
       "O provedor não confirmou o envio. A mensagem não será reenviada automaticamente para evitar duplicidade.",
@@ -318,13 +329,16 @@ async function runtimeFetch(url: string, init: RequestInit) {
     if (response.status === 429) {
       throw new RuntimeProviderError("provider_rate_limited", "O provedor limitou temporariamente os envios.", true);
     }
-    const uncertain = response.status >= 500;
+    const retryable = options.idempotent && response.status >= 500;
+    const uncertain = !options.idempotent && response.status >= 500;
     throw new RuntimeProviderError(
       `provider_http_${response.status}`,
-      uncertain
+      retryable
+        ? "O provedor está temporariamente indisponível."
+        : uncertain
         ? "O provedor falhou sem confirmar se processou a mensagem; o envio foi interrompido para evitar duplicidade."
         : "O provedor recusou a mensagem.",
-      false,
+      retryable,
       uncertain,
     );
   }
@@ -382,7 +396,7 @@ async function downloadBinary(url: string, headers: HeadersInit) {
   } catch {
     throw new RuntimeProviderError("media_download_failed", "O provedor não entregou a mídia para processamento.", true);
   }
-  if (!response.ok) throw new RuntimeProviderError(`media_http_${response.status}`, "O provedor recusou o download da mídia.", response.status === 429);
+  if (!response.ok) throw new RuntimeProviderError(`media_http_${response.status}`, "O provedor recusou o download da mídia.", response.status === 429 || response.status >= 500);
   const declaredSize = Number(response.headers.get("content-length") ?? 0);
   if (declaredSize > 20 * 1024 * 1024) throw new RuntimeProviderError("media_too_large", "A mídia excede o limite de 20 MB.");
   const bytes = new Uint8Array(await response.arrayBuffer());
@@ -400,9 +414,11 @@ export async function downloadWhatsappMedia(input: {
   if (input.provider === "meta_cloud") {
     if (!input.providerMediaId) throw new RuntimeProviderError("meta_media_id_missing", "A Meta não informou o identificador da mídia.");
     const parsedSecret = parseMetaSecret(input.secret);
-    const metadata = await runtimeFetch(`${input.endpointUrl.replace(/\/$/, "")}/${encodeURIComponent(input.providerMediaId)}`, {
-      headers: { accept: "application/json", authorization: `Bearer ${parsedSecret.accessToken}` },
-    });
+    const metadata = await runtimeFetch(
+      `${input.endpointUrl.replace(/\/$/, "")}/${encodeURIComponent(input.providerMediaId)}`,
+      { headers: { accept: "application/json", authorization: `Bearer ${parsedSecret.accessToken}` } },
+      { idempotent: true },
+    );
     const mediaUrl = text(record(metadata)?.url);
     if (!mediaUrl) throw new RuntimeProviderError("meta_media_url_missing", "A Meta não devolveu a URL temporária da mídia.");
     return downloadBinary(mediaUrl, { authorization: `Bearer ${parsedSecret.accessToken}` });

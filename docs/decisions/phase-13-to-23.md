@@ -21,9 +21,10 @@ A fase de push havia substituído o consumidor de eventos e removido, por regres
 
 - TypeScript: aprovado;
 - ESLint: aprovado;
-- Vitest: 58/58 testes aprovados;
+- Vitest: 70/70 testes aprovados;
+- pgTAP remoto: 127/127 verificações aprovadas, com rollback das fixtures;
 - build Next.js: 31 páginas/rotas geradas;
-- banco remoto: 40 migrações aplicadas, incluindo fase 23;
+- banco remoto: 41 migrações aplicadas, incluindo fase 23 e hardening de privilégios;
 - RLS: zero das 139 tabelas públicas sem RLS;
 - Storage: dois buckets privados;
-- produção: não publicada deliberadamente.
+- produção anterior disponível; esta rodada de hardening ainda precisa ser publicada pelo fluxo Git/Vercel.

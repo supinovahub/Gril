@@ -4,6 +4,7 @@ vi.mock("server-only", () => ({}));
 
 import { createPedroResponse } from "./openai-runtime";
 import {
+  downloadWhatsappMedia,
   normalizeMetaWebhook,
   sendWhatsappText,
   verifyAndNormalizeUazapiWebhook,
@@ -81,6 +82,28 @@ describe("adapters de tráfego real", () => {
     expect(update?.mutations[0]).toMatchObject({ kind: "edit", targetProviderMessageId: "2", body: "Texto corrigido" });
   });
 
+  it("normaliza falhas e recibos Uazapi sem expor dados do provedor", () => {
+    const update = verifyAndNormalizeUazapiWebhook(
+      {
+        EventType: "messages_update",
+        token: "token-seguro",
+        message: {
+          messageid: "uaz-out-1",
+          status: "failed",
+          messageTimestamp: 1700000001000,
+          authorization: "Bearer segredo-interno",
+        },
+      },
+      "token-seguro",
+    );
+    expect(update?.statuses[0]).toMatchObject({
+      providerMessageId: "uaz-out-1",
+      status: "failed",
+      errorRedacted: "Uazapi informou falha no envio.",
+    });
+    expect(JSON.stringify(update)).not.toContain("segredo-interno");
+  });
+
   it("envia texto com os contratos oficiais de Uazapi e Meta", async () => {
     const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
       if (url.includes("uazapi")) {
@@ -98,6 +121,103 @@ describe("adapters de tráfego real", () => {
     await expect(sendWhatsappText({ provider: "meta_cloud", endpointUrl: "https://graph.facebook.com/v24.0", secret: JSON.stringify({ accessToken: "meta-token", appSecret: "secret" }), externalPhoneNumberId: "12345", toE164: "+5511999999999", body: "não usado", messageId: "message-3", template: { name: "reativacao", language: "pt_BR", parameters: ["Maria"] } })).resolves.toMatchObject({ providerMessageId: "wamid.ack" });
     const templateBody = JSON.parse(String(fetchMock.mock.calls.at(-1)?.[1]?.body));
     expect(templateBody).toMatchObject({ type: "template", template: { name: "reativacao", language: { code: "pt_BR" } } });
+  });
+
+  it("marca 429 como repetível, sem classificar o envio como incerto", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ error: "limit" }), { status: 429 })));
+    await expect(sendWhatsappText({
+      provider: "uazapi",
+      endpointUrl: "https://cliente.uazapi.com",
+      secret: "uaz-token-supersecreto",
+      toE164: "+5511999999999",
+      body: "Oi",
+      messageId: "message-rate-limit",
+    })).rejects.toMatchObject({
+      code: "provider_rate_limited",
+      retryable: true,
+      uncertain: false,
+    });
+  });
+
+  it("não reenvia cegamente quando timeout ou 5xx deixam o envio incerto", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => {
+      throw new Error("socket timeout com uaz-token-supersecreto");
+    }));
+    const timedOut = sendWhatsappText({
+      provider: "uazapi",
+      endpointUrl: "https://cliente.uazapi.com",
+      secret: "uaz-token-supersecreto",
+      toE164: "+5511999999999",
+      body: "Oi",
+      messageId: "message-timeout",
+    });
+    await expect(timedOut).rejects.toMatchObject({
+      code: "provider_send_uncertain",
+      retryable: false,
+      uncertain: true,
+      redactedMessage: expect.not.stringContaining("uaz-token-supersecreto"),
+    });
+
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ error: "upstream" }), { status: 503 })));
+    await expect(sendWhatsappText({
+      provider: "uazapi",
+      endpointUrl: "https://cliente.uazapi.com",
+      secret: "uaz-token-supersecreto",
+      toE164: "+5511999999999",
+      body: "Oi",
+      messageId: "message-503",
+    })).rejects.toMatchObject({ code: "provider_http_503", retryable: false, uncertain: true });
+  });
+
+  it("trata 4xx de envio como falha permanente e mantém o segredo fora do erro", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ error: "token uaz-token-supersecreto" }), { status: 400 })));
+    await expect(sendWhatsappText({
+      provider: "uazapi",
+      endpointUrl: "https://cliente.uazapi.com",
+      secret: "uaz-token-supersecreto",
+      toE164: "+5511999999999",
+      body: "Oi",
+      messageId: "message-invalid",
+    })).rejects.toMatchObject({
+      code: "provider_http_400",
+      retryable: false,
+      uncertain: false,
+      redactedMessage: expect.not.stringContaining("uaz-token-supersecreto"),
+    });
+  });
+
+  it("baixa mídia Meta autenticada e permite repetir falha transitória de leitura", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(Response.json({ url: "https://lookaside.facebook.com/media-1" }))
+      .mockResolvedValueOnce(new Response(new Uint8Array([1, 2, 3]), {
+        status: 200,
+        headers: { "content-type": "image/jpeg", "content-length": "3" },
+      }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(downloadWhatsappMedia({
+      provider: "meta_cloud",
+      endpointUrl: "https://graph.facebook.com/v24.0",
+      secret: JSON.stringify({ accessToken: "meta-token", appSecret: "meta-secret" }),
+      providerMediaId: "media-1",
+    })).resolves.toMatchObject({ bytes: new Uint8Array([1, 2, 3]), mimeType: "image/jpeg" });
+    expect(new Headers(fetchMock.mock.calls[1]?.[1]?.headers).get("authorization")).toBe("Bearer meta-token");
+
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ error: "temporary" }), { status: 503 })));
+    await expect(downloadWhatsappMedia({
+      provider: "meta_cloud",
+      endpointUrl: "https://graph.facebook.com/v24.0",
+      secret: JSON.stringify({ accessToken: "meta-token", appSecret: "meta-secret" }),
+      providerMediaId: "media-1",
+    })).rejects.toMatchObject({ code: "provider_http_503", retryable: true, uncertain: false });
+  });
+
+  it("recusa mídia Uazapi hospedada fora das origens autorizadas", async () => {
+    await expect(downloadWhatsappMedia({
+      provider: "uazapi",
+      endpointUrl: "https://cliente.uazapi.com",
+      secret: "uaz-token",
+      sourceUrl: "https://atacante.example/arquivo.pdf",
+    })).rejects.toMatchObject({ code: "uazapi_media_url_unsafe", retryable: false });
   });
 
   it("usa Responses API com tool calling estrito", async () => {
@@ -137,5 +257,49 @@ describe("adapters de tráfego real", () => {
       businessContext: { qualification_definitions: [] },
     });
     expect(result).toMatchObject({ responseId: "resp_1", outputText: "Oi! Como posso ajudar?", inputTokens: 10, outputTokens: 8 });
+  });
+
+  it("classifica 429 e 5xx da OpenAI como repetíveis, mas não repete 401", async () => {
+    const input = {
+      apiKey: "sk-segredo-nao-pode-vazar",
+      model: "gpt-5.6-sol",
+      instructions: "Seja breve",
+      messages: [{ role: "user" as const, text: "Oi" }],
+      businessContext: {},
+    };
+    for (const status of [429, 503]) {
+      vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ error: { message: input.apiKey } }), { status })));
+      await expect(createPedroResponse(input)).rejects.toMatchObject({
+        code: `openai_http_${status}`,
+        retryable: true,
+        redactedMessage: expect.not.stringContaining(input.apiKey),
+      });
+    }
+    vi.stubGlobal("fetch", vi.fn(async () => new Response(JSON.stringify({ error: { message: input.apiKey } }), { status: 401 })));
+    await expect(createPedroResponse(input)).rejects.toMatchObject({
+      code: "openai_http_401",
+      retryable: false,
+      redactedMessage: expect.not.stringContaining(input.apiKey),
+    });
+  });
+
+  it("rejeita decisão OpenAI fora do contrato estruturado", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      id: "resp_invalid",
+      status: "completed",
+      output: [{
+        type: "function_call",
+        name: "commit_pedro_turn",
+        call_id: "call_invalid",
+        arguments: JSON.stringify({ outcome: "reply", reply: null }),
+      }],
+    })));
+    await expect(createPedroResponse({
+      apiKey: "sk-test",
+      model: "gpt-5.6-sol",
+      instructions: "Seja breve",
+      messages: [{ role: "user", text: "Oi" }],
+      businessContext: {},
+    })).rejects.toMatchObject({ code: "openai_tool_arguments_invalid", retryable: false });
   });
 });
