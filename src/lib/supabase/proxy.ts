@@ -2,20 +2,8 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import type { Database } from "@/lib/database.types";
+import { isPublicPath } from "@/lib/routing/public-path";
 import { supabaseEnv } from "@/lib/supabase/env";
-
-const publicPrefixes = [
-  "/auth",
-  "/convite",
-  "/login",
-  "/cadastro",
-  "/recuperar-senha",
-  "/redefinir-senha",
-];
-
-function isPublicPath(pathname: string) {
-  return pathname === "/" || publicPrefixes.some((prefix) => pathname.startsWith(prefix));
-}
 
 export async function updateSession(request: NextRequest) {
   let response = NextResponse.next({ request });
