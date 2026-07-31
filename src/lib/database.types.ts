@@ -838,6 +838,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: "conversation_context_qualification_version_id_fkey"
+            columns: ["qualification_version_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "qualification_versions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
             foreignKeyName: "conversation_context_versions_conversation_id_org_id_fkey"
             columns: ["conversation_id", "org_id"]
             isOneToOne: false
@@ -1165,6 +1172,182 @@ export type Database = {
           },
           {
             foreignKeyName: "escalations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faq_creation_requests: {
+        Row: {
+          actor_user_id: string
+          base_answer: string
+          canonical_question: string
+          created_at: string
+          faq_entry_id: string | null
+          id: string
+          org_id: string
+          processed_at: string
+          response_mode: string
+          source_name: string
+        }
+        Insert: {
+          actor_user_id?: string
+          base_answer: string
+          canonical_question: string
+          created_at?: string
+          faq_entry_id?: string | null
+          id?: string
+          org_id: string
+          processed_at?: string
+          response_mode: string
+          source_name: string
+        }
+        Update: {
+          actor_user_id?: string
+          base_answer?: string
+          canonical_question?: string
+          created_at?: string
+          faq_entry_id?: string | null
+          id?: string
+          org_id?: string
+          processed_at?: string
+          response_mode?: string
+          source_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_creation_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      faq_entries: {
+        Row: {
+          canonical_question: string
+          created_at: string
+          created_by: string | null
+          id: string
+          org_id: string
+          project_id: string | null
+          scope: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          canonical_question: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id: string
+          project_id?: string | null
+          scope: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          canonical_question?: string
+          created_at?: string
+          created_by?: string | null
+          id?: string
+          org_id?: string
+          project_id?: string | null
+          scope?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_entries_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "faq_entries_project_id_org_id_fkey"
+            columns: ["project_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      faq_versions: {
+        Row: {
+          allowed_dynamic_fields: string[]
+          base_answer: string
+          caveats: string | null
+          checksum: string
+          created_at: string
+          faq_entry_id: string
+          forbidden_claims: Json
+          id: string
+          org_id: string
+          published_at: string | null
+          published_by: string | null
+          question_variations: Json
+          response_mode: string
+          source_name: string | null
+          status: string
+          updated_at: string
+          valid_until: string | null
+          version: number
+        }
+        Insert: {
+          allowed_dynamic_fields?: string[]
+          base_answer: string
+          caveats?: string | null
+          checksum: string
+          created_at?: string
+          faq_entry_id: string
+          forbidden_claims?: Json
+          id?: string
+          org_id: string
+          published_at?: string | null
+          published_by?: string | null
+          question_variations?: Json
+          response_mode: string
+          source_name?: string | null
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+          version: number
+        }
+        Update: {
+          allowed_dynamic_fields?: string[]
+          base_answer?: string
+          caveats?: string | null
+          checksum?: string
+          created_at?: string
+          faq_entry_id?: string
+          forbidden_claims?: Json
+          id?: string
+          org_id?: string
+          published_at?: string | null
+          published_by?: string | null
+          question_variations?: Json
+          response_mode?: string
+          source_name?: string | null
+          status?: string
+          updated_at?: string
+          valid_until?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "faq_versions_faq_entry_id_org_id_fkey"
+            columns: ["faq_entry_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "faq_entries"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "faq_versions_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -2912,6 +3095,779 @@ export type Database = {
           whatsapp_e164?: string | null
         }
         Relationships: []
+      }
+      project_facts: {
+        Row: {
+          active: boolean
+          code: string
+          confidence: number | null
+          created_at: string
+          id: string
+          org_id: string
+          project_id: string
+          reference_date: string
+          source_name: string
+          unit: string | null
+          updated_at: string
+          valid_until: string | null
+          value_number: number | null
+          value_text: string | null
+        }
+        Insert: {
+          active?: boolean
+          code: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          org_id: string
+          project_id: string
+          reference_date: string
+          source_name: string
+          unit?: string | null
+          updated_at?: string
+          valid_until?: string | null
+          value_number?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          active?: boolean
+          code?: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          org_id?: string
+          project_id?: string
+          reference_date?: string
+          source_name?: string
+          unit?: string | null
+          updated_at?: string
+          valid_until?: string | null
+          value_number?: number | null
+          value_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_facts_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_facts_project_id_org_id_fkey"
+            columns: ["project_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      project_match_requests: {
+        Row: {
+          actor_user_id: string | null
+          created_at: string
+          id: string
+          opportunity_id: string
+          org_id: string
+          processed_at: string
+          result_count: number
+        }
+        Insert: {
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          opportunity_id: string
+          org_id: string
+          processed_at?: string
+          result_count?: number
+        }
+        Update: {
+          actor_user_id?: string | null
+          created_at?: string
+          id?: string
+          opportunity_id?: string
+          org_id?: string
+          processed_at?: string
+          result_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_match_requests_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "project_match_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      project_matches: {
+        Row: {
+          created_at: string
+          criteria: Json
+          decision_reason: string
+          eligible: boolean
+          id: string
+          opportunity_id: string
+          org_id: string
+          project_id: string
+          rank: number | null
+          request_id: string
+          sent_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          criteria: Json
+          decision_reason: string
+          eligible: boolean
+          id?: string
+          opportunity_id: string
+          org_id: string
+          project_id: string
+          rank?: number | null
+          request_id: string
+          sent_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          criteria?: Json
+          decision_reason?: string
+          eligible?: boolean
+          id?: string
+          opportunity_id?: string
+          org_id?: string
+          project_id?: string
+          rank?: number | null
+          request_id?: string
+          sent_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_matches_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "project_matches_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_matches_project_id_org_id_fkey"
+            columns: ["project_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      project_media: {
+        Row: {
+          active: boolean
+          created_at: string
+          external_url: string | null
+          id: string
+          media_type: string
+          org_id: string
+          project_id: string
+          sort_order: number
+          storage_path: string | null
+          title: string | null
+        }
+        Insert: {
+          active?: boolean
+          created_at?: string
+          external_url?: string | null
+          id?: string
+          media_type: string
+          org_id: string
+          project_id: string
+          sort_order?: number
+          storage_path?: string | null
+          title?: string | null
+        }
+        Update: {
+          active?: boolean
+          created_at?: string
+          external_url?: string | null
+          id?: string
+          media_type?: string
+          org_id?: string
+          project_id?: string
+          sort_order?: number
+          storage_path?: string | null
+          title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_media_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_media_project_id_org_id_fkey"
+            columns: ["project_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      project_snapshots: {
+        Row: {
+          checksum: string
+          created_at: string
+          id: string
+          opportunity_id: string | null
+          org_id: string
+          project_id: string
+          snapshot: Json
+        }
+        Insert: {
+          checksum: string
+          created_at?: string
+          id?: string
+          opportunity_id?: string | null
+          org_id: string
+          project_id: string
+          snapshot: Json
+        }
+        Update: {
+          checksum?: string
+          created_at?: string
+          id?: string
+          opportunity_id?: string | null
+          org_id?: string
+          project_id?: string
+          snapshot?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "project_snapshots_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "project_snapshots_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "project_snapshots_project_id_org_id_fkey"
+            columns: ["project_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "projects"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      projects: {
+        Row: {
+          comfortable_installment: number | null
+          commercial_priority: number
+          cover_storage_path: string | null
+          created_at: string
+          created_by: string | null
+          delivery_type: string
+          id: string
+          max_price: number | null
+          min_down_payment: number | null
+          min_price: number | null
+          name: string
+          neighborhood: string | null
+          operation_id: string | null
+          org_id: string
+          primary_objective: string | null
+          recommendable: boolean
+          reference_date: string | null
+          region: string
+          short_stay_management: boolean | null
+          source_name: string | null
+          status: string
+          summary: string
+          updated_at: string
+          valid_until: string | null
+        }
+        Insert: {
+          comfortable_installment?: number | null
+          commercial_priority?: number
+          cover_storage_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivery_type: string
+          id?: string
+          max_price?: number | null
+          min_down_payment?: number | null
+          min_price?: number | null
+          name: string
+          neighborhood?: string | null
+          operation_id?: string | null
+          org_id: string
+          primary_objective?: string | null
+          recommendable?: boolean
+          reference_date?: string | null
+          region: string
+          short_stay_management?: boolean | null
+          source_name?: string | null
+          status?: string
+          summary: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Update: {
+          comfortable_installment?: number | null
+          commercial_priority?: number
+          cover_storage_path?: string | null
+          created_at?: string
+          created_by?: string | null
+          delivery_type?: string
+          id?: string
+          max_price?: number | null
+          min_down_payment?: number | null
+          min_price?: number | null
+          name?: string
+          neighborhood?: string | null
+          operation_id?: string | null
+          org_id?: string
+          primary_objective?: string | null
+          recommendable?: boolean
+          reference_date?: string | null
+          region?: string
+          short_stay_management?: boolean | null
+          source_name?: string | null
+          status?: string
+          summary?: string
+          updated_at?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "projects_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "projects_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qualification_definitions: {
+        Row: {
+          accepted_interpretations: Json
+          active: boolean
+          answer_type: string
+          applicability: Json
+          clarification_rule: string | null
+          code: string
+          created_at: string
+          description: string | null
+          id: string
+          intent: string
+          name: string
+          natural_examples: Json
+          org_id: string
+          priority: number
+          required: boolean
+          suggested_order: number
+          updated_at: string
+          validity_days: number | null
+        }
+        Insert: {
+          accepted_interpretations?: Json
+          active?: boolean
+          answer_type: string
+          applicability?: Json
+          clarification_rule?: string | null
+          code: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          intent: string
+          name: string
+          natural_examples?: Json
+          org_id: string
+          priority?: number
+          required?: boolean
+          suggested_order: number
+          updated_at?: string
+          validity_days?: number | null
+        }
+        Update: {
+          accepted_interpretations?: Json
+          active?: boolean
+          answer_type?: string
+          applicability?: Json
+          clarification_rule?: string | null
+          code?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          intent?: string
+          name?: string
+          natural_examples?: Json
+          org_id?: string
+          priority?: number
+          required?: boolean
+          suggested_order?: number
+          updated_at?: string
+          validity_days?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualification_definitions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qualification_value_history: {
+        Row: {
+          actor_user_id: string | null
+          confidence: number | null
+          created_at: string
+          definition_id: string
+          id: string
+          new_value: Json | null
+          opportunity_id: string
+          org_id: string
+          previous_value: Json | null
+          qualification_value_id: string | null
+          result: string
+          source: string
+          source_message_id: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          definition_id: string
+          id?: string
+          new_value?: Json | null
+          opportunity_id: string
+          org_id: string
+          previous_value?: Json | null
+          qualification_value_id?: string | null
+          result: string
+          source: string
+          source_message_id?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          definition_id?: string
+          id?: string
+          new_value?: Json | null
+          opportunity_id?: string
+          org_id?: string
+          previous_value?: Json | null
+          qualification_value_id?: string | null
+          result?: string
+          source?: string
+          source_message_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualification_value_history_definition_id_org_id_fkey"
+            columns: ["definition_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "qualification_definitions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "qualification_value_history_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "qualification_value_history_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qualification_value_history_qualification_value_id_org_id_fkey"
+            columns: ["qualification_value_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "qualification_values"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "qualification_value_history_source_message_id_fkey"
+            columns: ["source_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qualification_value_requests: {
+        Row: {
+          actor_user_id: string | null
+          confidence: number | null
+          created_at: string
+          definition_id: string
+          expected_version: number | null
+          human_confirmed: boolean
+          id: string
+          opportunity_id: string
+          org_id: string
+          processed_at: string
+          qualification_value_id: string | null
+          result: string | null
+          source: string
+          source_message_id: string | null
+          state: string
+          value_boolean: boolean | null
+          value_json: Json | null
+          value_number: number | null
+          value_text: string | null
+        }
+        Insert: {
+          actor_user_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          definition_id: string
+          expected_version?: number | null
+          human_confirmed?: boolean
+          id?: string
+          opportunity_id: string
+          org_id: string
+          processed_at?: string
+          qualification_value_id?: string | null
+          result?: string | null
+          source: string
+          source_message_id?: string | null
+          state?: string
+          value_boolean?: boolean | null
+          value_json?: Json | null
+          value_number?: number | null
+          value_text?: string | null
+        }
+        Update: {
+          actor_user_id?: string | null
+          confidence?: number | null
+          created_at?: string
+          definition_id?: string
+          expected_version?: number | null
+          human_confirmed?: boolean
+          id?: string
+          opportunity_id?: string
+          org_id?: string
+          processed_at?: string
+          qualification_value_id?: string | null
+          result?: string | null
+          source?: string
+          source_message_id?: string | null
+          state?: string
+          value_boolean?: boolean | null
+          value_json?: Json | null
+          value_number?: number | null
+          value_text?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualification_value_requests_definition_id_org_id_fkey"
+            columns: ["definition_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "qualification_definitions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "qualification_value_requests_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "qualification_value_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qualification_value_requests_qualification_value_id_org_id_fkey"
+            columns: ["qualification_value_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "qualification_values"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "qualification_value_requests_source_message_id_fkey"
+            columns: ["source_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qualification_values: {
+        Row: {
+          confidence: number | null
+          confirmed_at: string | null
+          confirmed_by: string | null
+          created_at: string
+          definition_id: string
+          human_confirmed: boolean
+          id: string
+          opportunity_id: string
+          org_id: string
+          source: string
+          source_message_id: string | null
+          state: string
+          updated_at: string
+          valid_until: string | null
+          value_boolean: boolean | null
+          value_json: Json | null
+          value_number: number | null
+          value_text: string | null
+          version: number
+        }
+        Insert: {
+          confidence?: number | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          definition_id: string
+          human_confirmed?: boolean
+          id?: string
+          opportunity_id: string
+          org_id: string
+          source: string
+          source_message_id?: string | null
+          state?: string
+          updated_at?: string
+          valid_until?: string | null
+          value_boolean?: boolean | null
+          value_json?: Json | null
+          value_number?: number | null
+          value_text?: string | null
+          version?: number
+        }
+        Update: {
+          confidence?: number | null
+          confirmed_at?: string | null
+          confirmed_by?: string | null
+          created_at?: string
+          definition_id?: string
+          human_confirmed?: boolean
+          id?: string
+          opportunity_id?: string
+          org_id?: string
+          source?: string
+          source_message_id?: string | null
+          state?: string
+          updated_at?: string
+          valid_until?: string | null
+          value_boolean?: boolean | null
+          value_json?: Json | null
+          value_number?: number | null
+          value_text?: string | null
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualification_values_definition_id_org_id_fkey"
+            columns: ["definition_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "qualification_definitions"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "qualification_values_opportunity_id_org_id_fkey"
+            columns: ["opportunity_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "opportunities"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "qualification_values_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "qualification_values_source_message_id_fkey"
+            columns: ["source_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      qualification_versions: {
+        Row: {
+          checksum: string
+          created_at: string
+          definitions_snapshot: Json
+          id: string
+          org_id: string
+          published_at: string | null
+          published_by: string | null
+          status: string
+          version: number
+        }
+        Insert: {
+          checksum: string
+          created_at?: string
+          definitions_snapshot: Json
+          id?: string
+          org_id: string
+          published_at?: string | null
+          published_by?: string | null
+          status?: string
+          version: number
+        }
+        Update: {
+          checksum?: string
+          created_at?: string
+          definitions_snapshot?: Json
+          id?: string
+          org_id?: string
+          published_at?: string | null
+          published_by?: string | null
+          status?: string
+          version?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "qualification_versions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       rule_sets: {
         Row: {

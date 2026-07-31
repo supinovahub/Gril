@@ -12,7 +12,7 @@ import { notFound } from "next/navigation";
 
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { changeStageAction, completeNextActionAction } from "../actions";
+import { changeStageAction, completeNextActionAction, matchProjectsAction, recordQualificationAction } from "../actions";
 import styles from "../leads.module.css";
 
 const allowedNext: Record<string, string[]> = {
@@ -38,7 +38,7 @@ export default async function LeadDetailPage({
   const feedback = await searchParams;
   const supabase = await createClient();
 
-  const [opportunityResult, stagesResult, reasonsResult, historyResult, actionsResult, sourcesResult, salesResult] = await Promise.all([
+  const [opportunityResult, stagesResult, reasonsResult, historyResult, actionsResult, sourcesResult, salesResult, definitionsResult, qualificationResult, matchesResult] = await Promise.all([
     supabase
       .from("opportunities")
       .select("*, contacts!inner(id,name,status,contact_phones(*)), pipeline_stages!inner(id,name,code,position)")
@@ -50,6 +50,9 @@ export default async function LeadDetailPage({
     supabase.from("next_actions").select("*").eq("opportunity_id", id).order("due_at"),
     supabase.from("source_attributions").select("*").eq("opportunity_id", id).order("attributed_at", { ascending: false }),
     supabase.from("sales").select("*").eq("opportunity_id", id).neq("status", "cancelled").maybeSingle(),
+    supabase.from("qualification_definitions").select("*").eq("org_id", viewer.organization!.id).eq("active", true).order("suggested_order"),
+    supabase.from("qualification_values").select("*").eq("opportunity_id", id),
+    supabase.from("project_matches").select("*,projects!inner(name,region,neighborhood,min_price,min_down_payment,cover_storage_path)").eq("opportunity_id", id).eq("eligible", true).order("created_at", { ascending: false }).limit(4),
   ]);
 
   const opportunity = opportunityResult.data;
@@ -94,6 +97,45 @@ export default async function LeadDetailPage({
               <div><dt>Contexto para Pedro</dt><dd>{opportunity.ai_context || "Não informado"}</dd></div>
               <div><dt>Nota interna</dt><dd>{opportunity.internal_note || "Não informada"}</dd></div>
             </dl>
+          </section>
+
+          <section className={styles.detailCard}>
+            <div className={styles.cardTitle}><CircleAlert size={18} /><h2>Qualificação</h2></div>
+            <div className={styles.qualificationGrid}>
+              {definitionsResult.data?.map((definition) => {
+                const current = qualificationResult.data?.find((value) => value.definition_id === definition.id);
+                const display = current?.value_number !== null && current?.value_number !== undefined
+                  ? new Intl.NumberFormat("pt-BR", { style: definition.answer_type === "money" ? "currency" : "decimal", currency: "BRL" }).format(current.value_number)
+                  : current?.value_text ?? (current?.state === "refused" ? "Não informado" : "Pendente");
+                return (
+                  <form action={recordQualificationAction} className={styles.qualificationItem} key={definition.id}>
+                    <input name="opportunityId" type="hidden" value={opportunity.id} />
+                    <input name="definitionId" type="hidden" value={definition.id} />
+                    <input name="answerType" type="hidden" value={definition.answer_type} />
+                    {current ? <input name="expectedVersion" type="hidden" value={current.version} /> : null}
+                    <span><strong>{definition.name}</strong><small>{current ? `${current.source} · ${current.state}${current.human_confirmed ? " · confirmado" : ""}` : "a coletar"}</small></span>
+                    <input defaultValue={display === "Pendente" ? "" : display} name="value" placeholder={display} required />
+                    <button type="submit">Salvar</button>
+                  </form>
+                );
+              })}
+            </div>
+          </section>
+
+          <section className={styles.detailCard}>
+            <div className={styles.cardTitle}><CircleAlert size={18} /><h2>Curadoria determinística</h2></div>
+            <form action={matchProjectsAction} className={styles.matchAction}>
+              <input name="opportunityId" type="hidden" value={opportunity.id} />
+              <p>Preço total e entrada são filtros obrigatórios. Região, entrega e prioridade apenas ordenam.</p>
+              <button type="submit">Recalcular até 2 opções</button>
+            </form>
+            <div className={styles.matchList}>
+              {matchesResult.data?.map((match) => {
+                const project = Array.isArray(match.projects) ? match.projects[0] : match.projects;
+                return <article key={match.id}><span><strong>{project?.name}</strong><small>{project?.neighborhood || project?.region} · entrada desde {project?.min_down_payment?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</small></span><span className={styles.stagePill}>#{match.rank}</span></article>;
+              })}
+              {!matchesResult.data?.length ? <p className={styles.mutedCopy}>Nenhuma curadoria executada ou critérios mínimos ainda ausentes.</p> : null}
+            </div>
           </section>
 
           <section className={styles.detailCard}>

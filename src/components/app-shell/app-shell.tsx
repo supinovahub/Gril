@@ -1,4 +1,5 @@
 import {
+  BookOpenCheck,
   Building2,
   ChevronDown,
   CircleUserRound,
@@ -98,6 +99,9 @@ export function AppShell({
           <p className={styles.navLabel}>Inteligência</p>
           <Link className={styles.navItem} href="/app/pedro">
             <Sparkles size={18} aria-hidden="true" /> Pedro
+          </Link>
+          <Link className={styles.navItem} href="/app/conhecimento">
+            <BookOpenCheck size={18} aria-hidden="true" /> Conhecimento
           </Link>
 
           <p className={styles.navLabel}>Próximas fases</p>

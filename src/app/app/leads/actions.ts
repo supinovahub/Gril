@@ -180,3 +180,53 @@ export async function completeNextActionAction(formData: FormData) {
   revalidatePath(`/app/leads/${opportunityId.data}`);
 }
 
+export async function recordQualificationAction(formData: FormData) {
+  const parsed = z.object({
+    opportunityId: z.string().uuid(),
+    definitionId: z.string().uuid(),
+    answerType: z.enum(["money", "number", "text", "single_choice", "multi_choice", "boolean", "datetime_preference"]),
+    value: z.string().trim().min(1).max(1000),
+    expectedVersion: z.coerce.number().int().positive().optional(),
+  }).safeParse({
+    opportunityId: formData.get("opportunityId"),
+    definitionId: formData.get("definitionId"),
+    answerType: formData.get("answerType"),
+    value: formData.get("value"),
+    expectedVersion: formData.get("expectedVersion") || undefined,
+  });
+  if (!parsed.success) return;
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const numeric = ["money", "number"].includes(parsed.data.answerType)
+    ? Number(parsed.data.value.replace(/[^0-9,.-]/g, "").replace(",", "."))
+    : null;
+  const { error } = await supabase.from("qualification_value_requests").insert({
+    org_id: viewer.organization!.id,
+    opportunity_id: parsed.data.opportunityId,
+    definition_id: parsed.data.definitionId,
+    value_number: numeric !== null && Number.isFinite(numeric) ? numeric : null,
+    value_text: numeric === null ? parsed.data.value : null,
+    source: "manual",
+    confidence: 1,
+    human_confirmed: true,
+    actor_user_id: viewer.userId,
+    expected_version: parsed.data.expectedVersion ?? null,
+  });
+  if (error) {
+    redirect(`/app/leads/${parsed.data.opportunityId}?erro=${queryMessage(crmError(error.message))}`);
+  }
+  revalidatePath(`/app/leads/${parsed.data.opportunityId}`);
+}
+
+export async function matchProjectsAction(formData: FormData) {
+  const opportunityId = z.string().uuid().safeParse(formData.get("opportunityId"));
+  if (!opportunityId.success) return;
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  await supabase.from("project_match_requests").insert({
+    org_id: viewer.organization!.id,
+    opportunity_id: opportunityId.data,
+    actor_user_id: viewer.userId,
+  });
+  revalidatePath(`/app/leads/${opportunityId.data}`);
+}
