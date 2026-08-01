@@ -8,10 +8,10 @@ export const metadata: Metadata = { title: "Criar conta" };
 export default async function RegisterPage({
   searchParams,
 }: {
-  searchParams: Promise<{ next?: string }>;
+  searchParams: Promise<{ next?: string; email?: string }>;
 }) {
-  const { next } = await searchParams;
+  const { next, email } = await searchParams;
   return (
-    <RegisterForm nextPath={safeNextPath(next, "/onboarding")} />
+    <RegisterForm initialEmail={email?.slice(0, 320) ?? ""} nextPath={safeNextPath(next, "/onboarding")} />
   );
 }

@@ -1,8 +1,9 @@
 import { Building2, CirclePause, ShieldCheck } from "lucide-react";
 
+import { TypedConfirmationButton } from "@/components/typed-confirmation-button";
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { emergencyPauseAction, resumeEmergencyPauseAction, updateInstitutionalSettingsAction, updateOperationSettingsAction } from "./actions";
+import { emergencyPauseAction, resumeEmergencyPauseAction, revokeExternalSupportAction, updateInstitutionalSettingsAction, updateOperationSettingsAction } from "./actions";
 import styles from "../../operations.module.css";
 
 type InstitutionalProfile = { company_name?: string;cnpj?: string;creci?: string;address?: string;site?: string;instagram?: string;privacy_contact?: string;source_name?: string;valid_until?: string };
@@ -12,13 +13,15 @@ export default async function OrganizationSettingsPage({ searchParams }: { searc
   const feedback = await searchParams;
   const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
   const supabase = await createClient();
-  const [{ data: organizationSettings }, { data: operationSettings }, { data: pauses }] = await Promise.all([
+  const [{ data: organizationSettings }, { data: operationSettings }, { data: pauses }, supportResult] = await Promise.all([
     supabase.from("organization_settings").select("*").eq("org_id", viewer.organization!.id).single(),
     operation ? supabase.from("operation_settings").select("*").eq("operation_id", operation.id).single() : Promise.resolve({ data: null }),
     supabase.from("system_pauses").select("*").eq("org_id", viewer.organization!.id).eq("active", true).order("paused_at", { ascending: false }),
+    viewer.membership?.role === "owner" ? supabase.rpc("organization_has_external_support") : Promise.resolve({ data: false }),
   ]);
   const institutional = (organizationSettings?.institutional_profile ?? {}) as InstitutionalProfile;
   const canManage = viewer.membership?.role === "owner" || viewer.permissions.includes("settings.manage");
+  const canPause = viewer.membership?.role === "owner" || viewer.permissions.includes("operations.pause");
 
   return <div className={styles.page}>
     <header className={styles.header}><div><p className={styles.eyebrow}>Fonte institucional</p><h1>Organização e operação</h1><p>Identidade, horários e limites usados pelo Pedro e pelas automações.</p></div><Building2 /></header>
@@ -39,7 +42,8 @@ export default async function OrganizationSettingsPage({ searchParams }: { searc
         <button disabled={!canManage}>Salvar regras operacionais</button>
       </form> : null}
     </main><aside className={styles.stack}><section className={styles.panel}><h2>Gate de produção</h2><p className={styles.definition}><ShieldCheck size={15} /> O banco exige identidade, persona, regras, qualificação, conhecimento válido, modelo principal e fallback, canal saudável e regressão real aprovada.</p></section>
-      {operation ? <form action={emergencyPauseAction} className={styles.formCard}><h2><CirclePause size={17} /> Pausa emergencial</h2><input name="operationId" type="hidden" value={operation.id} /><label><span>Motivo obrigatório</span><textarea name="reason" required rows={3} /></label><button disabled={!canManage}>Pausar automações</button><p className={styles.definition}>Gestor pode pausar. Somente o dono pode retomar.</p></form> : null}
+      {viewer.membership?.role === "owner" && supportResult.data ? <section className={styles.panel}><h2>Acesso externo de suporte</h2><p className={styles.definition}>Existe uma concessão contratual ativa. Você pode encerrá-la imediatamente; uma nova concessão dependerá do administrador da plataforma.</p><form action={revokeExternalSupportAction}><TypedConfirmationButton>Revogar acesso do suporte</TypedConfirmationButton></form></section> : null}
+      {operation ? <form action={emergencyPauseAction} className={styles.formCard}><h2><CirclePause size={17} /> Pausa emergencial</h2><input name="operationId" type="hidden" value={operation.id} /><label><span>Motivo obrigatório</span><textarea name="reason" required rows={3} /></label><button disabled={!canPause}>Pausar automações</button><p className={styles.definition}>Gestor autorizado pode pausar. Somente o dono pode retomar.</p></form> : null}
     </aside></div>
   </div>;
 }

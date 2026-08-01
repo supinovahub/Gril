@@ -78,6 +78,17 @@ const regressionClaimSchema = z.object({
   rules: z.unknown().optional(), model: z.string().optional(),
 });
 
+const platformPushClaimSchema = z.array(z.object({
+  id: z.string().uuid(),
+  recipient_user_id: z.string().uuid(),
+  title: z.string(),
+  body: z.string(),
+  url: z.string(),
+  subscriptions: z.array(z.object({
+    id: z.string().uuid(), endpoint: z.string().url(), p256dh: z.string(), auth_key: z.string(),
+  })).default([]),
+}));
+
 function hasExplicitCallConfirmation(messages: Array<{ role: "user" | "assistant"; text: string }>) {
   const latest = [...messages].reverse().find((message) => message.role === "user")?.text
     .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() ?? "";
@@ -707,6 +718,46 @@ async function deliverPendingPushNotifications() {
   }
 }
 
+async function deliverPendingPlatformPushNotifications() {
+  const publicKey = process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY;
+  const privateKey = process.env.WEB_PUSH_PRIVATE_KEY;
+  if (!publicKey || !privateKey) return 0;
+  webpush.setVapidDetails(process.env.WEB_PUSH_SUBJECT ?? "mailto:suporte@gril.app", publicKey, privateKey);
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("claim_platform_push_notifications", { p_limit: 20 });
+  if (error) throw error;
+  const notifications = platformPushClaimSchema.parse(data);
+  let deliveredCount = 0;
+  for (const notification of notifications) {
+    let deliveredSubscriptionId: string | undefined;
+    let failedSubscriptionId: string | undefined;
+    let revokeFailedSubscription = false;
+    for (const subscription of notification.subscriptions) {
+      try {
+        await webpush.sendNotification(
+          { endpoint: subscription.endpoint, keys: { p256dh: subscription.p256dh, auth: subscription.auth_key } },
+          JSON.stringify({ title: notification.title, body: notification.body, url: notification.url, tag: `gril-platform-${notification.id}` }),
+        );
+        deliveredSubscriptionId = subscription.id;
+        break;
+      } catch (pushError) {
+        const statusCode = (pushError as { statusCode?: number }).statusCode;
+        failedSubscriptionId = subscription.id;
+        revokeFailedSubscription = [404, 410].includes(statusCode ?? 0);
+      }
+    }
+    const delivered = Boolean(deliveredSubscriptionId);
+    await admin.rpc("finish_platform_push_notification", {
+      p_notification_id: notification.id,
+      p_delivered: delivered,
+      p_subscription_id: deliveredSubscriptionId ?? failedSubscriptionId,
+      p_revoke_subscription: !delivered && revokeFailedSubscription,
+    });
+    if (delivered) deliveredCount += 1;
+  }
+  return deliveredCount;
+}
+
 async function processQueueItem(queue: QueueName, item: z.infer<typeof queueMessageSchema>) {
   const message = item.message;
   if (queue === "ai-turns") return processAiMessage(message);
@@ -798,10 +849,11 @@ export async function drainRuntimeWorker() {
     }
   }
   const purged = await drainRetention();
+  const platformPushDelivered = await deliverPendingPlatformPushNotifications();
   await admin.from("integration_health_checks").insert({
     component: "queues",
     status: "healthy",
-    metadata: { source: "runtime_worker", summary, purged },
+    metadata: { source: "runtime_worker", summary, purged, platformPushDelivered },
   });
-  return { ok: true, summary, purged };
+  return { ok: true, summary, purged, platformPushDelivered };
 }

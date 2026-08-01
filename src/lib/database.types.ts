@@ -1,4 +1,4 @@
-export type Json =
+﻿export type Json =
   | string
   | number
   | boolean
@@ -14,6 +14,104 @@ export type Database = {
   }
   public: {
     Tables: {
+      access_requests: {
+        Row: {
+          approval_expires_at: string | null
+          approved_at: string | null
+          approved_by: string | null
+          approved_role: string | null
+          approximate_brokers: number | null
+          city: string | null
+          cnpj: string | null
+          consumed_at: string | null
+          created_at: string
+          creci: string | null
+          email: string
+          full_name: string
+          id: string
+          introduction: string | null
+          last_submitted_at: string
+          operation_description: string | null
+          org_id: string | null
+          organization_name: string | null
+          public_reason: string | null
+          request_type: string
+          requested_role: string | null
+          requester_user_id: string
+          state: string | null
+          status: string
+          updated_at: string
+          version: number
+          whatsapp_e164: string
+        }
+        Insert: {
+          approval_expires_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_role?: string | null
+          approximate_brokers?: number | null
+          city?: string | null
+          cnpj?: string | null
+          consumed_at?: string | null
+          created_at?: string
+          creci?: string | null
+          email: string
+          full_name: string
+          id?: string
+          introduction?: string | null
+          last_submitted_at?: string
+          operation_description?: string | null
+          org_id?: string | null
+          organization_name?: string | null
+          public_reason?: string | null
+          request_type: string
+          requested_role?: string | null
+          requester_user_id: string
+          state?: string | null
+          status?: string
+          updated_at?: string
+          version?: number
+          whatsapp_e164: string
+        }
+        Update: {
+          approval_expires_at?: string | null
+          approved_at?: string | null
+          approved_by?: string | null
+          approved_role?: string | null
+          approximate_brokers?: number | null
+          city?: string | null
+          cnpj?: string | null
+          consumed_at?: string | null
+          created_at?: string
+          creci?: string | null
+          email?: string
+          full_name?: string
+          id?: string
+          introduction?: string | null
+          last_submitted_at?: string
+          operation_description?: string | null
+          org_id?: string | null
+          organization_name?: string | null
+          public_reason?: string | null
+          request_type?: string
+          requested_role?: string | null
+          requester_user_id?: string
+          state?: string | null
+          status?: string
+          updated_at?: string
+          version?: number
+          whatsapp_e164?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "access_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ai_action_executions: {
         Row: {
           action_input: Json
@@ -6810,7 +6908,9 @@ export type Database = {
       }
       organization_bootstrap_requests: {
         Row: {
+          access_request_id: string | null
           actor_user_id: string
+          city: string | null
           created_at: string
           id: string
           membership_id: string | null
@@ -6820,10 +6920,13 @@ export type Database = {
           organization_name: string
           processed_at: string | null
           result: string
+          state: string | null
           timezone: string
         }
         Insert: {
+          access_request_id?: string | null
           actor_user_id?: string
+          city?: string | null
           created_at?: string
           id?: string
           membership_id?: string | null
@@ -6833,10 +6936,13 @@ export type Database = {
           organization_name: string
           processed_at?: string | null
           result?: string
+          state?: string | null
           timezone?: string
         }
         Update: {
+          access_request_id?: string | null
           actor_user_id?: string
+          city?: string | null
           created_at?: string
           id?: string
           membership_id?: string | null
@@ -6846,9 +6952,17 @@ export type Database = {
           organization_name?: string
           processed_at?: string | null
           result?: string
+          state?: string | null
           timezone?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "organization_bootstrap_requests_access_request_id_fkey"
+            columns: ["access_request_id"]
+            isOneToOne: false
+            referencedRelation: "access_requests"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "organization_bootstrap_requests_organization_id_fkey"
             columns: ["organization_id"]
@@ -6911,29 +7025,50 @@ export type Database = {
       }
       organizations: {
         Row: {
+          archived_at: string | null
+          archived_by: string | null
+          city: string | null
           created_at: string
           id: string
           name: string
           slug: string
+          state: string | null
           status: string
+          suspended_at: string | null
+          suspended_by: string | null
+          suspension_public_message: string | null
           timezone: string
           updated_at: string
         }
         Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          city?: string | null
           created_at?: string
           id?: string
           name: string
           slug: string
+          state?: string | null
           status?: string
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspension_public_message?: string | null
           timezone?: string
           updated_at?: string
         }
         Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          city?: string | null
           created_at?: string
           id?: string
           name?: string
           slug?: string
+          state?: string | null
           status?: string
+          suspended_at?: string | null
+          suspended_by?: string | null
+          suspension_public_message?: string | null
           timezone?: string
           updated_at?: string
         }
@@ -10012,8 +10147,16 @@ export type Database = {
         Args: { p_message_id: string }
         Returns: undefined
       }
+      cancel_access_request: {
+        Args: { p_request_id: string }
+        Returns: undefined
+      }
       claim_inbound_media: { Args: { p_message_id: string }; Returns: Json }
       claim_outbound_message: { Args: { p_message_id: string }; Returns: Json }
+      claim_platform_push_notifications: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
       claim_regression_case: {
         Args: { p_case_id: string; p_run_id: string }
         Returns: Json
@@ -10093,6 +10236,32 @@ export type Database = {
         Returns: undefined
       }
       consume_runtime_event: { Args: { p_event: Json }; Returns: Json }
+      current_access_block: {
+        Args: never
+        Returns: {
+          block_type: string
+          public_message: string
+        }[]
+      }
+      current_platform_context: {
+        Args: never
+        Returns: {
+          role: string
+          status: string
+        }[]
+      }
+      decide_access_request: {
+        Args: {
+          p_approved_role?: string
+          p_confirmation?: string
+          p_decision: string
+          p_internal_note?: string
+          p_operation_ids?: string[]
+          p_public_reason?: string
+          p_request_id: string
+        }
+        Returns: string
+      }
       dispatch_runtime_sources: {
         Args: { p_batch_size?: number }
         Returns: Json
@@ -10145,6 +10314,15 @@ export type Database = {
         }
         Returns: undefined
       }
+      finish_platform_push_notification: {
+        Args: {
+          p_delivered: boolean
+          p_notification_id: string
+          p_revoke_subscription?: boolean
+          p_subscription_id?: string
+        }
+        Returns: undefined
+      }
       finish_retention_purge: {
         Args: { p_error_redacted?: string; p_id: string; p_success: boolean }
         Returns: undefined
@@ -10187,6 +10365,69 @@ export type Database = {
         }
         Returns: undefined
       }
+      lookup_organization_join_code: {
+        Args: { p_code: string }
+        Returns: {
+          city: string
+          org_id: string
+          organization_name: string
+          state: string
+        }[]
+      }
+      organization_has_external_support: { Args: never; Returns: boolean }
+      organization_join_code: {
+        Args: never
+        Returns: {
+          code: string
+          enabled: boolean
+          generated_at: string
+        }[]
+      }
+      platform_add_access_request_note: {
+        Args: { p_note: string; p_request_id: string }
+        Returns: undefined
+      }
+      platform_control_organization: {
+        Args: {
+          p_action: string
+          p_confirmation: string
+          p_internal_note: string
+          p_org_id: string
+          p_public_message: string
+        }
+        Returns: string
+      }
+      platform_control_snapshot: { Args: never; Returns: Json }
+      platform_control_user: {
+        Args: {
+          p_action: string
+          p_confirmation: string
+          p_internal_note: string
+          p_public_message: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      platform_manage_principal: {
+        Args: {
+          p_action: string
+          p_confirmation: string
+          p_role: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      platform_manage_support_grant: {
+        Args: {
+          p_access_level: string
+          p_action: string
+          p_confirmation: string
+          p_contract_reference: string
+          p_expires_at: string
+          p_org_id: string
+        }
+        Returns: string
+      }
       platform_organization_metrics: {
         Args: never
         Returns: {
@@ -10199,6 +10440,11 @@ export type Database = {
           status: string
         }[]
       }
+      platform_preauthorize_organization: {
+        Args: { p_action: string; p_confirmation: string; p_email: string }
+        Returns: string
+      }
+      platform_user_directory: { Args: never; Returns: Json }
       process_operational_whatsapp_reply: {
         Args: {
           p_body: string
@@ -10208,6 +10454,35 @@ export type Database = {
         }
         Returns: Json
       }
+      record_access_rate_event: {
+        Args: { p_event_type: string; p_ip_hash: string; p_user_id: string }
+        Returns: undefined
+      }
+      register_platform_invitation: {
+        Args: {
+          p_created_by: string
+          p_email: string
+          p_expires_at: string
+          p_role: string
+          p_user_id: string
+        }
+        Returns: string
+      }
+      resubmit_access_request: {
+        Args: {
+          p_approximate_brokers?: number
+          p_city?: string
+          p_cnpj?: string
+          p_creci?: string
+          p_introduction?: string
+          p_operation_description?: string
+          p_organization_name?: string
+          p_request_id: string
+          p_state?: string
+          p_whatsapp_e164: string
+        }
+        Returns: undefined
+      }
       retry_ai_execution: {
         Args: {
           p_error_code: string
@@ -10216,6 +10491,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      revoke_external_support_access: {
+        Args: { p_confirmation: string }
+        Returns: number
+      }
       revoke_integration_account: {
         Args: {
           p_actor_user_id: string
@@ -10223,6 +10502,10 @@ export type Database = {
           p_org_id: string
         }
         Returns: undefined
+      }
+      rotate_organization_join_code: {
+        Args: { p_action: string; p_confirmation: string; p_reason: string }
+        Returns: string
       }
       runtime_queue_archive: {
         Args: { p_msg_id: number; p_queue_name: string }
@@ -10303,6 +10586,40 @@ export type Database = {
           p_provider: string
           p_secret: string
           p_visible_profile_name: string
+        }
+        Returns: string
+      }
+      submit_access_request: {
+        Args: {
+          p_approximate_brokers?: number
+          p_city?: string
+          p_cnpj?: string
+          p_creci?: string
+          p_introduction?: string
+          p_join_code?: string
+          p_operation_description?: string
+          p_organization_name?: string
+          p_request_type: string
+          p_state?: string
+          p_whatsapp_e164: string
+        }
+        Returns: string
+      }
+      support_access_context: {
+        Args: { p_org_id: string }
+        Returns: {
+          access_level: string
+          org_id: string
+          organization_name: string
+          organization_status: string
+        }[]
+      }
+      upsert_platform_push_subscription: {
+        Args: {
+          p_auth_key: string
+          p_endpoint: string
+          p_p256dh: string
+          p_user_agent?: string
         }
         Returns: string
       }

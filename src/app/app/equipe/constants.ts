@@ -2,6 +2,7 @@ export const permissionOptions = [
   "settings.manage",
   "team.manage",
   "operations.manage",
+  "operations.pause",
   "contacts.manage",
   "campaigns.manage",
   "pipeline.manage",

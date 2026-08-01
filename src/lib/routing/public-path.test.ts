@@ -8,6 +8,7 @@ describe("isPublicPath", () => {
     "/manifest.webmanifest",
     "/sw.js",
     "/login",
+    "/acesso-suspenso",
     "/auth/callback",
     "/api/webhooks/whatsapp/connection-id",
     "/api/webhooks/meta/forms/form-id",

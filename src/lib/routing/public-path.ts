@@ -5,6 +5,7 @@ const publicPrefixes = [
   "/cadastro",
   "/recuperar-senha",
   "/redefinir-senha",
+  "/acesso-suspenso",
   "/api/webhooks",
   "/api/internal/workers",
 ];

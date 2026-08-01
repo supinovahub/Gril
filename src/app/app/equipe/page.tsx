@@ -2,6 +2,7 @@ import { Link2, ShieldCheck, UserRoundPlus, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import type { Tables } from "@/lib/database.types";
+import { TypedConfirmationButton } from "@/components/typed-confirmation-button";
 import {
   canManageTeam,
   requireActiveViewer,
@@ -14,9 +15,12 @@ import {
   updateManagerPermissionsAction,
   requestOwnershipTransferAction,
   acceptOwnershipTransferAction,
+  decideTeamAccessRequestAction,
+  rotateOrganizationCodeAction,
 } from "./actions";
 import { permissionOptions } from "./constants";
 import { InviteForm } from "./invite-form";
+import { CopyButton } from "./copy-button";
 import styles from "./team.module.css";
 
 const statusLabels: Record<string, string> = {
@@ -30,6 +34,7 @@ const permissionLabels: Record<(typeof permissionOptions)[number], string> = {
   "settings.manage": "Configurações gerais",
   "team.manage": "Gerenciar corretores",
   "operations.manage": "Gerenciar operações",
+  "operations.pause": "Pausa emergencial",
   "contacts.manage": "Gerenciar contatos",
   "campaigns.manage": "Gerenciar campanhas",
   "pipeline.manage": "Gerenciar pipeline",
@@ -56,12 +61,13 @@ function statusClass(status: string) {
   return styles.status;
 }
 
-export default async function TeamPage() {
+export default async function TeamPage({ searchParams }: { searchParams: Promise<{ erro?: string; sucesso?: string }> }) {
   const viewer = await requireActiveViewer();
   if (!canManageTeam(viewer)) redirect("/app");
+  const feedback = await searchParams;
 
   const supabase = await createClient();
-  const [{ data: memberships }, { data: invitations }, { data: ownershipTransfers }] = await Promise.all([
+  const [{ data: memberships }, { data: invitations }, { data: ownershipTransfers }, { data: accessRequests }, { data: joinCodes }] = await Promise.all([
     supabase
       .from("memberships")
       .select("*")
@@ -74,6 +80,8 @@ export default async function TeamPage() {
       .order("created_at", { ascending: false })
       .limit(12),
     supabase.from("ownership_transfer_requests").select("*").eq("org_id", viewer.organization!.id).eq("status", "pending"),
+    supabase.from("access_requests").select("*").eq("org_id", viewer.organization!.id).in("status", ["pending", "correction_requested"]).order("created_at"),
+    supabase.rpc("organization_join_code"),
   ]);
 
   const memberRows = memberships ?? [];
@@ -113,6 +121,7 @@ export default async function TeamPage() {
   const isOwner = viewer.membership?.role === "owner";
   const activeCount = memberRows.filter((member) => member.status === "active").length;
   const pendingCount = memberRows.filter((member) => member.status === "pending").length;
+  const joinCode = joinCodes?.[0];
 
   return (
     <div className={styles.page}>
@@ -124,6 +133,36 @@ export default async function TeamPage() {
         </div>
         <span className={styles.summary}>{activeCount} ativos · {pendingCount} pendentes</span>
       </header>
+
+      {feedback.erro ? <p className={styles.feedback}>Não foi possível concluir a ação. Revise a confirmação e as permissões.</p> : null}
+      {feedback.sucesso ? <p className={`${styles.feedback} ${styles.success}`}>Ação concluída e registrada.</p> : null}
+
+      {joinCode ? <section className={styles.panel}>
+        <header className={styles.panelHeader}><div><Link2 size={18} /><h2>Código da imobiliária</h2></div><span>Localizador, não autorização</span></header>
+        <div className={styles.generatedLink}><code>{joinCode.code}</code>{joinCode.enabled ? <CopyButton value={joinCode.code} /> : <strong>Desativado</strong>}</div>
+        <p className={styles.formHint}>Visível somente para dono e gestores autorizados. Corretores não recebem este código.</p>
+        {isOwner ? <div className={styles.codeActions}>
+          <form action={rotateOrganizationCodeAction}><input name="action" type="hidden" value="rotate" /><input name="reason" placeholder="Motivo da troca" required /><TypedConfirmationButton className={styles.actionButton}>Gerar novo código</TypedConfirmationButton></form>
+          {joinCode.enabled ? <form action={rotateOrganizationCodeAction}><input name="action" type="hidden" value="disable" /><input name="reason" placeholder="Motivo da desativação" required /><TypedConfirmationButton className={styles.dangerButton}>Desativar código</TypedConfirmationButton></form> : null}
+        </div> : null}
+      </section> : null}
+
+      {accessRequests?.length ? <section className={styles.panel}>
+        <header className={styles.panelHeader}><div><UserRoundPlus size={18} /><h2>Solicitações pelo código</h2></div><span>{accessRequests.length} aguardando</span></header>
+        <ul className={styles.requestList}>{accessRequests.map((request) => <li className={styles.accessRequest} key={request.id}>
+          <div className={styles.requestIdentity}><strong>{request.full_name}</strong><span>{request.email} · {request.whatsapp_e164}</span><small>{request.requested_role === "manager" ? "Solicitou perfil de gestor" : "Solicitou perfil de corretor"} · v{request.version}</small>{request.introduction ? <p>{request.introduction}</p> : null}{request.public_reason ? <p className={styles.requestReason}>{request.public_reason}</p> : null}</div>
+          {request.status === "pending" ? <div className={styles.requestActions}>
+            <form action={decideTeamAccessRequestAction}>
+              <input name="requestId" type="hidden" value={request.id} /><input name="decision" type="hidden" value="approve" />
+              <label>Papel ao aprovar<select defaultValue={request.requested_role ?? "broker"} name="approvedRole"><option value="broker">Corretor</option>{isOwner ? <option value="manager">Gestor padrão</option> : null}</select></label>
+              <fieldset><legend>Operações do corretor</legend>{viewer.operations.map((operation) => <label key={operation.id}><input defaultChecked={operation.is_default} name="operationId" type="checkbox" value={operation.id} /> {operation.name}</label>)}</fieldset>
+              <TypedConfirmationButton className={styles.actionButton}>Aprovar acesso</TypedConfirmationButton>
+            </form>
+            <form action={decideTeamAccessRequestAction}><input name="requestId" type="hidden" value={request.id} /><input name="decision" type="hidden" value="request_correction" /><input name="publicReason" placeholder="Correção necessária" required /><TypedConfirmationButton className={styles.actionButton}>Pedir correção</TypedConfirmationButton></form>
+            <form action={decideTeamAccessRequestAction}><input name="requestId" type="hidden" value={request.id} /><input name="decision" type="hidden" value="reject" /><input name="publicReason" placeholder="Motivo da recusa" required /><TypedConfirmationButton className={styles.dangerButton}>Recusar</TypedConfirmationButton></form>
+          </div> : <span className={styles.pendingReview}>Aguardando correção do solicitante</span>}
+        </li>)}</ul>
+      </section> : null}
 
       <section className={styles.panel}>
         <header className={styles.panelHeader}>

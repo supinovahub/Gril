@@ -8,7 +8,7 @@ import { initialAuthState } from "@/lib/auth/validation";
 import { registerAction } from "../actions";
 import styles from "../auth.module.css";
 
-export function RegisterForm({ nextPath }: { nextPath: string }) {
+export function RegisterForm({ nextPath, initialEmail }: { nextPath: string; initialEmail?: string }) {
   const [state, action, pending] = useActionState(registerAction, initialAuthState);
 
   return (
@@ -39,6 +39,7 @@ export function RegisterForm({ nextPath }: { nextPath: string }) {
         <div className={styles.field}>
           <label htmlFor="fullName">Nome completo</label>
           <input
+            defaultValue={initialEmail}
             id="fullName"
             name="fullName"
             autoComplete="name"

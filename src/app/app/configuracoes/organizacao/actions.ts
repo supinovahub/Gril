@@ -86,7 +86,7 @@ export async function emergencyPauseAction(formData: FormData) {
   const parsed = z.object({ operationId: z.string().uuid(), reason: z.string().trim().min(5).max(500) }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) settingsRedirect("Explique o motivo da pausa emergencial.");
   const viewer = await requireActiveViewer();
-  const canPause = viewer.membership?.role === "owner" || viewer.permissions.includes("settings.manage");
+  const canPause = viewer.membership?.role === "owner" || viewer.permissions.includes("operations.pause");
   if (!canPause) settingsRedirect("Sem permissão para pausar a operação.");
   const supabase = await createClient();
   const { error } = await supabase.from("system_pauses").insert({
@@ -117,4 +117,18 @@ export async function resumeEmergencyPauseAction(formData: FormData) {
   if (error) settingsRedirect("Não foi possível retomar a operação.");
   revalidatePath("/app", "layout");
   settingsRedirect("Operação retomada pelo dono.", "sucesso");
+}
+
+export async function revokeExternalSupportAction(formData: FormData) {
+  const parsed = z.object({ confirmation: z.literal("CONFIRMAR AÇÃO") }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) settingsRedirect("A confirmação digitada não confere.");
+  const viewer = await requireActiveViewer();
+  if (viewer.membership?.role !== "owner") settingsRedirect("Somente o dono pode revogar o acesso externo de suporte.");
+  const supabase = await createClient();
+  const { data, error } = await supabase.rpc("revoke_external_support_access", {
+    p_confirmation: parsed.data.confirmation,
+  });
+  if (error || !data) settingsRedirect("Não existe uma concessão de suporte ativa para revogar.");
+  revalidatePath("/app", "layout");
+  settingsRedirect("Acesso externo de suporte revogado imediatamente.", "sucesso");
 }

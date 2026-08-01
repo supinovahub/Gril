@@ -1,6 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
+import { cookies } from "next/headers";
 
 import { safeNextPath } from "@/lib/auth/safe-next";
 import {
@@ -159,5 +160,7 @@ export async function signOutAction() {
   if (data?.claims?.sub) {
     await supabase.auth.signOut({ scope: "global" });
   }
+  const cookieStore = await cookies();
+  cookieStore.delete("gril_support_org");
   redirect("/login");
 }

@@ -37,12 +37,14 @@ export async function GET(request: Request, { params }: RouteParams) {
   const admin = createAdminClient();
   const { data: connection } = await admin
     .from("whatsapp_connections")
-    .select("provider,status")
+    .select("org_id,provider,status")
     .eq("id", connectionId)
     .maybeSingle();
   if (!connection || connection.provider !== "meta_cloud" || connection.status === "revoked") {
     return new Response("Not found", { status: 404 });
   }
+  const { data: organization } = await admin.from("organizations").select("status").eq("id", connection.org_id).maybeSingle();
+  if (!organization || organization.status === "archived") return new Response("Not found", { status: 404 });
   const expected = metaWebhookVerifyToken(connectionId);
   if (query.get("hub.verify_token") !== expected) return new Response("Forbidden", { status: 403 });
   return new Response(query.get("hub.challenge") ?? "", { status: 200 });
@@ -67,6 +69,10 @@ export async function POST(request: Request, { params }: RouteParams) {
     .maybeSingle();
   if (!connection || connection.status !== "active" || !connection.inbound_enabled || !connection.integration_account_id) {
     return NextResponse.json({ error: "connection_not_active" }, { status: 404 });
+  }
+  const { data: organization } = await admin.from("organizations").select("status").eq("id", connection.org_id).maybeSingle();
+  if (!organization || organization.status === "archived") {
+    return NextResponse.json({ error: "organization_archived" }, { status: 410 });
   }
   const { data: secret, error: secretError } = await admin.rpc("get_integration_secret", {
     p_integration_account_id: connection.integration_account_id,
