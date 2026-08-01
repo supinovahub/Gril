@@ -7,4 +7,8 @@ export const permissionOptions = [
   "pipeline.manage",
   "reports.view",
   "ai.manage",
+  "finance.view",
+  "privacy.manage",
+  "exports.create",
+  "checklists.manage",
 ] as const;

@@ -6,6 +6,7 @@ import { createPedroResponse } from "./openai-runtime";
 import {
   downloadWhatsappMedia,
   normalizeMetaWebhook,
+  sendWhatsappMedia,
   sendWhatsappText,
   verifyAndNormalizeUazapiWebhook,
   verifyMetaWebhook,
@@ -121,6 +122,43 @@ describe("adapters de tráfego real", () => {
     await expect(sendWhatsappText({ provider: "meta_cloud", endpointUrl: "https://graph.facebook.com/v24.0", secret: JSON.stringify({ accessToken: "meta-token", appSecret: "secret" }), externalPhoneNumberId: "12345", toE164: "+5511999999999", body: "não usado", messageId: "message-3", template: { name: "reativacao", language: "pt_BR", parameters: ["Maria"] } })).resolves.toMatchObject({ providerMessageId: "wamid.ack" });
     const templateBody = JSON.parse(String(fetchMock.mock.calls.at(-1)?.[1]?.body));
     expect(templateBody).toMatchObject({ type: "template", template: { name: "reativacao", language: { code: "pt_BR" } } });
+  });
+
+  it("envia imagens e books aprovados sem permitir áudio no contrato", async () => {
+    const fetchMock = vi.fn(async (url: string, init?: RequestInit) => {
+      const body = JSON.parse(String(init?.body));
+      if (url.includes("uazapi")) {
+        expect(body).toMatchObject({
+          number: "5511999999999",
+          type: "image",
+          file: "https://storage.example/principal.jpg",
+          track_id: "media-1",
+        });
+        return Response.json({ messageid: "uaz-media" });
+      }
+      expect(body).toMatchObject({
+        messaging_product: "whatsapp",
+        type: "document",
+        document: {
+          link: "https://storage.example/book.pdf",
+          filename: "book.pdf",
+        },
+      });
+      return Response.json({ messages: [{ id: "wamid.media" }] });
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(sendWhatsappMedia({
+      provider: "uazapi", endpointUrl: "https://cliente.uazapi.com", secret: "uaz-token",
+      toE164: "+5511999999999", caption: "Foto principal", messageId: "media-1",
+      mediaType: "image", mediaUrl: "https://storage.example/principal.jpg", mimeType: "image/jpeg",
+    })).resolves.toMatchObject({ providerMessageId: "uaz-media" });
+    await expect(sendWhatsappMedia({
+      provider: "meta_cloud", endpointUrl: "https://graph.facebook.com/v24.0",
+      secret: JSON.stringify({ accessToken: "meta-token", appSecret: "secret" }), externalPhoneNumberId: "12345",
+      toE164: "+5511999999999", caption: "Book completo", messageId: "media-2",
+      mediaType: "document", mediaUrl: "https://storage.example/book.pdf", mimeType: "application/pdf", fileName: "book.pdf",
+    })).resolves.toMatchObject({ providerMessageId: "wamid.media" });
   });
 
   it("marca 429 como repetível, sem classificar o envio como incerto", async () => {
@@ -240,6 +278,7 @@ describe("adapters de tráfego real", () => {
             escalation: null,
             qualification_updates: [],
             request_project_match: false,
+            project_media_request: null,
             call_request: null,
             followup_strategy: "none",
             conversation_summary: { summary: "Conversa de teste.", facts: [] },

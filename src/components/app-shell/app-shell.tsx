@@ -59,7 +59,7 @@ export function AppShell({
   const canConfigure = isOwner || viewer.permissions.includes("settings.manage");
   const canManageCampaigns = isOwner || viewer.permissions.includes("campaigns.manage");
   const canManageAi = isOwner || viewer.permissions.includes("ai.manage");
-  const canViewReports = isOwner || viewer.permissions.includes("reports.view");
+  const canViewReports = isOwner || memberRole === "broker" || viewer.permissions.includes("reports.view");
   const environmentLabel = process.env.VERCEL_ENV === "production"
     ? "Produção · Vercel"
     : process.env.VERCEL_ENV === "preview"
@@ -96,6 +96,12 @@ export function AppShell({
             <input aria-label="Busca global" name="q" placeholder="Buscar na operação" />
           </form>
           <p className={styles.navLabel}>Agora</p>
+          {memberRole === "broker" ? <Link className={styles.navItem} href="/app/hoje">
+            <CalendarClock size={18} aria-hidden="true" /> Hoje
+          </Link> : null}
+          {memberRole === "broker" ? <Link className={styles.navItem} href="/app/meu-pipeline">
+            <KanbanSquare size={18} aria-hidden="true" /> Meu pipeline
+          </Link> : null}
           <Link className={styles.navItem} href="/app">
             <LayoutDashboard size={18} aria-hidden="true" /> Visão geral
           </Link>
@@ -141,6 +147,9 @@ export function AppShell({
           {canManageAi ? <Link className={styles.navItem} href="/app/simulador">
             <FlaskConical size={18} aria-hidden="true" /> Simulador
           </Link> : null}
+          {canManageAi ? <Link className={styles.navItem} href="/app/pedro/experimentos">
+            <FlaskConical size={18} aria-hidden="true" /> Experimentos A/B
+          </Link> : null}
           {canViewReports ? <Link className={styles.navItem} href="/app/relatorios">
             <BarChart3 size={18} aria-hidden="true" /> Relatórios
           </Link> : null}
@@ -153,6 +162,9 @@ export function AppShell({
           </Link> : null}
           {canConfigure ? <Link className={styles.navItem} href="/app/configuracoes/meta">
             <Webhook size={18} aria-hidden="true" /> Meta
+          </Link> : null}
+          {(isOwner || viewer.permissions.includes("checklists.manage")) ? <Link className={styles.navItem} href="/app/configuracoes/checklists">
+            <BookOpenCheck size={18} aria-hidden="true" /> Checklists
           </Link> : null}
           {(isOwner || isManager) ? <Link className={styles.navItem} href="/app/configuracoes/privacidade">
             <ShieldCheck size={18} aria-hidden="true" /> Privacidade

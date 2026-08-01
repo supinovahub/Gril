@@ -3,7 +3,7 @@ import { Bot, BrainCircuit, CheckCircle2, CircleDashed, KeyRound, RefreshCw, Shi
 import { retestIntegrationAction, revokeIntegrationAction } from "@/app/app/integration-actions";
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { changeGlobalAiModeAction, configureFallbackModelAction, configureModelAction, connectOpenAiAction, createPersonaDraftAction, publishPersonaAction } from "./actions";
+import { addPersonaSampleAction, changeGlobalAiModeAction, clonePersonaAction, configureFallbackModelAction, configureModelAction, connectOpenAiAction, createPersonaDraftAction, publishPersonaAction } from "./actions";
 import styles from "./pedro.module.css";
 
 export default async function PedroPage({
@@ -14,7 +14,7 @@ export default async function PedroPage({
   const viewer = await requireActiveViewer();
   const feedback = await searchParams;
   const supabase = await createClient();
-  const [settingsResult, personasResult, versionsResult, modelsResult, rulesResult, executionsResult, integrationsResult] = await Promise.all([
+  const [settingsResult, personasResult, versionsResult, modelsResult, rulesResult, executionsResult, integrationsResult, samplesResult] = await Promise.all([
     supabase.from("organization_settings").select("*").eq("org_id", viewer.organization!.id).single(),
     supabase.from("personas").select("*").eq("org_id", viewer.organization!.id).eq("status", "active").order("name"),
     supabase.from("persona_versions").select("*").eq("org_id", viewer.organization!.id).order("version", { ascending: false }),
@@ -22,6 +22,7 @@ export default async function PedroPage({
     supabase.from("rule_versions").select("id,version,status,checksum,published_at").eq("org_id", viewer.organization!.id).order("version", { ascending: false }),
     supabase.from("ai_executions").select("id,mode,status,model_returned,error_code,created_at").eq("org_id", viewer.organization!.id).order("created_at", { ascending: false }).limit(10),
     supabase.from("integration_accounts").select("*").eq("org_id", viewer.organization!.id).eq("provider", "openai").order("created_at", { ascending: false }),
+    supabase.from("persona_samples").select("id,persona_id,status,extraction,created_at").eq("org_id", viewer.organization!.id).order("created_at", { ascending: false }),
   ]);
   const settings = settingsResult.data;
   const defaultPersona = personasResult.data?.[0];
@@ -54,6 +55,22 @@ export default async function PedroPage({
             {drafts.map((draft) => (
               <article className={styles.draftRow} key={draft.id}><span><strong>Rascunho v{draft.version}</strong><small>{draft.checksum.slice(0, 12)}…</small></span>{viewer.membership?.role === "owner" ? <form action={publishPersonaAction}><input name="personaVersionId" type="hidden" value={draft.id} /><button type="submit">Publicar</button></form> : null}</article>
             ))}
+          </section>
+
+          <section className={styles.panel}>
+            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Construtor guiado</p><h2>Amostras e clones</h2></span><span className={styles.versionChip}>{samplesResult.data?.filter((item)=>item.persona_id===defaultPersona?.id && item.status==='confirmed').length ?? 0} / 10–30</span></div>
+            <form action={addPersonaSampleAction} className={styles.promptForm}>
+              <label><span>Persona</span><select name="personaId" required>{personasResult.data?.map((persona)=><option key={persona.id} value={persona.id}>{persona.name}</option>)}</select></label>
+              <label><span>Conversa de exemplo</span><textarea name="sample" placeholder="Cole uma conversa. Telefones, e-mails, documentos e valores serão mascarados antes da análise." required rows={8}/></label>
+              <p>O original fica protegido somente durante o rascunho e por no máximo 30 dias. Na publicação, permanecem apenas padrões e exemplos anonimizados confirmados.</p>
+              <button type="submit">Mascarar e analisar amostra</button>
+            </form>
+            <form action={clonePersonaAction} className={styles.promptForm}>
+              <input name="sourcePersonaId" type="hidden" value={defaultPersona?.id}/>
+              <label><span>Nome da nova persona</span><input name="name" required/></label>
+              <label><span>Código interno</span><input name="code" pattern="[a-z0-9_]+" placeholder="pedro_investidor" required/></label>
+              <button type="submit">Clonar para novo rascunho</button>
+            </form>
           </section>
 
           <section className={styles.panel}>

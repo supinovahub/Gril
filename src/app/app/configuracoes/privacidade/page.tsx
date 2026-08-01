@@ -2,7 +2,7 @@ import { ShieldCheck } from "lucide-react";
 
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { createPrivacyRequestAction, reviewPrivacyRequestAction } from "./actions";
+import { createPrivacyRequestAction, executePrivacyAction, reviewPrivacyRequestAction } from "./actions";
 import styles from "../../operations.module.css";
 
 export default async function PrivacyPage({ searchParams }: { searchParams: Promise<{ erro?: string; sucesso?: string }> }) {
@@ -27,7 +27,8 @@ export default async function PrivacyPage({ searchParams }: { searchParams: Prom
           const available = request.status === "open" ? ["start_review", "legal_hold", "reject"]
             : request.status === "reviewing" ? ["legal_hold", "complete", "reject"]
               : request.status === "blocked_legal_hold" ? ["release_hold", "reject"] : [];
-          return <article className={styles.item} key={request.id}><span><strong>{contact?.name ?? "Contato"}</strong><small>{request.request_type} · vence {new Date(request.due_at).toLocaleDateString("pt-BR")}</small><small>{request.resolution_notes ?? "Sem decisão registrada"}</small></span><div><b>{request.status}</b>{available.length ? <form action={reviewPrivacyRequestAction}><input name="privacyRequestId" type="hidden" value={request.id} /><textarea name="notes" placeholder="Justificativa ou evidência" required rows={2} /><div className={styles.actions}>{available.map((action) => <button name="action" type="submit" value={action} key={action}>{action.replaceAll("_", " ")}</button>)}</div></form> : null}</div></article>;
+          return <article className={styles.item} key={request.id}><span><strong>{contact?.name ?? "Contato"}</strong><small>{request.request_type} · vence {new Date(request.due_at).toLocaleDateString("pt-BR")}</small><small>{request.resolution_notes ?? "Automação pausada enquanto a solicitação estiver aberta"}</small></span><div><b>{request.status}</b>{available.length ? <form action={reviewPrivacyRequestAction}><input name="privacyRequestId" type="hidden" value={request.id} /><textarea name="notes" placeholder="Justificativa ou evidência" required rows={2} /><div className={styles.actions}>{available.map((action) => <button name="action" type="submit" value={action} key={action}>{action.replaceAll("_", " ")}</button>)}</div></form> : null}
+            {!['completed','rejected'].includes(request.status) ? <form action={executePrivacyAction}><input name="privacyRequestId" type="hidden" value={request.id} /><select name="action"><option value="archive">Arquivar lead</option><option value="resume_ai">Voltar ao Pedro</option><option value="correct">Corrigir nome</option><option value="anonymize">Anonimizar</option><option value="delete">Excluir identificadores e conteúdo</option><option value="retain_close">Reter por exceção e fechar</option></select><input name="correctedName" placeholder="Nome corrigido (se aplicável)" /><input name="retentionUntil" type="datetime-local" /><textarea name="reason" placeholder="Justificativa obrigatória" required rows={2}/><label><input name="identityVerified" type="checkbox"/> Identidade verificada para ação material</label><button type="submit">Executar decisão</button></form> : null}</div></article>;
         })}
         {!requests?.length ? <p className={styles.empty}>Nenhuma solicitação.</p> : null}
       </div></section></main>

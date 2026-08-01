@@ -1,4 +1,4 @@
-import { Link2, UserRoundPlus, UsersRound } from "lucide-react";
+import { Link2, ShieldCheck, UserRoundPlus, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import type { Tables } from "@/lib/database.types";
@@ -12,6 +12,8 @@ import {
   changeMembershipAction,
   updateMemberCallSettingsAction,
   updateManagerPermissionsAction,
+  requestOwnershipTransferAction,
+  acceptOwnershipTransferAction,
 } from "./actions";
 import { permissionOptions } from "./constants";
 import { InviteForm } from "./invite-form";
@@ -33,6 +35,10 @@ const permissionLabels: Record<(typeof permissionOptions)[number], string> = {
   "pipeline.manage": "Gerenciar pipeline",
   "reports.view": "Visualizar relatórios",
   "ai.manage": "Operar o Pedro",
+  "finance.view": "Visualizar custos financeiros",
+  "privacy.manage": "Executar decisões de privacidade",
+  "exports.create": "Exportar dados do CRM",
+  "checklists.manage": "Configurar e dispensar checklists",
 };
 
 function initials(name: string) {
@@ -55,7 +61,7 @@ export default async function TeamPage() {
   if (!canManageTeam(viewer)) redirect("/app");
 
   const supabase = await createClient();
-  const [{ data: memberships }, { data: invitations }] = await Promise.all([
+  const [{ data: memberships }, { data: invitations }, { data: ownershipTransfers }] = await Promise.all([
     supabase
       .from("memberships")
       .select("*")
@@ -67,6 +73,7 @@ export default async function TeamPage() {
       .eq("org_id", viewer.organization!.id)
       .order("created_at", { ascending: false })
       .limit(12),
+    supabase.from("ownership_transfer_requests").select("*").eq("org_id", viewer.organization!.id).eq("status", "pending"),
   ]);
 
   const memberRows = memberships ?? [];
@@ -128,6 +135,9 @@ export default async function TeamPage() {
           operations={viewer.operations.map(({ id, name }) => ({ id, name }))}
         />
       </section>
+
+      {isOwner ? <section className={styles.panel}><header className={styles.panelHeader}><div><ShieldCheck size={18}/><h2>Transferir propriedade</h2></div><span>O dono atual vira gestor após o aceite</span></header><form action={requestOwnershipTransferAction} className={styles.permissionForm}><label>Novo dono<select name="targetMembershipId" required><option value="">Selecione</option>{memberRows.filter((member)=>member.status==='active'&&member.role!=='owner').map((member)=><option key={member.id} value={member.id}>{profilesByUser.get(member.user_id)?.full_name ?? member.id.slice(0,8)}</option>)}</select></label><label>Senha atual<input autoComplete="current-password" name="password" required type="password"/></label><button className={styles.savePermissions}>Solicitar aceite</button></form></section> : null}
+      {ownershipTransfers?.filter((item)=>item.target_membership_id===viewer.membership?.id).map((item)=><section className={styles.panel} key={item.id}><header className={styles.panelHeader}><div><ShieldCheck size={18}/><h2>Aceitar propriedade</h2></div></header><form action={acceptOwnershipTransferAction} className={styles.permissionForm}><input name="transferId" type="hidden" value={item.id}/><p>Ao aceitar, você se torna o novo dono e o dono anterior vira gestor.</p><button className={styles.savePermissions}>Aceitar transferência</button></form></section>)}
 
       <section className={styles.panel}>
         <header className={styles.panelHeader}>

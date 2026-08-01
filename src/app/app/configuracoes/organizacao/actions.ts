@@ -44,7 +44,7 @@ export async function updateInstitutionalSettingsAction(formData: FormData) {
   };
   const [organizationResult, settingsResult] = await Promise.all([
     supabase.from("organizations").update({ name: parsed.data.organizationName }).eq("id", viewer.organization!.id),
-    supabase.from("organization_settings").update({ institutional_profile: profile, ai_monthly_budget: parsed.data.aiMonthlyBudget ?? null }).eq("org_id", viewer.organization!.id),
+    supabase.from("organization_settings").update({ institutional_profile: profile, ai_monthly_budget_brl: parsed.data.aiMonthlyBudget ?? null }).eq("org_id", viewer.organization!.id),
   ]);
   if (organizationResult.error || settingsResult.error) settingsRedirect("Não foi possível salvar a configuração institucional.");
   revalidatePath("/app", "layout");

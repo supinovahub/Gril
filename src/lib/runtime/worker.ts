@@ -15,7 +15,7 @@ import { evaluateRegressionCase } from "@/lib/ai/regression";
 import type { Json } from "@/lib/database.types";
 import { createPedroResponse, OpenAiRuntimeError } from "@/lib/integrations/openai-runtime";
 import { extractMediaText } from "@/lib/integrations/openai-media";
-import { downloadWhatsappMedia, RuntimeProviderError, sendWhatsappText, type WhatsappProvider } from "@/lib/integrations/whatsapp-runtime";
+import { downloadWhatsappMedia, RuntimeProviderError, sendWhatsappMedia, sendWhatsappText, type WhatsappProvider } from "@/lib/integrations/whatsapp-runtime";
 import { createAdminClient } from "@/lib/supabase/admin";
 
 const queueNames = [
@@ -158,7 +158,8 @@ async function runAiExecution(executionId: string) {
           "Registre qualificação somente quando o contato tiver informado o dado. Nunca estime renda, entrada, orçamento ou prazo.",
           "Solicite curadoria apenas quando preço total e entrada estiverem disponíveis. O backend fará o filtro final e acrescentará os imóveis elegíveis.",
           "Crie call somente quando o contato tiver aceitado explicitamente uma data e um horário. Caso contrário, pergunte a preferência sem criar a call.",
-          "Use followup_strategy=short quando a conversa deve ser retomada em curto prazo, long para nutrição e cancel para resposta, opt-out, call confirmada ou ownership humano.",
+          "Use followup_strategy=short quando a conversa deve ser retomada em curto prazo, long para nutrição, future quando o lead declarou compra futura sem prazo exato, e cancel para resposta, opt-out, call confirmada ou ownership humano.",
+          "Ao recomendar um empreendimento, project_media_request deve ficar null: o servidor enviará apenas a foto principal. Se o lead pedir mais material, primeiro pergunte se prefere mais fotos ou o book completo. Depois da escolha, use project_media_request com more_photos ou book, nunca ambos. Nunca envie áudio.",
           "Uma reação 👍 só significa sim quando responde a uma pergunta binária textual clara; reação a imagem ou material não prova interesse.",
         ].join("\n\n");
       }
@@ -203,8 +204,8 @@ async function runAiExecution(executionId: string) {
       admin.from("faq_entries").select("id,canonical_question").eq("org_id", execution.org_id).eq("status", "published").limit(50),
       admin.from("project_facts").select("project_id,code,value_text,value_number,unit,source_name,reference_date,valid_until")
         .eq("org_id", execution.org_id).eq("active", true),
-      admin.from("project_media").select("project_id,media_type,title,external_url,storage_path,sort_order")
-        .eq("org_id", execution.org_id).eq("active", true).order("sort_order"),
+      admin.from("project_media").select("project_id,media_type,title,external_url,storage_path,sort_order,mime_type,size_bytes,published_at")
+        .eq("org_id", execution.org_id).eq("active", true).not("published_at", "is", null).order("sort_order"),
     ]);
     if (definitionsResult.error || valuesResult.error || projectsResult.error || faqEntriesResult.error || projectFactsResult.error || projectMediaResult.error) {
       throw definitionsResult.error ?? valuesResult.error ?? projectsResult.error ?? faqEntriesResult.error ?? projectFactsResult.error ?? projectMediaResult.error;
@@ -308,6 +309,8 @@ async function runAiExecution(executionId: string) {
       p_response_id: response.responseId,
     });
     if (completeError) throw completeError;
+    const { error: mediaEnqueueError } = await admin.rpc("enqueue_pedro_project_media", { p_execution_id: executionId });
+    if (mediaEnqueueError) throw mediaEnqueueError;
     if (execution.conversation_id) {
       const { error: summaryError } = await admin.rpc("store_conversation_summary", {
         p_conversation_id: execution.conversation_id,
@@ -519,7 +522,7 @@ async function processOutboundMessage(messageId: string) {
   let outboundBody = claim.body;
   let callContext: { id: string; format: string; video_link: string | null; starts_at: string; org_id: string; operation_id: string; status: string } | null = null;
   const [{ data: conversationMessage }, { data: operationalMessage }] = await Promise.all([
-    admin.from("messages").select("metadata").eq("id", messageId).maybeSingle(),
+    admin.from("messages").select("content_type,metadata").eq("id", messageId).maybeSingle(),
     admin.from("operational_messages").select("entity_type,entity_id").eq("id", messageId).maybeSingle(),
   ]);
   const metadata = conversationMessage?.metadata && typeof conversationMessage.metadata === "object" && !Array.isArray(conversationMessage.metadata)
@@ -544,11 +547,16 @@ async function processOutboundMessage(messageId: string) {
     }
   }
   try {
+    const isApprovedMedia = conversationMessage?.content_type === "image" || conversationMessage?.content_type === "document";
     let template: { name: string; language: string; parameters: string[] } | null = null;
     if (claim.provider === "meta_cloud") {
       const { data: templateData, error: templateError } = await admin.rpc("get_outbound_template", { p_message_id: messageId });
       if (templateError) throw templateError;
       const parsedTemplate = outboundTemplateSchema.parse(templateData);
+      if (isApprovedMedia && parsedTemplate.required) {
+        await admin.rpc("block_outbound_template_missing", { p_message_id: messageId });
+        return "suppressed";
+      }
       if (parsedTemplate.required && (parsedTemplate.missing || !parsedTemplate.name || !parsedTemplate.language)) {
         await admin.rpc("block_outbound_template_missing", { p_message_id: messageId });
         return "suppressed";
@@ -569,16 +577,41 @@ async function processOutboundMessage(messageId: string) {
         }
       }
     }
-    const sent = await sendWhatsappText({
-      provider: claim.provider as WhatsappProvider,
-      endpointUrl: claim.endpoint_url,
-      secret,
-      externalPhoneNumberId: account.external_phone_number_id,
-      toE164: claim.to_e164,
-      body: outboundBody,
-      messageId,
-      template,
-    });
+    let sent: { providerMessageId: string; providerTimestamp: string };
+    if (isApprovedMedia) {
+      const storagePath = typeof metadata?.storage_path === "string" ? metadata.storage_path : null;
+      const storageBucket = typeof metadata?.storage_bucket === "string" ? metadata.storage_bucket : null;
+      const mimeType = typeof metadata?.mime_type === "string" ? metadata.mime_type : null;
+      if (!storagePath || storageBucket !== "gril-projects" || !mimeType) {
+        throw new RuntimeProviderError("approved_media_context_missing", "A mídia aprovada perdeu a referência privada de armazenamento.");
+      }
+      const { data: signed, error: signedError } = await admin.storage.from(storageBucket).createSignedUrl(storagePath, 15 * 60);
+      if (signedError || !signed?.signedUrl) throw signedError ?? new Error("approved_media_signed_url_failed");
+      sent = await sendWhatsappMedia({
+        provider: claim.provider as WhatsappProvider,
+        endpointUrl: claim.endpoint_url,
+        secret,
+        externalPhoneNumberId: account.external_phone_number_id,
+        toE164: claim.to_e164,
+        caption: outboundBody,
+        messageId,
+        mediaType: conversationMessage!.content_type as "image" | "document",
+        mediaUrl: signed.signedUrl,
+        mimeType,
+        fileName: typeof metadata?.file_name === "string" ? metadata.file_name : undefined,
+      });
+    } else {
+      sent = await sendWhatsappText({
+        provider: claim.provider as WhatsappProvider,
+        endpointUrl: claim.endpoint_url,
+        secret,
+        externalPhoneNumberId: account.external_phone_number_id,
+        toE164: claim.to_e164,
+        body: outboundBody,
+        messageId,
+        template,
+      });
+    }
     const { error: completeError } = await admin.rpc("complete_outbound_message", {
       p_message_id: messageId,
       p_provider_message_id: sent.providerMessageId,

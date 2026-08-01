@@ -7,6 +7,7 @@ import { z } from "zod";
 import { requireActiveViewer } from "@/lib/auth/session";
 import { leadSchema, normalizePhoneToE164 } from "@/lib/crm/phone";
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 
 const stageChangeSchema = z.object({
   opportunityId: z.string().uuid(),
@@ -48,6 +49,8 @@ function crmError(message: string | undefined) {
   if (message?.includes("required_checklist_incomplete")) return "Conclua ou dispense os itens obrigatórios do checklist antes de avançar.";
   if (message?.includes("sale_confirmation_manager_required")) return "Somente dono ou gestor pode confirmar a venda.";
   if (message?.includes("sale_unit_and_quantity_required")) return "Informe a unidade e a quantidade vendida.";
+  if (message?.includes("active_opt_out_blocks_proactive_resume")) return "O opt-out ativo impede devolver este contato ao Pedro ou a um follow-up proativo.";
+  if (message?.includes("contact_archive_forbidden")) return "Você não tem permissão para arquivar ou restaurar contatos.";
   return "Não foi possível concluir a operação.";
 }
 
@@ -353,4 +356,79 @@ export async function updatePurchaseStructureAction(formData: FormData) {
   });
   if (error) redirect(`/app/leads/${parsed.data.opportunityId}?erro=${queryMessage(crmError(error.message))}`);
   revalidatePath(`/app/leads/${parsed.data.opportunityId}`); revalidatePath("/app/kanban");
+}
+
+export async function archiveContactAction(formData: FormData) {
+  const parsed = z.object({
+    opportunityId: z.string().uuid(),
+    contactId: z.string().uuid(),
+    action: z.enum(["archive", "restore"]),
+    resumeMode: z.enum(["manual", "pedro", "followup"]),
+    reason: z.string().trim().min(3).max(500),
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) return;
+
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { error } = await supabase.from("contact_archive_requests").insert({
+    org_id: viewer.organization!.id,
+    contact_id: parsed.data.contactId,
+    action: parsed.data.action,
+    resume_mode: parsed.data.resumeMode,
+    reason: parsed.data.reason,
+    actor_user_id: viewer.userId,
+  });
+  if (error) redirect(`/app/leads/${parsed.data.opportunityId}?erro=${queryMessage(crmError(error.message))}`);
+  revalidatePath(`/app/leads/${parsed.data.opportunityId}`);
+  revalidatePath("/app/leads");
+  revalidatePath("/app/kanban");
+  redirect(`/app/leads/${parsed.data.opportunityId}?sucesso=${parsed.data.action}`);
+}
+
+function selectedContactIds(formData: FormData) {
+  return z.array(z.string().uuid()).min(1).max(500).safeParse(formData.getAll("contactIds"));
+}
+
+export async function bulkCrmAction(formData: FormData) {
+  const contacts = selectedContactIds(formData);
+  const action = z.enum(["tag_add", "tag_remove", "campaign_include", "campaign_exclude", "assign_manager", "pause_ai", "resume_ai", "correct_source"]).safeParse(formData.get("action"));
+  if (!contacts.success || !action.success || formData.get("confirmed") !== "yes") redirect(`/app/leads?erro=${queryMessage("Selecione os leads e confirme a operação em massa.")}`);
+  const viewer = await requireActiveViewer(); const supabase = await createClient();
+  const payload = action.data.startsWith("tag_") ? { label: String(formData.get("value") ?? "") }
+    : action.data.startsWith("campaign_") ? { campaign_id: String(formData.get("campaignId") ?? "") }
+      : action.data === "assign_manager" ? { membership_id: String(formData.get("membershipId") ?? "") }
+        : action.data === "correct_source" ? { source: String(formData.get("value") ?? "") } : {};
+  const { error } = await supabase.from("crm_bulk_action_requests").insert({ org_id: viewer.organization!.id, contact_ids: contacts.data, action: action.data, payload, actor_user_id: viewer.userId });
+  if (error) redirect(`/app/leads?erro=${queryMessage("A operação em massa foi recusada. Revise os valores, permissões e opt-outs.")}`);
+  revalidatePath("/app/leads"); revalidatePath("/app/kanban"); redirect("/app/leads?sucesso=acao-em-massa-aplicada");
+}
+
+export async function createCrmExportAction(formData: FormData) {
+  const contacts = z.array(z.string().uuid()).min(1).max(5000).safeParse(formData.getAll("contactIds"));
+  if (!contacts.success || formData.get("confirmed") !== "yes") redirect(`/app/leads?erro=${queryMessage("Selecione e confirme os leads para exportar.")}`);
+  const viewer = await requireActiveViewer();
+  const allowed = viewer.membership?.role === "owner" || viewer.permissions.includes("exports.create");
+  if (!allowed) redirect(`/app/leads?erro=${queryMessage("Sem permissão para exportar.")}`);
+  const admin = createAdminClient();
+  const { data: rows, error: rowsError } = await admin.from("contacts").select("id,name,status,created_at,contact_phones(e164,is_primary,status),opportunities(id,status,source,last_activity_at,pipeline_stages(name))")
+    .eq("org_id", viewer.organization!.id).in("id", contacts.data);
+  if (rowsError) redirect(`/app/leads?erro=${queryMessage("Não foi possível montar a exportação.")}`);
+  const quote = (value: unknown) => `"${String(value ?? "").replaceAll('"', '""')}"`;
+  const lines = ["contato_id;nome;telefone;status_contato;oportunidade_id;status_oportunidade;origem;etapa;ultima_atividade;criado_em"];
+  for (const contact of rows ?? []) for (const opportunity of contact.opportunities ?? []) {
+    const phone = contact.contact_phones?.find((item)=>item.is_primary && item.status==='active')?.e164 ?? "";
+    lines.push([contact.id,contact.name,phone,contact.status,opportunity.id,opportunity.status,opportunity.source,(opportunity.pipeline_stages as {name:string}|null)?.name,opportunity.last_activity_at,contact.created_at].map(quote).join(";"));
+  }
+  const { data: request, error: requestError } = await admin.from("crm_export_requests").insert({ org_id: viewer.organization!.id, contact_ids: contacts.data, actor_user_id: viewer.userId }).select("id").single();
+  if (requestError) redirect(`/app/leads?erro=${queryMessage("Não foi possível registrar a exportação.")}`);
+  const path = `${viewer.organization!.id}/${request.id}.csv`;
+  const bytes = new TextEncoder().encode(`\uFEFF${lines.join("\r\n")}`);
+  const { error: uploadError } = await admin.storage.from("gril-exports").upload(path, bytes, { contentType: "text/csv;charset=utf-8", upsert: false });
+  if (uploadError) redirect(`/app/leads?erro=${queryMessage("O arquivo de exportação não pôde ser armazenado.")}`);
+  const expiresAt = new Date(Date.now()+24*60*60*1000).toISOString();
+  await admin.from("crm_export_requests").update({ status: "completed", storage_bucket: "gril-exports", storage_path: path, expires_at: expiresAt, completed_at: new Date().toISOString() }).eq("id", request.id);
+  await admin.rpc("enqueue_storage_retention", { p_org_id: viewer.organization!.id, p_entity_type: "crm_export", p_entity_id: request.id, p_bucket: "gril-exports", p_path: path, p_due_at: expiresAt });
+  const { data: signed } = await admin.storage.from("gril-exports").createSignedUrl(path, 15*60, { download: `leads-${new Date().toISOString().slice(0,10)}.csv` });
+  if (!signed?.signedUrl) redirect(`/app/leads?erro=${queryMessage("O CSV foi criado, mas o link temporário falhou.")}`);
+  redirect(signed.signedUrl);
 }

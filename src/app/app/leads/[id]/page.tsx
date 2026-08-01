@@ -14,6 +14,7 @@ import { canManageTeam, requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import {
   addContactPhoneAction,
+  archiveContactAction,
   changeStageAction,
   completeNextActionAction,
   matchProjectsAction,
@@ -50,6 +51,8 @@ export default async function LeadDetailPage({
   const supabase = await createClient();
 
   const canManage = canManageTeam(viewer);
+  const canManageArchive = viewer.membership?.role === "owner" ||
+    (viewer.membership?.role === "manager" && viewer.permissions.includes("contacts.manage"));
   const [opportunityResult, stagesResult, reasonsResult, historyResult, actionsResult, sourcesResult, salesResult, definitionsResult, qualificationResult, matchesResult, participantsResult, contactsResult, scoresResult, checklistsResult] = await Promise.all([
     supabase
       .from("opportunities")
@@ -250,6 +253,21 @@ export default async function LeadDetailPage({
             <h3>Origem</h3>
             {sourcesResult.data?.map((source) => <p key={source.id}><strong>{source.source}</strong><span>{source.attribution_type} · {new Date(source.attributed_at).toLocaleDateString("pt-BR")}</span></p>)}
           </section>
+
+          {canManageArchive && contact ? (
+            <section className={styles.stageFormCard}>
+              <div className={styles.cardTitle}><UserRound size={18}/><h2>{contact.status === "archived" ? "Restaurar lead" : "Arquivar lead"}</h2></div>
+              <p className={styles.terminalMessage}>O arquivamento preserva o histórico e interrompe Pedro, campanhas e follow-ups. Ao restaurar, você escolhe como o atendimento volta.</p>
+              <form action={archiveContactAction} className={styles.stageForm}>
+                <input name="opportunityId" type="hidden" value={opportunity.id}/>
+                <input name="contactId" type="hidden" value={contact.id}/>
+                <input name="action" type="hidden" value={contact.status === "archived" ? "restore" : "archive"}/>
+                {contact.status === "archived" ? <label><span>Após restaurar</span><select defaultValue="manual" name="resumeMode"><option value="manual">Manter atendimento manual</option><option value="pedro">Devolver ao Pedro</option><option value="followup">Devolver ao Pedro e executar follow-up</option></select></label> : <input name="resumeMode" type="hidden" value="manual"/>}
+                <label><span>Motivo auditável</span><textarea maxLength={500} minLength={3} name="reason" required rows={2}/></label>
+                <button type="submit">{contact.status === "archived" ? "Restaurar lead" : "Arquivar e pausar automações"}</button>
+              </form>
+            </section>
+          ) : null}
 
           {canManage ? <section className={styles.stageFormCard}><div className={styles.cardTitle}><Phone size={18}/><h2>Telefones</h2></div><div className={styles.actionList}>{phones.filter((phone) => phone.status === "active").map((phone) => <div className={styles.actionRow} key={phone.e164}><span><strong>{phone.e164}</strong><small>{phone.is_primary ? "Principal" : "Alternativo"}</small></span><form action={updateContactPhoneAction}><input name="opportunityId" type="hidden" value={opportunity.id}/><input name="contactId" type="hidden" value={contact?.id}/><input name="phoneId" type="hidden" value={phone.id}/><select name="action"><option value="set_primary">Tornar principal</option><option value="deactivate">Desativar</option><option value="mark_wrong">Número errado</option></select><button type="submit">Aplicar</button></form></div>)}</div><form action={addContactPhoneAction} className={styles.stageForm}><input name="opportunityId" type="hidden" value={opportunity.id}/><input name="contactId" type="hidden" value={contact?.id}/><label><span>Novo telefone</span><input name="phone" placeholder="(11) 99999-9999" required/></label><label><input name="makePrimary" type="checkbox"/> Tornar principal</label><button type="submit">Adicionar telefone</button></form></section> : null}
 

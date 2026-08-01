@@ -27,3 +27,37 @@ export async function reviewPrivacyRequestAction(formData: FormData) {
   revalidatePath("/app/configuracoes/privacidade");
   redirect("/app/configuracoes/privacidade?sucesso=decisao-registrada");
 }
+
+export async function executePrivacyAction(formData: FormData) {
+  const parsed = z.object({
+    privacyRequestId: z.string().uuid(),
+    action: z.enum(["archive", "resume_ai", "correct", "anonymize", "delete", "retain_close"]),
+    reason: z.string().trim().min(5).max(2000),
+    correctedName: z.string().trim().max(160).optional(),
+    retentionUntil: z.string().datetime({ local: true }).optional(),
+  }).safeParse({
+    privacyRequestId: formData.get("privacyRequestId"), action: formData.get("action"), reason: formData.get("reason"),
+    correctedName: formData.get("correctedName") || undefined, retentionUntil: formData.get("retentionUntil") || undefined,
+  });
+  if (!parsed.success) redirect(`/app/configuracoes/privacidade?erro=${encodeURIComponent("Revise a ação e informe uma justificativa.")}`);
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { error } = await supabase.from("privacy_action_requests").insert({
+    org_id: viewer.organization!.id,
+    privacy_request_id: parsed.data.privacyRequestId,
+    action: parsed.data.action,
+    identity_verified: formData.get("identityVerified") === "on",
+    reason: parsed.data.reason,
+    corrected_name: parsed.data.correctedName ?? null,
+    retention_until: parsed.data.retentionUntil ? new Date(parsed.data.retentionUntil).toISOString() : null,
+    actor_user_id: viewer.userId,
+  });
+  if (error) {
+    const message = error.message.includes("identity_verification") ? "Confirme a verificação de identidade para essa ação material."
+      : error.message.includes("opt_out") ? "O opt-out ativo impede a retomada proativa; corrija a base jurídica/autorização antes."
+      : "A ação foi recusada pelo contrato de privacidade.";
+    redirect(`/app/configuracoes/privacidade?erro=${encodeURIComponent(message)}`);
+  }
+  revalidatePath("/app/configuracoes/privacidade");
+  redirect("/app/configuracoes/privacidade?sucesso=acao-executada");
+}

@@ -2,6 +2,7 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { canManageTeam, requireActiveViewer } from "@/lib/auth/session";
@@ -232,4 +233,22 @@ export async function updateMemberCallSettingsAction(membershipId: string, formD
     actor_user_id: viewer.userId,
   });
   revalidatePath("/app/equipe"); revalidatePath("/app/agenda");
+}
+
+export async function requestOwnershipTransferAction(formData: FormData) {
+  const parsed = z.object({ targetMembershipId: z.string().uuid(), password: z.string().min(8).max(1000) }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect("/app/equipe");
+  const viewer = await requireActiveViewer(); if (viewer.membership?.role !== "owner") return;
+  const supabase = await createClient();
+  const { error: reauthError } = await supabase.auth.signInWithPassword({ email: viewer.email, password: parsed.data.password });
+  if (reauthError) redirect("/app/equipe");
+  const { error } = await supabase.from("ownership_transfer_requests").insert({ org_id: viewer.organization!.id, target_membership_id: parsed.data.targetMembershipId, requested_by: viewer.userId, reauthenticated_at: new Date().toISOString() });
+  if (error) redirect("/app/equipe"); revalidatePath("/app/equipe");
+}
+
+export async function acceptOwnershipTransferAction(formData: FormData) {
+  const transferId = z.string().uuid().safeParse(formData.get("transferId")); if (!transferId.success) return;
+  const viewer = await requireActiveViewer(); const supabase = await createClient();
+  await supabase.from("ownership_transfer_requests").update({ status: "accepted", accepted_by: viewer.userId }).eq("id", transferId.data).eq("target_membership_id", viewer.membership!.id).eq("status", "pending");
+  revalidatePath("/app/equipe"); redirect("/app");
 }

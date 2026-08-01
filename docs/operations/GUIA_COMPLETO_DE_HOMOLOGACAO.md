@@ -1,6 +1,6 @@
 # Guia mestre de cadastro, configuração e homologação do Gril
 
-> Revisão consolidada em 31/07/2026 a partir dos sete documentos iniciais do Grill Me, do código local, das migrations aplicadas no banco remoto e das validações automáticas. As mudanças desta rodada ainda não foram publicadas na Vercel.
+> Revisão consolidada em 31/07/2026 a partir dos sete documentos iniciais do Grill Me, das decisões complementares fechadas com o dono do produto, do código local, das migrations aplicadas no banco remoto e das validações automáticas. As mudanças desta rodada ainda não foram publicadas na Vercel.
 
 ## 1. Objetivo deste guia
 
@@ -27,14 +27,14 @@ Responsáveis usados neste guia:
 
 O núcleo vertical do MVP está implementado e pronto para homologação: primeiro cadastro com organização/operação/dono, configurações institucionais e operacionais, equipe, credenciais por organização, Pedro nos modos sombra/assistido/produção, qualificação, recomendações, calls, follow-ups, campanhas 20/50/restante, capacidade, integração Uazapi/Meta, privacidade operacional, auditoria e isolamento por organização.
 
-A revisão desta rodada fechou no código e no banco os P0 que tinham contrato suficiente nos sete documentos: portão de produção, pausa emergencial, janelas e ritmo, agrupamento, atrasos, fallback, caixa assistida, cadências curta/longa/no-show, campanhas, preferenciais, comandos de corretor pelo WhatsApp, reagendamento, anexos sensíveis, dead-letter e revogação de sessões.
+A revisão desta rodada fechou no código e no banco os P0, P1 e P2 que possuíam contrato suficiente: portão de produção, pausa emergencial, cadências inclusive compra futura vaga, campanhas, agenda/distribuição, mídia aprovada, conhecimento e conflitos, personas guiadas, A/B, CRM em massa, exportação, checklists, custos, permissões, propriedade, suporte contratual privado, visões do corretor e administração agregada da plataforma.
 
 Isso ainda não equivale a uma homologação aprovada. Permanecem dependências que não podem ser comprovadas sem ação humana ou fornecedor real:
 
 1. cadastrar identidade, regras, chave OpenAI, modelos, conhecimento e credenciais de canal da imobiliária;
 2. executar os 100 casos com o modelo real e alcançar 90% geral e 100% nos críticos;
 3. provar envio, recebimento, recibos, retries, mídias e comandos operacionais em Uazapi e/ou Meta;
-4. definir e executar materialmente correção, anonimização, exclusão e retenção conforme decisão do responsável LGPD;
+4. decidir quando usar as ações já implementadas de correção, anonimização, exclusão, arquivamento e retenção; a conformidade da imobiliária continua sendo responsabilidade do dono;
 5. ativar a proteção de senhas vazadas no painel Supabase;
 6. realizar restore em destino seguro e medir RPO/RTO;
 7. concluir revisão jurídica e homologação humana de UI/acessibilidade.
@@ -134,39 +134,42 @@ Legenda: `[x]` implementado no sistema; `[~]` implementado parcialmente ou depen
 - [x] Implementar atrasos planejados de 4–12 s, 12–35 s, 25–60 s e alta demanda de 0–5 s.
 - [x] Tornar o modo assistido operável: visualizar, aprovar, editar, enviar ou descartar.
 - [x] Implementar fallback para modelo secundário em erros transitórios.
-- [~] Corrigir cadências curta, longa e no-show. A compra futura com mês exato está catalogada; prazo vago mensal depende de uma decisão de produto sobre a data-base.
+- [x] Corrigir cadências curta, longa, no-show e compra futura. Prazo vago usa 30/60/90/120/150/180 dias; sem resposta após 180 dias pausa e alerta, e qualquer inbound cancela os próximos contatos.
 - [x] Fechar mapeamento/hash de importação, cinco exemplos, ritmo, deduplicação e revisão 20/50/restante de campanhas.
 - [x] Corrigir distribuição preferencial com expiração, fallback, recusa, devolução e comandos pelo WhatsApp.
 - [x] Fazer mensagens operacionais de corretores não virarem leads nem consumirem capacidade.
 - [x] Criar revisão, legal hold, export snapshot, conclusão/rejeição e evidência para solicitações de privacidade.
-- [~] Executar materialmente correção/anonimização/exclusão conforme a política LGPD aprovada pela imobiliária.
+- [x] Executar correção, anonimização, exclusão lógica/material possível, retenção, arquivamento e retomada mediante decisão auditada de dono/gestor; o sistema não impõe uma política jurídica à imobiliária.
 - [x] Restringir documentos sensíveis a dono/gestor, salvo liberação explícita e auditada.
 - [x] Encaminhar falhas definitivas para dead-letter e alerta.
 - [x] Revogar sessões e desabilitar efeitos operacionais na suspensão/remoção de membro.
 - [x] Reagendamento confirmado cria a nova call e cancela de forma atômica slots, ofertas e jobs anteriores.
 - [ ] Executar os 100 casos com modelo real e obter 90% geral e 100% nos críticos.
 - [ ] Fazer testes reais de envio/recebimento, recibos, retries e idempotência em Uazapi e/ou Meta.
-- [ ] Ativar proteção contra senhas vazadas no painel Supabase Auth.
+- [ ] Ativar [proteção contra senhas vazadas](https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection) no painel Supabase Auth.
 - [ ] Comprovar backup/restore compatível com RPO de 15 minutos e RTO de 4 horas em destino seguro.
 
 ### P1 — antes de ampliar o piloto
 
-- [ ] Editor guiado de persona, clonagem, amostras de conversas e comparação de versões.
-- [ ] Experimentos A/B completos, com alocação, encerramento e promoção de vencedor.
-- [~] Conhecimento por empreendimento: fatos e URLs de mídias aprovadas estão operáveis; conflito/expiração e upload/envio binário ainda precisam de ampliação.
-- [ ] Upload e envio real de imagens, áudio e documentos aprovados.
-- [ ] Permissões granulares, transferência de propriedade e suporte temporário auditado.
-- [ ] Ações em massa de CRM, exportação e modelos/versionamento de checklist.
+- [x] Editor de persona, clonagem, amostras mascaradas/analisadas, retenção e comparação por versões.
+- [x] Experimentos A/B com duas variantes aprovadas, atribuição estável, pausa, encerramento e promoção de vencedor.
+- [x] Conhecimento por empreendimento com fatos, validade opcional, conflitos pendentes, resolução humana e alertas de expiração.
+- [x] Upload e envio real de JPEG/PNG e PDF aprovados. Áudio recebido é transcrito; áudio enviado pelo Pedro ficou explicitamente fora do MVP.
+- [x] Até cinco fotos por empreendimento, exatamente uma principal, e um PDF; para substituir material cheio é necessário excluir antes.
+- [x] Envio da foto principal na recomendação e, quando solicitado, escolha entre as quatro fotos restantes ou o book completo.
+- [x] Permissões granulares, transferência formal de propriedade e suporte contratual privado, permanente ou com prazo, configurado diretamente no banco pela plataforma.
+- [x] Ações seguras em massa de CRM, prévia/confirmação, exportação CSV temporária e modelos/versionamento de checklist.
 - [x] Realtime na inbox, Central, Kanban, agenda e aceite de call.
-- [~] Painel de auditoria implementado; relatórios operacionais/financeiros continuam básicos.
-- [ ] Visões específicas `Hoje` e `Meu pipeline` para corretor.
+- [x] Painel de auditoria, relatórios operacionais, carga por corretor, custos em BRL e alertas informativos de orçamento.
+- [x] Visões específicas `Hoje` e `Meu pipeline` para corretor.
+- [x] Arquivamento reversível do lead, com pausa das automações e restauração manual, para Pedro ou para Pedro com follow-up.
 
 ### P2 — acabamento e escala
 
 - [~] Textos de ambiente e navegação por papel corrigidos; refinamento visual final permanece para a homologação humana.
 - [ ] Homologação completa de teclado, contraste, leitor de tela e dispositivos móveis.
-- [ ] Administração técnica agregada da plataforma.
-- [ ] Integrações externas de agenda previstas para etapa posterior.
+- [x] Administração técnica agregada da plataforma, sem expor conteúdo de imobiliárias por padrão.
+- [ ] Integrações Google Calendar e Outlook permanecem previstas para uma versão posterior e não bloqueiam o MVP.
 
 ## 7. Roteiro completo de homologação
 
@@ -246,7 +249,7 @@ Critério: nenhuma ativação de IA autônoma deve ser possível antes de esta f
 
 ## Fase 3 — cadastrar equipe, funções e permissões
 
-Estado atual: `TESTÁVEL` no fluxo básico e `PARCIAL` no contrato completo.
+Estado atual: `PRONTO PARA HOMOLOGAÇÃO` no código local e no banco remoto.
 
 ### 3.1 Convite individual
 
@@ -294,11 +297,18 @@ Para cada papel, valide:
 - calls futuras e pipeline são tratados antes da remoção;
 - propriedade pode ser transferida com reautenticação e auditoria.
 
-Estado: `PARCIAL`. RLS, navegação por papel, revogação de sessão, desativação de disponibilidade/push e alerta de calls futuras estão implementados. Transferência de propriedade, suporte temporário e toda a granularidade prevista permanecem P1.
+Estado: `PRONTO PARA HOMOLOGAÇÃO`. RLS, navegação por papel, permissões granulares, revogação de sessão, desativação de disponibilidade/push, alerta de calls futuras e transferência formal de propriedade estão implementados. Teste também:
+
+1. o dono inicia a transferência após confirmar novamente a própria senha;
+2. o novo dono aceita explicitamente;
+3. o dono anterior vira gestor com todas as permissões, exceto transferir propriedade e criar gestores;
+4. o novo dono pode revogar acessos e concessões posteriores.
+
+O acesso do suporte não é configurado pelo dono na interface. Quando houver contrato assinado, a equipe da plataforma registra diretamente no schema privado uma concessão de leitura ou acesso total, com ou sem prazo. Esse acesso e sua auditoria são visíveis apenas à equipe da plataforma, evitando poluição para a imobiliária.
 
 ## Fase 4 — configurar corretores para receber calls
 
-Estado atual: `PARCIAL`.
+Estado atual: `PRONTO PARA HOMOLOGAÇÃO`; cadastro e validação operacional continuam sendo tarefas humanas.
 
 Para cada corretor:
 
@@ -320,11 +330,11 @@ Critério:
 - o sistema alerta sobre calls já aceitas no período;
 - todas as mudanças são auditadas.
 
-Lacunas P1: edição/exclusão completa das regras de disponibilidade e fluxo guiado de férias/indisponibilidade. Recusa, devolução e redistribuição da call já estão no núcleo.
+Recusa, devolução, indisponibilidade, expiração e redistribuição estão no núcleo. Esta fase somente será aprovada depois de os próprios corretores validarem sua agenda e seus números.
 
 ## Fase 5 — cadastrar OpenAI, modelos e Pedro
 
-Estado atual: `CREDENCIAL REAL` no básico e `PARCIAL` no contrato completo.
+Estado atual: `CREDENCIAL REAL`; o contrato técnico está implementado, mas depende da chave da própria imobiliária.
 
 ### 5.1 Credencial da organização
 
@@ -357,9 +367,21 @@ Estado: `CREDENCIAL REAL`. Modelo principal e secundário podem ser definidos; o
 6. Publique somente após aprovação humana.
 7. Valide descarte das amostras após 30 dias.
 
-Estado: `PARCIAL`. Hoje é possível editar/publicar um prompt compilado, mas não existe o construtor guiado, análise de amostras, clonagem ou comparação completa.
+Estado: `PRONTO PARA HOMOLOGAÇÃO`. É possível adicionar 10 a 30 amostras, mascarar dados pessoais, analisá-las pela OpenAI com saída estruturada, clonar a persona, criar/publicar versões e excluir os textos originais depois da publicação ou do prazo de retenção. A publicação continua sempre humana.
 
-### 5.4 Modos de IA
+### 5.4 Experimento A/B
+
+1. Abra `/app/pedro/experimentos`.
+2. Escolha exatamente duas variantes publicadas, totalizando 100% da alocação.
+3. Como dono, inicie o experimento.
+4. Confirme que o mesmo contato/oportunidade permanece na mesma variante.
+5. Como gestor, pause por segurança.
+6. Como dono, retome, encerre e promova o vencedor.
+7. Confirme que conversas em andamento não trocam silenciosamente de identidade.
+
+Estado: `PRONTO PARA HOMOLOGAÇÃO`. Casos críticos pausam o experimento e geram alerta.
+
+### 5.5 Modos de IA
 
 Teste na ordem:
 
@@ -379,7 +401,7 @@ Estado: `PRONTO PARA HOMOLOGAÇÃO`. A inbox permite editar/enviar ou descartar 
 
 ## Fase 6 — cadastrar conhecimento e empreendimentos
 
-Estado atual: `PARCIAL`.
+Estado atual: `PRONTO PARA HOMOLOGAÇÃO` no código e `CREDENCIAL REAL` para o envio pelo WhatsApp.
 
 Prepare cinco empreendimentos fictícios variados. Para cada um, o requisito é:
 
@@ -387,7 +409,7 @@ Prepare cinco empreendimentos fictícios variados. Para cada um, o requisito é:
 2. cidade, região e tipo;
 3. preço/faixa e entrada, com fonte e validade;
 4. disponibilidade, com fonte e validade;
-5. capa e materiais aprovados;
+5. até cinco fotos JPEG/PNG de no máximo 5 MB, exatamente uma marcada como principal, e um PDF de no máximo 20 MB;
 6. diferenciais factuais;
 7. restrições e ressalvas;
 8. perguntas frequentes específicas;
@@ -403,15 +425,21 @@ Depois:
 5. altere um preço e confirme uso imediato nas próximas respostas;
 6. expire uma fonte e confirme bloqueio ou alerta;
 7. crie dois fatos conflitantes e confirme quarentena até revisão;
-8. envie capa, imagem, áudio e PDF de teste;
+8. envie cinco fotos e um PDF de teste; áudio de saída não faz parte do MVP;
 9. confirme que Pedro usa somente materiais aprovados;
 10. arquive um empreendimento e confirme que ele não é mais recomendado.
+11. tente enviar uma sexta foto ou segundo PDF e confirme bloqueio até excluir um arquivo existente.
+12. peça recomendação e confirme o envio prioritário da foto principal.
+13. peça “mais fotos” e confirme que Pedro pergunta se o lead prefere as fotos restantes ou o book completo.
+14. escolha fotos e valide o envio das quatro restantes; repita escolhendo o book e valide o PDF.
 
 Estado atual:
 
-- criação de empreendimento, FAQ global, fatos por projeto e catálogo de URLs de mídias aprovadas está operável;
-- o contexto do worker inclui fatos e mídias aprovadas do empreendimento;
-- upload binário, envio real de mídia, resolução guiada de conflitos e expiração automática ainda estão `PARCIAIS`.
+- upload usa reserva assinada, valida o binário real no servidor e mantém o bucket privado;
+- fatos podem ter validade opcional; fatos vencidos saem do contexto e geram alerta;
+- fatos conflitantes permanecem pendentes até decisão humana auditada;
+- o contexto do worker inclui somente fatos válidos e mídias publicadas;
+- o worker envia JPEG/PNG e PDF por Uazapi ou Meta usando URL HTTPS assinada e registra a entrega de forma idempotente.
 
 Aprove a recomendação textual apenas depois de confirmar fonte, validade e ausência de invenção. Homologue mídia real somente após conectar o fornecedor.
 
@@ -512,7 +540,7 @@ Estado atual: `CREDENCIAL REAL` no fluxo básico.
 
 ## Fase 11 — cadastrar e organizar leads no CRM
 
-Estado atual: `TESTÁVEL` no núcleo e `PARCIAL` nas operações avançadas.
+Estado atual: `PRONTO PARA HOMOLOGAÇÃO`.
 
 Em `/app/leads`:
 
@@ -530,6 +558,13 @@ Em `/app/leads`:
 12. tente marcar venda sem requisitos;
 13. complete os requisitos e marque venda;
 14. pesquise o lead em `/app/busca`.
+15. selecione vários leads, revise a prévia e teste etiqueta, atribuição, inclusão/exclusão de campanha, pausa/retomada da IA e correção de origem.
+16. confirme que venda, pagamento, perda em massa, exclusão de contato e mensagem livre não estão disponíveis.
+17. exporte uma seleção e valide CSV UTF-8 compatível com Excel, link assinado por 15 minutos e remoção programada em 24 horas.
+18. em `/app/configuracoes/checklists`, publique uma nova versão de checklist com itens obrigatórios e opcionais.
+19. dispense um item obrigatório como dono/gestor e confirme exigência de motivo auditável.
+20. arquive um lead com motivo, confirme sua saída das listas ativas e a pausa de Pedro/campanhas/follow-ups.
+21. abra `Ver arquivados` e restaure o lead em cada modo: manual, Pedro e Pedro com follow-up.
 
 Critério:
 
@@ -539,7 +574,7 @@ Critério:
 - dados históricos não mudam retroativamente quando projeto é atualizado;
 - corretor enxerga apenas seu pipeline.
 
-Lacunas: ações em massa, exportação, edição/versionamento de templates de checklist e controles detalhados de atribuição ainda faltam.
+As ações em massa exigem seleção, prévia e confirmação no servidor. Exportações ficam em bucket privado; checklists são versionados e copiados como snapshot para cada oportunidade. O arquivamento não apaga histórico e não permite retomada proativa quando existe opt-out ativo.
 
 ## Fase 12 — validar a jornada inbound autônoma
 
@@ -555,18 +590,19 @@ Use um telefone de teste e siga uma conversa completa:
 6. peça opções de imóveis;
 7. confirme recomendação somente de projetos compatíveis e publicados;
 8. peça material de um projeto;
-9. confirme envio somente de mídia aprovada;
-10. peça horário de atendimento;
-11. confirme sugestões baseadas na disponibilidade real;
-12. aceite um horário;
-13. confirme reserva sem usar a palavra `confirmado` antes de um corretor aceitar;
-14. confirme criação da call e início da distribuição;
-15. deixe a conversa sem resposta e valide follow-ups;
-16. responda e confirme cancelamento dos follow-ups pendentes;
-17. peça humano e confirme pausa imediata do Pedro;
-18. encerre atendimento humano e confirme retomada controlada;
-19. envie `não quero mais mensagens` e confirme opt-out em todos os fluxos;
-20. tente reativar o lead via campanha e confirme bloqueio.
+9. confirme envio da foto principal aprovada;
+10. peça mais material, escolha entre fotos restantes e book, e valide a decisão;
+11. peça horário de atendimento;
+12. confirme sugestões baseadas na disponibilidade real;
+13. aceite um horário;
+14. confirme reserva sem usar a palavra `confirmado` antes de um corretor aceitar;
+15. confirme criação da call e início da distribuição;
+16. deixe a conversa sem resposta e valide follow-ups;
+17. responda e confirme cancelamento dos follow-ups pendentes;
+18. peça humano e confirme pausa imediata do Pedro;
+19. encerre atendimento humano e confirme retomada controlada;
+20. envie `não quero mais mensagens` e confirme opt-out em todos os fluxos;
+21. tente reativar o lead via campanha e confirme bloqueio.
 
 ### 12.1 Limites temporais
 
@@ -604,7 +640,7 @@ Critério adicional: a mensagem de dead-letter deve ser privada para o runtime; 
 
 ## Fase 14 — validar follow-ups
 
-Estado atual: `PRONTO PARA HOMOLOGAÇÃO` nas cadências curta, longa e no-show. `PARCIAL` apenas para compra futura com prazo vago.
+Estado atual: `PRONTO PARA HOMOLOGAÇÃO` em todas as cadências do MVP.
 
 Cadências obrigatórias:
 
@@ -633,9 +669,9 @@ Cadências obrigatórias:
 ### Compra futura
 
 - 90, 30 e 7 dias antes do mês-alvo;
-- acompanhamento mensal quando o prazo for vago.
-
-Observação: o catálogo 90/30/7 existe, mas a data-base e a cadência mensal para prazo vago não foram definidas de modo executável nos sete arquivos. Não aprove esta subfase até registrar essa decisão de produto.
+- quando o prazo for vago: dias 30, 60, 90, 120, 150 e 180 contados da decisão registrada;
+- depois de 180 dias sem resposta: pausa a conversa e alerta dono/gestor;
+- qualquer nova mensagem inbound cancela toda a sequência pendente.
 
 Para cada cadência, confirme que para imediatamente quando o lead:
 
@@ -707,7 +743,7 @@ O portão de produção e os bloqueios da campanha impedem liberação sem os co
 11. Confirme uma única nova abertura por minuto por conexão.
 12. Confirme janela de 08:30 a 20:30.
 
-O servidor calcula 20 na primeira onda, 50 na segunda e todo o restante na terceira; exige revisão da onda anterior e agenda no máximo uma abertura por minuto por conexão. Ações avançadas de exclusão/pular em massa permanecem P1.
+O servidor calcula 20 na primeira onda, 50 na segunda e todo o restante na terceira; exige revisão da onda anterior e agenda no máximo uma abertura por minuto por conexão. Inclusão e exclusão seguras em massa estão disponíveis no CRM com prévia e confirmação.
 
 ### 15.4 Arquivamento
 
@@ -819,7 +855,7 @@ Critério: snapshots históricos permanecem inalterados mesmo se preço ou proje
 
 ## Fase 18 — Central, alertas, push e atendimento humano
 
-Estado atual: `PRONTO PARA HOMOLOGAÇÃO` no núcleo, dead-letter, pausa emergencial, retomada exclusiva do dono e atualização Realtime. Transferência avançada de atendimento permanece P1.
+Estado atual: `PRONTO PARA HOMOLOGAÇÃO` no núcleo, dead-letter, pausa emergencial, retomada exclusiva do dono e atualização Realtime.
 
 1. Abra `/app/central`.
 2. Autorize notificações push.
@@ -840,7 +876,7 @@ Critério adicional: o gestor pode pausar, mas não retomar a pausa global; o do
 
 ## Fase 19 — privacidade, retenção e documentos sensíveis
 
-Estado atual: `PARCIAL`. Workflow de revisão, export snapshot, legal hold, liberação, conclusão/rejeição, evidência e restrição de anexos sensíveis está pronto; a mutação material dos dados depende da política LGPD aprovada.
+Estado atual: `PRONTO PARA HOMOLOGAÇÃO`. O sistema fornece as ações; o dono decide se, quando e sob qual base jurídica irá utilizá-las.
 
 1. Abra `/app/configuracoes/privacidade`.
 2. Registre pedido de acesso.
@@ -856,12 +892,15 @@ Estado atual: `PARCIAL`. Workflow de revisão, export snapshot, legal hold, libe
 12. Libere explicitamente e confirme acesso auditado.
 13. Reclassifique falso positivo.
 14. Execute purge de anexos expirados.
+15. Arquive um lead sem excluí-lo e restaure-o manualmente.
+16. Devolva o lead restaurado ao Pedro e, em outro teste, ao Pedro com follow-up.
+17. Confirme que opt-out bloqueia as duas retomadas proativas.
 
-Não marque exclusão/anonimização como concluída apenas por fechar o ticket. Anexe evidência da ação material definida pelo responsável LGPD. Sem essa política, esta fase não pode ser aprovada integralmente.
+Correção, anonimização e exclusão exigem identidade verificada e motivo. Arquivamento é reversível. O padrão técnico de retenção é 24 meses, configurável, sem apagar automaticamente por obrigação do produto; anexos sensíveis têm purge padrão de 30 dias. A conformidade jurídica continua sendo responsabilidade da imobiliária.
 
 ## Fase 20 — relatórios, custos e auditoria
 
-Estado atual: `PARCIAL`.
+Estado atual: `PRONTO PARA HOMOLOGAÇÃO` para os relatórios essenciais do MVP.
 
 Em `/app/relatorios`, valide pelo menos:
 
@@ -877,6 +916,7 @@ Em `/app/relatorios`, valide pelo menos:
 - moeda, cotação e projeção em BRL;
 - alertas de orçamento em 50%, 80% e 100%;
 - atribuição e coorte;
+- carga por corretor e itens sem responsável;
 - exportação respeitando permissões.
 
 Depois, abra `/app/configuracoes/auditoria` e confirme:
@@ -886,7 +926,7 @@ Depois, abra `/app/configuracoes/auditoria` e confirme:
 - usuário comum não consegue alterar eventos;
 - dono consegue investigar sem visualizar segredo em texto puro.
 
-O feed de auditoria está disponível para dono/gestor com RLS e direitos de invocador. Os relatórios continuam básicos e ainda não cobrem todo o contrato de orçamento, coorte, custo e exportação.
+O feed de auditoria está disponível para dono/gestor com RLS. Custos são calculados em BRL com preços e câmbio privados configuráveis pela plataforma; alertas de 50%, 80% e 100% são informativos e nunca pausam a operação automaticamente. Dono vê finanças por padrão; gestor precisa da permissão específica.
 
 ## Fase 21 — segurança, concorrência e recuperação
 
@@ -902,10 +942,10 @@ Estado atual: `PARCIAL`; automação já cobre boa parte do banco, mas faltam pr
 
 Evidência automática atual:
 
-- 144 de 144 tabelas públicas com RLS;
+- 158 de 158 tabelas públicas com RLS;
 - zero grants de tabela para `anon`;
 - zero `TRUNCATE`, `REFERENCES` ou `TRIGGER` excessivos para `authenticated`;
-- 127 testes pgTAP aprovados.
+- 127 testes pgTAP previamente aprovados e smoke transacional de arquivar/restaurar executado com rollback.
 
 ### 21.2 Concorrência e idempotência
 
@@ -965,24 +1005,24 @@ Não aprove uma tela só porque ela abre. Valide estado vazio, carregamento, suc
 | GAP-005 | P0 | FECHADO NO SISTEMA | horários, ritmo, agrupamento e atrasos | VOCÊ homologa com timestamps |
 | GAP-006 | P0 | FECHADO NO SISTEMA | caixa assistida com editar/enviar/descartar | VOCÊ homologa |
 | GAP-007 | P0 | FECHADO NO SISTEMA | fallback de modelo em erro transitório | VOCÊ testa com OpenAI |
-| GAP-008 | P1 | ABERTO | persona guiada, amostras e A/B completos | CODEX após o MVP |
-| GAP-009 | P1 | PARCIAL | fatos e catálogo de mídia existem; upload/envio binário e conflito/expiração avançados faltam | CODEX + FORNECEDOR |
-| GAP-010 | P0 | PARCIAL | curta, longa e no-show fechadas; compra futura vaga sem data-base | VOCÊ decide regra; CODEX implementa |
+| GAP-008 | P1 | FECHADO NO SISTEMA | persona, amostras, clonagem, retenção e A/B estável | VOCÊ homologa com OpenAI real |
+| GAP-009 | P1 | FECHADO NO SISTEMA | fatos, conflito/expiração, upload e envio de JPEG/PNG/PDF | VOCÊ homologa com canal real |
+| GAP-010 | P0 | FECHADO NO SISTEMA | curta, longa, no-show e compra futura 30/60/90/120/150/180 | VOCÊ homologa |
 | GAP-011 | P0 | FECHADO NO SISTEMA | mapeamento/hash/amostras e portões de campanha | VOCÊ homologa |
 | GAP-012 | P0 | FECHADO NO SISTEMA | ondas obrigatórias 20/50/restante | VOCÊ homologa |
 | GAP-013 | P0 | FECHADO NO SISTEMA | preferenciais, recusa, expiração e fallback | VOCÊ homologa com canal real |
 | GAP-014 | P0 | FECHADO NO SISTEMA | aceite/recusa/devolução por app e WhatsApp | VOCÊ homologa com canal real |
 | GAP-015 | P0 | FECHADO NO SISTEMA | nova call cancela slot/ofertas/jobs anteriores e reinicia distribuição | VOCÊ homologa |
 | GAP-016 | P1 | FECHADO NO SISTEMA | Realtime nas telas operacionais | VOCÊ homologa |
-| GAP-017 | P1 | ABERTO | ações em massa/exportação/checklists avançados | CODEX após o MVP |
-| GAP-018 | P0 | PARCIAL/LEGAL | workflow e evidência existem; ação material depende da política LGPD | VOCÊ + RESPONSÁVEL LGPD |
+| GAP-017 | P1 | FECHADO NO SISTEMA | ações seguras em massa, CSV temporário e checklists versionados | VOCÊ homologa |
+| GAP-018 | P0 | FECHADO NO SISTEMA/DECISÃO DO DONO | correção, anonimização, exclusão, retenção, arquivo e retomada | VOCÊ decide e homologa |
 | GAP-019 | P0 | FECHADO NO SISTEMA | anexos sensíveis restritos com liberação auditada | VOCÊ homologa |
 | GAP-020 | P0 | FECHADO NO SISTEMA | saída global e suspensão revogam sessões/efeitos operacionais | VOCÊ homologa Auth |
 | GAP-021 | P0 | FECHADO NO SISTEMA | dead-letter privada e alerta redigido | VOCÊ homologa falha simulada |
-| GAP-022 | P1 | ABERTO | relatórios e custos completos | CODEX após o MVP |
+| GAP-022 | P1 | FECHADO NO SISTEMA | relatórios essenciais, carga e custos privados em BRL | VOCÊ configura preços/câmbio e homologa |
 | GAP-023 | P1 | FECHADO NO SISTEMA | painel de auditoria com RLS | VOCÊ homologa |
-| GAP-024 | P1 | ABERTO | granularidade total de permissões | CODEX após o MVP |
-| GAP-025 | P1 | ABERTO | transferência de dono e suporte temporário | CODEX após o MVP |
+| GAP-024 | P1 | FECHADO NO SISTEMA | permissões granulares por gestor | VOCÊ homologa por papel |
+| GAP-025 | P1 | FECHADO NO SISTEMA | transferência aceita pelo novo dono e suporte contratual privado | VOCÊ homologa transferência; PLATAFORMA configura suporte |
 | GAP-026 | P0 | DEPENDÊNCIA EXTERNA | proteção contra senha vazada desativada | VOCÊ no Supabase Auth |
 | GAP-027 | P0 | DEPENDÊNCIA DE HOMOLOGAÇÃO | 100 casos ainda não rodados com modelo real | VOCÊ; CODEX corrige reprovações |
 | GAP-028 | P0 | DEPENDÊNCIA EXTERNA | fornecedores reais ainda não homologados | VOCÊ + FORNECEDOR |
@@ -992,22 +1032,29 @@ Não aprove uma tela só porque ela abre. Valide estado vazio, carregamento, suc
 | GAP-032 | P1 | FECHADO NO SISTEMA | agenda/IA usam fuso da operação | VOCÊ homologa outro fuso |
 | GAP-033 | P0 | FECHADO NO SISTEMA | mensagem de staff é tratada antes de lead | VOCÊ homologa com número real |
 | GAP-034 | P0 | DEPENDÊNCIA EXTERNA | revisão jurídica de mensagens, consentimento e crédito | VOCÊ + JURÍDICO |
+| GAP-035 | P1 | FECHADO NO SISTEMA | arquivar/restaurar lead e escolher retomada manual/Pedro/follow-up | VOCÊ homologa |
+| GAP-036 | P1 | FECHADO NO SISTEMA | Hoje e Meu pipeline do corretor | VOCÊ homologa com corretor |
+| GAP-037 | P2 | FECHADO NO SISTEMA | administração agregada da plataforma e suporte sem conteúdo por padrão | PLATAFORMA homologa |
+| GAP-038 | P2 | PÓS-MVP CONFIRMADO | Google Calendar e Outlook | versão futura |
+| GAP-039 | P2 | FORA DO MVP CONFIRMADO | áudio enviado pelo Pedro | versão futura, se priorizada |
 
 ## 9. O que já possui boa evidência automática
 
 Na revisão atual, foram registrados:
 
-- 73 testes Vitest aprovados em 11 arquivos;
+- 75 testes Vitest aprovados em 11 arquivos;
 - 127 testes pgTAP previamente aprovados e um novo arquivo de fechamento com 17 assertivas de contrato;
 - transação de validação pgTAP executada no banco remoto e validação estrutural consolidada aprovada;
 - lint aprovado sem erro ou aviso;
-- build de produção aprovado, com 34 rotas geradas;
-- 46 migrations presentes no banco remoto;
-- 144 de 144 tabelas públicas com RLS e zero grants de tabela para `anon`;
+- build de produção aprovado, com 40 rotas geradas;
+- 54 migrations presentes no banco remoto;
+- 158 de 158 tabelas públicas com RLS e zero grants de tabela para `anon`;
 - 7 tabelas operacionais no Supabase Realtime;
 - bootstrap de operação nova validado em transação com 4 planos e 33 passos de cadência, seguido de rollback;
-- advisor de desempenho sem `WARN` ou `ERROR`;
-- advisor de segurança sem erro de RLS; resta apenas o `WARN` externo de proteção contra senha vazada;
+- advisor de desempenho sem `WARN` ou `ERROR`; os avisos informativos de índices não usados são esperados em um banco ainda sem carga e não justificam apagar índices antes do piloto;
+- advisor de segurança sem erro: quatro `INFO` são tabelas de comando intencionalmente exclusivas do service role; resta apenas o `WARN` externo de proteção contra senha vazada;
+- smoke transacional de arquivamento e restauração aprovado no banco remoto e revertido ao final;
+- buckets privados `gril-projects` e `gril-exports` validados com limites e MIME permitidos;
 - 100 casos de regressão cadastrados, sendo 52 críticos;
 - migrations desta rodada aplicadas diretamente no projeto `frslhzwhaooqtivkzdez`.
 
@@ -1076,7 +1123,7 @@ Para evitar retrabalho, siga esta ordem operacional:
 
 ## 12. O que o Codex ainda pode executar antes da homologação
 
-Não há outro P0 puramente técnico, bem definido nos sete arquivos e seguro para executar sozinho que impeça o início da homologação. O próximo passo útil é gerar evidência com sua configuração e seus fornecedores reais.
+Após a revisão final dos sete arquivos e das decisões complementares, não há outro P0, P1 ou P2 de MVP com contrato suficiente que o Codex possa fechar sozinho antes da homologação. O próximo passo útil é gerar evidência com a configuração real da imobiliária e seus fornecedores.
 
 ### Entradas que os sete arquivos deixaram deliberadamente em aberto
 
@@ -1090,20 +1137,22 @@ Não devem ser inventadas pelo sistema nem pelo Codex:
 6. CNPJ, CRECI e dados institucionais autorizados para divulgação;
 7. dono, gestores, corretores, preferenciais e exceções de permissão reais;
 8. checklists concretos de proposta, documentação, pagamento e venda;
-9. orçamento da OpenAI e limites de alerta em 50%, 80% e 100%;
+9. orçamento da OpenAI, preços efetivos dos modelos, câmbio usado pela plataforma e valores de alerta em 50%, 80% e 100%;
 10. política jurídica/LGPD para comunicação, consentimento, crédito, retenção e ação material sobre dados;
-11. data-base de compra futura e regra mensal quando o prazo for vago;
+11. identificação dos usuários da equipe da plataforma e referência dos contratos que autorizam suporte privado a cada imobiliária;
 12. plano de observabilidade e destino seguro para o teste de restauração.
 
 A sugestão original de staging foi substituída pela decisão explícita deste projeto: usar o banco remoto `frslhzwhaooqtivkzdez`, com dados identificados de homologação, e publicar na Vercel somente na versão final autorizada.
 
-O Codex pode agir novamente assim que existir uma destas entradas:
+O Codex pode agir novamente assim que existir uma destas entradas ou evidências:
 
-- decisão da data-base e do comportamento mensal da compra futura com prazo vago;
-- política aprovada para correção, anonimização, exclusão e retenção LGPD;
-- credencial/instância real para fechar upload e envio binário de imagens, áudios e documentos;
+- credencial/instância real para comprovar, não para implementar, envio e recebimento por Uazapi/Meta/OpenAI;
+- preços dos modelos, taxa de câmbio e orçamento que a plataforma deve registrar;
+- usuários da equipe de suporte e contrato de uma imobiliária para criar a concessão privada correspondente;
 - evidência de reprovação dos 100 casos, do WhatsApp, de UI ou de concorrência;
 - autorização e destino seguro para o exercício de restore.
+
+Áudio recebido continua sendo transcrito quando possível. Áudio enviado pelo Pedro e sincronização com Google Calendar/Outlook foram confirmados como fora do MVP e não devem ser tratados como lacuna desta homologação.
 
 ## 13. Fontes revisadas
 
