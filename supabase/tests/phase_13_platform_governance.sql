@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(22);
+select extensions.plan(25);
 
 select extensions.has_table('public', 'access_requests', 'public access request workflow exists');
 select extensions.has_table('private', 'platform_principals', 'platform principals are private');
@@ -40,6 +40,16 @@ select extensions.has_function('public', 'platform_control_organization', array[
 select extensions.has_function('public', 'platform_control_user', array['uuid','text','text','text','text'], 'user control exists');
 select extensions.has_function('public', 'platform_manage_support_grant', array['uuid','text','text','text','timestamp with time zone','text'], 'support grant control exists');
 select extensions.has_function('public', 'revoke_external_support_access', array['text'], 'tenant support revocation exists');
+select extensions.has_function('private', 'valid_typed_confirmation', array['text'], 'encoding-safe typed confirmation exists');
+
+select extensions.ok(
+  position('approve_30_days' in pg_get_functiondef('public.decide_access_request(uuid,text,text,uuid[],text,text,text)'::regprocedure)) > 0,
+  'organization requests support permanent and temporary approval'
+);
+select extensions.ok(
+  position('approval_expires_at is null' in lower(pg_get_functiondef('private.process_organization_bootstrap_request()'::regprocedure))) > 0,
+  'permanent approval can bootstrap an organization'
+);
 
 select extensions.ok(
   (select relrowsecurity from pg_class where oid = 'public.access_requests'::regclass),

@@ -85,7 +85,7 @@ export default async function OnboardingPage({
             {current.status === "approved" && current.request_type === "create_organization" ? (
               <form action={bootstrapOrganizationAction} className={styles.formCard}>
                 <input name="accessRequestId" type="hidden" value={current.id} />
-                <p className={styles.approved}><ShieldCheck aria-hidden="true" /> A aprovação libera somente este onboarding e expira em {current.approval_expires_at ? new Date(current.approval_expires_at).toLocaleDateString("pt-BR") : "30 dias"}.</p>
+                <p className={styles.approved}><ShieldCheck aria-hidden="true" /> A aprovação libera somente este onboarding {current.approval_expires_at ? `e expira em ${new Date(current.approval_expires_at).toLocaleDateString("pt-BR")}.` : "e não possui prazo de expiração."}</p>
                 <label><span>Nome final da imobiliária</span><input defaultValue={current.organization_name ?? ""} name="organizationName" required /></label>
                 <label><span>Nome da operação</span><input defaultValue="Operação principal" name="operationName" required /></label>
                 <div className={styles.row}><label><span>Cidade</span><input defaultValue={current.city ?? ""} name="city" required /></label><label><span>UF</span><input defaultValue={current.state ?? ""} maxLength={2} name="state" required /></label></div>

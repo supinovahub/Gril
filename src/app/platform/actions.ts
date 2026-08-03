@@ -8,6 +8,7 @@ import { z } from "zod";
 import { requireViewer } from "@/lib/auth/session";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
+import { TYPED_CONFIRMATION_PHRASE } from "@/lib/typed-confirmation";
 
 async function requirePlatform(role?: "platform_admin") {
   const viewer = await requireViewer();
@@ -22,10 +23,10 @@ function platformRedirect(message: string, kind: "erro" | "sucesso" = "erro"): n
 export async function decidePlatformAccessRequestAction(formData: FormData) {
   const parsed = z.object({
     requestId: z.string().uuid(),
-    decision: z.enum(["approve", "reject", "request_correction", "revoke_approval"]),
+    decision: z.enum(["approve", "approve_30_days", "reject", "request_correction", "revoke_approval"]),
     publicReason: z.string().trim().max(1000).optional(),
     internalNote: z.string().trim().max(2000).optional(),
-    confirmation: z.literal("CONFIRMAR AÇÃO"),
+    confirmation: z.literal(TYPED_CONFIRMATION_PHRASE),
   }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) platformRedirect("Confirmação ou decisão inválida.");
   await requirePlatform("platform_admin");
@@ -37,9 +38,14 @@ export async function decidePlatformAccessRequestAction(formData: FormData) {
     p_internal_note: parsed.data.internalNote,
     p_confirmation: parsed.data.confirmation,
   });
+  if (error?.message.includes("confirmation_or_decision_invalid")) platformRedirect("A confirmação não foi reconhecida. Digite a frase exatamente como exibida.");
   if (error) platformRedirect("A decisão não foi aplicada. Verifique o estado atual da solicitação.");
   revalidatePath("/platform");
-  platformRedirect("Solicitação atualizada.", "sucesso");
+  platformRedirect(parsed.data.decision === "approve"
+    ? "Solicitação aprovada sem prazo de expiração."
+    : parsed.data.decision === "approve_30_days"
+      ? "Solicitação aprovada por 30 dias."
+      : "Solicitação atualizada.", "sucesso");
 }
 
 export async function addPlatformRequestNoteAction(formData: FormData) {

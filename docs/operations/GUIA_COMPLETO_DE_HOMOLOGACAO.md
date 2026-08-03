@@ -40,7 +40,7 @@ Primeiro acesso planejado:
 No painel da plataforma, valide:
 
 - fila de solicitações de novas imobiliárias;
-- aprovação por 30 dias, pedido de correção, recusa e revogação;
+- aprovação normal sem prazo ou temporária por 30 dias, pedido de correção, recusa e revogação;
 - nota interna visível apenas à equipe da plataforma;
 - pré-autorização por e-mail por 30 dias;
 - convite de outro administrador ou suporte, válido por sete dias;
@@ -63,7 +63,7 @@ Crie contas diferentes para provar os três caminhos. Confirme o e-mail antes de
 4. CNPJ, CRECI, descrição e número aproximado de corretores são opcionais;
 5. envie a solicitação;
 6. no `/platform`, aprove, peça correção e reenvie; depois faça a aprovação final;
-7. volte à conta solicitante e conclua a criação dentro de 30 dias.
+7. valide separadamente a aprovação normal e a aprovação por 30 dias; volte à conta solicitante e conclua a criação dentro do prazo escolhido.
 
 Resultado esperado: a conta não cria uma imobiliária diretamente. Após aprovação, cria organização, operação padrão e vínculo de dono em uma única transação. Pré-autorização aprova a solicitação automaticamente, mas o usuário ainda conclui o onboarding.
 
