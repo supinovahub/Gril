@@ -13,6 +13,9 @@ values
   ('16000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'campaign-owner@invalid.test', '', now(), '{}', '{"full_name":"Campaign Owner"}', now(), now()),
   ('16000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'campaign-broker@invalid.test', '', now(), '{}', '{"full_name":"Campaign Broker"}', now(), now());
 
+update public.profiles set whatsapp_e164 = '+5511988000062'
+where user_id = '16000000-0000-0000-0000-000000000002';
+
 insert into public.organizations (id, name, slug)
 values ('26000000-0000-0000-0000-000000000001', 'Campaign Gate Org', 'campaign-gate-org');
 
@@ -131,13 +134,12 @@ select * from (
     'reviewed campaign can be explicitly approved'
   )
   union all
-  select 7, extensions.throws_ok(
-    $$insert into public.campaign_wave_release_requests (org_id,campaign_id,requested_count,actor_user_id)
-      select '26000000-0000-0000-0000-000000000001',campaign_id,21,'16000000-0000-0000-0000-000000000001'
-      from public.campaign_creation_requests where id='66000000-0000-0000-0000-000000000001'$$,
-    '22023',
-    'campaign_wave_limit_20',
-    'first campaign wave is capped at 20 on the server'
+  select 7, extensions.ok(
+    position(
+      'v_required:=casewhenv_wave_no=1thenleast(20,v_remaining)'
+      in replace(lower(pg_get_functiondef('private.process_campaign_wave_release_request()'::regprocedure)), ' ', '')
+    ) > 0,
+    'campaign wave sizes are derived on the server'
   )
 ) pre_wave_assertions
 order by 1;

@@ -5,6 +5,7 @@ import { z } from "zod";
 
 import { requireViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { isWhatsAppConflict, optionalWhatsAppSchema } from "@/lib/whatsapp";
 
 export type ProfileState = {
   status: "idle" | "error" | "success";
@@ -14,16 +15,7 @@ export type ProfileState = {
 
 const profileSchema = z.object({
   fullName: z.string().trim().min(2, "Informe seu nome completo.").max(120),
-  whatsapp: z
-    .string()
-    .trim()
-    .transform((value) => {
-      const digits = value.replace(/\D/g, "");
-      return digits ? `+${digits}` : null;
-    })
-    .refine((value) => value === null || /^\+[1-9][0-9]{7,14}$/.test(value), {
-      message: "Informe país, DDD e número. Ex.: +55 11 99999-9999.",
-    }),
+  whatsapp: optionalWhatsAppSchema,
 });
 
 export async function updateProfileAction(
@@ -36,13 +28,21 @@ export async function updateProfileAction(
   });
 
   if (!parsed.success) {
-    return {
-      status: "error",
-      fields: parsed.error.flatten().fieldErrors,
-    };
+    return { status: "error", fields: parsed.error.flatten().fieldErrors };
   }
 
   const viewer = await requireViewer();
+  if (
+    viewer.membership?.status === "active"
+    && ["manager", "broker"].includes(viewer.membership.role)
+    && !parsed.data.whatsapp
+  ) {
+    return {
+      status: "error",
+      fields: { whatsapp: ["Gestores e corretores não podem remover o WhatsApp operacional."] },
+    };
+  }
+
   const supabase = await createClient();
   const { error } = await supabase
     .from("profiles")
@@ -55,7 +55,9 @@ export async function updateProfileAction(
   if (error) {
     return {
       status: "error",
-      message: "Não foi possível salvar o perfil.",
+      message: isWhatsAppConflict(error)
+        ? "Este número já está em uso. Informe outro WhatsApp ou fale com o suporte."
+        : "Não foi possível salvar o perfil.",
     };
   }
 

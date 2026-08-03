@@ -1,6 +1,7 @@
 const publicPrefixes = [
   "/auth",
   "/convite",
+  "/aceitar-convite",
   "/login",
   "/cadastro",
   "/recuperar-senha",

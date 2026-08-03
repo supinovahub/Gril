@@ -13,7 +13,7 @@ export function RegisterForm({ nextPath, initialEmail }: { nextPath: string; ini
 
   return (
     <div className={styles.formPanel}>
-      <Link className={styles.backLink} href="/login">
+      <Link className={styles.backLink} href={`/login?next=${encodeURIComponent(nextPath)}`}>
         ← Já tenho conta
       </Link>
 
@@ -39,7 +39,6 @@ export function RegisterForm({ nextPath, initialEmail }: { nextPath: string; ini
         <div className={styles.field}>
           <label htmlFor="fullName">Nome completo</label>
           <input
-            defaultValue={initialEmail}
             id="fullName"
             name="fullName"
             autoComplete="name"
@@ -54,6 +53,7 @@ export function RegisterForm({ nextPath, initialEmail }: { nextPath: string; ini
         <div className={styles.field}>
           <label htmlFor="email">E-mail</label>
           <input
+            defaultValue={initialEmail}
             id="email"
             name="email"
             type="email"

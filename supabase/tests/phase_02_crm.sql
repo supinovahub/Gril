@@ -14,6 +14,9 @@ values
   ('11000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'crm-broker@invalid.test', '', now(), '{}', '{"full_name":"CRM Broker"}', now(), now()),
   ('11000000-0000-0000-0000-000000000003', 'authenticated', 'authenticated', 'crm-outsider@invalid.test', '', now(), '{}', '{"full_name":"CRM Outsider"}', now(), now());
 
+update public.profiles set whatsapp_e164 = '+5511988000012'
+where user_id = '11000000-0000-0000-0000-000000000002';
+
 insert into public.organizations (id, name, slug)
 values
   ('21000000-0000-0000-0000-000000000001', 'CRM Gate Org A', 'crm-gate-org-a'),

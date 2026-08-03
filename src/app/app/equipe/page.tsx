@@ -12,6 +12,7 @@ import { createClient } from "@/lib/supabase/server";
 import {
   changeMembershipAction,
   updateMemberCallSettingsAction,
+  updateMemberWhatsappAction,
   updateManagerPermissionsAction,
   requestOwnershipTransferAction,
   acceptOwnershipTransferAction,
@@ -122,6 +123,11 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   const activeCount = memberRows.filter((member) => member.status === "active").length;
   const pendingCount = memberRows.filter((member) => member.status === "pending").length;
   const joinCode = joinCodes?.[0];
+  const errorMessage = feedback.erro === "whatsapp-em-uso"
+    ? "Este número já está em uso. Informe outro WhatsApp ou fale com o suporte."
+    : feedback.erro === "whatsapp-invalido"
+      ? "Informe o WhatsApp com país, DDD e número."
+      : "Não foi possível concluir a ação. Revise a confirmação e as permissões.";
 
   return (
     <div className={styles.page}>
@@ -134,7 +140,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         <span className={styles.summary}>{activeCount} ativos · {pendingCount} pendentes</span>
       </header>
 
-      {feedback.erro ? <p className={styles.feedback}>Não foi possível concluir a ação. Revise a confirmação e as permissões.</p> : null}
+      {feedback.erro ? <p className={styles.feedback}>{errorMessage}</p> : null}
       {feedback.sucesso ? <p className={`${styles.feedback} ${styles.success}`}>Ação concluída e registrada.</p> : null}
 
       {joinCode ? <section className={styles.panel}>
@@ -193,6 +199,9 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
               const canAct = member.role !== "owner" && !isSelf;
               const assignedPermissions = permissionsByMembership.get(member.id) ?? new Set<string>();
               const memberCallSettings = callSettingsByMembership.get(member.id);
+              const canEditWhatsapp = !isSelf && member.status !== "revoked" && (
+                member.role === "broker" || (isOwner && member.role === "manager")
+              );
 
               return (
                 <li className={styles.member} key={member.id}>
@@ -201,7 +210,9 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
                       <span className={styles.avatar}>{initials(displayName)}</span>
                       <span>
                         <strong>{displayName}{isSelf ? " · você" : ""}</strong>
-                        <small>{profile?.whatsapp_e164 ?? "WhatsApp não informado"}</small>
+                        <small className={!profile?.whatsapp_e164 && ["manager", "broker"].includes(member.role) ? styles.whatsappMissing : undefined}>
+                          {profile?.whatsapp_e164 ?? "WhatsApp obrigatório pendente"}
+                        </small>
                       </span>
                     </div>
 
@@ -247,6 +258,26 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
                       </form>
                     ) : null}
                   </div>
+
+                  {canEditWhatsapp ? (
+                    <details className={styles.permissions}>
+                      <summary>Alterar WhatsApp</summary>
+                      <form action={updateMemberWhatsappAction} className={styles.whatsappForm}>
+                        <input name="membershipId" type="hidden" value={member.id} />
+                        <label>
+                          <span>WhatsApp com país e DDD</span>
+                          <input
+                            defaultValue={profile?.whatsapp_e164 ?? "+55"}
+                            inputMode="tel"
+                            name="whatsapp"
+                            placeholder="+55 11 99999-9999"
+                            required
+                          />
+                        </label>
+                        <button className={styles.savePermissions} type="submit">Salvar WhatsApp</button>
+                      </form>
+                    </details>
+                  ) : null}
 
                   {isOwner && member.role === "manager" && member.status !== "revoked" ? (
                     <details className={styles.permissions}>

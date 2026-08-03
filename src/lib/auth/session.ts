@@ -146,6 +146,12 @@ export async function requireActiveViewer() {
   if (viewer.membership?.status !== "active" || !viewer.organization) {
     redirect("/aguardando-aprovacao");
   }
+  if (
+    ["manager", "broker"].includes(viewer.membership.role)
+    && !viewer.profile?.whatsapp_e164
+  ) {
+    redirect("/whatsapp-obrigatorio");
+  }
   return viewer;
 }
 

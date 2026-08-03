@@ -1,6 +1,6 @@
 # Guia de homologação do Gril
 
-> Roteiro operacional do MVP, atualizado em 01/08/2026. Consolida os sete documentos iniciais, as decisões do Grill Me posterior e o produto implementado.
+> Roteiro operacional do MVP, atualizado em 03/08/2026. Consolida os sete documentos iniciais, as decisões do Grill Me posterior e o produto implementado.
 
 ## 1. Onde testar
 
@@ -63,7 +63,7 @@ Crie contas diferentes para provar os três caminhos. Confirme o e-mail antes de
 4. CNPJ, CRECI, descrição e número aproximado de corretores são opcionais;
 5. envie a solicitação;
 6. no `/platform`, aprove, peça correção e reenvie; depois faça a aprovação final;
-7. valide separadamente a aprovação normal e a aprovação por 30 dias; volte à conta solicitante e conclua a criação dentro do prazo escolhido.
+7. valide separadamente a aprovação normal e a aprovação por 30 dias; confirme que a decisão não falha ao criar a notificação interna; volte à conta solicitante e conclua a criação dentro do prazo escolhido.
 
 Resultado esperado: a conta não cria uma imobiliária diretamente. Após aprovação, cria organização, operação padrão e vínculo de dono em uma única transação. Pré-autorização aprova a solicitação automaticamente, mas o usuário ainda conclui o onboarding.
 
@@ -75,7 +75,7 @@ Resultado esperado: a conta não cria uma imobiliária diretamente. Após aprova
 4. confira o nome da imobiliária exibido e confirme;
 5. envie a solicitação;
 6. o dono pede correção, aprova ou recusa;
-7. confirme que um gestor não consegue aprovar outro gestor.
+7. confirme que o solicitante recebe `Acesso aprovado` na Central e que um gestor não consegue aprovar outro gestor.
 
 ### 4.3 Corretor de imobiliária existente
 
@@ -91,10 +91,39 @@ Repita o caminho anterior como corretor. Dono ou gestor com `team.manage` pode a
 - WhatsApp não pode pertencer a outra conta ou solicitação aberta;
 - após recusa, existe espera de sete dias para nova solicitação equivalente;
 - convite individual é de uso único, preso ao e-mail e expira em sete dias;
+- abrir o convite preserva o retorno durante cadastro, confirmação de e-mail, login e troca de conta;
+- o convite aberto mais recentemente fica pendente por no máximo sete dias;
+- gestor ou corretor ativo sem WhatsApp fica bloqueado até cadastrar um número válido e único;
 - links gerais de convite não são aceitos;
 - cancelar solicitação mantém a conta livre para escolher outro caminho.
 
 ## 5. Organização, equipe e suporte
+
+### 5.1 Convite individual e WhatsApp obrigatório
+
+1. como dono, crie um convite de gestor; como gestor autorizado, crie um convite de corretor;
+2. copie o link e abra-o em janela anônima, sem conta criada;
+3. confirme que aparecem somente imobiliária, papel e validade, sem e-mail completo ou operação interna;
+4. crie a conta pelo próprio convite, confirme o e-mail e entre sem reabrir manualmente o link;
+5. na tela final, informe o WhatsApp e clique em `Salvar WhatsApp e aceitar convite`;
+6. confirme ativação imediata, sem segunda aprovação, e a notificação `Convite aceito` na Central do dono/criador;
+7. repita com uma conta logada no e-mail errado: o aceite deve ser bloqueado, o e-mail convidado deve aparecer mascarado e `Trocar de conta` deve preservar o convite;
+8. tente número já utilizado, convite expirado/revogado, segundo vínculo e clique repetido; nenhum deles pode duplicar vínculo ou consumir parcialmente o convite;
+9. se o WhatsApp for salvo e o aceite falhar, corrija a causa e tente novamente sem perder o número.
+
+Depois, valide o gate operacional:
+
+- gestor/corretor existente sem WhatsApp vai para `/whatsapp-obrigatorio` e só consegue cadastrar o número ou sair;
+- enquanto bloqueado, não vê dados por navegação nem por API direta e não recebe oferta de call;
+- dono ou gestor autorizado altera o WhatsApp de um corretor;
+- somente dono ou o próprio gestor altera o WhatsApp de um gestor;
+- gestor/corretor pode trocar o próprio número, mas não deixá-lo vazio;
+- número inválido ou usado por outra conta é recusado sem revelar quem o utiliza;
+- toda alteração administrativa registra ator, número anterior, número novo e horário na auditoria.
+
+O link é entregue manualmente pelo dono/gestor; o MVP não envia convite automaticamente por e-mail ou WhatsApp.
+
+### 5.2 Configuração da equipe e suporte
 
 Cadastre identidade, CNPJ/CRECI, endereço, site, Instagram, contato de privacidade, fonte dos dados, fuso, janelas de atendimento e número operacional.
 
@@ -243,13 +272,15 @@ O dono/gestor pode arquivar e restaurar um lead, devolvê-lo ao Pedro e reativar
 
 Em privacidade, teste acesso, exportação, correção e anonimização; legal hold; documento sensível com e sem liberação; e trilha de auditoria. A decisão jurídica e o atendimento de LGPD pertencem à imobiliária; o sistema oferece os controles, mas não substitui sua decisão.
 
-Valide ainda Central, push, pausa emergencial, relatórios, custos, carga por corretor, alertas de orçamento em 50/80/100% e auditoria. A revisão visual em desktop/celular e o teste de restore seguro são etapas humanas finais.
+Valide ainda Central, push, pausa emergencial, relatórios, custos, carga por corretor, alertas de orçamento em 50/80/100% e auditoria. Em um notebook com altura reduzida e zoom de 100%, confirme que a sidebar rola verticalmente, mantém o rodapé acessível e permite alcançar todos os botões. A revisão visual em desktop/celular e o teste de restore seguro são etapas humanas finais.
 
 ## 12. Critério de aprovação
 
 ### Produto
 
 - [ ] os três caminhos de cadastro e todas as aprovações funcionam;
+- [ ] convite sobrevive ao cadastro/login e ativa somente o e-mail correto com WhatsApp único;
+- [ ] gestor/corretor sem WhatsApp fica bloqueado no app, na API e nas ofertas;
 - [ ] administrador, suporte, dono, gestor e corretor respeitam seus limites;
 - [ ] Pedro qualifica, recomenda, agenda e acompanha sem inventar;
 - [ ] humano pausa, assume, corrige e audita;
@@ -268,6 +299,7 @@ Valide ainda Central, push, pausa emergencial, relatórios, custos, carga por co
 - [ ] campanha de 20 contatos aprovada;
 - [ ] kill switch testado;
 - [ ] UI, jurídico e restore seguro aprovados.
+- [ ] sidebar é utilizável a 100% de zoom em notebook com pouca altura;
 
 ## 13. Regras numéricas de referência
 

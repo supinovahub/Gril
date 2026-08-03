@@ -3,7 +3,10 @@
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 
-import { safeNextPath } from "@/lib/auth/safe-next";
+import {
+  PENDING_INVITATION_COOKIE,
+  resolveAuthNext,
+} from "@/lib/auth/pending-invitation";
 import {
   emailSchema,
   loginSchema,
@@ -48,7 +51,12 @@ export async function loginAction(
     };
   }
 
-  redirect(safeNextPath(parsed.data.next));
+  const cookieStore = await cookies();
+  redirect(resolveAuthNext(
+    parsed.data.next,
+    cookieStore.get(PENDING_INVITATION_COOKIE)?.value,
+    "/app",
+  ));
 }
 
 export async function registerAction(
@@ -66,6 +74,12 @@ export async function registerAction(
     return { status: "error", fields: fieldErrors(parsed.error) };
   }
 
+  const cookieStore = await cookies();
+  const nextPath = resolveAuthNext(
+    parsed.data.next,
+    cookieStore.get(PENDING_INVITATION_COOKIE)?.value,
+    "/onboarding",
+  );
   const supabase = await createClient();
   const { data, error } = await supabase.auth.signUp({
     email: parsed.data.email,
@@ -73,7 +87,7 @@ export async function registerAction(
     options: {
       data: { full_name: parsed.data.fullName },
       emailRedirectTo: `${appUrl()}/auth/callback?next=${encodeURIComponent(
-        safeNextPath(parsed.data.next, "/onboarding"),
+        nextPath,
       )}`,
     },
   });
@@ -86,7 +100,7 @@ export async function registerAction(
   }
 
   if (data.session) {
-    redirect(safeNextPath(parsed.data.next, "/onboarding"));
+    redirect(nextPath);
   }
 
   return {

@@ -7,6 +7,7 @@ import { z } from "zod";
 
 import { canManageTeam, requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { isWhatsAppConflict, requiredWhatsAppSchema } from "@/lib/whatsapp";
 import { permissionOptions } from "./constants";
 
 const zeroUuid = "00000000-0000-0000-0000-000000000000";
@@ -212,6 +213,31 @@ export async function updateMemberCallSettingsAction(membershipId: string, formD
     actor_user_id: viewer.userId,
   });
   revalidatePath("/app/equipe"); revalidatePath("/app/agenda");
+}
+
+export async function updateMemberWhatsappAction(formData: FormData) {
+  const parsed = z.object({
+    membershipId: z.string().uuid(),
+    whatsapp: requiredWhatsAppSchema,
+  }).safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) redirect("/app/equipe?erro=whatsapp-invalido");
+
+  const viewer = await requireActiveViewer();
+  if (!canManageTeam(viewer)) redirect("/app");
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_member_whatsapp", {
+    p_membership_id: parsed.data.membershipId,
+    p_whatsapp_e164: parsed.data.whatsapp,
+  });
+
+  if (error) {
+    redirect(`/app/equipe?erro=${isWhatsAppConflict(error) ? "whatsapp-em-uso" : "whatsapp-nao-atualizado"}`);
+  }
+
+  revalidatePath("/app/equipe");
+  redirect("/app/equipe?sucesso=whatsapp-atualizado");
 }
 
 const accessDecisionSchema = z.object({

@@ -2,6 +2,10 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 import type { Database } from "@/lib/database.types";
+import {
+  PENDING_INVITATION_COOKIE,
+  resolveAuthNext,
+} from "@/lib/auth/pending-invitation";
 import { isPublicPath } from "@/lib/routing/public-path";
 import { supabaseEnv } from "@/lib/supabase/env";
 
@@ -51,7 +55,14 @@ export async function updateSession(request: NextRequest) {
   );
 
   if (hasSession && isAuthEntry) {
-    return NextResponse.redirect(new URL("/app", request.url));
+    const target = resolveAuthNext(
+      request.nextUrl.searchParams.get("next"),
+      request.cookies.get(PENDING_INVITATION_COOKIE)?.value,
+      "/app",
+    );
+    const redirectResponse = NextResponse.redirect(new URL(target, request.url));
+    response.cookies.getAll().forEach((cookie) => redirectResponse.cookies.set(cookie));
+    return redirectResponse;
   }
 
   return response;

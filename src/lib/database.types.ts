@@ -12,6 +12,31 @@ export type Database = {
   __InternalSupabase: {
     PostgrestVersion: "14.15"
   }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
+  }
   public: {
     Tables: {
       access_requests: {
@@ -10341,6 +10366,18 @@ export type Database = {
         Returns: string
       }
       get_outbound_template: { Args: { p_message_id: string }; Returns: Json }
+      invitation_preview: {
+        Args: { p_token_hash: string }
+        Returns: {
+          email_matches: boolean
+          expires_at: string
+          invitation_status: string
+          invited_email_masked: string
+          invited_role: string
+          operation_name: string
+          organization_name: string
+        }[]
+      }
       list_audit_events: {
         Args: { p_limit?: number; p_org_id: string }
         Returns: {
@@ -10614,6 +10651,10 @@ export type Database = {
           organization_status: string
         }[]
       }
+      update_member_whatsapp: {
+        Args: { p_membership_id: string; p_whatsapp_e164: string }
+        Returns: undefined
+      }
       upsert_platform_push_subscription: {
         Args: {
           p_auth_key: string
@@ -10751,6 +10792,9 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {},
   },
