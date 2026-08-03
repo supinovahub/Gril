@@ -71,7 +71,9 @@ const errorMessages: Record<string, string> = {
   "conversa-nao-encontrada": "A conversa simulada não foi encontrada ou você não tem acesso a ela.",
   "configure-modelo-e-chave": "Ative um modelo e confira a chave OpenAI da organização.",
   "regressao-ja-em-execucao": "Já existe uma regressão em execução.",
-  "configure-modelo-e-regras": "Configure o modelo e publique as regras antes de executar a regressão.",
+  "publique-regras-da-regressao": "Publique as regras principais antes de executar a regressão.",
+  "sem-permissao-para-regressao": "Seu perfil não tem permissão para executar a regressão.",
+  "regressao-indisponivel": "Não foi possível iniciar a regressão. Tente novamente; se persistir, acione o suporte.",
   "acao-invalida": "A ação solicitada não é válida.",
   "nao-foi-possivel-executar": "Não foi possível concluir a ação. Confira a configuração e tente novamente.",
 };
@@ -104,7 +106,7 @@ export default async function SimulatorPage({
   const archivedView = feedback.arquivadas === "1";
   const supabase = await createClient();
 
-  const [{ data: sessions }, { data: regressions }] = await Promise.all([
+  const [{ data: sessions }, { data: regressions }, { count: regressionCaseCount }] = await Promise.all([
     supabase
       .from("simulator_sessions")
       .select("id,title,status,turn_count,last_activity_at,created_at,archived_at")
@@ -118,6 +120,11 @@ export default async function SimulatorPage({
       .eq("org_id", viewer.organization!.id)
       .order("created_at", { ascending: false })
       .limit(10),
+    supabase
+      .from("regression_cases")
+      .select("id", { count: "exact", head: true })
+      .eq("org_id", viewer.organization!.id)
+      .eq("active", true),
   ]);
 
   const selectedSession = feedback.nova === "1"
@@ -139,11 +146,12 @@ export default async function SimulatorPage({
     const execution = executionFromRun(run);
     return !terminalStatuses.has(execution?.status ?? run.status);
   });
+  const regressionPending = (regressions ?? []).some((run) => ["queued", "running"].includes(run.status));
   const errorMessage = feedback.erro ? errorMessages[feedback.erro] ?? errorMessages["nao-foi-possivel-executar"] : null;
   const successMessage = feedback.sucesso ? successMessages[feedback.sucesso] : null;
 
   return <div className={styles.page}>
-    <SimulationAutoRefresh active={hasPending} />
+    <SimulationAutoRefresh active={hasPending || regressionPending} />
     <header className={styles.header}>
       <div>
         <p className={styles.eyebrow}>Ambiente isolado</p>
@@ -293,7 +301,7 @@ export default async function SimulatorPage({
     <section className={styles.panel}>
       <div className={styles.panelHeader}>
         <div><p className={styles.eyebrow}>Validação em lote</p><h2>Regressão completa</h2></div>
-        <form action={runRegressionAction}><button>Executar {regressions?.[0]?.total_cases || 100} cenários</button></form>
+        <form action={runRegressionAction}><button disabled={regressionPending}>{regressionPending ? "Lote em execução" : `Executar ${regressionCaseCount ?? regressions?.[0]?.total_cases ?? 0} cenários`}</button></form>
       </div>
       <div className={styles.list}>
         {regressions?.map((run) => <article className={styles.item} key={run.id}><span><strong>{run.status} · {run.passed_cases}/{run.total_cases} aprovados</strong><small>{run.critical_failures} falhas críticas · criado em {new Date(run.created_at).toLocaleString("pt-BR")}</small></span></article>)}
