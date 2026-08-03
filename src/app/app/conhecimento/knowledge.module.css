@@ -21,8 +21,21 @@
 .status { color: var(--accent); font-size: 11px; font-weight: 800; text-transform: uppercase; }
 .projectState { display: grid; justify-items: end; gap: 6px; }
 .projectState form { margin: 0; }
-.projectState button { border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--ink); padding: 6px 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
+.projectState button { display: inline-flex; align-items: center; justify-content: center; gap: 5px; border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--ink); padding: 6px 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
 .projectState button:disabled { cursor: not-allowed; opacity: .45; }
+.projectState .dangerButton { border-color: #e6c8c3; color: #9d2e22; }
+.projectEditor { grid-column: 1 / -1; border-top: 1px solid var(--border); padding-top: 10px; }
+.projectEditor > summary { display: inline-flex; align-items: center; gap: 6px; border-radius: 8px; padding: 7px 9px; color: var(--accent); font-size: 12px; font-weight: 800; cursor: pointer; list-style: none; }
+.projectEditor > summary::-webkit-details-marker { display: none; }
+.projectEditor > summary:hover { background: #eee8dc; }
+.projectEditor[open] > summary { margin-bottom: 10px; background: #eee8dc; }
+.projectEditForm { display: grid; gap: 12px; border-radius: 12px; background: var(--surface); padding: 14px; }
+.projectEditForm label { display: grid; gap: 6px; color: var(--ink); font-size: 12px; font-weight: 700; }
+.projectEditForm label small, .projectEditFooter small { color: var(--ink-muted); font-weight: 500; line-height: 1.4; }
+.projectEditForm input, .projectEditForm textarea, .projectEditForm select { width: 100%; border: 1px solid var(--border); border-radius: 10px; background: #fff; padding: 10px 11px; color: inherit; font: inherit; }
+.projectEditForm input:focus-visible, .projectEditForm textarea:focus-visible, .projectEditForm select:focus-visible { outline: 2px solid color-mix(in srgb, var(--accent) 35%, transparent); outline-offset: 1px; }
+.projectEditFooter { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+.projectEditFooter button { border: 0; border-radius: 10px; background: var(--ink); color: #fff; padding: 10px 13px; font-weight: 800; cursor: pointer; }
 .faqList article { padding: 13px 0; border-top: 1px solid var(--border); }
 .faqList article:first-child { border-top: 0; }
 .faqList p { margin: 6px 0; color: var(--ink-muted); line-height: 1.5; }
@@ -46,4 +59,4 @@
 .mediaList small { color: var(--ink-muted); text-transform: uppercase; }
 .mediaList button { background: transparent; color: #9d2e22; border: 1px solid #e6c8c3; padding: 7px 9px; }
 @media (max-width: 1050px) { .layout { grid-template-columns: 1fr; } }
-@media (max-width: 720px) { .readiness, .two { grid-template-columns: 1fr; } .catalog article { grid-template-columns: auto 1fr; } }
+@media (max-width: 720px) { .readiness, .two { grid-template-columns: 1fr; } .catalog article { grid-template-columns: auto 1fr; } .projectState { justify-items: stretch; } .projectEditFooter { align-items: stretch; flex-direction: column; } }

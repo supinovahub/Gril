@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireActiveViewer } from "@/lib/auth/session";
+import { TYPED_CONFIRMATION_PHRASE } from "@/lib/typed-confirmation";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 const projectSchema = z.object({
@@ -30,13 +32,23 @@ function parseBrlCurrency(value: FormDataEntryValue | null) {
   return Number.isFinite(parsed) ? parsed : Number.NaN;
 }
 
-export async function createProjectAction(formData: FormData) {
-  const parsed = projectSchema.safeParse({
-    name: formData.get("name"), region: formData.get("region"), neighborhood: formData.get("neighborhood") || undefined,
-    summary: formData.get("summary"), deliveryType: formData.get("deliveryType"), minPrice: parseBrlCurrency(formData.get("minPrice")),
-    maxPrice: parseBrlCurrency(formData.get("maxPrice")), minDownPayment: parseBrlCurrency(formData.get("minDownPayment")), sourceName: formData.get("sourceName"),
+function projectInputFromFormData(formData: FormData) {
+  return {
+    name: formData.get("name"),
+    region: formData.get("region"),
+    neighborhood: formData.get("neighborhood") || undefined,
+    summary: formData.get("summary"),
+    deliveryType: formData.get("deliveryType"),
+    minPrice: parseBrlCurrency(formData.get("minPrice")),
+    maxPrice: parseBrlCurrency(formData.get("maxPrice")),
+    minDownPayment: parseBrlCurrency(formData.get("minDownPayment")),
+    sourceName: formData.get("sourceName"),
     validUntil: formData.get("validUntil"),
-  });
+  };
+}
+
+export async function createProjectAction(formData: FormData) {
+  const parsed = projectSchema.safeParse(projectInputFromFormData(formData));
   if (!parsed.success) {
     redirect(`/app/conhecimento?erro=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Revise os campos.")}`);
   }
@@ -68,6 +80,88 @@ export async function createProjectAction(formData: FormData) {
   if (error) redirect(`/app/conhecimento?erro=${encodeURIComponent("Não foi possível salvar o empreendimento.")}`);
   revalidatePath("/app/conhecimento");
   redirect("/app/conhecimento?sucesso=empreendimento-criado-em-rascunho");
+}
+
+export async function updateProjectAction(formData: FormData) {
+  const parsed = projectSchema.extend({ projectId: z.string().uuid() }).safeParse({
+    ...projectInputFromFormData(formData),
+    projectId: formData.get("projectId"),
+  });
+  if (!parsed.success) {
+    redirect(`/app/conhecimento?erro=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Revise os campos.")}`);
+  }
+  if (parsed.data.maxPrice < parsed.data.minPrice) {
+    redirect(`/app/conhecimento?erro=${encodeURIComponent("Preço máximo deve ser maior que o mínimo.")}`);
+  }
+
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { data: project } = await supabase.from("projects").select("id,status")
+    .eq("id", parsed.data.projectId).eq("org_id", viewer.organization!.id).maybeSingle();
+  if (!project) {
+    redirect(`/app/conhecimento?erro=${encodeURIComponent("Empreendimento não encontrado.")}`);
+  }
+  if (project.status === "active" && parsed.data.validUntil < new Date().toISOString().slice(0, 10)) {
+    redirect(`/app/conhecimento?erro=${encodeURIComponent("Um empreendimento ativo não pode ficar com os dados comerciais vencidos.")}`);
+  }
+
+  const { error } = await supabase.from("projects").update({
+    name: parsed.data.name,
+    region: parsed.data.region,
+    neighborhood: parsed.data.neighborhood || null,
+    summary: parsed.data.summary,
+    delivery_type: parsed.data.deliveryType,
+    min_price: parsed.data.minPrice,
+    max_price: parsed.data.maxPrice,
+    min_down_payment: parsed.data.minDownPayment,
+    source_name: parsed.data.sourceName,
+    reference_date: new Date().toISOString().slice(0, 10),
+    valid_until: parsed.data.validUntil,
+  }).eq("id", project.id).eq("org_id", viewer.organization!.id);
+  if (error) {
+    redirect(`/app/conhecimento?erro=${encodeURIComponent("Não foi possível atualizar o empreendimento.")}`);
+  }
+  revalidatePath("/app/conhecimento");
+  redirect("/app/conhecimento?sucesso=empreendimento-atualizado");
+}
+
+export async function deleteProjectAction(formData: FormData) {
+  const parsed = z.object({
+    projectId: z.string().uuid(),
+    confirmation: z.literal(TYPED_CONFIRMATION_PHRASE),
+  }).safeParse({ projectId: formData.get("projectId"), confirmation: formData.get("confirmation") });
+  if (!parsed.success) {
+    redirect(`/app/conhecimento?erro=${encodeURIComponent("Confirme a exclusão do empreendimento.")}`);
+  }
+
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const admin = createAdminClient();
+  const [{ data: project }, { data: media }, { data: uploads }] = await Promise.all([
+    admin.from("projects").select("id").eq("id", parsed.data.projectId).eq("org_id", viewer.organization!.id).maybeSingle(),
+    admin.from("project_media").select("storage_path").eq("project_id", parsed.data.projectId).eq("org_id", viewer.organization!.id),
+    admin.from("project_media_uploads").select("storage_path").eq("project_id", parsed.data.projectId).eq("org_id", viewer.organization!.id),
+  ]);
+  if (!project) {
+    redirect(`/app/conhecimento?erro=${encodeURIComponent("Empreendimento não encontrado.")}`);
+  }
+
+  const { error } = await supabase.from("projects").delete()
+    .eq("id", project.id).eq("org_id", viewer.organization!.id);
+  if (error) {
+    const message = error.code === "23503"
+      ? "Este empreendimento já faz parte do histórico de atendimentos e não pode ser excluído. Pause-o para impedir novas recomendações."
+      : "Não foi possível excluir o empreendimento.";
+    redirect(`/app/conhecimento?erro=${encodeURIComponent(message)}`);
+  }
+
+  const storagePaths = [...new Set([...(media ?? []), ...(uploads ?? [])]
+    .map((item) => item.storage_path).filter((path): path is string => Boolean(path)))];
+  const { error: storageError } = storagePaths.length
+    ? await admin.storage.from("gril-projects").remove(storagePaths)
+    : { error: null };
+  revalidatePath("/app/conhecimento");
+  redirect(`/app/conhecimento?sucesso=${storageError ? "empreendimento-excluido-limpeza-pendente" : "empreendimento-excluido"}`);
 }
 
 export async function changeProjectRecommendationAction(formData: FormData) {

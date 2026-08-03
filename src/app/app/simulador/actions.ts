@@ -32,6 +32,14 @@ function simulationErrorSlug(message: string) {
   return "nao-foi-possivel-executar";
 }
 
+function regressionErrorSlug(message: string) {
+  if (message.includes("regression_run_already_active")) return "regressao-ja-em-execucao";
+  if (message.includes("published_rule_required")) return "publique-regras-da-regressao";
+  if (message.includes("active_model_required")) return "configure-modelo-e-chave";
+  if (message.includes("regression_run_forbidden")) return "sem-permissao-para-regressao";
+  return "regressao-indisponivel";
+}
+
 function parseInitialState(value: string | undefined) {
   if (!value) return {} as Json;
   try {
@@ -145,7 +153,7 @@ export async function runRegressionAction() {
     actor_user_id: viewer.userId,
   });
   if (error) {
-    redirect(`/app/simulador?erro=${error.message.includes("already_active") ? "regressao-ja-em-execucao" : "configure-modelo-e-regras"}`);
+    redirect(`/app/simulador?erro=${regressionErrorSlug(error.message)}`);
   }
   revalidatePath("/app/simulador");
   redirect("/app/simulador?sucesso=regressao-iniciada");

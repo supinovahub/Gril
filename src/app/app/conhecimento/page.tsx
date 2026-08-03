@@ -1,9 +1,11 @@
-import { BookOpenCheck, Building2, CircleAlert, FileQuestion } from "lucide-react";
+import { BookOpenCheck, Building2, CircleAlert, FileQuestion, Trash2 } from "lucide-react";
 
+import { TypedConfirmationButton } from "@/components/typed-confirmation-button";
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { changeProjectRecommendationAction, createFaqAction, createProjectFactAction, resolveProjectFactConflictAction } from "./actions";
+import { changeProjectRecommendationAction, createFaqAction, createProjectFactAction, deleteProjectAction, resolveProjectFactConflictAction } from "./actions";
 import { ProjectCreateForm } from "./project-create-form";
+import { ProjectEditForm } from "./project-edit-form";
 import { ProjectMediaManager } from "./project-media-manager";
 import styles from "./knowledge.module.css";
 
@@ -29,6 +31,9 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
         "empreendimento-criado-em-rascunho": "Rascunho salvo. Adicione a foto principal e depois ative o empreendimento.",
         "empreendimento-ativado": "Empreendimento ativo e disponível para recomendação.",
         "empreendimento-pausado": "Recomendações pausadas; o cadastro continua salvo.",
+        "empreendimento-atualizado": "Empreendimento atualizado.",
+        "empreendimento-excluido": "Empreendimento excluído permanentemente.",
+        "empreendimento-excluido-limpeza-pendente": "Empreendimento excluído. A limpeza física de um arquivo ficou pendente para o suporte.",
       } as Record<string, string>)[feedback.sucesso] ?? "Cadastro salvo."}</p> : null}
       <section className={styles.readiness}>
         <div><Building2 size={18} /><span><small>Empreendimentos ativos</small><strong>{activeProjects} / 5 recomendados</strong></span></div>
@@ -38,7 +43,47 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
 
       <div className={styles.layout}>
         <div className={styles.main}>
-          <section className={styles.panel}><div className={styles.panelHeader}><h2>Empreendimentos</h2><span>Preço + entrada são critérios mínimos</span></div><div className={styles.catalog}>{projects?.map((project) => <article key={project.id}><span className={styles.projectIcon}><Building2 size={18} /></span><span><strong>{project.name}</strong><small>{project.neighborhood || project.region} · {project.delivery_type}</small><small>{project.project_facts?.filter((fact)=>fact.active).length ?? 0} fatos · {project.project_media?.filter((media)=>media.active).length ?? 0} mídias</small></span><span><strong>{project.min_price?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) ?? "Preço pendente"}</strong><small>Entrada {project.min_down_payment?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) ?? "pendente"}</small></span><span className={styles.projectState}><span className={styles.status}>{project.status}</span><form action={changeProjectRecommendationAction}><input name="projectId" type="hidden" value={project.id}/>{project.status === "active" ? <button name="action" value="pause">Pausar</button> : <button disabled={!project.cover_storage_path} name="action" title={project.cover_storage_path ? "Ativar para recomendação" : "Adicione a foto principal antes de ativar"} value="activate">Ativar</button>}</form></span></article>)}{!projects?.length ? <p className={styles.empty}>Nenhum empreendimento cadastrado.</p> : null}</div></section>
+          <section className={styles.panel}>
+            <div className={styles.panelHeader}><h2>Empreendimentos</h2><span>Preço + entrada são critérios mínimos</span></div>
+            <div className={styles.catalog}>
+              {projects?.map((project) => <article key={project.id}>
+                <span className={styles.projectIcon}><Building2 size={18} /></span>
+                <span><strong>{project.name}</strong><small>{project.neighborhood || project.region} · {project.delivery_type}</small><small>{project.project_facts?.filter((fact)=>fact.active).length ?? 0} fatos · {project.project_media?.filter((media)=>media.active).length ?? 0} mídias</small></span>
+                <span><strong>{project.min_price?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) ?? "Preço pendente"}</strong><small>Entrada {project.min_down_payment?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) ?? "pendente"}</small></span>
+                <div className={styles.projectState}>
+                  <span className={styles.status}>{project.status}</span>
+                  <form action={changeProjectRecommendationAction}>
+                    <input name="projectId" type="hidden" value={project.id}/>
+                    {project.status === "active"
+                      ? <button name="action" value="pause">Pausar</button>
+                      : <button disabled={!project.cover_storage_path} name="action" title={project.cover_storage_path ? "Ativar para recomendação" : "Adicione a foto principal antes de ativar"} value="activate">Ativar</button>}
+                  </form>
+                  <form action={deleteProjectAction}>
+                    <input name="projectId" type="hidden" value={project.id} />
+                    <TypedConfirmationButton
+                      className={styles.dangerButton}
+                      description="O empreendimento e seus fatos, FAQs e mídias serão excluídos. Se ele já fizer parte de um atendimento, a exclusão será bloqueada para preservar o histórico."
+                      title={`Excluir ${project.name}?`}
+                    ><Trash2 size={13} /> Excluir</TypedConfirmationButton>
+                  </form>
+                </div>
+                <ProjectEditForm project={{
+                  id: project.id,
+                  name: project.name,
+                  region: project.region,
+                  neighborhood: project.neighborhood,
+                  summary: project.summary,
+                  delivery_type: project.delivery_type,
+                  min_price: project.min_price,
+                  max_price: project.max_price,
+                  min_down_payment: project.min_down_payment,
+                  source_name: project.source_name,
+                  valid_until: project.valid_until,
+                }} />
+              </article>)}
+              {!projects?.length ? <p className={styles.empty}>Nenhum empreendimento cadastrado.</p> : null}
+            </div>
+          </section>
           <section className={styles.panel}><div className={styles.panelHeader}><h2>FAQs globais</h2><span>Comunicação, não valores</span></div><div className={styles.faqList}>{faqs?.map((faq) => { const versions = (faq.faq_versions ?? []) as Array<{ base_answer:string; response_mode:string; version:number; status:string }>; const version=versions.find((item)=>item.status==='published'); return <article key={faq.id}><strong>{faq.canonical_question}</strong><p>{version?.base_answer ?? "Sem versão publicada"}</p><small>{version?.response_mode} · v{version?.version}</small></article>; })}{!faqs?.length ? <p className={styles.empty}>Cadastre a base mínima antes do piloto.</p> : null}</div></section>
           <section className={styles.panel}><div className={styles.panelHeader}><h2>Qualificação publicada</h2><span>Validade e fonte por resposta</span></div><ol className={styles.definitionList}>{definitions?.map((definition) => <li key={definition.id}><span>{definition.suggested_order}</span><strong>{definition.name}</strong><small>{definition.answer_type} · {definition.required ? "obrigatório" : "complementar"} · {definition.validity_days ? `${definition.validity_days} dias` : "recoletar"}</small></li>)}</ol></section>
           {conflicts?.length ? <section className={styles.panel}><div className={styles.panelHeader}><h2>Conflitos de fatos</h2><span>O valor atual continua no Pedro até decisão</span></div><div className={styles.faqList}>{conflicts.map((conflict)=><article key={conflict.id}><strong>{(conflict.projects as {name:string}|null)?.name} · {conflict.code}</strong><p>Atual: {JSON.stringify(conflict.current_snapshot)}<br/>Proposto: {conflict.proposed_value_text ?? conflict.proposed_value_number} · fonte {conflict.proposed_source_name}</p><form action={resolveProjectFactConflictAction}><input name="conflictId" type="hidden" value={conflict.id}/><textarea name="reason" placeholder="Justificativa" required/><div className={styles.two}><button name="decision" value="accept_new">Aceitar novo</button><button name="decision" value="keep_current">Manter atual</button><button name="decision" value="quarantine_current">Quarentenar atual</button></div></form></article>)}</div></section> : null}
