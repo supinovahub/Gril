@@ -6,25 +6,12 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireActiveViewer } from "@/lib/auth/session";
+import { campaignCsvRow, parseCsvLine, resolveCampaignCsvColumns } from "@/lib/campaigns/csv";
+import { normalizePhoneToE164 } from "@/lib/crm/phone";
 import { createClient } from "@/lib/supabase/server";
 
 function campaignRedirect(message: string, kind: "erro" | "sucesso" = "erro"): never {
   redirect(`/app/campanhas?${kind}=${encodeURIComponent(message)}`);
-}
-
-function parseCsvLine(line: string) {
-  const result: string[] = [];
-  let current = "";
-  let quoted = false;
-  for (let index = 0; index < line.length; index += 1) {
-    const char = line[index];
-    if (char === '"' && line[index + 1] === '"' && quoted) { current += '"'; index += 1; }
-    else if (char === '"') quoted = !quoted;
-    else if ((char === "," || char === ";") && !quoted) { result.push(current.trim()); current = ""; }
-    else current += char;
-  }
-  result.push(current.trim());
-  return result;
 }
 
 export async function createCampaignAction(formData: FormData) {
@@ -66,24 +53,48 @@ export async function importCampaignAction(formData: FormData) {
   const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   if (lines.length < 2) campaignRedirect("Informe cabeçalho e ao menos um contato.");
   const rawHeader = parseCsvLine(lines[0]);
-  const header = rawHeader.map((item) => item.toLowerCase());
-  const requestedName = String(formData.get("nameColumn") ?? "").trim().toLowerCase();
-  const requestedPhone = String(formData.get("phoneColumn") ?? "").trim().toLowerCase();
-  const nameIndex = requestedName ? header.indexOf(requestedName) : header.findIndex((item) => ["name", "nome"].includes(item));
-  const phoneIndex = requestedPhone ? header.indexOf(requestedPhone) : header.findIndex((item) => ["phone", "telefone", "whatsapp"].includes(item));
-  if (nameIndex < 0 || phoneIndex < 0 || nameIndex === phoneIndex) campaignRedirect("Mapeie colunas diferentes para nome e telefone.");
-  const rows = lines.slice(1).map((line) => { const values = parseCsvLine(line); return { name: values[nameIndex] ?? "", phone: values[phoneIndex] ?? "" }; });
+  const requestedName = String(formData.get("nameColumn") ?? "").trim();
+  const requestedPhone = String(formData.get("phoneColumn") ?? "").trim();
+  const mapping = resolveCampaignCsvColumns(rawHeader, requestedName, requestedPhone);
+  if (!mapping.valid) {
+    campaignRedirect(`Não encontramos as colunas informadas. Cabeçalhos disponíveis: ${rawHeader.join(", ")}.`);
+  }
+  const rows = lines.slice(1).map((line) => campaignCsvRow(
+    parseCsvLine(line), mapping.nameIndex, mapping.phoneIndex,
+  ));
   if (rows.length > 500) campaignRedirect("O MVP aceita até 500 contatos por campanha.");
+  const invalidNameLines = rows.flatMap((row, index) => row.name.length < 2 ? [index + 2] : []);
+  const invalidPhoneLines = rows.flatMap((row, index) => normalizePhoneToE164(row.phone) ? [] : [index + 2]);
+  if (rows.every((row) => row.name.length < 2 || !normalizePhoneToE164(row.phone))) {
+    const details = [
+      invalidNameLines.length ? `nome inválido nas linhas ${invalidNameLines.slice(0, 5).join(", ")}` : "",
+      invalidPhoneLines.length ? `telefone inválido nas linhas ${invalidPhoneLines.slice(0, 5).join(", ")}` : "",
+    ].filter(Boolean).join("; ");
+    campaignRedirect(`Nenhum contato válido foi encontrado: ${details}. Use telefone com DDD; o +55 é adicionado automaticamente.`);
+  }
   const viewer = await requireActiveViewer();
   const supabase = await createClient();
-  const { error } = await supabase.from("campaign_import_requests").insert({
+  const { data: result, error } = await supabase.from("campaign_import_requests").insert({
     org_id: viewer.organization!.id, campaign_id: campaignId.data, filename, rows,
-    mapping: { name: rawHeader[nameIndex], phone: rawHeader[phoneIndex] },
+    mapping: { name: rawHeader[mapping.nameIndex], phone: rawHeader[mapping.phoneIndex] },
     file_sha256: createHash("sha256").update(text).digest("hex"), actor_user_id: viewer.userId,
-  });
-  if (error) campaignRedirect("A importação foi rejeitada. Verifique estado, telefones e duplicidades.");
+  }).select("valid_rows,duplicate_rows,error_rows").single();
+  if (error) {
+    if (error.message.includes("campaign_file_already_imported")) {
+      campaignRedirect("Este mesmo arquivo já foi processado com contatos válidos nesta campanha.");
+    }
+    if (error.message.includes("campaign_not_importable")) {
+      campaignRedirect("Esta campanha não aceita uma nova base no estado atual.");
+    }
+    campaignRedirect("Não foi possível processar a base. Confira os cabeçalhos e tente novamente.");
+  }
+  if (!result) campaignRedirect("A base foi processada, mas o resumo não pôde ser carregado.");
   revalidatePath("/app/campanhas");
-  campaignRedirect("Base processada. Revise válidos, erros e duplicidades.", "sucesso");
+  const summary = `${result.valid_rows} válidos, ${result.duplicate_rows} duplicados e ${result.error_rows} erros.`;
+  campaignRedirect(
+    result.valid_rows > 0 ? `Base processada: ${summary}` : `Nenhum contato novo foi importado: ${summary}`,
+    result.valid_rows > 0 ? "sucesso" : "erro",
+  );
 }
 
 export async function transitionCampaignAction(formData: FormData) {
