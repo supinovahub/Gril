@@ -3397,6 +3397,55 @@ export type Database = {
           },
         ]
       }
+      conversation_read_states: {
+        Row: {
+          conversation_id: string
+          created_at: string
+          last_read_inbound_at: string
+          org_id: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          conversation_id: string
+          created_at?: string
+          last_read_inbound_at?: string
+          org_id: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          conversation_id?: string
+          created_at?: string
+          last_read_inbound_at?: string
+          org_id?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversation_read_states_conversation_id_org_id_fkey"
+            columns: ["conversation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "conversations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "conversation_read_states_conversation_id_org_id_fkey"
+            columns: ["conversation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "inbox_notification_counts"
+            referencedColumns: ["conversation_id", "org_id"]
+          },
+          {
+            foreignKeyName: "conversation_read_states_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       conversation_context_versions: {
         Row: {
           conversation_id: string
@@ -10278,7 +10327,24 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      inbox_notification_counts: {
+        Row: {
+          conversation_id: string | null
+          org_id: string | null
+          pending_suggestion_count: number | null
+          total_count: number | null
+          unread_inbound_count: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "conversations_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Functions: {
       apply_inbound_control_intent: {

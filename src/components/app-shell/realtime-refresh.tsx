@@ -5,7 +5,17 @@ import { useEffect } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 
-const tables = ["messages", "conversations", "alerts", "calls", "call_offers", "campaigns", "campaign_waves"] as const;
+const tables = [
+  "messages",
+  "conversations",
+  "ai_suggestions",
+  "conversation_read_states",
+  "alerts",
+  "calls",
+  "call_offers",
+  "campaigns",
+  "campaign_waves",
+] as const;
 
 export function RealtimeRefresh({ orgId }: { orgId: string }) {
   const router = useRouter();

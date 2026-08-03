@@ -28,6 +28,57 @@ function errorText(message: string | undefined) {
   return "Não foi possível concluir a ação.";
 }
 
+export async function markConversationReadAction(conversationId: string) {
+  const parsedConversationId = z.string().uuid().safeParse(conversationId);
+  if (!parsedConversationId.success) return false;
+
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const [conversationResult, latestInboundResult] = await Promise.all([
+    supabase
+      .from("conversations")
+      .select("id,org_id")
+      .eq("id", parsedConversationId.data)
+      .maybeSingle(),
+    supabase
+      .from("messages")
+      .select("created_at")
+      .eq("conversation_id", parsedConversationId.data)
+      .eq("direction", "inbound")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ]);
+
+  const conversation = conversationResult.data;
+  const latestInbound = latestInboundResult.data;
+  if (
+    conversationResult.error
+    || latestInboundResult.error
+    || !conversation
+    || conversation.org_id !== viewer.organization!.id
+    || !latestInbound
+  ) {
+    return false;
+  }
+
+  const { error } = await supabase.from("conversation_read_states").upsert({
+    org_id: conversation.org_id,
+    conversation_id: conversation.id,
+    user_id: viewer.userId,
+    last_read_inbound_at: latestInbound.created_at,
+  }, { onConflict: "conversation_id,user_id" });
+
+  if (error) {
+    console.error("Failed to mark Inbox conversation as read", error);
+    return false;
+  }
+
+  revalidatePath("/app", "layout");
+  revalidatePath("/app/inbox");
+  return true;
+}
+
 export async function sendHumanMessageAction(formData: FormData) {
   const parsed = sendSchema.safeParse({
     conversationId: formData.get("conversationId"),

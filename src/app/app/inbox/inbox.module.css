@@ -18,6 +18,7 @@
 .conversationCopy strong { font-size: 12px; }
 .conversationCopy small { overflow: hidden; color: var(--ink-muted); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
 .contextBadge,.ownerBadge { display: inline-flex; align-items: center; gap: 5px; padding: 6px 8px; border: 1px solid #d9cdbf; border-radius: 999px; color: var(--ink-muted); font-size: 9px; white-space: nowrap; }
+.conversationMeta { display: inline-flex; align-items: center; justify-content: flex-end; gap: 8px; }
 .conversationRow time { color: var(--ink-muted); font-size: 9px; }
 .empty { display: grid; justify-items: center; gap: 7px; padding: 48px 24px; color: var(--ink-muted); text-align: center; }
 .empty strong { color: var(--ink); font-size: 13px; }
