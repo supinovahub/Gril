@@ -1,5 +1,7 @@
 import { AppShell } from "@/components/app-shell/app-shell";
 import { requireActiveViewer } from "@/lib/auth/session";
+import { loadInboxNotificationCounts } from "@/lib/inbox/notifications";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function ApplicationLayout({
   children,
@@ -7,5 +9,18 @@ export default async function ApplicationLayout({
   children: React.ReactNode;
 }) {
   const viewer = await requireActiveViewer();
-  return <AppShell viewer={viewer}>{children}</AppShell>;
+  const supabase = await createClient();
+  const notifications = await loadInboxNotificationCounts(
+    supabase,
+    viewer.organization!.id,
+  );
+
+  return (
+    <AppShell
+      inboxNotificationCount={notifications.conversationsWithNotifications}
+      viewer={viewer}
+    >
+      {children}
+    </AppShell>
+  );
 }

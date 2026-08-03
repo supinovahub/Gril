@@ -25,6 +25,7 @@ import {
 import Link from "next/link";
 
 import { signOutAction } from "@/app/(auth)/actions";
+import { NotificationBadge } from "@/components/notification-badge/notification-badge";
 import {
   canManageTeam,
   roleLabels,
@@ -45,9 +46,11 @@ function initials(name: string | undefined, email: string) {
 
 export function AppShell({
   viewer,
+  inboxNotificationCount,
   children,
 }: {
   viewer: Viewer;
+  inboxNotificationCount: number;
   children: React.ReactNode;
 }) {
   const operation =
@@ -126,6 +129,11 @@ export function AppShell({
           </Link>
           <Link className={styles.navItem} href="/app/inbox">
             <MessagesSquare size={18} aria-hidden="true" /> Inbox
+            <NotificationBadge
+              className={styles.navNotificationBadge}
+              count={inboxNotificationCount}
+              label={`${inboxNotificationCount} ${inboxNotificationCount === 1 ? "conversa com notificação" : "conversas com notificações"}`}
+            />
           </Link>
           {canManageCampaigns ? <Link className={styles.navItem} href="/app/campanhas">
             <Megaphone size={18} aria-hidden="true" /> Campanhas
@@ -201,7 +209,17 @@ export function AppShell({
       <nav className={styles.mobileNav} aria-label="Navegação móvel">
         <Link href="/app"><LayoutDashboard size={20} /><span>Visão geral</span></Link>
         <Link href="/app/perfil"><Settings2 size={20} /><span>Perfil</span></Link>
-        <Link href="/app/inbox"><MessagesSquare size={20} /><span>Inbox</span></Link>
+        <Link href="/app/inbox">
+          <span className={styles.mobileNavIcon}>
+            <MessagesSquare aria-hidden="true" size={20} />
+            <NotificationBadge
+              className={styles.mobileNotificationBadge}
+              count={inboxNotificationCount}
+              label={`${inboxNotificationCount} ${inboxNotificationCount === 1 ? "conversa com notificação" : "conversas com notificações"}`}
+            />
+          </span>
+          <span>Inbox</span>
+        </Link>
         <Link href="/app/leads"><ContactRound size={20} /><span>Leads</span></Link>
         <Link href="/app/kanban"><KanbanSquare size={20} /><span>Kanban</span></Link>
         {canManageAi

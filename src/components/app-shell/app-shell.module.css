@@ -157,6 +157,10 @@
   background: rgba(255, 255, 255, 0.58);
 }
 
+.navNotificationBadge {
+  margin-left: auto;
+}
+
 .navItemDisabled {
   color: #aaa298;
   cursor: not-allowed;
@@ -294,6 +298,22 @@
     place-items: center;
     gap: 4px;
     color: var(--ink-muted);
+    font-size: 9px;
+  }
+
+  .mobileNavIcon {
+    position: relative;
+    display: grid;
+    place-items: center;
+  }
+
+  .mobileNotificationBadge {
+    position: absolute;
+    top: -10px;
+    right: -16px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
     font-size: 9px;
   }
 }

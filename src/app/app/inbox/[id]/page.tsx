@@ -6,6 +6,7 @@ import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { conversationAction, reviewAiSuggestionAction, sendHumanMessageAction } from "../actions";
 import styles from "../inbox.module.css";
+import { ConversationReadMarker } from "./conversation-read-marker";
 
 export default async function ConversationPage({
   params,
@@ -44,6 +45,7 @@ export default async function ConversationPage({
 
   return (
     <div className={styles.page}>
+      <ConversationReadMarker conversationId={conversation.id} />
       <Link className={styles.backLink} href="/app/inbox"><ArrowLeft size={15} /> Voltar para Inbox</Link>
       <header className={styles.chatHeader}>
         <div><span className={styles.avatar}>{contact?.name?.slice(0, 1).toUpperCase()}</span><span><h1>{contact?.name}</h1><p>{phones.find((phone) => phone.is_primary && phone.status === "active")?.e164 ?? "Telefone protegido"} · {stage?.name}</p></span></div>
