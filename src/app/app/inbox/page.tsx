@@ -8,12 +8,17 @@ import styles from "./inbox.module.css";
 export default async function InboxPage() {
   const viewer = await requireActiveViewer();
   const supabase = await createClient();
-  const { data: conversations } = await supabase
+  const { data: conversations, error: conversationsError } = await supabase
     .from("conversations")
-    .select("id,status,ownership,ai_mode,last_inbound_at,last_message_preview,updated_at,contacts!inner(name),opportunities!inner(id,pipeline_stages!inner(name))")
+    .select("id,status,ownership,ai_mode,last_inbound_at,last_message_preview,updated_at,contacts!inner(name),opportunities!conversations_opportunity_id_org_id_fkey(id,pipeline_stages!inner(name))")
     .eq("org_id", viewer.organization!.id)
     .order("updated_at", { ascending: false })
     .limit(100);
+
+  if (conversationsError) {
+    console.error("Failed to load Inbox conversations", conversationsError);
+    throw new Error("Não foi possível carregar as conversas do Inbox.");
+  }
 
   return (
     <div className={styles.page}>

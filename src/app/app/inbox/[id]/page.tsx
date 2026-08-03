@@ -18,12 +18,22 @@ export default async function ConversationPage({
   const { id } = await params;
   const feedback = await searchParams;
   const supabase = await createClient();
-  const [{ data: conversation }, { data: messages }, { data: summary }, { data: suggestions }] = await Promise.all([
-    supabase.from("conversations").select("*,contacts!inner(name,contact_phones(e164,is_primary,status)),opportunities!inner(id,pipeline_stages!inner(name)),whatsapp_connections!inner(name,provider)").eq("id", id).maybeSingle(),
+  const [conversationResult, messagesResult, summaryResult, suggestionsResult] = await Promise.all([
+    supabase.from("conversations").select("*,contacts!inner(name,contact_phones(e164,is_primary,status)),opportunities!conversations_opportunity_id_org_id_fkey(id,pipeline_stages!inner(name)),whatsapp_connections!inner(name,provider)").eq("id", id).maybeSingle(),
     supabase.from("messages").select("*").eq("conversation_id", id).order("created_at").limit(300),
     supabase.from("conversation_summaries").select("summary,facts,created_at").eq("conversation_id", id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("ai_suggestions").select("id,body,status,created_at").eq("conversation_id", id).eq("status", "pending").order("created_at", { ascending: false }),
   ]);
+  const queryError = conversationResult.error ?? messagesResult.error ?? summaryResult.error ?? suggestionsResult.error;
+  if (queryError) {
+    console.error("Failed to load Inbox conversation", queryError);
+    throw new Error("Não foi possível carregar a conversa do Inbox.");
+  }
+
+  const conversation = conversationResult.data;
+  const messages = messagesResult.data;
+  const summary = summaryResult.data;
+  const suggestions = suggestionsResult.data;
   if (!conversation) notFound();
 
   const contact = Array.isArray(conversation.contacts) ? conversation.contacts[0] : conversation.contacts;
