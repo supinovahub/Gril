@@ -74,6 +74,38 @@ describe("adapters de tráfego real", () => {
     expect(JSON.stringify(inbound?.inbound[0].rawPayload)).not.toContain("token-seguro");
   });
 
+  it("aceita o callback Uazapi sem token quando a instância confere", () => {
+    const inbound = verifyAndNormalizeUazapiWebhook(
+      {
+        event: "message.received",
+        instance: "instance-1",
+        data: {
+          from: "5511999999999",
+          body: "Olá pelo webhook",
+          timestamp: 1_700_000_000,
+        },
+      },
+      "token-seguro",
+      null,
+      "instance-1",
+    );
+
+    expect(inbound?.inbound[0]).toMatchObject({
+      fromE164: "+5511999999999",
+      contentType: "text",
+      body: "Olá pelo webhook",
+    });
+    expect(inbound?.inbound[0].providerMessageId).toMatch(/^uaz-[a-f0-9]{64}$/);
+    expect(
+      verifyAndNormalizeUazapiWebhook(
+        { event: "message.received", instance: "outra", data: { from: "5511999999999", body: "Oi" } },
+        "token-seguro",
+        null,
+        "instance-1",
+      ),
+    ).toBeNull();
+  });
+
   it("normaliza edição Uazapi sem criar uma segunda mensagem bruta", () => {
     const update = verifyAndNormalizeUazapiWebhook(
       { EventType: "messages_update", token: "token-seguro", message: { messageid: "2", sender: "5511999999999", messageTimestamp: 1700000001000, text: "Texto corrigido" } },

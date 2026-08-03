@@ -87,7 +87,23 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
     normalized = normalizeMetaWebhook(json);
   } else if (connection.provider === "uazapi") {
-    normalized = verifyAndNormalizeUazapiWebhook(json, secret, request.headers.get("token"));
+    const { data: account } = await admin
+      .from("integration_accounts")
+      .select("external_account_id,metadata")
+      .eq("id", connection.integration_account_id)
+      .maybeSingle();
+    const metadata = account?.metadata && typeof account.metadata === "object" && !Array.isArray(account.metadata)
+      ? account.metadata
+      : null;
+    const instanceName = metadata && typeof metadata.instance_name === "string"
+      ? metadata.instance_name
+      : null;
+    normalized = verifyAndNormalizeUazapiWebhook(
+      json,
+      secret,
+      request.headers.get("token"),
+      [account?.external_account_id, instanceName].filter((value): value is string => Boolean(value)),
+    );
     if (!normalized) return NextResponse.json({ error: "invalid_token" }, { status: 401 });
   } else if (verifyWebhookSecret(request.headers.get("x-gril-webhook-secret"))) {
     const parsed = normalizedWebhook.safeParse(json);
