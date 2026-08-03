@@ -5388,6 +5388,7 @@ export type Database = {
       message_send_requests: {
         Row: {
           actor_user_id: string
+          ai_suggestion_id: string | null
           body: string
           conversation_id: string
           created_at: string
@@ -5397,9 +5398,11 @@ export type Database = {
           org_id: string
           processed_at: string
           reply_to_message_id: string | null
+          source: string
         }
         Insert: {
           actor_user_id?: string
+          ai_suggestion_id?: string | null
           body: string
           conversation_id: string
           created_at?: string
@@ -5409,9 +5412,11 @@ export type Database = {
           org_id: string
           processed_at?: string
           reply_to_message_id?: string | null
+          source?: string
         }
         Update: {
           actor_user_id?: string
+          ai_suggestion_id?: string | null
           body?: string
           conversation_id?: string
           created_at?: string
@@ -5421,8 +5426,16 @@ export type Database = {
           org_id?: string
           processed_at?: string
           reply_to_message_id?: string | null
+          source?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "message_send_requests_ai_suggestion_fkey"
+            columns: ["ai_suggestion_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "ai_suggestions"
+            referencedColumns: ["id", "org_id"]
+          },
           {
             foreignKeyName: "message_send_requests_conversation_id_org_id_fkey"
             columns: ["conversation_id", "org_id"]
