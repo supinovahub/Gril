@@ -170,7 +170,15 @@ Valide:
 
 ## 7. Simulador e regressão
 
-No simulador, cubra saudação vaga, preço, disponibilidade, compra à vista/financiada/futura, falta de imóvel compatível, pergunta sem resposta, pedido humano, reclamação, opt-out, número errado, prompt injection, agendamento, cancelamento, reagendamento e recebimento de mídia.
+No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confirme que o Pedro lembra as mensagens anteriores, acumula a qualificação e mantém o resumo sem criar lead, Inbox, WhatsApp, call, follow-up real ou consumo de capacidade. Cubra saudação vaga, preço, disponibilidade, compra à vista/financiada/futura, falta de imóvel compatível, pergunta sem resposta, pedido humano, reclamação, opt-out, número errado, prompt injection, agendamento, cancelamento, reagendamento e recebimento de mídia.
+
+Também valide:
+
+- uma nova mensagem só é liberada depois que o turno atual termina;
+- uma conversa arquivada sai da lista ativa, permanece legível em **Arquivadas** e não aceita novas mensagens;
+- ao restaurar, todo o histórico reaparece e a conversa pode continuar do mesmo estado;
+- atualizar a página ou sair e voltar não perde o histórico;
+- cenários antigos continuam disponíveis como conversas de um turno.
 
 Depois:
 

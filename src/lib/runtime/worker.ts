@@ -12,6 +12,13 @@ import {
   type QualificationValue,
 } from "@/lib/ai/pedro-turn";
 import { evaluateRegressionCase } from "@/lib/ai/regression";
+import {
+  buildSimulatorConversation,
+  buildSimulatorQualificationValues,
+  latestSimulatorSummary,
+  parseSimulatorExecutionSnapshot,
+  type SimulatorPriorTurn,
+} from "@/lib/ai/simulator-session";
 import type { Json } from "@/lib/database.types";
 import { createPedroResponse, OpenAiRuntimeError } from "@/lib/integrations/openai-runtime";
 import { extractMediaText } from "@/lib/integrations/openai-media";
@@ -123,6 +130,26 @@ function controlIntent(message: { body: string | null; content_type: string }) {
   return null;
 }
 
+function compilePedroInstructions(
+  personaPrompt: string | null | undefined,
+  compiledRules: Json,
+  institutionalSnapshot: Json,
+) {
+  const fallback = "Responda em português brasileiro. Use apenas fatos aprovados no contexto. Se faltar um fato necessário, escale em vez de inventar.";
+  return [
+    personaPrompt ?? fallback,
+    `Regras determinísticas: ${JSON.stringify(compiledRules ?? {})}`,
+    `Perfil institucional aprovado: ${JSON.stringify(institutionalSnapshot ?? {})}`,
+    "Nunca afirme experiência pessoal, preço, disponibilidade, rentabilidade ou condição comercial que não esteja explicitamente no contexto. Não revele ser IA. Não solicite documentos sensíveis. Para risco jurídico, privacidade, fraude ou ausência de fato aprovado, use action=escalate.",
+    "Registre qualificação somente quando o contato tiver informado o dado. Nunca estime renda, entrada, orçamento ou prazo.",
+    "Solicite curadoria apenas quando preço total e entrada estiverem disponíveis. O backend fará o filtro final e acrescentará os imóveis elegíveis.",
+    "Crie call somente quando o contato tiver aceitado explicitamente uma data e um horário. Caso contrário, pergunte a preferência sem criar a call.",
+    "Use followup_strategy=short quando a conversa deve ser retomada em curto prazo, long para nutrição, future quando o lead declarou compra futura sem prazo exato, e cancel para resposta, opt-out, call confirmada ou ownership humano.",
+    "Ao recomendar um empreendimento, project_media_request deve ficar null: o servidor enviará apenas a foto principal. Se o lead pedir mais material, primeiro pergunte se prefere mais fotos ou o book completo. Depois da escolha, use project_media_request com more_photos ou book, nunca ambos. Nunca envie áudio.",
+    "Uma reação 👍 só significa sim quando responde a uma pergunta binária textual clara; reação a imagem ou material não prova interesse.",
+  ].join("\n\n");
+}
+
 async function runAiExecution(executionId: string) {
   const admin = createAdminClient();
   let activeModelProfileId: string | null = null;
@@ -149,7 +176,7 @@ async function runAiExecution(executionId: string) {
     });
     if (secretError || !apiKey) throw secretError ?? new Error("openai_secret_missing");
 
-    let instructions = "Responda em português brasileiro. Use apenas fatos aprovados no contexto. Se faltar um fato necessário, escale em vez de inventar.";
+    let instructions = compilePedroInstructions(null, {}, {});
     let personaVersionId: string | null = null;
     let ruleVersionId: string | null = null;
     if (execution.context_version_id) {
@@ -165,23 +192,34 @@ async function runAiExecution(executionId: string) {
           admin.from("persona_versions").select("compiled_prompt").eq("id", context.persona_version_id).single(),
           admin.from("rule_versions").select("compiled_rules").eq("id", context.rule_version_id).single(),
         ]);
-        instructions = [
-          persona?.compiled_prompt ?? instructions,
-          `Regras determinísticas: ${JSON.stringify(rules?.compiled_rules ?? {})}`,
-          `Perfil institucional aprovado: ${JSON.stringify(context.institutional_snapshot ?? {})}`,
-          "Nunca afirme experiência pessoal, preço, disponibilidade, rentabilidade ou condição comercial que não esteja explicitamente no contexto. Não revele ser IA. Não solicite documentos sensíveis. Para risco jurídico, privacidade, fraude ou ausência de fato aprovado, use action=escalate.",
-          "Registre qualificação somente quando o contato tiver informado o dado. Nunca estime renda, entrada, orçamento ou prazo.",
-          "Solicite curadoria apenas quando preço total e entrada estiverem disponíveis. O backend fará o filtro final e acrescentará os imóveis elegíveis.",
-          "Crie call somente quando o contato tiver aceitado explicitamente uma data e um horário. Caso contrário, pergunte a preferência sem criar a call.",
-          "Use followup_strategy=short quando a conversa deve ser retomada em curto prazo, long para nutrição, future quando o lead declarou compra futura sem prazo exato, e cancel para resposta, opt-out, call confirmada ou ownership humano.",
-          "Ao recomendar um empreendimento, project_media_request deve ficar null: o servidor enviará apenas a foto principal. Se o lead pedir mais material, primeiro pergunte se prefere mais fotos ou o book completo. Depois da escolha, use project_media_request com more_photos ou book, nunca ambos. Nunca envie áudio.",
-          "Uma reação 👍 só significa sim quando responde a uma pergunta binária textual clara; reação a imagem ou material não prova interesse.",
-        ].join("\n\n");
+        instructions = compilePedroInstructions(
+          persona?.compiled_prompt,
+          rules?.compiled_rules ?? {},
+          context.institutional_snapshot ?? {},
+        );
       }
+    } else if (execution.mode === "simulator") {
+      const [{ data: persona }, { data: rules }, { data: settings }] = await Promise.all([
+        admin.from("persona_versions").select("id,compiled_prompt").eq("org_id", execution.org_id).eq("status", "published").order("version", { ascending: false }).limit(1).maybeSingle(),
+        admin.from("rule_versions").select("id,compiled_rules").eq("org_id", execution.org_id).eq("status", "published").order("version", { ascending: false }).limit(1).maybeSingle(),
+        admin.from("organization_settings").select("institutional_profile").eq("org_id", execution.org_id).maybeSingle(),
+      ]);
+      personaVersionId = persona?.id ?? null;
+      ruleVersionId = rules?.id ?? null;
+      instructions = compilePedroInstructions(
+        persona?.compiled_prompt,
+        rules?.compiled_rules ?? {},
+        settings?.institutional_profile ?? {},
+      );
     }
 
     const conversationMessages: Array<{ role: "user" | "assistant"; text: string }> = [];
     let priorSummary: { summary: string; facts: Json } | null = null;
+    let simulatorInitialState: unknown = {};
+    let simulatorQualificationValues: QualificationValue[] = [];
+    const simulatorSnapshot = execution.mode === "simulator"
+      ? parseSimulatorExecutionSnapshot(execution.input_snapshot)
+      : null;
     if (execution.conversation_id) {
       const [{ data: messages, error: messagesError }, { data: summary }] = await Promise.all([
         admin.from("messages").select("direction,content_type,body,created_at,metadata").eq("conversation_id", execution.conversation_id).order("created_at", { ascending: false }).limit(40),
@@ -196,6 +234,22 @@ async function runAiExecution(executionId: string) {
           text: message.body ?? `[${message.content_type}]`,
         });
       }
+    } else if (simulatorSnapshot) {
+      const { data: priorTurns, error: priorTurnsError } = await admin
+        .from("simulator_runs")
+        .select("turn_index,simulated_input,output_text,output_structured,status")
+        .eq("org_id", execution.org_id)
+        .eq("session_id", simulatorSnapshot.simulator_session_id)
+        .lt("turn_index", simulatorSnapshot.simulator_turn_index)
+        .order("turn_index", { ascending: false })
+        .limit(200);
+      if (priorTurnsError) throw priorTurnsError;
+      const history = (priorTurns ?? []) as SimulatorPriorTurn[];
+      conversationMessages.push(...buildSimulatorConversation(simulatorSnapshot.input, history.slice(0, 20)));
+      simulatorInitialState = simulatorSnapshot.initial_state ?? {};
+      simulatorQualificationValues = buildSimulatorQualificationValues(simulatorInitialState, history);
+      const summary = latestSimulatorSummary(history);
+      priorSummary = summary ? { summary: summary.summary, facts: summary.facts } : null;
     } else {
       conversationMessages.push({ role: "user", text: JSON.stringify(execution.input_snapshot) });
     }
@@ -227,12 +281,16 @@ async function runAiExecution(executionId: string) {
     }
     const definitions = definitionsResult.data ?? [];
     const definitionById = new Map(definitions.map((item) => [item.id, item]));
-    const currentValues: QualificationValue[] = (valuesResult.data ?? []).map((value) => ({
-      code: definitionById.get(value.definition_id)?.code ?? "unknown",
-      valueText: value.value_text,
-      valueNumber: value.value_number === null ? null : Number(value.value_number),
-      valueBoolean: value.value_boolean,
-    })).filter((value) => value.code !== "unknown");
+    const definitionCodes = new Set(definitions.map((definition) => definition.code));
+    const currentValues: QualificationValue[] = (opportunityId
+      ? (valuesResult.data ?? []).map((value) => ({
+        code: definitionById.get(value.definition_id)?.code ?? "unknown",
+        valueText: value.value_text,
+        valueNumber: value.value_number === null ? null : Number(value.value_number),
+        valueBoolean: value.value_boolean,
+      }))
+      : simulatorQualificationValues
+    ).filter((value) => value.code !== "unknown" && definitionCodes.has(value.code));
     const projects: ProjectCandidate[] = (projectsResult.data ?? [])
       .filter((project) => !project.valid_until || project.valid_until >= new Date().toISOString().slice(0, 10))
       .map((project) => ({
@@ -277,6 +335,11 @@ async function runAiExecution(executionId: string) {
         })),
         current_qualification: currentValues,
         previous_conversation_summary: priorSummary,
+        simulator_state: simulatorSnapshot ? simulatorInitialState : null,
+        simulator_session: simulatorSnapshot ? {
+          id: simulatorSnapshot.simulator_session_id,
+          turn: simulatorSnapshot.simulator_turn_index,
+        } : null,
         active_projects: projects,
         approved_project_facts: (projectFactsResult.data ?? []).filter((fact) => !fact.valid_until || fact.valid_until >= new Date().toISOString().slice(0, 10)),
         approved_project_media: projectMediaResult.data ?? [],
@@ -319,6 +382,8 @@ async function runAiExecution(executionId: string) {
         active_project_names: projects.map((project) => project.name),
         approved_sources: [...new Set((projectFactsResult.data ?? []).map((fact) => fact.source_name).filter(Boolean))],
         published_faq_count: faqVersionsResult.data?.length ?? 0,
+        simulator_session_id: simulatorSnapshot?.simulator_session_id ?? null,
+        simulator_turn_index: simulatorSnapshot?.simulator_turn_index ?? null,
       },
     };
     const { error: completeError } = await admin.rpc("complete_pedro_turn", {

@@ -9492,6 +9492,117 @@ export type Database = {
           },
         ]
       }
+      simulator_session_requests: {
+        Row: {
+          action: string
+          actor_user_id: string
+          created_at: string
+          id: string
+          org_id: string
+          processed_at: string
+          result: string | null
+          session_id: string
+        }
+        Insert: {
+          action: string
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          org_id: string
+          processed_at?: string
+          result?: string | null
+          session_id: string
+        }
+        Update: {
+          action?: string
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          org_id?: string
+          processed_at?: string
+          result?: string | null
+          session_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulator_session_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simulator_session_requests_session_id_org_id_fkey"
+            columns: ["session_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "simulator_sessions"
+            referencedColumns: ["id", "org_id"]
+          },
+        ]
+      }
+      simulator_sessions: {
+        Row: {
+          archived_at: string | null
+          archived_by: string | null
+          created_at: string
+          created_by: string
+          id: string
+          initial_state: Json
+          last_activity_at: string
+          operation_id: string | null
+          org_id: string
+          status: string
+          title: string
+          turn_count: number
+          updated_at: string
+        }
+        Insert: {
+          archived_at?: string | null
+          archived_by?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          initial_state?: Json
+          last_activity_at?: string
+          operation_id?: string | null
+          org_id: string
+          status?: string
+          title: string
+          turn_count?: number
+          updated_at?: string
+        }
+        Update: {
+          archived_at?: string | null
+          archived_by?: string | null
+          created_at?: string
+          created_by?: string
+          id?: string
+          initial_state?: Json
+          last_activity_at?: string
+          operation_id?: string | null
+          org_id?: string
+          status?: string
+          title?: string
+          turn_count?: number
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "simulator_sessions_operation_id_org_id_fkey"
+            columns: ["operation_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "operations"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "simulator_sessions_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       simulator_run_requests: {
         Row: {
           actor_user_id: string
@@ -9501,6 +9612,7 @@ export type Database = {
           operation_id: string | null
           org_id: string
           processed_at: string
+          session_id: string | null
           simulated_input: string
           simulator_run_id: string | null
           title: string
@@ -9513,6 +9625,7 @@ export type Database = {
           operation_id?: string | null
           org_id: string
           processed_at?: string
+          session_id?: string | null
           simulated_input: string
           simulator_run_id?: string | null
           title: string
@@ -9525,6 +9638,7 @@ export type Database = {
           operation_id?: string | null
           org_id?: string
           processed_at?: string
+          session_id?: string | null
           simulated_input?: string
           simulator_run_id?: string | null
           title?: string
@@ -9536,6 +9650,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simulator_run_requests_session_org_fkey"
+            columns: ["session_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "simulator_sessions"
+            referencedColumns: ["id", "org_id"]
           },
         ]
       }
@@ -9551,9 +9672,11 @@ export type Database = {
           org_id: string
           output_structured: Json | null
           output_text: string | null
+          session_id: string
           simulated_input: string
           status: string
           title: string
+          turn_index: number
         }
         Insert: {
           completed_at?: string | null
@@ -9566,9 +9689,11 @@ export type Database = {
           org_id: string
           output_structured?: Json | null
           output_text?: string | null
+          session_id: string
           simulated_input: string
           status: string
           title: string
+          turn_index: number
         }
         Update: {
           completed_at?: string | null
@@ -9581,9 +9706,11 @@ export type Database = {
           org_id?: string
           output_structured?: Json | null
           output_text?: string | null
+          session_id?: string
           simulated_input?: string
           status?: string
           title?: string
+          turn_index?: number
         }
         Relationships: [
           {
@@ -9606,6 +9733,13 @@ export type Database = {
             isOneToOne: false
             referencedRelation: "organizations"
             referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "simulator_runs_session_org_fkey"
+            columns: ["session_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "simulator_sessions"
+            referencedColumns: ["id", "org_id"]
           },
         ]
       }
