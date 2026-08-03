@@ -3,23 +3,23 @@
   max-height: min(90vh, 640px);
   margin: auto;
   overflow: visible;
-  border: 1px solid var(--border);
-  border-radius: var(--radius-panel);
+  border: 0;
+  border-radius: var(--radius-large);
   background: var(--surface);
   color: var(--ink);
   padding: 0;
-  box-shadow: 0 24px 80px rgba(31, 30, 27, 0.24);
+  box-shadow: 0 28px 90px rgba(28, 33, 31, 0.28);
 }
 
 .dialog::backdrop {
-  background: rgba(31, 30, 27, 0.54);
-  backdrop-filter: blur(2px);
+  background: rgba(28, 33, 31, 0.62);
+  backdrop-filter: blur(4px);
 }
 
 .content {
   display: grid;
   gap: 16px;
-  padding: 24px;
+  padding: 26px;
 }
 
 .content header {
@@ -42,7 +42,9 @@
 }
 
 .content h2 {
-  font-size: 24px;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: 29px;
+  font-weight: 560;
   letter-spacing: -.03em;
 }
 
@@ -70,7 +72,7 @@
   width: 100%;
   border: 1px solid var(--border);
   border-radius: var(--radius-control);
-  background: #fff;
+  background: var(--control-bg);
   padding: 11px 12px;
   color: var(--ink);
 }
@@ -89,14 +91,14 @@
 }
 
 .content footer .confirm {
-  border-color: var(--accent);
-  background: var(--accent);
+  border-color: var(--ink);
+  background: var(--ink);
   color: #fff;
 }
 
 .content footer .confirm:hover:not(:disabled) {
   border-color: var(--accent-dark);
-  background: var(--accent-dark);
+  background: var(--accent);
 }
 
 .content footer .confirm:disabled {
