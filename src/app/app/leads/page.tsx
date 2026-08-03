@@ -4,33 +4,41 @@ import Link from "next/link";
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { LeadForm } from "./lead-form";
+import { BulkCrmPanel } from "./bulk-crm-panel";
 import styles from "./leads.module.css";
 
 export default async function LeadsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ q?: string; erro?: string }>;
+  searchParams: Promise<{ q?: string; arquivados?: string; erro?: string; sucesso?: string }>;
 }) {
   const viewer = await requireActiveViewer();
-  const { q, erro } = await searchParams;
+  const { q, arquivados, erro, sucesso } = await searchParams;
+  const showingArchived = arquivados === "1";
   const supabase = await createClient();
   let query = supabase
     .from("opportunities")
-    .select("id, status, source, version, last_activity_at, assigned_membership_id, contacts!inner(id,name,contact_phones(e164,is_primary,status)), pipeline_stages!inner(name,code,position)")
+    .select("id, status, source, version, last_activity_at, assigned_membership_id, contacts!inner(id,name,status,contact_phones(e164,is_primary,status)), pipeline_stages!inner(name,code,position)")
     .eq("org_id", viewer.organization!.id)
+    .eq("contacts.status", showingArchived ? "archived" : "active")
     .order("last_activity_at", { ascending: false })
     .limit(100);
 
   if (q?.trim()) query = query.ilike("contacts.name", `%${q.trim()}%`);
 
-  const [{ data: opportunities }, { data: memberships }] = await Promise.all([
+  const [{ data: opportunities }, { data: memberships }, { data: campaigns }] = await Promise.all([
     query,
     supabase
       .from("memberships")
       .select("id, role")
       .eq("org_id", viewer.organization!.id)
       .eq("status", "active"),
+    supabase.from("campaigns").select("id,name").eq("org_id", viewer.organization!.id).in("status", ["draft", "pending_approval", "approved", "paused"]).order("created_at", { ascending: false }),
   ]);
+  const contacts = Array.from(new Map((opportunities ?? []).map((opportunity)=>{
+    const contact = Array.isArray(opportunity.contacts) ? opportunity.contacts[0] : opportunity.contacts;
+    return contact ? [contact.id, { id: contact.id, name: contact.name }] : ["", null];
+  }).filter((entry): entry is [string,{id:string;name:string}]=>Boolean(entry[0] && entry[1]))).values());
 
   return (
     <div className={styles.page}>
@@ -40,10 +48,15 @@ export default async function LeadsPage({
           <h1>Leads e oportunidades</h1>
           <p>Uma pessoa pode ter várias decisões de compra sem duplicar o contato.</p>
         </div>
-        <Link className={styles.secondaryButton} href="/app/kanban">Abrir Kanban</Link>
+        <div className={styles.headerActions}>
+          <Link className={styles.secondaryButton} href={showingArchived ? "/app/leads" : "/app/leads?arquivados=1"}>{showingArchived ? "Ver ativos" : "Ver arquivados"}</Link>
+          <Link className={styles.secondaryButton} href="/app/kanban">Abrir Kanban</Link>
+        </div>
       </header>
 
       {erro ? <p className={styles.errorBanner}>{erro}</p> : null}
+      {sucesso ? <p className={styles.successBanner}>Operação concluída.</p> : null}
+      <BulkCrmPanel contacts={contacts} managers={(memberships ?? []).filter((item)=>item.role!=='broker').map((item)=>({ id:item.id,label:`${item.role} · ${item.id.slice(0,8)}` }))} campaigns={(campaigns ?? []).map((item)=>({id:item.id,label:item.name}))}/>
 
       <section className={styles.layout}>
         <div className={styles.listPanel}>
@@ -54,7 +67,7 @@ export default async function LeadsPage({
           </form>
 
           <div className={styles.listHeader}>
-            <span>{opportunities?.length ?? 0} oportunidades visíveis</span>
+            <span>{opportunities?.length ?? 0} oportunidades {showingArchived ? "arquivadas" : "ativas"}</span>
             <span>Atualização mais recente primeiro</span>
           </div>
 

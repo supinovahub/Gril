@@ -1,7 +1,8 @@
-import { Link2, UserRoundPlus, UsersRound } from "lucide-react";
+import { Link2, ShieldCheck, UserRoundPlus, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import type { Tables } from "@/lib/database.types";
+import { TypedConfirmationButton } from "@/components/typed-confirmation-button";
 import {
   canManageTeam,
   requireActiveViewer,
@@ -11,10 +12,16 @@ import { createClient } from "@/lib/supabase/server";
 import {
   changeMembershipAction,
   updateMemberCallSettingsAction,
+  updateMemberWhatsappAction,
   updateManagerPermissionsAction,
+  requestOwnershipTransferAction,
+  acceptOwnershipTransferAction,
+  decideTeamAccessRequestAction,
+  rotateOrganizationCodeAction,
 } from "./actions";
 import { permissionOptions } from "./constants";
 import { InviteForm } from "./invite-form";
+import { CopyButton } from "./copy-button";
 import styles from "./team.module.css";
 
 const statusLabels: Record<string, string> = {
@@ -28,11 +35,16 @@ const permissionLabels: Record<(typeof permissionOptions)[number], string> = {
   "settings.manage": "Configurações gerais",
   "team.manage": "Gerenciar corretores",
   "operations.manage": "Gerenciar operações",
+  "operations.pause": "Pausa emergencial",
   "contacts.manage": "Gerenciar contatos",
   "campaigns.manage": "Gerenciar campanhas",
   "pipeline.manage": "Gerenciar pipeline",
   "reports.view": "Visualizar relatórios",
   "ai.manage": "Operar o Pedro",
+  "finance.view": "Visualizar custos financeiros",
+  "privacy.manage": "Executar decisões de privacidade",
+  "exports.create": "Exportar dados do CRM",
+  "checklists.manage": "Configurar e dispensar checklists",
 };
 
 function initials(name: string) {
@@ -50,12 +62,13 @@ function statusClass(status: string) {
   return styles.status;
 }
 
-export default async function TeamPage() {
+export default async function TeamPage({ searchParams }: { searchParams: Promise<{ erro?: string; sucesso?: string }> }) {
   const viewer = await requireActiveViewer();
   if (!canManageTeam(viewer)) redirect("/app");
+  const feedback = await searchParams;
 
   const supabase = await createClient();
-  const [{ data: memberships }, { data: invitations }] = await Promise.all([
+  const [{ data: memberships }, { data: invitations }, { data: ownershipTransfers }, { data: accessRequests }, { data: joinCodes }] = await Promise.all([
     supabase
       .from("memberships")
       .select("*")
@@ -67,6 +80,9 @@ export default async function TeamPage() {
       .eq("org_id", viewer.organization!.id)
       .order("created_at", { ascending: false })
       .limit(12),
+    supabase.from("ownership_transfer_requests").select("*").eq("org_id", viewer.organization!.id).eq("status", "pending"),
+    supabase.from("access_requests").select("*").eq("org_id", viewer.organization!.id).in("status", ["pending", "correction_requested"]).order("created_at"),
+    supabase.rpc("organization_join_code"),
   ]);
 
   const memberRows = memberships ?? [];
@@ -106,6 +122,12 @@ export default async function TeamPage() {
   const isOwner = viewer.membership?.role === "owner";
   const activeCount = memberRows.filter((member) => member.status === "active").length;
   const pendingCount = memberRows.filter((member) => member.status === "pending").length;
+  const joinCode = joinCodes?.[0];
+  const errorMessage = feedback.erro === "whatsapp-em-uso"
+    ? "Este número já está em uso. Informe outro WhatsApp ou fale com o suporte."
+    : feedback.erro === "whatsapp-invalido"
+      ? "Informe o WhatsApp com país, DDD e número."
+      : "Não foi possível concluir a ação. Revise a confirmação e as permissões.";
 
   return (
     <div className={styles.page}>
@@ -118,6 +140,36 @@ export default async function TeamPage() {
         <span className={styles.summary}>{activeCount} ativos · {pendingCount} pendentes</span>
       </header>
 
+      {feedback.erro ? <p className={styles.feedback}>{errorMessage}</p> : null}
+      {feedback.sucesso ? <p className={`${styles.feedback} ${styles.success}`}>Ação concluída e registrada.</p> : null}
+
+      {joinCode ? <section className={styles.panel}>
+        <header className={styles.panelHeader}><div><Link2 size={18} /><h2>Código da imobiliária</h2></div><span>Localizador, não autorização</span></header>
+        <div className={styles.generatedLink}><code>{joinCode.code}</code>{joinCode.enabled ? <CopyButton value={joinCode.code} /> : <strong>Desativado</strong>}</div>
+        <p className={styles.formHint}>Visível somente para dono e gestores autorizados. Corretores não recebem este código.</p>
+        {isOwner ? <div className={styles.codeActions}>
+          <form action={rotateOrganizationCodeAction}><input name="action" type="hidden" value="rotate" /><input name="reason" placeholder="Motivo da troca" required /><TypedConfirmationButton className={styles.actionButton}>Gerar novo código</TypedConfirmationButton></form>
+          {joinCode.enabled ? <form action={rotateOrganizationCodeAction}><input name="action" type="hidden" value="disable" /><input name="reason" placeholder="Motivo da desativação" required /><TypedConfirmationButton className={styles.dangerButton}>Desativar código</TypedConfirmationButton></form> : null}
+        </div> : null}
+      </section> : null}
+
+      {accessRequests?.length ? <section className={styles.panel}>
+        <header className={styles.panelHeader}><div><UserRoundPlus size={18} /><h2>Solicitações pelo código</h2></div><span>{accessRequests.length} aguardando</span></header>
+        <ul className={styles.requestList}>{accessRequests.map((request) => <li className={styles.accessRequest} key={request.id}>
+          <div className={styles.requestIdentity}><strong>{request.full_name}</strong><span>{request.email} · {request.whatsapp_e164}</span><small>{request.requested_role === "manager" ? "Solicitou perfil de gestor" : "Solicitou perfil de corretor"} · v{request.version}</small>{request.introduction ? <p>{request.introduction}</p> : null}{request.public_reason ? <p className={styles.requestReason}>{request.public_reason}</p> : null}</div>
+          {request.status === "pending" ? <div className={styles.requestActions}>
+            <form action={decideTeamAccessRequestAction}>
+              <input name="requestId" type="hidden" value={request.id} /><input name="decision" type="hidden" value="approve" />
+              <label>Papel ao aprovar<select defaultValue={request.requested_role ?? "broker"} name="approvedRole"><option value="broker">Corretor</option>{isOwner ? <option value="manager">Gestor padrão</option> : null}</select></label>
+              <fieldset><legend>Operações do corretor</legend>{viewer.operations.map((operation) => <label key={operation.id}><input defaultChecked={operation.is_default} name="operationId" type="checkbox" value={operation.id} /> {operation.name}</label>)}</fieldset>
+              <TypedConfirmationButton className={styles.actionButton}>Aprovar acesso</TypedConfirmationButton>
+            </form>
+            <form action={decideTeamAccessRequestAction}><input name="requestId" type="hidden" value={request.id} /><input name="decision" type="hidden" value="request_correction" /><input name="publicReason" placeholder="Correção necessária" required /><TypedConfirmationButton className={styles.actionButton}>Pedir correção</TypedConfirmationButton></form>
+            <form action={decideTeamAccessRequestAction}><input name="requestId" type="hidden" value={request.id} /><input name="decision" type="hidden" value="reject" /><input name="publicReason" placeholder="Motivo da recusa" required /><TypedConfirmationButton className={styles.dangerButton}>Recusar</TypedConfirmationButton></form>
+          </div> : <span className={styles.pendingReview}>Aguardando correção do solicitante</span>}
+        </li>)}</ul>
+      </section> : null}
+
       <section className={styles.panel}>
         <header className={styles.panelHeader}>
           <div><UserRoundPlus size={18} /><h2>Novo acesso</h2></div>
@@ -128,6 +180,9 @@ export default async function TeamPage() {
           operations={viewer.operations.map(({ id, name }) => ({ id, name }))}
         />
       </section>
+
+      {isOwner ? <section className={styles.panel}><header className={styles.panelHeader}><div><ShieldCheck size={18}/><h2>Transferir propriedade</h2></div><span>O dono atual vira gestor após o aceite</span></header><form action={requestOwnershipTransferAction} className={styles.permissionForm}><label>Novo dono<select name="targetMembershipId" required><option value="">Selecione</option>{memberRows.filter((member)=>member.status==='active'&&member.role!=='owner').map((member)=><option key={member.id} value={member.id}>{profilesByUser.get(member.user_id)?.full_name ?? member.id.slice(0,8)}</option>)}</select></label><label>Senha atual<input autoComplete="current-password" name="password" required type="password"/></label><button className={styles.savePermissions}>Solicitar aceite</button></form></section> : null}
+      {ownershipTransfers?.filter((item)=>item.target_membership_id===viewer.membership?.id).map((item)=><section className={styles.panel} key={item.id}><header className={styles.panelHeader}><div><ShieldCheck size={18}/><h2>Aceitar propriedade</h2></div></header><form action={acceptOwnershipTransferAction} className={styles.permissionForm}><input name="transferId" type="hidden" value={item.id}/><p>Ao aceitar, você se torna o novo dono e o dono anterior vira gestor.</p><button className={styles.savePermissions}>Aceitar transferência</button></form></section>)}
 
       <section className={styles.panel}>
         <header className={styles.panelHeader}>
@@ -144,6 +199,9 @@ export default async function TeamPage() {
               const canAct = member.role !== "owner" && !isSelf;
               const assignedPermissions = permissionsByMembership.get(member.id) ?? new Set<string>();
               const memberCallSettings = callSettingsByMembership.get(member.id);
+              const canEditWhatsapp = !isSelf && member.status !== "revoked" && (
+                member.role === "broker" || (isOwner && member.role === "manager")
+              );
 
               return (
                 <li className={styles.member} key={member.id}>
@@ -152,7 +210,9 @@ export default async function TeamPage() {
                       <span className={styles.avatar}>{initials(displayName)}</span>
                       <span>
                         <strong>{displayName}{isSelf ? " · você" : ""}</strong>
-                        <small>{profile?.whatsapp_e164 ?? "WhatsApp não informado"}</small>
+                        <small className={!profile?.whatsapp_e164 && ["manager", "broker"].includes(member.role) ? styles.whatsappMissing : undefined}>
+                          {profile?.whatsapp_e164 ?? "WhatsApp obrigatório pendente"}
+                        </small>
                       </span>
                     </div>
 
@@ -198,6 +258,26 @@ export default async function TeamPage() {
                       </form>
                     ) : null}
                   </div>
+
+                  {canEditWhatsapp ? (
+                    <details className={styles.permissions}>
+                      <summary>Alterar WhatsApp</summary>
+                      <form action={updateMemberWhatsappAction} className={styles.whatsappForm}>
+                        <input name="membershipId" type="hidden" value={member.id} />
+                        <label>
+                          <span>WhatsApp com país e DDD</span>
+                          <input
+                            defaultValue={profile?.whatsapp_e164 ?? "+55"}
+                            inputMode="tel"
+                            name="whatsapp"
+                            placeholder="+55 11 99999-9999"
+                            required
+                          />
+                        </label>
+                        <button className={styles.savePermissions} type="submit">Salvar WhatsApp</button>
+                      </form>
+                    </details>
+                  ) : null}
 
                   {isOwner && member.role === "manager" && member.status !== "revoked" ? (
                     <details className={styles.permissions}>
@@ -259,7 +339,7 @@ export default async function TeamPage() {
                   <td>{invitation.kind === "general" ? "Link geral" : "Individual"}</td>
                   <td>{invitation.email ?? "Qualquer corretor"}</td>
                   <td>{invitation.used_count}/{invitation.max_uses}</td>
-                  <td>{new Intl.DateTimeFormat("pt-BR").format(new Date(invitation.expires_at))}</td>
+                  <td>{invitation.expires_at ? new Intl.DateTimeFormat("pt-BR").format(new Date(invitation.expires_at)) : "Sem expiração"}</td>
                   <td>{invitation.status}</td>
                 </tr>
               ))}

@@ -13,8 +13,10 @@ import {
   addAvailabilityAction,
   addAvailabilityExceptionAction,
   createCallAction,
+  declineOfferAction,
   distributeCallAction,
   recordCallResultAction,
+  returnCallAction,
   updateCallSettingsAction,
   updateCallVideoLinkAction,
 } from "./actions";
@@ -163,6 +165,7 @@ export default async function AgendaPage({
                   />
                   <button>Aceitar call</button>
                 </form>
+                <form action={declineOfferAction}><input name="callId" type="hidden" value={call.id} /><input name="offerId" type="hidden" value={offer.id} /><button>Recusar</button></form>
               </article>
             );
           })}
@@ -219,6 +222,7 @@ export default async function AgendaPage({
                       <small>Link pendente</small>
                     ) : null}
                     <b>{call.status}</b>
+                    {call.status === "assigned" && call.assigned_membership_id === viewer.membership?.id && !past ? <form action={returnCallAction}><input name="callId" type="hidden" value={call.id} /><button>Devolver call</button></form> : null}
                     {canSetLink ? (
                       <details className={styles.result}>
                         <summary>

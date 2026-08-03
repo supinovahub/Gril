@@ -16,6 +16,9 @@ values
   ('10000000-0000-0000-0000-000000000004', 'authenticated', 'authenticated', 'gate-pending@invalid.test', '', now(), '{}', '{"full_name":"Gate Pending"}', now(), now()),
   ('10000000-0000-0000-0000-000000000005', 'authenticated', 'authenticated', 'gate-no-membership@invalid.test', '', now(), '{}', '{"full_name":"Gate No Membership"}', now(), now());
 
+update public.profiles set whatsapp_e164 = '+5511988000002'
+where user_id = '10000000-0000-0000-0000-000000000002';
+
 insert into public.organizations (id, name, slug)
 values
   ('20000000-0000-0000-0000-000000000001', 'Gate Org A', 'gate-org-a'),

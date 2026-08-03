@@ -22,6 +22,7 @@
 .promptForm label { display: grid; gap: 7px; }
 .promptForm label span { color: var(--ink-muted); font-size: 10px; font-weight: 700; }
 .promptForm textarea { width: 100%; padding: 13px; border: 1px solid var(--border); border-radius: 10px; background: #fffcf8; font-family: "Cascadia Code",Consolas,monospace; font-size: 10px; line-height: 1.55; resize: vertical; }
+.promptForm input,.promptForm select { width: 100%; padding: 10px; border: 1px solid var(--border); border-radius: 9px; background: white; font: inherit; }
 .promptForm p,.notice { margin: 0; color: var(--ink-muted); font-size: 9px; line-height: 1.55; }
 .promptForm button,.draftRow button,.modelRow button { min-height: 36px; padding: 0 13px; border: 1px solid var(--accent-dark); border-radius: 8px; background: var(--accent); color: white; font-size: 9px; font-weight: 720; }
 .draftRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 18px; border-top: 1px solid #eee7de; }

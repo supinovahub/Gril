@@ -13,6 +13,9 @@ values
   ('15000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'qualification-owner@invalid.test', '', now(), '{}', '{"full_name":"Qualification Owner"}', now(), now()),
   ('15000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'qualification-broker@invalid.test', '', now(), '{}', '{"full_name":"Qualification Broker"}', now(), now());
 
+update public.profiles set whatsapp_e164 = '+5511988000052'
+where user_id = '15000000-0000-0000-0000-000000000002';
+
 insert into public.organizations (id, name, slug)
 values ('25000000-0000-0000-0000-000000000001', 'Qualification Gate Org', 'qualification-gate-org');
 

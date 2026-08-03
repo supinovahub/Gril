@@ -37,12 +37,14 @@ export async function GET(request: Request, { params }: RouteParams) {
   const admin = createAdminClient();
   const { data: connection } = await admin
     .from("whatsapp_connections")
-    .select("provider,status")
+    .select("org_id,provider,status")
     .eq("id", connectionId)
     .maybeSingle();
   if (!connection || connection.provider !== "meta_cloud" || connection.status === "revoked") {
     return new Response("Not found", { status: 404 });
   }
+  const { data: organization } = await admin.from("organizations").select("status").eq("id", connection.org_id).maybeSingle();
+  if (!organization || organization.status === "archived") return new Response("Not found", { status: 404 });
   const expected = metaWebhookVerifyToken(connectionId);
   if (query.get("hub.verify_token") !== expected) return new Response("Forbidden", { status: 403 });
   return new Response(query.get("hub.challenge") ?? "", { status: 200 });
@@ -67,6 +69,10 @@ export async function POST(request: Request, { params }: RouteParams) {
     .maybeSingle();
   if (!connection || connection.status !== "active" || !connection.inbound_enabled || !connection.integration_account_id) {
     return NextResponse.json({ error: "connection_not_active" }, { status: 404 });
+  }
+  const { data: organization } = await admin.from("organizations").select("status").eq("id", connection.org_id).maybeSingle();
+  if (!organization || organization.status === "archived") {
+    return NextResponse.json({ error: "organization_archived" }, { status: 410 });
   }
   const { data: secret, error: secretError } = await admin.rpc("get_integration_secret", {
     p_integration_account_id: connection.integration_account_id,
@@ -113,6 +119,7 @@ export async function POST(request: Request, { params }: RouteParams) {
 
   let ingested = 0;
   let duplicates = 0;
+  let operational = 0;
   for (const status of normalized.statuses) {
     await admin.rpc("apply_provider_message_status", {
       p_connection_id: connectionId,
@@ -134,6 +141,17 @@ export async function POST(request: Request, { params }: RouteParams) {
     });
   }
   for (const message of normalized.inbound) {
+    const { data: operationalResult, error: operationalError } = await admin.rpc("process_operational_whatsapp_reply", {
+      p_body: message.body ?? "",
+      p_connection_id: connectionId,
+      p_external_event_id: message.externalEventId,
+      p_from_e164: message.fromE164,
+    });
+    if (operationalError) return NextResponse.json({ error: "operational_reply_rejected" }, { status: 409 });
+    if (operationalResult && typeof operationalResult === "object" && !Array.isArray(operationalResult) && operationalResult.operational === true) {
+      operational += 1;
+      continue;
+    }
     const { data, error } = await admin
       .from("webhook_ingest_requests")
       .insert({
@@ -172,5 +190,5 @@ export async function POST(request: Request, { params }: RouteParams) {
       }
     }
   }
-  return NextResponse.json({ received: true, ingested, duplicates, statuses: normalized.statuses.length, mutations: normalized.mutations.length });
+  return NextResponse.json({ received: true, ingested, duplicates, operational, statuses: normalized.statuses.length, mutations: normalized.mutations.length });
 }

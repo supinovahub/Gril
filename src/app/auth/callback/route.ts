@@ -1,13 +1,17 @@
 import { NextResponse, type NextRequest } from "next/server";
 
-import { safeNextPath } from "@/lib/auth/safe-next";
+import {
+  PENDING_INVITATION_COOKIE,
+  resolveAuthNext,
+} from "@/lib/auth/pending-invitation";
 import { createClient } from "@/lib/supabase/server";
 
 export async function GET(request: NextRequest) {
   const code = request.nextUrl.searchParams.get("code");
-  const next = safeNextPath(
+  const next = resolveAuthNext(
     request.nextUrl.searchParams.get("next"),
-    "/aguardando-aprovacao",
+    request.cookies.get(PENDING_INVITATION_COOKIE)?.value,
+    "/onboarding",
   );
 
   if (code) {

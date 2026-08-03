@@ -1,9 +1,8 @@
 import { redirect } from "next/navigation";
 
-import { createClient } from "@/lib/supabase/server";
+import { getViewer } from "@/lib/auth/session";
 
 export default async function HomePage() {
-  const supabase = await createClient();
-  const { data } = await supabase.auth.getClaims();
-  redirect(data?.claims?.sub ? "/app" : "/login");
+  const viewer = await getViewer();
+  redirect(viewer ? (viewer.platformRole ? "/platform" : "/app") : "/login");
 }

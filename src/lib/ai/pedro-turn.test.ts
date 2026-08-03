@@ -52,6 +52,7 @@ describe("pedroTurnSchema", () => {
       escalation: null,
       qualification_updates: [],
       request_project_match: false,
+      project_media_request: null,
       call_request: null,
       followup_strategy: "none",
       conversation_summary: { summary: "Lead pediu informações iniciais.", facts: [] },
@@ -72,10 +73,25 @@ describe("pedroTurnSchema", () => {
         confidence: 0.9,
       }],
       request_project_match: false,
+      project_media_request: null,
       call_request: null,
       followup_strategy: "short",
       conversation_summary: { summary: "Lead confirmou orçamento.", facts: ["Orçamento confirmado"] },
     })).toThrow();
+  });
+
+  it("aceita pedido estruturado de mídia e cadência de compra futura", () => {
+    expect(pedroTurnSchema.parse({
+      outcome: "reply",
+      reply: "Posso enviar mais fotos ou o book completo. O que você prefere?",
+      escalation: null,
+      qualification_updates: [],
+      request_project_match: false,
+      project_media_request: { project_id: "4c28007d-81bd-4c42-8b3e-7cc6e565b2e8", kind: "more_photos" },
+      call_request: null,
+      followup_strategy: "future",
+      conversation_summary: { summary: "Lead pediu material e informou compra futura.", facts: [] },
+    })).toMatchObject({ followup_strategy: "future", project_media_request: { kind: "more_photos" } });
   });
 });
 

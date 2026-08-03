@@ -13,6 +13,9 @@ values
   ('12000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'inbox-owner@invalid.test', '', now(), '{}', '{"full_name":"Inbox Owner"}', now(), now()),
   ('12000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'inbox-broker@invalid.test', '', now(), '{}', '{"full_name":"Inbox Broker"}', now(), now());
 
+update public.profiles set whatsapp_e164 = '+5511988000022'
+where user_id = '12000000-0000-0000-0000-000000000002';
+
 insert into public.organizations (id, name, slug)
 values ('22000000-0000-0000-0000-000000000001', 'Inbox Gate Org', 'inbox-gate-org');
 

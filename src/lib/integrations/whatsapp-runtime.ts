@@ -389,6 +389,73 @@ export async function sendWhatsappText(input: {
   return { providerMessageId: result.data.messages[0].id, providerTimestamp: new Date().toISOString() };
 }
 
+export async function sendWhatsappMedia(input: {
+  provider: WhatsappProvider;
+  endpointUrl: string;
+  secret: string;
+  externalPhoneNumberId?: string | null;
+  toE164: string;
+  caption: string;
+  messageId: string;
+  mediaType: "image" | "document";
+  mediaUrl: string;
+  mimeType: string;
+  fileName?: string;
+}) {
+  const mediaUrl = new URL(input.mediaUrl);
+  if (mediaUrl.protocol !== "https:") {
+    throw new RuntimeProviderError("approved_media_url_unsafe", "A URL temporária da mídia não usa HTTPS.");
+  }
+  if (input.mediaType === "image" && !["image/jpeg", "image/png"].includes(input.mimeType)) {
+    throw new RuntimeProviderError("approved_image_type_invalid", "A imagem aprovada não é JPEG ou PNG.");
+  }
+  if (input.mediaType === "document" && input.mimeType !== "application/pdf") {
+    throw new RuntimeProviderError("approved_document_type_invalid", "O documento aprovado não é PDF.");
+  }
+
+  if (input.provider === "uazapi") {
+    const response = await runtimeFetch(`${input.endpointUrl.replace(/\/$/, "")}/send/media`, {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json", token: input.secret },
+      body: JSON.stringify({
+        number: input.toE164.replace(/^\+/, ""),
+        type: input.mediaType,
+        file: input.mediaUrl,
+        text: input.caption.slice(0, 1024),
+        ...(input.mediaType === "document" ? {
+          docName: (input.fileName || "book.pdf").slice(0, 120),
+          mimetype: input.mimeType,
+        } : {}),
+        track_id: input.messageId,
+      }),
+    });
+    const result = record(response);
+    const providerMessageId = text(result?.messageid) ?? text(result?.messageId) ?? text(result?.id) ?? text(record(result?.key)?.id);
+    if (!providerMessageId) throw new RuntimeProviderError("provider_ack_missing", "A Uazapi não devolveu o identificador da mídia.");
+    return { providerMessageId, providerTimestamp: new Date().toISOString() };
+  }
+
+  const parsedSecret = parseMetaSecret(input.secret);
+  if (!input.externalPhoneNumberId) throw new RuntimeProviderError("meta_phone_id_missing", "O Phone Number ID da Meta não está configurado.");
+  const media = input.mediaType === "image"
+    ? { link: input.mediaUrl, caption: input.caption.slice(0, 1024) }
+    : { link: input.mediaUrl, filename: (input.fileName || "book.pdf").slice(0, 120), caption: input.caption.slice(0, 1024) };
+  const response = await runtimeFetch(`${input.endpointUrl.replace(/\/$/, "")}/${input.externalPhoneNumberId}/messages`, {
+    method: "POST",
+    headers: { "content-type": "application/json", accept: "application/json", authorization: `Bearer ${parsedSecret.accessToken}` },
+    body: JSON.stringify({
+      messaging_product: "whatsapp",
+      recipient_type: "individual",
+      to: input.toE164.replace(/^\+/, ""),
+      type: input.mediaType,
+      [input.mediaType]: media,
+    }),
+  });
+  const result = z.object({ messages: z.array(z.object({ id: z.string().min(1) })).min(1) }).safeParse(response);
+  if (!result.success) throw new RuntimeProviderError("provider_ack_missing", "A Meta não devolveu o identificador da mídia.");
+  return { providerMessageId: result.data.messages[0].id, providerTimestamp: new Date().toISOString() };
+}
+
 async function downloadBinary(url: string, headers: HeadersInit) {
   let response: Response;
   try {

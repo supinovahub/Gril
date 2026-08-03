@@ -6,8 +6,10 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireActiveViewer } from "@/lib/auth/session";
+import type { Json } from "@/lib/database.types";
 import { validateOpenAiCredential } from "@/lib/integrations/openai";
 import { IntegrationProviderError } from "@/lib/integrations/provider-http";
+import { analyzePersonaSample, maskPersonaSample } from "@/lib/integrations/persona-analysis";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
@@ -154,6 +156,20 @@ export async function publishPersonaAction(formData: FormData) {
   const viewer = await requireActiveViewer();
   if (viewer.membership?.role !== "owner") return;
   const supabase = await createClient();
+  const { data: version } = await supabase
+    .from("persona_versions")
+    .select("persona_id")
+    .eq("id", versionId.data)
+    .eq("org_id", viewer.organization!.id)
+    .maybeSingle();
+  if (!version) return;
+  const [{ count: sampleCount }, { count: anySamples }] = await Promise.all([
+    supabase.from("persona_samples").select("id", { count: "exact", head: true }).eq("persona_id", version.persona_id).eq("status", "confirmed"),
+    supabase.from("persona_samples").select("id", { count: "exact", head: true }).eq("persona_id", version.persona_id).neq("status", "purged"),
+  ]);
+  if ((anySamples ?? 0) > 0 && (sampleCount ?? 0) < 10) {
+    redirect(`/app/pedro?erro=${encodeURIComponent("Confirme pelo menos 10 amostras antes de publicar essa persona.")}`);
+  }
   const { error } = await supabase.from("persona_publish_requests").insert({
     org_id: viewer.organization!.id,
     persona_version_id: versionId.data,
@@ -162,6 +178,39 @@ export async function publishPersonaAction(formData: FormData) {
   if (error) return;
   revalidatePath("/app/pedro");
   redirect("/app/pedro?sucesso=persona-publicada");
+}
+
+export async function addPersonaSampleAction(formData: FormData) {
+  const parsed = z.object({ personaId: z.string().uuid(), sample: z.string().trim().min(10).max(20000) }).safeParse({ personaId: formData.get("personaId"), sample: formData.get("sample") });
+  if (!parsed.success) redirect(`/app/pedro?erro=${encodeURIComponent("A amostra deve ter entre 10 e 20.000 caracteres.")}`);
+  const viewer = await requireActiveViewer(); const supabase = await createClient();
+  const { count } = await supabase.from("persona_samples").select("id", { count: "exact", head: true }).eq("persona_id", parsed.data.personaId).neq("status", "purged");
+  if ((count ?? 0) >= 30) redirect(`/app/pedro?erro=${encodeURIComponent("O limite é de 30 amostras por persona.")}`);
+  const maskedText = maskPersonaSample(parsed.data.sample);
+  let extraction: Json = {};
+  try {
+    const admin = createAdminClient();
+    const { data: model } = await admin.from("model_profiles").select("model_identifier,integration_account_id").eq("org_id", viewer.organization!.id).eq("status", "active").eq("is_default", true).maybeSingle();
+    if (model?.integration_account_id) {
+      const { data: apiKey } = await admin.rpc("get_integration_secret", { p_integration_account_id: model.integration_account_id });
+      if (apiKey) extraction = await analyzePersonaSample({ apiKey, model: model.model_identifier, maskedText });
+    }
+  } catch { extraction = { pending_manual_review: true }; }
+  const { error } = await supabase.from("persona_samples").insert({ org_id: viewer.organization!.id, persona_id: parsed.data.personaId, raw_text: parsed.data.sample, masked_text: maskedText, extraction, status: "confirmed", created_by: viewer.userId });
+  if (error) redirect(`/app/pedro?erro=${encodeURIComponent("Não foi possível salvar a amostra.")}`);
+  revalidatePath("/app/pedro"); redirect("/app/pedro?sucesso=amostra-analisada");
+}
+
+export async function clonePersonaAction(formData: FormData) {
+  const parsed = z.object({ sourcePersonaId: z.string().uuid(), name: z.string().trim().min(2).max(120), code: z.string().trim().regex(/^[a-z0-9_]+$/) }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect(`/app/pedro?erro=${encodeURIComponent("Informe nome e código válido para a persona.")}`);
+  const viewer = await requireActiveViewer(); const supabase = await createClient();
+  const { data: source } = await supabase.from("persona_versions").select("*").eq("persona_id", parsed.data.sourcePersonaId).eq("status", "published").maybeSingle();
+  if (!source) redirect(`/app/pedro?erro=${encodeURIComponent("A persona de origem não possui versão publicada.")}`);
+  const { data: persona, error } = await supabase.from("personas").insert({ org_id: viewer.organization!.id, code: parsed.data.code, name: parsed.data.name, identity_name: parsed.data.name, created_by: viewer.userId }).select("id").single();
+  if (error) redirect(`/app/pedro?erro=${encodeURIComponent("Nome ou código já utilizado.")}`);
+  await supabase.from("persona_versions").insert({ org_id: viewer.organization!.id, persona_id: persona.id, version: 1, status: "draft", identity: source.identity, style: source.style, boundaries: source.boundaries, escalation_rules: source.escalation_rules, examples: source.examples, compiled_prompt: source.compiled_prompt, checksum: source.checksum, source_version_id: source.id, created_by: viewer.userId });
+  revalidatePath("/app/pedro"); redirect("/app/pedro?sucesso=persona-clonada");
 }
 
 export async function changeGlobalAiModeAction(formData: FormData) {
@@ -181,6 +230,34 @@ export async function changeGlobalAiModeAction(formData: FormData) {
     }
   }
 
-  await supabase.from("organization_settings").update({ ai_global_mode: mode.data }).eq("org_id", viewer.organization!.id);
+  const { error } = await supabase.from("organization_settings").update({ ai_global_mode: mode.data }).eq("org_id", viewer.organization!.id);
+  if (error) {
+    const reason = error.message.includes("institutional") ? "Complete a identidade institucional."
+      : error.message.includes("knowledge_or_rules") ? "Publique persona, regras, qualificação e ao menos um empreendimento válido."
+      : error.message.includes("models") ? "Configure modelo principal e fallback aprovado."
+      : error.message.includes("channel_unhealthy") ? "Teste um WhatsApp inbound ativo e saudável nos últimos 15 minutos."
+      : error.message.includes("regression") ? "Execute os 100 casos reais: mínimo de 90% geral e nenhum erro crítico."
+      : "O banco recusou a mudança de modo por um gate de segurança.";
+    redirect(`/app/pedro?erro=${encodeURIComponent(reason)}`);
+  }
   revalidatePath("/app/pedro");
+}
+
+export async function configureFallbackModelAction(formData: FormData) {
+  const profileId = z.string().uuid().safeParse(formData.get("fallbackModelProfileId"));
+  if (!profileId.success) redirect(`/app/pedro?erro=${encodeURIComponent("Selecione um modelo secundário aprovado.")}`);
+  const viewer = await requireActiveViewer();
+  if (viewer.membership?.role !== "owner") return;
+  const supabase = await createClient();
+  const { data: profile } = await supabase.from("model_profiles")
+    .select("id,integration_account_id,secret_reference,is_default")
+    .eq("id", profileId.data).eq("org_id", viewer.organization!.id).maybeSingle();
+  if (!profile?.integration_account_id || !profile.secret_reference || profile.is_default) {
+    redirect(`/app/pedro?erro=${encodeURIComponent("O fallback deve ser diferente do principal e possuir chave validada.")}`);
+  }
+  const { error } = await supabase.from("organization_settings")
+    .update({ fallback_model_profile_id: profile.id }).eq("org_id", viewer.organization!.id);
+  if (error) redirect(`/app/pedro?erro=${encodeURIComponent("Não foi possível salvar o fallback.")}`);
+  revalidatePath("/app/pedro");
+  redirect("/app/pedro?sucesso=fallback-configurado");
 }

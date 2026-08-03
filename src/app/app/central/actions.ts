@@ -20,6 +20,23 @@ export async function claimEscalationAction(formData:FormData){
   if(error)redirect("/app/central?erro=escalada-indisponivel"); revalidatePath("/app/central"); redirect("/app/central");
 }
 
+export async function markNotificationReadAction(formData: FormData) {
+  const id = z.string().uuid().safeParse(formData.get("notificationId"));
+  if (!id.success) redirect("/app/central");
+
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("notifications")
+    .update({ status: "read", read_at: new Date().toISOString() })
+    .eq("id", id.data)
+    .eq("recipient_membership_id", viewer.membership!.id);
+
+  if (error) redirect("/app/central?erro=notificacao-indisponivel");
+  revalidatePath("/app/central");
+  redirect("/app/central");
+}
+
 export async function registerPushSubscriptionAction(input: unknown) {
   const parsed=z.object({endpoint:z.string().url().max(4000),keys:z.object({p256dh:z.string().min(20).max(1000),auth:z.string().min(10).max(500)}),userAgent:z.string().max(500).optional()}).safeParse(input);
   if(!parsed.success)return{ok:false,message:"Assinatura push inválida."};

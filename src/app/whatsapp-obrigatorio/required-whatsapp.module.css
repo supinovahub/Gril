@@ -1,0 +1,14 @@
+.page { display: grid; min-height: 100vh; place-items: center; padding: 28px; }
+.panel { width: min(100%, 540px); padding: clamp(28px, 6vw, 48px); border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow); }
+.panel > svg { color: var(--accent); }
+.eyebrow { margin: 18px 0 8px; color: var(--accent-dark); font-size: 10px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
+.panel h1 { margin: 0; font-size: clamp(30px, 6vw, 42px); letter-spacing: -.045em; line-height: 1.08; }
+.lead { margin: 16px 0 24px; color: var(--ink-muted); line-height: 1.65; }
+.form { display: grid; gap: 10px; }
+.form label { display: grid; gap: 8px; font-size: 12px; font-weight: 750; }
+.form input { width: 100%; height: 46px; padding: 0 12px; border: 1px solid var(--border); border-radius: 9px; background: #fff; }
+.form button { min-height: 46px; margin-top: 6px; border: 1px solid var(--accent); border-radius: 9px; background: var(--accent); color: #fff; font-weight: 750; }
+.form button:disabled { opacity: .6; }
+.form small { color: var(--danger); }
+.error { padding: 11px 13px; margin: 0; border: 1px solid #e6c0ba; border-radius: 10px; background: #fff6f4; color: var(--danger); font-size: 12px; }
+.signOut { width: 100%; margin-top: 10px; border: 0; background: transparent; color: var(--ink-muted); text-decoration: underline; }

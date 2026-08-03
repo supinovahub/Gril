@@ -1,5 +1,6 @@
 "use server";
 
+import { createHash } from "node:crypto";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { z } from "zod";
@@ -64,15 +65,22 @@ export async function importCampaignAction(formData: FormData) {
   }
   const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   if (lines.length < 2) campaignRedirect("Informe cabeçalho e ao menos um contato.");
-  const header = parseCsvLine(lines[0]).map((item) => item.toLowerCase());
-  const nameIndex = header.findIndex((item) => ["name", "nome"].includes(item));
-  const phoneIndex = header.findIndex((item) => ["phone", "telefone", "whatsapp"].includes(item));
-  if (nameIndex < 0 || phoneIndex < 0) campaignRedirect("O CSV precisa das colunas nome/name e telefone/phone.");
+  const rawHeader = parseCsvLine(lines[0]);
+  const header = rawHeader.map((item) => item.toLowerCase());
+  const requestedName = String(formData.get("nameColumn") ?? "").trim().toLowerCase();
+  const requestedPhone = String(formData.get("phoneColumn") ?? "").trim().toLowerCase();
+  const nameIndex = requestedName ? header.indexOf(requestedName) : header.findIndex((item) => ["name", "nome"].includes(item));
+  const phoneIndex = requestedPhone ? header.indexOf(requestedPhone) : header.findIndex((item) => ["phone", "telefone", "whatsapp"].includes(item));
+  if (nameIndex < 0 || phoneIndex < 0 || nameIndex === phoneIndex) campaignRedirect("Mapeie colunas diferentes para nome e telefone.");
   const rows = lines.slice(1).map((line) => { const values = parseCsvLine(line); return { name: values[nameIndex] ?? "", phone: values[phoneIndex] ?? "" }; });
   if (rows.length > 500) campaignRedirect("O MVP aceita até 500 contatos por campanha.");
   const viewer = await requireActiveViewer();
   const supabase = await createClient();
-  const { error } = await supabase.from("campaign_import_requests").insert({ org_id: viewer.organization!.id, campaign_id: campaignId.data, filename, rows, actor_user_id: viewer.userId });
+  const { error } = await supabase.from("campaign_import_requests").insert({
+    org_id: viewer.organization!.id, campaign_id: campaignId.data, filename, rows,
+    mapping: { name: rawHeader[nameIndex], phone: rawHeader[phoneIndex] },
+    file_sha256: createHash("sha256").update(text).digest("hex"), actor_user_id: viewer.userId,
+  });
   if (error) campaignRedirect("A importação foi rejeitada. Verifique estado, telefones e duplicidades.");
   revalidatePath("/app/campanhas");
   campaignRedirect("Base processada. Revise válidos, erros e duplicidades.", "sucesso");

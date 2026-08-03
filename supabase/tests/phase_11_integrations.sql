@@ -15,6 +15,9 @@ values
   ('18000000-0000-0000-0000-000000000001', 'authenticated', 'authenticated', 'integration-owner@invalid.test', '', now(), '{}', '{"full_name":"Integration Owner"}', now(), now()),
   ('18000000-0000-0000-0000-000000000002', 'authenticated', 'authenticated', 'integration-broker@invalid.test', '', now(), '{}', '{"full_name":"Integration Broker"}', now(), now());
 
+update public.profiles set whatsapp_e164 = '+5511988000082'
+where user_id = '18000000-0000-0000-0000-000000000002';
+
 insert into public.organizations (id, name, slug)
 values ('28000000-0000-0000-0000-000000000001', 'Integration Gate Org', 'integration-gate-org');
 

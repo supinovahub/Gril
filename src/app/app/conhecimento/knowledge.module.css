@@ -33,5 +33,12 @@
 .check { display: flex !important; grid-template-columns: auto 1fr; align-items: center; }
 .check input { width: auto; }
 .warning { display: flex; gap: 8px; align-items: flex-start; background: #fff7e7; color: #795817; font-size: 12px; line-height: 1.45; }
+.helper { margin: 0; color: var(--ink-muted); font-size: 12px; line-height: 1.5; }
+.embeddedForm { display: grid; gap: 12px; }
+.mediaList { display: grid; gap: 8px; }
+.mediaList > div { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px; border-radius: 10px; background: var(--surface-muted); }
+.mediaList span { display: grid; gap: 2px; }
+.mediaList small { color: var(--ink-muted); text-transform: uppercase; }
+.mediaList button { background: transparent; color: #9d2e22; border: 1px solid #e6c8c3; padding: 7px 9px; }
 @media (max-width: 1050px) { .layout { grid-template-columns: 1fr; } }
 @media (max-width: 720px) { .readiness, .two { grid-template-columns: 1fr; } .catalog article { grid-template-columns: auto 1fr; } }

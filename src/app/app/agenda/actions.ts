@@ -6,6 +6,7 @@ import { z } from "zod";
 
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { zonedLocalDateTimeToIso } from "@/lib/time/zoned-local";
 
 function agendaRedirect(message: string, kind: "erro" | "sucesso" = "erro"): never {
   redirect(`/app/agenda?${kind}=${encodeURIComponent(message)}`);
@@ -45,14 +46,16 @@ export async function addAvailabilityExceptionAction(formData: FormData) {
     availability: z.enum(["available", "unavailable"]), reason: z.string().trim().max(500).optional(),
   }).safeParse({ startsAt: formData.get("startsAt"), endsAt: formData.get("endsAt"), availability: formData.get("availability"), reason: formData.get("reason") || undefined });
   if (!parsed.success) agendaRedirect("Revise o período excepcional.");
-  const startsAt = new Date(`${parsed.data.startsAt}:00-03:00`); const endsAt = new Date(`${parsed.data.endsAt}:00-03:00`);
-  if (Number.isNaN(startsAt.getTime()) || Number.isNaN(endsAt.getTime()) || endsAt <= startsAt) agendaRedirect("O fim deve ser posterior ao início.");
   const viewer = await requireActiveViewer(); const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
   if (!viewer.membership || !operation) agendaRedirect("Operação não encontrada.");
+  let startsAt: string; let endsAt: string;
+  try { startsAt = zonedLocalDateTimeToIso(parsed.data.startsAt, operation.timezone); endsAt = zonedLocalDateTimeToIso(parsed.data.endsAt, operation.timezone); }
+  catch { agendaRedirect("Data ou fuso inválido."); }
+  if (new Date(endsAt) <= new Date(startsAt)) agendaRedirect("O fim deve ser posterior ao início.");
   const supabase = await createClient();
   const { error } = await supabase.from("availability_exceptions").insert({
     org_id: viewer.organization!.id, operation_id: operation.id, membership_id: viewer.membership.id,
-    starts_at: startsAt.toISOString(), ends_at: endsAt.toISOString(), availability: parsed.data.availability,
+    starts_at: startsAt, ends_at: endsAt, availability: parsed.data.availability,
     reason: parsed.data.reason ?? null, created_by: viewer.userId,
   });
   if (error) agendaRedirect("Não foi possível salvar a exceção de agenda.");
@@ -63,12 +66,13 @@ export async function createCallAction(formData: FormData) {
   const parsed = z.object({ opportunityRef: z.string().regex(/^[0-9a-f-]{36}:[1-9][0-9]*$/), startsAt: z.string().min(16), format: z.enum(["video","phone","unknown"]), leadConfirmed: z.literal("on") }).safeParse(Object.fromEntries(formData));
   if (!parsed.success) agendaRedirect("Revise oportunidade, data e confirmação do lead.");
   const [opportunityId, versionText] = parsed.data.opportunityRef.split(":");
-  const startsAt = new Date(`${parsed.data.startsAt}:00-03:00`);
-  if (Number.isNaN(startsAt.getTime())) agendaRedirect("Data inválida.");
   const viewer = await requireActiveViewer(); const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
   if (!operation) agendaRedirect("Operação não encontrada.");
+  let startsAt: string;
+  try { startsAt = zonedLocalDateTimeToIso(parsed.data.startsAt, operation.timezone); }
+  catch { agendaRedirect("Data ou fuso inválido."); }
   const supabase = await createClient();
-  const { error } = await supabase.from("call_creation_requests").insert({ org_id: viewer.organization!.id, operation_id: operation.id, opportunity_id: opportunityId, starts_at: startsAt.toISOString(), format: parsed.data.format, lead_confirmed: true, expected_opportunity_version: Number(versionText), actor_user_id: viewer.userId });
+  const { error } = await supabase.from("call_creation_requests").insert({ org_id: viewer.organization!.id, operation_id: operation.id, opportunity_id: opportunityId, starts_at: startsAt, format: parsed.data.format, lead_confirmed: true, expected_opportunity_version: Number(versionText), actor_user_id: viewer.userId });
   if (error) agendaRedirect(error.message.includes("too_close") ? "Use pelo menos 10 minutos; abaixo de uma hora a call irá para o gestor." : "Não foi possível separar o horário.");
   revalidatePath("/app/agenda"); agendaRedirect("Horário separado. Inicie a distribuição.", "sucesso");
 }
@@ -103,6 +107,24 @@ export async function acceptOfferAction(formData: FormData) {
   const { error } = await supabase.from("call_offer_accept_requests").insert({ org_id: viewer.organization!.id, call_id: parsed.data.callId, offer_id: parsed.data.offerId, expected_call_version: parsed.data.expectedVersion, actor_user_id: viewer.userId });
   if (error) agendaRedirect("Esta oferta já venceu, foi aceita ou conflita com sua agenda.");
   revalidatePath("/app/agenda"); revalidatePath("/app/leads"); agendaRedirect("Call atribuída a você.", "sucesso");
+}
+
+export async function declineOfferAction(formData: FormData) {
+  const parsed = z.object({ callId: z.string().uuid(), offerId: z.string().uuid() }).safeParse({ callId: formData.get("callId"), offerId: formData.get("offerId") });
+  if (!parsed.success) agendaRedirect("Oferta inválida.");
+  const viewer = await requireActiveViewer(); const supabase = await createClient();
+  const { error } = await supabase.from("call_offer_response_requests").insert({ org_id: viewer.organization!.id, call_id: parsed.data.callId, offer_id: parsed.data.offerId, action: "decline", actor_user_id: viewer.userId });
+  if (error) agendaRedirect("A oferta já venceu ou não pode mais ser recusada.");
+  revalidatePath("/app/agenda"); agendaRedirect("Oferta recusada; a distribuição continuará automaticamente.", "sucesso");
+}
+
+export async function returnCallAction(formData: FormData) {
+  const callId = z.string().uuid().safeParse(formData.get("callId"));
+  if (!callId.success) agendaRedirect("Call inválida.");
+  const viewer = await requireActiveViewer(); const supabase = await createClient();
+  const { error } = await supabase.from("call_offer_response_requests").insert({ org_id: viewer.organization!.id, call_id: callId.data, offer_id: null, action: "return", actor_user_id: viewer.userId });
+  if (error) agendaRedirect("A call não está atribuída a você ou não pode mais ser devolvida.");
+  revalidatePath("/app/agenda"); agendaRedirect("Call devolvida e redistribuição iniciada.", "sucesso");
 }
 
 export async function recordCallResultAction(formData: FormData) {

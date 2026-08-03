@@ -2,10 +2,12 @@
 
 import { createHash, randomBytes } from "node:crypto";
 import { revalidatePath } from "next/cache";
+import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { canManageTeam, requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { isWhatsAppConflict, requiredWhatsAppSchema } from "@/lib/whatsapp";
 import { permissionOptions } from "./constants";
 
 const zeroUuid = "00000000-0000-0000-0000-000000000000";
@@ -19,16 +21,13 @@ export type InviteState = {
 
 const inviteSchema = z
   .object({
-    kind: z.enum(["general", "individual"]),
-    email: z.string().trim().toLowerCase().optional(),
+    email: z.string().trim().toLowerCase().email(),
     role: z.enum(["manager", "broker"]),
     operationId: z.string().uuid().optional().or(z.literal("")),
-    expiresDays: z.coerce.number().int().min(1).max(30),
-    maxUses: z.coerce.number().int().min(1).max(1000),
   })
   .refine(
-    (data) => data.kind === "general" || z.string().email().safeParse(data.email).success,
-    { path: ["email"], message: "Informe o e-mail do convite individual." },
+    (data) => data.role === "manager" || Boolean(data.operationId),
+    { path: ["operationId"], message: "Escolha ao menos a operação do corretor." },
   );
 
 const changeSchema = z.object({
@@ -42,12 +41,9 @@ export async function createInvitationAction(
   formData: FormData,
 ): Promise<InviteState> {
   const parsed = inviteSchema.safeParse({
-    kind: formData.get("kind"),
-    email: formData.get("email") || undefined,
+    email: formData.get("email"),
     role: formData.get("role"),
     operationId: formData.get("operationId") || "",
-    expiresDays: formData.get("expiresDays"),
-    maxUses: formData.get("maxUses"),
   });
 
   if (!parsed.success) {
@@ -60,7 +56,7 @@ export async function createInvitationAction(
   }
 
   const data = parsed.data;
-  const role = data.kind === "general" ? "broker" : data.role;
+  const role = data.role;
 
   if (role === "manager" && viewer.membership?.role !== "owner") {
     return { status: "error", message: "Somente o dono pode convidar gestores." };
@@ -73,22 +69,20 @@ export async function createInvitationAction(
 
   const token = randomBytes(32).toString("base64url");
   const tokenHash = createHash("sha256").update(token).digest("hex");
-  const expiresAt = new Date(
-    Date.now() + data.expiresDays * 24 * 60 * 60 * 1000,
-  ).toISOString();
+  const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString();
   const supabase = await createClient();
 
   const { data: invitation, error } = await supabase
     .from("invitation_links")
     .insert({
       org_id: viewer.organization!.id,
-      operation_id: data.kind === "individual" ? operationId : null,
-      kind: data.kind,
-      email: data.kind === "individual" ? data.email : null,
+      operation_id: role === "broker" ? operationId : null,
+      kind: "individual",
+      email: data.email,
       role,
       token_hash: tokenHash,
       expires_at: expiresAt,
-      max_uses: data.kind === "general" ? data.maxUses : 1,
+      max_uses: 1,
       created_by: viewer.userId,
     })
     .select("id")
@@ -98,24 +92,11 @@ export async function createInvitationAction(
     return { status: "error", message: "Não foi possível criar o convite." };
   }
 
-  if (data.kind === "general") {
-    await supabase
-      .from("invitation_links")
-      .update({ status: "revoked" })
-      .eq("org_id", viewer.organization!.id)
-      .eq("kind", "general")
-      .eq("status", "active")
-      .neq("id", invitation.id);
-  }
-
   revalidatePath("/app/equipe");
   const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
   return {
     status: "success",
-    message:
-      data.kind === "general"
-        ? "Novo link geral criado; links gerais anteriores foram revogados."
-        : "Convite individual criado.",
+    message: "Convite individual criado. Ele é vinculado ao e-mail, usado uma vez e expira em 7 dias.",
     inviteUrl: `${baseUrl}/convite/${token}`,
   };
 }
@@ -232,4 +213,101 @@ export async function updateMemberCallSettingsAction(membershipId: string, formD
     actor_user_id: viewer.userId,
   });
   revalidatePath("/app/equipe"); revalidatePath("/app/agenda");
+}
+
+export async function updateMemberWhatsappAction(formData: FormData) {
+  const parsed = z.object({
+    membershipId: z.string().uuid(),
+    whatsapp: requiredWhatsAppSchema,
+  }).safeParse(Object.fromEntries(formData));
+
+  if (!parsed.success) redirect("/app/equipe?erro=whatsapp-invalido");
+
+  const viewer = await requireActiveViewer();
+  if (!canManageTeam(viewer)) redirect("/app");
+
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("update_member_whatsapp", {
+    p_membership_id: parsed.data.membershipId,
+    p_whatsapp_e164: parsed.data.whatsapp,
+  });
+
+  if (error) {
+    redirect(`/app/equipe?erro=${isWhatsAppConflict(error) ? "whatsapp-em-uso" : "whatsapp-nao-atualizado"}`);
+  }
+
+  revalidatePath("/app/equipe");
+  redirect("/app/equipe?sucesso=whatsapp-atualizado");
+}
+
+const accessDecisionSchema = z.object({
+  requestId: z.string().uuid(),
+  decision: z.enum(["approve", "reject", "request_correction"]),
+  approvedRole: z.enum(["manager", "broker"]).optional(),
+  publicReason: z.string().trim().max(1000).optional(),
+  confirmation: z.literal("CONFIRMAR AÇÃO"),
+});
+
+export async function decideTeamAccessRequestAction(formData: FormData) {
+  const parsed = accessDecisionSchema.safeParse({
+    requestId: formData.get("requestId"),
+    decision: formData.get("decision"),
+    approvedRole: formData.get("approvedRole") || undefined,
+    publicReason: formData.get("publicReason") || undefined,
+    confirmation: formData.get("confirmation"),
+  });
+  if (!parsed.success) redirect("/app/equipe?erro=confirmacao-invalida");
+  const viewer = await requireActiveViewer();
+  if (!canManageTeam(viewer)) redirect("/app");
+  const operationIds = formData.getAll("operationId").map(String).filter((id) => z.string().uuid().safeParse(id).success);
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("decide_access_request", {
+    p_request_id: parsed.data.requestId,
+    p_decision: parsed.data.decision,
+    p_approved_role: parsed.data.approvedRole,
+    p_operation_ids: operationIds,
+    p_public_reason: parsed.data.publicReason,
+    p_confirmation: parsed.data.confirmation,
+  });
+  if (error) redirect("/app/equipe?erro=decisao-nao-aplicada");
+  revalidatePath("/app/equipe");
+  redirect("/app/equipe?sucesso=solicitacao-atualizada");
+}
+
+export async function rotateOrganizationCodeAction(formData: FormData) {
+  const parsed = z.object({
+    action: z.enum(["rotate", "disable"]),
+    reason: z.string().trim().min(3).max(500),
+    confirmation: z.literal("CONFIRMAR AÇÃO"),
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect("/app/equipe?erro=confirmacao-invalida");
+  const viewer = await requireActiveViewer();
+  if (viewer.membership?.role !== "owner") redirect("/app/equipe?erro=apenas-o-dono");
+  const supabase = await createClient();
+  const { error } = await supabase.rpc("rotate_organization_join_code", {
+    p_action: parsed.data.action,
+    p_reason: parsed.data.reason,
+    p_confirmation: parsed.data.confirmation,
+  });
+  if (error) redirect("/app/equipe?erro=codigo-nao-atualizado");
+  revalidatePath("/app/equipe");
+  redirect("/app/equipe?sucesso=codigo-atualizado");
+}
+
+export async function requestOwnershipTransferAction(formData: FormData) {
+  const parsed = z.object({ targetMembershipId: z.string().uuid(), password: z.string().min(8).max(1000) }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect("/app/equipe");
+  const viewer = await requireActiveViewer(); if (viewer.membership?.role !== "owner") return;
+  const supabase = await createClient();
+  const { error: reauthError } = await supabase.auth.signInWithPassword({ email: viewer.email, password: parsed.data.password });
+  if (reauthError) redirect("/app/equipe");
+  const { error } = await supabase.from("ownership_transfer_requests").insert({ org_id: viewer.organization!.id, target_membership_id: parsed.data.targetMembershipId, requested_by: viewer.userId, reauthenticated_at: new Date().toISOString() });
+  if (error) redirect("/app/equipe"); revalidatePath("/app/equipe");
+}
+
+export async function acceptOwnershipTransferAction(formData: FormData) {
+  const transferId = z.string().uuid().safeParse(formData.get("transferId")); if (!transferId.success) return;
+  const viewer = await requireActiveViewer(); const supabase = await createClient();
+  await supabase.from("ownership_transfer_requests").update({ status: "accepted", accepted_by: viewer.userId }).eq("id", transferId.data).eq("target_membership_id", viewer.membership!.id).eq("status", "pending");
+  revalidatePath("/app/equipe"); redirect("/app");
 }

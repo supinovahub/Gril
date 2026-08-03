@@ -46,13 +46,19 @@ export const pedroTurnSchema = z
       .nullable(),
     qualification_updates: z.array(qualificationUpdateSchema).max(8),
     request_project_match: z.boolean(),
+    project_media_request: z
+      .object({
+        project_id: z.string().uuid(),
+        kind: z.enum(["principal", "more_photos", "book"]),
+      })
+      .nullable(),
     call_request: z
       .object({
         starts_at: z.string().datetime({ offset: true }),
         format: z.enum(["video", "phone", "unknown"]),
       })
       .nullable(),
-    followup_strategy: z.enum(["none", "short", "long", "cancel"]),
+    followup_strategy: z.enum(["none", "short", "long", "future", "cancel"]),
     conversation_summary: z.object({
       summary: z.string().trim().min(1).max(2000),
       facts: z.array(z.string().trim().min(1).max(500)).max(20),
@@ -126,6 +132,20 @@ export const pedroTurnTool = {
         },
       },
       request_project_match: { type: "boolean" },
+      project_media_request: {
+        anyOf: [
+          { type: "null" },
+          {
+            type: "object",
+            additionalProperties: false,
+            properties: {
+              project_id: { type: "string", description: "UUID de um empreendimento ativo presente no contexto aprovado." },
+              kind: { type: "string", enum: ["principal", "more_photos", "book"] },
+            },
+            required: ["project_id", "kind"],
+          },
+        ],
+      },
       call_request: {
         anyOf: [
           { type: "null" },
@@ -140,7 +160,7 @@ export const pedroTurnTool = {
           },
         ],
       },
-      followup_strategy: { type: "string", enum: ["none", "short", "long", "cancel"] },
+      followup_strategy: { type: "string", enum: ["none", "short", "long", "future", "cancel"] },
       conversation_summary: {
         type: "object",
         additionalProperties: false,
@@ -157,6 +177,7 @@ export const pedroTurnTool = {
       "escalation",
       "qualification_updates",
       "request_project_match",
+      "project_media_request",
       "call_request",
       "followup_strategy",
       "conversation_summary",

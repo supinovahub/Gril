@@ -18,6 +18,7 @@ import {
   Sparkles,
   Settings2,
   Search,
+  ScrollText,
   ShieldCheck,
   UsersRound,
 } from "lucide-react";
@@ -30,6 +31,7 @@ import {
   type Viewer,
 } from "@/lib/auth/session";
 import styles from "./app-shell.module.css";
+import { RealtimeRefresh } from "./realtime-refresh";
 
 function initials(name: string | undefined, email: string) {
   const source = name?.trim() || email;
@@ -52,11 +54,22 @@ export function AppShell({
     viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
   const name = viewer.profile?.full_name;
   const memberRole = viewer.membership?.role ?? "broker";
+  const isOwner = memberRole === "owner";
+  const isManager = memberRole === "manager";
+  const canConfigure = isOwner || viewer.permissions.includes("settings.manage");
+  const canManageCampaigns = isOwner || viewer.permissions.includes("campaigns.manage");
+  const canManageAi = isOwner || viewer.permissions.includes("ai.manage");
+  const canViewReports = isOwner || memberRole === "broker" || viewer.permissions.includes("reports.view");
+  const environmentLabel = process.env.VERCEL_ENV === "production"
+    ? "Produção · Vercel"
+    : process.env.VERCEL_ENV === "preview"
+      ? "Homologação · Vercel Preview"
+      : "Desenvolvimento · localhost · banco remoto autorizado";
 
   return (
     <div className={styles.appFrame}>
       <div className={styles.environmentBar}>
-        <span /> Local · banco remoto de desenvolvimento · sem deploy Vercel
+        <span /> {environmentLabel}
       </div>
 
       <aside className={styles.sidebar}>
@@ -83,6 +96,12 @@ export function AppShell({
             <input aria-label="Busca global" name="q" placeholder="Buscar na operação" />
           </form>
           <p className={styles.navLabel}>Agora</p>
+          {memberRole === "broker" ? <Link className={styles.navItem} href="/app/hoje">
+            <CalendarClock size={18} aria-hidden="true" /> Hoje
+          </Link> : null}
+          {memberRole === "broker" ? <Link className={styles.navItem} href="/app/meu-pipeline">
+            <KanbanSquare size={18} aria-hidden="true" /> Meu pipeline
+          </Link> : null}
           <Link className={styles.navItem} href="/app">
             <LayoutDashboard size={18} aria-hidden="true" /> Visão geral
           </Link>
@@ -108,39 +127,51 @@ export function AppShell({
           <Link className={styles.navItem} href="/app/inbox">
             <MessagesSquare size={18} aria-hidden="true" /> Inbox
           </Link>
-          <Link className={styles.navItem} href="/app/campanhas">
+          {canManageCampaigns ? <Link className={styles.navItem} href="/app/campanhas">
             <Megaphone size={18} aria-hidden="true" /> Campanhas
-          </Link>
+          </Link> : null}
           <Link className={styles.navItem} href="/app/agenda">
             <CalendarClock size={18} aria-hidden="true" /> Agenda
           </Link>
 
           <p className={styles.navLabel}>Inteligência</p>
-          <Link className={styles.navItem} href="/app/pedro">
+          {canManageAi ? <Link className={styles.navItem} href="/app/pedro">
             <Sparkles size={18} aria-hidden="true" /> Pedro
-          </Link>
-          <Link className={styles.navItem} href="/app/conhecimento">
+          </Link> : null}
+          {canManageAi ? <Link className={styles.navItem} href="/app/conhecimento">
             <BookOpenCheck size={18} aria-hidden="true" /> Conhecimento
-          </Link>
-          <Link className={styles.navItem} href="/app/aprendizados">
+          </Link> : null}
+          {canManageAi ? <Link className={styles.navItem} href="/app/aprendizados">
             <BookMarked size={18} aria-hidden="true" /> Aprendizados
-          </Link>
-          <Link className={styles.navItem} href="/app/simulador">
+          </Link> : null}
+          {canManageAi ? <Link className={styles.navItem} href="/app/simulador">
             <FlaskConical size={18} aria-hidden="true" /> Simulador
-          </Link>
-          <Link className={styles.navItem} href="/app/relatorios">
+          </Link> : null}
+          {canManageAi ? <Link className={styles.navItem} href="/app/pedro/experimentos">
+            <FlaskConical size={18} aria-hidden="true" /> Experimentos A/B
+          </Link> : null}
+          {canViewReports ? <Link className={styles.navItem} href="/app/relatorios">
             <BarChart3 size={18} aria-hidden="true" /> Relatórios
-          </Link>
-          <p className={styles.navLabel}>Configurações</p>
-          <Link className={styles.navItem} href="/app/configuracoes/whatsapp">
+          </Link> : null}
+          {canConfigure ? <p className={styles.navLabel}>Configurações</p> : null}
+          {canConfigure ? <Link className={styles.navItem} href="/app/configuracoes/organizacao">
+            <Building2 size={18} aria-hidden="true" /> Organização
+          </Link> : null}
+          {canConfigure ? <Link className={styles.navItem} href="/app/configuracoes/whatsapp">
             <Settings2 size={18} aria-hidden="true" /> WhatsApp
-          </Link>
-          <Link className={styles.navItem} href="/app/configuracoes/meta">
+          </Link> : null}
+          {canConfigure ? <Link className={styles.navItem} href="/app/configuracoes/meta">
             <Webhook size={18} aria-hidden="true" /> Meta
-          </Link>
-          <Link className={styles.navItem} href="/app/configuracoes/privacidade">
+          </Link> : null}
+          {(isOwner || viewer.permissions.includes("checklists.manage")) ? <Link className={styles.navItem} href="/app/configuracoes/checklists">
+            <BookOpenCheck size={18} aria-hidden="true" /> Checklists
+          </Link> : null}
+          {(isOwner || isManager) ? <Link className={styles.navItem} href="/app/configuracoes/privacidade">
             <ShieldCheck size={18} aria-hidden="true" /> Privacidade
-          </Link>
+          </Link> : null}
+          {(isOwner || isManager || canViewReports) ? <Link className={styles.navItem} href="/app/configuracoes/auditoria">
+            <ScrollText size={18} aria-hidden="true" /> Auditoria
+          </Link> : null}
         </nav>
 
         <div className={styles.sidebarFooter}>
@@ -165,7 +196,7 @@ export function AppShell({
         <span>{operation?.name ?? "Sem operação"}</span>
       </header>
 
-      <main className={styles.content}>{children}</main>
+      <main className={styles.content}><RealtimeRefresh orgId={viewer.organization!.id} />{children}</main>
 
       <nav className={styles.mobileNav} aria-label="Navegação móvel">
         <Link href="/app"><LayoutDashboard size={20} /><span>Visão geral</span></Link>
@@ -173,7 +204,9 @@ export function AppShell({
         <Link href="/app/inbox"><MessagesSquare size={20} /><span>Inbox</span></Link>
         <Link href="/app/leads"><ContactRound size={20} /><span>Leads</span></Link>
         <Link href="/app/kanban"><KanbanSquare size={20} /><span>Kanban</span></Link>
-        <Link href="/app/pedro"><Sparkles size={20} /><span>Pedro</span></Link>
+        {canManageAi
+          ? <Link href="/app/pedro"><Sparkles size={20} /><span>Pedro</span></Link>
+          : <Link href="/app/agenda"><CalendarClock size={20} /><span>Agenda</span></Link>}
       </nav>
     </div>
   );
