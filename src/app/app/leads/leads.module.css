@@ -160,3 +160,82 @@
   .actionChoice { grid-template-columns: 1fr; }
   .bulkControls { grid-template-columns: 1fr; }
 }
+
+/* Dossiê comercial */
+.page,
+.kanbanPage { width: min(100%, 1380px); }
+.pageHeader { margin-bottom: 26px; }
+.pageHeader h1,
+.detailHeader h1 { font-family: var(--font-display), Georgia, serif; font-size: clamp(32px,4vw,42px); font-weight: 560; letter-spacing: -.045em; line-height: 1; }
+.pageHeader > div > p:last-child,
+.detailHeader p { max-width: 680px; font-size: 11px; line-height: 1.55; }
+.eyebrow { color: var(--accent-dark) !important; font-size: 9px !important; letter-spacing: .14em; }
+.primaryButton,
+.secondaryButton { min-height: 42px; padding: 0 14px; border-radius: 8px; font-size: 10px; }
+.primaryButton { border-color: var(--ink); background: var(--ink); }
+.secondaryButton { border-color: var(--border); background: var(--surface); }
+.errorBanner,
+.successBanner { position: relative; overflow: hidden; border: 0; padding-left: 17px; }
+.errorBanner::before,
+.successBanner::before { position: absolute; inset: 0 auto 0 0; width: 3px; background: currentColor; content: ""; }
+.errorBanner { background: #f9ebe9; }
+.successBanner { background: var(--pine-soft); }
+.bulkPanel,
+.listPanel,
+.createForm,
+.detailCard,
+.stageFormCard,
+.compactCard { border: 0; border-radius: var(--radius-panel); background: var(--surface); box-shadow: var(--shadow); }
+.bulkPanel summary { min-height: 44px; align-items: center; padding: 0 16px; font-size: 10px; }
+.bulkContacts label { min-height: 34px; background: var(--ledger); }
+.bulkControls input,
+.bulkControls select,
+.bulkControls button { min-height: 40px; border-color: var(--border); border-radius: 8px; background: var(--control-bg); }
+.bulkControls button { border-color: var(--ink); background: var(--ink); }
+.layout { grid-template-columns: minmax(0,1.55fr) minmax(320px,.52fr); gap: 20px; }
+.searchBar { min-height: 54px; border-bottom-color: var(--border-soft); }
+.searchBar button { min-height: 34px; background: var(--control-bg); }
+.listHeader { padding: 10px 16px; border-bottom-color: var(--border-soft); font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
+.leadRow { min-height: 64px; border-bottom-color: var(--border-soft); }
+.leadRow:hover { background: var(--paper); }
+.leadAvatar,
+.largeAvatar { background: #d9d2c5; color: var(--ink-secondary); }
+.leadIdentity strong { font-size: 12px; }
+.stagePill,
+.currentStage { border-color: rgba(80,104,115,.16); background: #e9eef0; color: var(--blueprint); }
+.createForm { top: 20px; gap: 17px; padding: 21px; }
+.formIntro h2 { font-size: 17px; }
+.formGrid label > span,
+.stageForm label > span { font-size: 9px; letter-spacing: .04em; }
+.formGrid input,
+.formGrid select,
+.formGrid textarea,
+.stageForm input,
+.stageForm select,
+.stageForm textarea { min-height: 42px; border-color: var(--border); border-radius: 8px; background: var(--control-bg); font-size: 11px; }
+.actionChoice label { min-height: 54px; border-color: var(--border); background: var(--paper); }
+.detailCard,
+.stageFormCard,
+.compactCard { padding: 21px; }
+.cardTitle { padding-bottom: 13px; margin-bottom: 16px; border-bottom: 1px solid var(--border-soft); }
+.cardTitle h2 { font-size: 14px; }
+.factGrid dt { font-size: 9px; letter-spacing: .06em; text-transform: uppercase; }
+.actionRow,
+.qualificationItem,
+.matchAction { border-color: var(--border-soft); background: var(--paper); }
+.timeline li { border-bottom-color: var(--border-soft); }
+.timelineDot { border-color: var(--surface); background: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.compactCard p { border-bottom-color: var(--border-soft); }
+.saleCard { border: 0; background: var(--pine-soft); box-shadow: inset 3px 0 0 var(--positive); }
+.qualificationItem input { background: var(--control-bg); }
+.qualificationItem button,
+.matchAction button { border-color: var(--ink); background: var(--ink); }
+.matchList article { border: 0; background: var(--pine-soft); }
+.kanbanBoard { gap: 14px; }
+.kanbanColumn { border: 0; border-radius: var(--radius-panel); background: var(--ledger); box-shadow: inset 0 0 0 1px var(--border-soft); }
+.kanbanColumn > header { border-bottom-color: var(--border-soft); }
+.kanbanCard { border: 0; border-radius: 12px; background: var(--surface); box-shadow: 0 1px 2px rgba(28,33,31,.05),0 7px 18px rgba(28,33,31,.045); }
+.kanbanCard time { border-top-color: var(--border-soft); }
+
+@media (max-width:1080px) { .layout,.detailLayout { grid-template-columns:1fr; } }
+@media (max-width:680px) { .pageHeader h1,.detailHeader h1 { font-size:34px; } }

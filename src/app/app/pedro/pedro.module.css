@@ -63,3 +63,31 @@
 .executionList small { color: var(--ink-muted); font-size: 8px; }
 @media (max-width: 1050px) { .grid { grid-template-columns: 1fr; } .modelRow { grid-template-columns: auto 1fr; } .modelRow > :not(.modelState):not(.modelCopy) { grid-column: 2; } }
 @media (max-width: 650px) { .pageHeader { align-items: flex-start; flex-direction: column; } .statusStrip { grid-template-columns: 1fr; } .credentialSummary { grid-template-columns: auto 1fr; } .credentialActions { grid-column: 2; flex-wrap: wrap; } .keyForm { align-items: stretch; flex-direction: column; } }
+
+/* Console do Pedro */
+.page { width:min(100%,1380px); max-width:none; }
+.pageHeader h1 { font-family:var(--font-display),Georgia,serif; font-size:clamp(34px,4vw,44px); font-weight:560; letter-spacing:-.05em; line-height:1; }
+.pageHeader > div > p:last-child { max-width:680px; font-size:11px; line-height:1.55; }
+.eyebrow { color:var(--accent-dark); font-size:9px; letter-spacing:.14em; }
+.modeBadge,.versionChip { border-color:rgba(80,104,115,.16); background:#e9eef0; color:var(--blueprint); }
+.errorBanner,.successBanner { position:relative; overflow:hidden; border:0; padding-left:17px; }
+.errorBanner::before,.successBanner::before { position:absolute; inset:0 auto 0 0; width:3px; background:currentColor; content:""; }
+.errorBanner { background:#f9ebe9; }.successBanner { background:var(--pine-soft); }
+.statusStrip { gap:1px; border-color:var(--border); border-radius:var(--radius-panel); background:var(--border-soft); }
+.statusStrip > div { min-height:88px; background:var(--surface); }
+.statusStrip > div:first-child { position:relative; }
+.statusStrip > div:first-child::before { position:absolute; inset:17px auto 17px 0; width:3px; border-radius:0 4px 4px 0; background:var(--accent); content:""; }
+.grid { grid-template-columns:minmax(0,1fr) 330px; gap:20px; }
+.panel { border:0; border-radius:var(--radius-panel); background:var(--surface); box-shadow:var(--shadow); }
+.panelHeader { border-bottom-color:var(--border-soft); }
+.promptForm textarea { border-color:var(--border); background:var(--control-bg); font-size:10px; }
+.promptForm input,.promptForm select { min-height:42px; border-color:var(--border); background:var(--control-bg); }
+.promptForm button,.draftRow button,.modelRow button { min-height:38px; border-color:var(--ink); border-radius:8px; background:var(--ink); }
+.draftRow,.modelRow { border-color:var(--border-soft); }
+.credentialPanel { border-color:var(--border-soft); background:var(--ledger); }
+.credentialActions button,.keyForm button { border-color:var(--border); background:var(--surface); }
+.keyForm input { min-height:40px; background:var(--control-bg); }
+.modeForm button { min-height:42px; background:var(--control-bg); }
+.modeForm .selectedMode { border-color:var(--ink); background:var(--ink); color:var(--surface); }
+.executionList article { border-bottom-color:var(--border-soft); }
+@media(max-width:1050px){.grid{grid-template-columns:1fr}}

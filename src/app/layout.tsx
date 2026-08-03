@@ -1,7 +1,20 @@
 import type { Metadata } from "next";
+import { Manrope, Newsreader } from "next/font/google";
 
 import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
+
+const interfaceFont = Manrope({
+  display: "swap",
+  subsets: ["latin"],
+  variable: "--font-interface",
+});
+
+const displayFont = Newsreader({
+  display: "swap",
+  subsets: ["latin"],
+  variable: "--font-display",
+});
 
 export const metadata: Metadata = {
   title: {
@@ -22,7 +35,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body><PwaRegister />{children}</body>
+      <body className={`${interfaceFont.variable} ${displayFont.variable}`}>
+        <PwaRegister />
+        {children}
+      </body>
     </html>
   );
 }

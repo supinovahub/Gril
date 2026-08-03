@@ -60,3 +60,30 @@
 .mediaList button { background: transparent; color: #9d2e22; border: 1px solid #e6c8c3; padding: 7px 9px; }
 @media (max-width: 1050px) { .layout { grid-template-columns: 1fr; } }
 @media (max-width: 720px) { .readiness, .two { grid-template-columns: 1fr; } .catalog article { grid-template-columns: auto 1fr; } .projectState { justify-items: stretch; } .projectEditFooter { align-items: stretch; flex-direction: column; } }
+
+/* Arquivo de empreendimentos */
+.page { width:min(100%,1380px); margin:0 auto; gap:24px; }
+.pageHeader h1 { font-family:var(--font-display),Georgia,serif; font-size:clamp(34px,4vw,42px); font-weight:560; letter-spacing:-.045em; line-height:1; }
+.pageHeader > div > p:last-child { max-width:680px; font-size:11px; line-height:1.55; }
+.eyebrow { color:var(--accent-dark); font-size:9px; letter-spacing:.14em; }
+.errorBanner,.successBanner,.warning { position:relative; overflow:hidden; border:0; padding-left:17px; }
+.errorBanner::before,.successBanner::before,.warning::before { position:absolute; inset:0 auto 0 0; width:3px; background:currentColor; content:""; }
+.errorBanner { background:#f9ebe9; }.successBanner { background:var(--pine-soft); }.warning { background:#f5eddd; }
+.readiness { gap:1px; overflow:hidden; border:1px solid var(--border); border-radius:var(--radius-panel); background:var(--border-soft); }
+.readiness > div { border:0; border-radius:0; background:var(--surface); }
+.layout { grid-template-columns:minmax(0,1.65fr) minmax(310px,.7fr); gap:20px; }
+.panel,.formCard { border:0; border-radius:var(--radius-panel); background:var(--surface); box-shadow:var(--shadow); }
+.panelHeader { padding-bottom:14px; border-bottom:1px solid var(--border-soft); }
+.catalog article { min-height:64px; background:var(--paper); border-bottom:1px solid var(--border-soft); border-radius:0; }
+.catalog article:last-child { border-bottom:0; }
+.projectIcon,.definitionList li > span { background:var(--ledger); color:var(--accent); }
+.projectState button { min-height:34px; border-color:var(--border); background:var(--surface); }
+.projectEditor { border-top-color:var(--border-soft); }
+.projectEditor > summary:hover,.projectEditor[open] > summary { background:var(--ledger); }
+.projectEditForm { background:var(--paper); }
+.projectEditForm input,.projectEditForm textarea,.projectEditForm select,.formCard input,.formCard textarea,.formCard select { min-height:42px; border-color:var(--border); border-radius:8px; background:var(--control-bg); }
+.projectEditFooter button,.formCard button { min-height:40px; border-radius:8px; background:var(--ink); }
+.faqList article { border-color:var(--border-soft); }
+.definitionList li { background:var(--paper); }
+.mediaList > div { background:var(--paper); }
+@media(max-width:1050px){.layout{grid-template-columns:1fr}}
