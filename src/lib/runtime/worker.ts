@@ -917,7 +917,10 @@ export async function drainRuntimeWorker() {
   const admin = createAdminClient();
   const summary: Record<string, { completed: number; retried: number }> = {};
   for (let pass = 0; pass < 2; pass += 1) {
-    const { error: dispatchError } = await admin.rpc("dispatch_runtime_sources", { p_batch_size: 100 });
+    // Each pass consumes at most five items per queue. Keep the producer batch
+    // bounded to the same size so jobs are not leased faster than this worker
+    // can make them visible again or finish them.
+    const { error: dispatchError } = await admin.rpc("dispatch_runtime_sources", { p_batch_size: 5 });
     if (dispatchError) throw dispatchError;
     for (const queue of queueNames) {
       const result = await drainQueue(queue);
