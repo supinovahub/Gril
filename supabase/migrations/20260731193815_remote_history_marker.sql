@@ -1,0 +1,1 @@
+-- Compatibility marker for a migration already present in the linked database history.
