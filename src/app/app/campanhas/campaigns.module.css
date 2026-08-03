@@ -21,6 +21,9 @@
 .metrics span { display: grid; gap: 2px; border-radius: 10px; background: var(--surface-muted); padding: 10px; }
 .metrics small { color: var(--ink-muted); font-size: 10px; text-transform: uppercase; }
 .importSummary { font-size: 12px; }
+.importIssues { border-radius: 10px; background: #fff7e7; color: #795817; padding: 10px 12px; font-size: 12px; }
+.importIssues summary { cursor: pointer; font-weight: 800; }
+.importIssues ul { display: grid; gap: 5px; margin: 9px 0 0; padding-left: 18px; }
 .reviewPanel { display: grid; gap: 10px; border-top: 1px solid var(--border); margin-top: 14px; padding-top: 14px; }
 .reviewHeader { display: flex; justify-content: space-between; gap: 12px; align-items: start; }
 .reviewHeader > span { display: grid; gap: 3px; }
@@ -36,6 +39,7 @@
 .importForm, .createForm { display: grid; gap: 12px; }
 .importForm { border-top: 1px solid var(--border); padding-top: 14px; }
 .importForm label, .createForm label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; }
+.importForm label small { color: var(--ink-muted); font-weight: 500; }
 .importForm input, .importForm textarea, .createForm input, .createForm textarea, .createForm select, .actions input { border: 1px solid var(--border); border-radius: 9px; background: #fff; padding: 9px 10px; font: inherit; }
 .importForm button, .createForm button, .actions button { display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 0; border-radius: 9px; background: var(--ink); color: #fff; padding: 10px 12px; font-weight: 800; cursor: pointer; }
 .actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
