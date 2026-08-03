@@ -58,6 +58,31 @@ describe("autosserviço de integrações", () => {
     expect(result.credentialHint).toBe("••••1234");
   });
 
+  it("aceita o JID textual devolvido por servidores Uazapi", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({
+      instance: {
+        id: "instance-2",
+        name: "Atendimento",
+        profileName: "Imobiliária",
+        owner: "5511888888888",
+        status: "connected",
+      },
+      status: {
+        connected: true,
+        loggedIn: true,
+        jid: "5511888888888:1@s.whatsapp.net",
+      },
+    })));
+
+    await expect(validateUazapiCredential({
+      baseUrl: "https://cliente.uazapi.com",
+      token: "token-seguro-1234",
+    })).resolves.toMatchObject({
+      externalAccountId: "instance-2",
+      phoneE164: "+5511888888888",
+    });
+  });
+
   it("solicita QR Code ou pair code sem persistir o token no navegador", async () => {
     vi.stubGlobal("fetch", vi.fn(async (_url: string, init?: RequestInit) => {
       expect(new Headers(init?.headers).get("token")).toBe("token-seguro-1234");

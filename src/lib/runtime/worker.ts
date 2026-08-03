@@ -150,6 +150,8 @@ async function runAiExecution(executionId: string) {
     if (secretError || !apiKey) throw secretError ?? new Error("openai_secret_missing");
 
     let instructions = "Responda em português brasileiro. Use apenas fatos aprovados no contexto. Se faltar um fato necessário, escale em vez de inventar.";
+    let personaVersionId: string | null = null;
+    let ruleVersionId: string | null = null;
     if (execution.context_version_id) {
       const { data: context } = await admin
         .from("conversation_context_versions")
@@ -157,6 +159,8 @@ async function runAiExecution(executionId: string) {
         .eq("id", execution.context_version_id)
         .single();
       if (context) {
+        personaVersionId = context.persona_version_id;
+        ruleVersionId = context.rule_version_id;
         const [{ data: persona }, { data: rules }] = await Promise.all([
           admin.from("persona_versions").select("compiled_prompt").eq("id", context.persona_version_id).single(),
           admin.from("rule_versions").select("compiled_rules").eq("id", context.rule_version_id).single(),
@@ -308,6 +312,14 @@ async function runAiExecution(executionId: string) {
       action: response.structured.outcome,
       escalation_reason: response.structured.escalation?.reason ?? null,
       recommended_project_ids: recommendedProjects.map((project) => project.id),
+      context_trace: {
+        persona_version_id: personaVersionId,
+        rule_version_id: ruleVersionId,
+        qualification_codes: definitions.map((definition) => definition.code),
+        active_project_names: projects.map((project) => project.name),
+        approved_sources: [...new Set((projectFactsResult.data ?? []).map((fact) => fact.source_name).filter(Boolean))],
+        published_faq_count: faqVersionsResult.data?.length ?? 0,
+      },
     };
     const { error: completeError } = await admin.rpc("complete_pedro_turn", {
       p_execution_id: executionId,

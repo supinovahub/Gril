@@ -101,6 +101,16 @@ export async function POST(request: Request) {
     await admin.from("project_media_uploads").update({ status: "failed", error_redacted: "media_limit_or_validation_failed" }).eq("id", upload.id);
     return NextResponse.json({ error: "Limite atingido. Exclua uma mídia antes de adicionar outra." }, { status: 409 });
   }
+  if (upload.media_type === "cover") {
+    const { error: coverError } = await admin.from("projects").update({ cover_storage_path: upload.storage_path })
+      .eq("id", upload.project_id).eq("org_id", upload.org_id);
+    if (coverError) {
+      await admin.from("project_media").delete().eq("id", media.id);
+      await admin.storage.from("gril-projects").remove([upload.storage_path]);
+      await admin.from("project_media_uploads").update({ status: "failed", error_redacted: "cover_sync_failed" }).eq("id", upload.id);
+      return NextResponse.json({ error: "A foto chegou, mas não foi possível defini-la como principal." }, { status: 500 });
+    }
+  }
   await admin.from("project_media_uploads").update({ status: "completed", media_id: media.id, completed_at: new Date().toISOString() }).eq("id", upload.id);
   return NextResponse.json({ mediaId: media.id });
 }
@@ -111,12 +121,20 @@ export async function DELETE(request: Request) {
   const parsed = deleteSchema.safeParse(await request.json().catch(() => null));
   if (!parsed.success) return NextResponse.json({ error: "Mídia inválida." }, { status: 400 });
   const admin = createAdminClient();
-  const { data: media } = await admin.from("project_media").select("id,storage_path,title,project_id")
+  const { data: media } = await admin.from("project_media").select("id,storage_path,title,project_id,media_type")
     .eq("id", parsed.data.mediaId).eq("org_id", viewer.organization!.id).maybeSingle();
   if (!media?.storage_path) return NextResponse.json({ error: "Mídia não encontrada." }, { status: 404 });
   const { error: storageError } = await admin.storage.from("gril-projects").remove([media.storage_path]);
   if (storageError) return NextResponse.json({ error: "A exclusão física falhou; o registro foi preservado." }, { status: 502 });
   const { error: deleteError } = await admin.from("project_media").delete().eq("id", media.id);
   if (deleteError) return NextResponse.json({ error: "O arquivo foi excluído, mas a limpeza do registro precisa de suporte." }, { status: 500 });
+  if (media.media_type === "cover") {
+    const { error: projectError } = await admin.from("projects").update({
+      cover_storage_path: null,
+      status: "draft",
+      recommendable: false,
+    }).eq("id", media.project_id).eq("org_id", viewer.organization!.id);
+    if (projectError) return NextResponse.json({ error: "A capa foi excluída, mas o empreendimento precisa de revisão." }, { status: 500 });
+  }
   return NextResponse.json({ deleted: true });
 }

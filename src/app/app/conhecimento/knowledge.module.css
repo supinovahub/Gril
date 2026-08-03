@@ -19,6 +19,10 @@
 .catalog article > span { display: grid; gap: 3px; }
 .projectIcon { width: 36px; height: 36px; place-items: center; border-radius: 10px; background: #eee8dc; color: var(--accent); }
 .status { color: var(--accent); font-size: 11px; font-weight: 800; text-transform: uppercase; }
+.projectState { display: grid; justify-items: end; gap: 6px; }
+.projectState form { margin: 0; }
+.projectState button { border: 1px solid var(--border); border-radius: 8px; background: #fff; color: var(--ink); padding: 6px 8px; font-size: 11px; font-weight: 800; cursor: pointer; }
+.projectState button:disabled { cursor: not-allowed; opacity: .45; }
 .faqList article { padding: 13px 0; border-top: 1px solid var(--border); }
 .faqList article:first-child { border-top: 0; }
 .faqList p { margin: 6px 0; color: var(--ink-muted); line-height: 1.5; }
@@ -27,6 +31,7 @@
 .definitionList li > span { grid-row: span 2; display: grid; place-items: center; width: 28px; height: 28px; border-radius: 8px; background: #eee8dc; font-weight: 800; }
 .formCard { display: grid; gap: 13px; }
 .formCard label { display: grid; gap: 6px; font-size: 12px; font-weight: 700; }
+.formCard label small { color: var(--ink-muted); font-weight: 500; line-height: 1.4; }
 .formCard input, .formCard textarea, .formCard select { width: 100%; border: 1px solid var(--border); border-radius: 10px; background: #fff; padding: 10px 11px; color: inherit; font: inherit; }
 .formCard button { border: 0; border-radius: 10px; background: var(--ink); color: white; padding: 11px 14px; font-weight: 800; cursor: pointer; }
 .two { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
