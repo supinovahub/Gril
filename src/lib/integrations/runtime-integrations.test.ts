@@ -106,6 +106,36 @@ describe("adapters de tráfego real", () => {
     ).toBeNull();
   });
 
+  it("usa sender_pn quando a Uazapi entrega o remetente como LID", () => {
+    const inbound = verifyAndNormalizeUazapiWebhook(
+      {
+        EventType: "messages",
+        instanceName: "instance-1",
+        token: "token-seguro",
+        message: {
+          messageid: "3EB0REAL",
+          sender: "123456789012345@lid",
+          sender_lid: "123456789012345@lid",
+          sender_pn: "5511999999999@s.whatsapp.net",
+          chatid: "5511999999999@s.whatsapp.net",
+          fromMe: false,
+          isGroup: false,
+          messageType: "Conversation",
+          messageTimestamp: 1_700_000_000,
+          text: "Mensagem real",
+        },
+      },
+      "token-seguro",
+    );
+
+    expect(inbound?.inbound[0]).toMatchObject({
+      providerMessageId: "3EB0REAL",
+      fromE164: "+5511999999999",
+      contentType: "text",
+      body: "Mensagem real",
+    });
+  });
+
   it("normaliza edição Uazapi sem criar uma segunda mensagem bruta", () => {
     const update = verifyAndNormalizeUazapiWebhook(
       { EventType: "messages_update", token: "token-seguro", message: { messageid: "2", sender: "5511999999999", messageTimestamp: 1700000001000, text: "Texto corrigido" } },

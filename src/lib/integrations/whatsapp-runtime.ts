@@ -219,6 +219,21 @@ function findUazapiMessage(root: Record<string, unknown>) {
   return record(root.message) ?? record(data?.message) ?? data ?? root;
 }
 
+function uazapiMessagePhone(message: Record<string, unknown>) {
+  const candidates = [
+    text(message.sender_pn),
+    text(message.from),
+    text(message.chatid),
+    text(message.sender),
+  ];
+  for (const candidate of candidates) {
+    if (!candidate || candidate.endsWith("@lid") || candidate.endsWith("@g.us")) continue;
+    const normalized = normalizePhoneToE164(candidate);
+    if (normalized) return normalized;
+  }
+  return null;
+}
+
 function uazapiInstanceId(root: Record<string, unknown>) {
   const instance = record(root.instance);
   const data = record(root.data);
@@ -305,8 +320,7 @@ export function verifyAndNormalizeUazapiWebhook(
   }
 
   const isGroup = message.isGroup === true || text(message.chatid)?.endsWith("@g.us") === true;
-  const rawFrom = text(message.sender) ?? text(message.from) ?? text(message.chatid)?.split("@")[0] ?? "";
-  const fromE164 = normalizePhoneToE164(rawFrom);
+  const fromE164 = uazapiMessagePhone(message);
   if (!fromMe && !isGroup && providerMessageId && fromE164) {
     const contentType = mapContentType(
       text(message.messageType)

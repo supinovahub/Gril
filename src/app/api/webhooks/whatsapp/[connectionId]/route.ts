@@ -132,6 +132,18 @@ export async function POST(request: Request, { params }: RouteParams) {
     }
   }
   if (!normalized) return NextResponse.json({ error: "unsupported_payload" }, { status: 400 });
+  const rawEventType = json && typeof json === "object" && !Array.isArray(json)
+    ? (json as Record<string, unknown>).EventType
+    : null;
+  if (
+    connection.provider === "uazapi"
+    && rawEventType === "messages"
+    && normalized.inbound.length === 0
+    && normalized.statuses.length === 0
+    && normalized.mutations.length === 0
+  ) {
+    return NextResponse.json({ error: "uazapi_message_not_recognized" }, { status: 422 });
+  }
 
   let ingested = 0;
   let duplicates = 0;
