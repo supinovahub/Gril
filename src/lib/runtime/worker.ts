@@ -916,6 +916,8 @@ async function drainRetention() {
 export async function drainRuntimeWorker() {
   const admin = createAdminClient();
   const summary: Record<string, { completed: number; retried: number }> = {};
+  const { data: recovery, error: recoveryError } = await admin.rpc("recover_stalled_inbound_ai", { p_limit: 10 });
+  if (recoveryError) throw recoveryError;
   for (let pass = 0; pass < 2; pass += 1) {
     // Each pass consumes at most five items per queue. Keep the producer batch
     // bounded to the same size so jobs are not leased faster than this worker
@@ -930,10 +932,38 @@ export async function drainRuntimeWorker() {
   }
   const purged = await drainRetention();
   const platformPushDelivered = await deliverPendingPlatformPushNotifications();
-  await admin.from("integration_health_checks").insert({
+  const recentDeadSince = new Date(Date.now() - 15 * 60_000).toISOString();
+  const { count: recentDeadInboundJobs, error: healthError } = await admin
+    .from("scheduled_jobs")
+    .select("id", { count: "exact", head: true })
+    .eq("job_type", "ai.inbound.aggregate")
+    .eq("status", "dead")
+    .gte("updated_at", recentDeadSince);
+  if (healthError) throw healthError;
+  const runtimeStatus = (recentDeadInboundJobs ?? 0) > 0 ? "degraded" : "healthy";
+  const { error: healthInsertError } = await admin.from("integration_health_checks").insert({
     component: "queues",
-    status: "healthy",
-    metadata: { source: "runtime_worker", summary, purged, platformPushDelivered },
+    status: runtimeStatus,
+    error_redacted: runtimeStatus === "degraded"
+      ? "Uma conversa inbound atingiu dead-letter nos últimos 15 minutos."
+      : null,
+    metadata: {
+      source: "runtime_worker",
+      summary,
+      purged,
+      platformPushDelivered,
+      stalledInboundRecovery: recovery,
+      recentDeadInboundJobs: recentDeadInboundJobs ?? 0,
+    },
   });
-  return { ok: true, summary, purged, platformPushDelivered };
+  if (healthInsertError) throw healthInsertError;
+  return {
+    ok: runtimeStatus === "healthy",
+    status: runtimeStatus,
+    summary,
+    purged,
+    platformPushDelivered,
+    recovery,
+    recentDeadInboundJobs: recentDeadInboundJobs ?? 0,
+  };
 }

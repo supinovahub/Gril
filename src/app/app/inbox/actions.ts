@@ -25,6 +25,7 @@ function errorText(message: string | undefined) {
   if (message?.includes("opted_out")) return "O contato pediu opt-out e não pode receber mensagens.";
   if (message?.includes("suppressed")) return "O telefone está na lista de supressão.";
   if (message?.includes("not_active")) return "A conversa não está ativa.";
+  if (message?.includes("ai_global_mode_off")) return "Ative o Pedro antes de devolver esta conversa para a IA.";
   return "Não foi possível concluir a ação.";
 }
 
@@ -143,6 +144,9 @@ export async function conversationAction(formData: FormData) {
   }
   revalidatePath(`/app/inbox/${conversation.id}`);
   revalidatePath("/app/inbox");
+  if (parsed.data.action === "return_to_ai") {
+    redirect(`/app/inbox/${conversation.id}?sucesso=pedro-reprocessado`);
+  }
 }
 
 export async function reviewAiSuggestionAction(formData: FormData) {

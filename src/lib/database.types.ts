@@ -10753,6 +10753,10 @@ export type Database = {
         }
         Returns: undefined
       }
+      recover_stalled_inbound_ai: {
+        Args: { p_limit?: number }
+        Returns: Json
+      }
       rotate_organization_join_code: {
         Args: { p_action: string; p_confirmation: string; p_reason: string }
         Returns: string
