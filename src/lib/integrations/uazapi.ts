@@ -13,25 +13,29 @@ const uazapiStatusSchema = z.object({
   instance: z
     .object({
       id: z.string().min(1),
-      name: z.string().optional(),
+      name: z.string().nullish(),
       status: z.enum(["disconnected", "connecting", "connected", "hibernated"]),
-      profileName: z.string().optional(),
-      owner: z.string().optional(),
+      profileName: z.string().nullish(),
+      owner: z.string().nullish(),
     })
     .passthrough(),
   status: z
     .object({
       connected: z.boolean().optional(),
       loggedIn: z.boolean().optional(),
-      jid: z
-        .object({ user: z.union([z.string(), z.number()]) })
-        .passthrough()
-        .nullable()
-        .optional(),
+      jid: z.union([
+        z.string(),
+        z.object({ user: z.union([z.string(), z.number()]) }).passthrough(),
+      ]).nullish(),
     })
     .passthrough()
-    .optional(),
+    .nullish(),
 });
+
+function phoneFromJid(jid: string | { user: string | number } | null | undefined) {
+  if (typeof jid === "string") return jid.split("@", 1)[0]?.split(":", 1)[0] ?? "";
+  return jid?.user?.toString() ?? "";
+}
 
 export function normalizeUazapiBaseUrl(value: string) {
   let url: URL;
@@ -112,8 +116,7 @@ export async function validateUazapiCredential(input: {
     );
   }
 
-  const rawPhone =
-    parsed.data.status?.jid?.user?.toString() ?? parsed.data.instance.owner ?? "";
+  const rawPhone = phoneFromJid(parsed.data.status?.jid) || parsed.data.instance.owner || "";
   const phoneE164 = normalizePhoneToE164(rawPhone);
   if (!phoneE164) {
     throw new IntegrationProviderError(

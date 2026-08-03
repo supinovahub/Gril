@@ -8,26 +8,34 @@ import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 
 const projectSchema = z.object({
-  name: z.string().trim().min(2).max(160),
-  region: z.string().trim().min(2).max(160),
+  name: z.string().trim().min(2, "Informe o nome do empreendimento.").max(160, "O nome deve ter até 160 caracteres."),
+  region: z.string().trim().min(2, "Informe a cidade ou região do empreendimento.").max(160, "A região deve ter até 160 caracteres."),
   neighborhood: z.string().trim().max(160).optional(),
-  summary: z.string().trim().min(20).max(4000),
-  deliveryType: z.enum(["ready", "under_construction", "launch", "mixed"]),
-  minPrice: z.coerce.number().nonnegative(),
-  maxPrice: z.coerce.number().nonnegative(),
-  minDownPayment: z.coerce.number().nonnegative(),
-  sourceName: z.string().trim().min(2).max(160),
-  validUntil: z.string().date(),
-  coverStoragePath: z.string().trim().min(3).max(500),
-  activate: z.boolean(),
+  summary: z.string().trim().min(20, "Escreva um resumo com pelo menos 20 caracteres.").max(4000, "O resumo deve ter até 4.000 caracteres."),
+  deliveryType: z.enum(["ready", "under_construction", "launch", "mixed"], { error: "Escolha a situação da entrega." }),
+  minPrice: z.number({ error: "Informe o preço mínimo em reais." }).finite().nonnegative("O preço mínimo não pode ser negativo."),
+  maxPrice: z.number({ error: "Informe o preço máximo em reais." }).finite().nonnegative("O preço máximo não pode ser negativo."),
+  minDownPayment: z.number({ error: "Informe a entrada mínima em reais." }).finite().nonnegative("A entrada mínima não pode ser negativa."),
+  sourceName: z.string().trim().min(2, "Informe a origem dos dados comerciais.").max(160, "A fonte deve ter até 160 caracteres."),
+  validUntil: z.string().refine((value) => /^\d{4}-\d{2}-\d{2}$/.test(value) && !Number.isNaN(Date.parse(`${value}T00:00:00Z`)), "Informe até quando esses dados são válidos."),
 });
+
+function parseBrlCurrency(value: FormDataEntryValue | null) {
+  if (typeof value !== "string" || !value.trim()) return Number.NaN;
+  const compact = value.trim().replace(/\s/g, "").replace(/^R\$/i, "");
+  const normalized = compact.includes(",")
+    ? compact.replace(/\./g, "").replace(",", ".")
+    : compact;
+  const parsed = Number(normalized.replace(/[^\d.-]/g, ""));
+  return Number.isFinite(parsed) ? parsed : Number.NaN;
+}
 
 export async function createProjectAction(formData: FormData) {
   const parsed = projectSchema.safeParse({
     name: formData.get("name"), region: formData.get("region"), neighborhood: formData.get("neighborhood") || undefined,
-    summary: formData.get("summary"), deliveryType: formData.get("deliveryType"), minPrice: formData.get("minPrice"),
-    maxPrice: formData.get("maxPrice"), minDownPayment: formData.get("minDownPayment"), sourceName: formData.get("sourceName"),
-    validUntil: formData.get("validUntil"), coverStoragePath: formData.get("coverStoragePath"), activate: formData.get("activate") === "on",
+    summary: formData.get("summary"), deliveryType: formData.get("deliveryType"), minPrice: parseBrlCurrency(formData.get("minPrice")),
+    maxPrice: parseBrlCurrency(formData.get("maxPrice")), minDownPayment: parseBrlCurrency(formData.get("minDownPayment")), sourceName: formData.get("sourceName"),
+    validUntil: formData.get("validUntil"),
   });
   if (!parsed.success) {
     redirect(`/app/conhecimento?erro=${encodeURIComponent(parsed.error.issues[0]?.message ?? "Revise os campos.")}`);
@@ -52,14 +60,53 @@ export async function createProjectAction(formData: FormData) {
     source_name: parsed.data.sourceName,
     reference_date: new Date().toISOString().slice(0, 10),
     valid_until: parsed.data.validUntil,
-    cover_storage_path: parsed.data.coverStoragePath,
-    status: parsed.data.activate ? "active" : "draft",
-    recommendable: parsed.data.activate,
+    cover_storage_path: null,
+    status: "draft",
+    recommendable: false,
     created_by: viewer.userId,
   });
   if (error) redirect(`/app/conhecimento?erro=${encodeURIComponent("Não foi possível salvar o empreendimento.")}`);
   revalidatePath("/app/conhecimento");
-  redirect("/app/conhecimento?sucesso=empreendimento-criado");
+  redirect("/app/conhecimento?sucesso=empreendimento-criado-em-rascunho");
+}
+
+export async function changeProjectRecommendationAction(formData: FormData) {
+  const parsed = z.object({
+    projectId: z.string().uuid(),
+    action: z.enum(["activate", "pause"]),
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) redirect(`/app/conhecimento?erro=${encodeURIComponent("Empreendimento ou ação inválida.")}`);
+
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { data: project } = await supabase.from("projects").select("id,valid_until")
+    .eq("id", parsed.data.projectId).eq("org_id", viewer.organization!.id).maybeSingle();
+  if (!project) redirect(`/app/conhecimento?erro=${encodeURIComponent("Empreendimento não encontrado.")}`);
+
+  if (parsed.data.action === "activate") {
+    if (project.valid_until && project.valid_until < new Date().toISOString().slice(0, 10)) {
+      redirect(`/app/conhecimento?erro=${encodeURIComponent("Atualize a validade dos dados comerciais antes de ativar.")}`);
+    }
+    const { data: cover } = await supabase.from("project_media").select("storage_path")
+      .eq("project_id", project.id).eq("org_id", viewer.organization!.id).eq("media_type", "cover").eq("active", true).maybeSingle();
+    if (!cover?.storage_path) {
+      redirect(`/app/conhecimento?erro=${encodeURIComponent("Adicione uma foto principal antes de ativar o empreendimento.")}`);
+    }
+    const { error } = await supabase.from("projects").update({
+      cover_storage_path: cover.storage_path,
+      status: "active",
+      recommendable: true,
+    }).eq("id", project.id).eq("org_id", viewer.organization!.id);
+    if (error) redirect(`/app/conhecimento?erro=${encodeURIComponent("Não foi possível ativar o empreendimento.")}`);
+    revalidatePath("/app/conhecimento");
+    redirect("/app/conhecimento?sucesso=empreendimento-ativado");
+  }
+
+  const { error } = await supabase.from("projects").update({ status: "draft", recommendable: false })
+    .eq("id", project.id).eq("org_id", viewer.organization!.id);
+  if (error) redirect(`/app/conhecimento?erro=${encodeURIComponent("Não foi possível pausar as recomendações.")}`);
+  revalidatePath("/app/conhecimento");
+  redirect("/app/conhecimento?sucesso=empreendimento-pausado");
 }
 
 export async function createFaqAction(formData: FormData) {
