@@ -71,16 +71,16 @@ export async function createPedroResponse(input: {
         model: input.model,
         store: false,
         instructions: input.instructions,
-        input: input.messages.map((message) => ({
-          role: message.role,
-          content: [{ type: "input_text", text: message.text }],
-        })).concat([{
-          role: "user" as const,
-          content: [{
-            type: "input_text" as const,
-            text: `CONTEXTO OPERACIONAL DO BACKEND (fonte de verdade):\n${JSON.stringify(input.businessContext)}`,
-          }],
-        }]),
+        input: [
+          ...input.messages.map((message) => ({
+            role: message.role,
+            content: message.text,
+          })),
+          {
+            role: "user" as const,
+            content: `CONTEXTO OPERACIONAL DO BACKEND (fonte de verdade):\n${JSON.stringify(input.businessContext)}`,
+          },
+        ],
         max_output_tokens: 1600,
         tools: [pedroTurnTool],
         tool_choice: { type: "function", name: pedroTurnTool.name },

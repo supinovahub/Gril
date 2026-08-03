@@ -264,6 +264,11 @@ describe("adapters de tráfego real", () => {
       expect(body.store).toBe(false);
       expect(body.tools[0]).toMatchObject({ type: "function", name: "commit_pedro_turn", strict: true });
       expect(body.parallel_tool_calls).toBe(false);
+      expect(body.input.slice(0, 3)).toEqual([
+        { role: "user", content: "Oi" },
+        { role: "assistant", content: "Olá! Como posso ajudar?" },
+        { role: "user", content: "Quero um imóvel no Centro." },
+      ]);
       return Response.json({
         id: "resp_1",
         status: "completed",
@@ -292,7 +297,11 @@ describe("adapters de tráfego real", () => {
       model: "gpt-5.6-sol",
       reasoningEffort: "medium",
       instructions: "Seja breve",
-      messages: [{ role: "user", text: "Oi" }],
+      messages: [
+        { role: "user", text: "Oi" },
+        { role: "assistant", text: "Olá! Como posso ajudar?" },
+        { role: "user", text: "Quero um imóvel no Centro." },
+      ],
       businessContext: { qualification_definitions: [] },
     });
     expect(result).toMatchObject({ responseId: "resp_1", outputText: "Oi! Como posso ajudar?", inputTokens: 10, outputTokens: 8 });
