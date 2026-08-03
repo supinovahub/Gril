@@ -15,17 +15,19 @@ export default async function ConversationPage({
   params: Promise<{ id: string }>;
   searchParams: Promise<{ erro?: string; sucesso?: string }>;
 }) {
-  await requireActiveViewer();
+  const viewer = await requireActiveViewer();
   const { id } = await params;
   const feedback = await searchParams;
   const supabase = await createClient();
-  const [conversationResult, messagesResult, summaryResult, suggestionsResult] = await Promise.all([
+  const [conversationResult, messagesResult, summaryResult, suggestionsResult, executionsResult, settingsResult] = await Promise.all([
     supabase.from("conversations").select("*,contacts!inner(name,contact_phones(e164,is_primary,status)),opportunities!conversations_opportunity_id_org_id_fkey(id,pipeline_stages!inner(name)),whatsapp_connections!inner(name,provider)").eq("id", id).maybeSingle(),
     supabase.from("messages").select("*").eq("conversation_id", id).order("created_at").limit(300),
     supabase.from("conversation_summaries").select("summary,facts,created_at").eq("conversation_id", id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("ai_suggestions").select("id,body,status,created_at").eq("conversation_id", id).eq("status", "pending").order("created_at", { ascending: false }),
+    supabase.from("ai_executions").select("id,request_message_id,status,error_code,created_at").eq("conversation_id", id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+    supabase.from("organization_settings").select("ai_global_mode").eq("org_id", viewer.organization!.id).maybeSingle(),
   ]);
-  const queryError = conversationResult.error ?? messagesResult.error ?? summaryResult.error ?? suggestionsResult.error;
+  const queryError = conversationResult.error ?? messagesResult.error ?? summaryResult.error ?? suggestionsResult.error ?? executionsResult.error ?? settingsResult.error;
   if (queryError) {
     console.error("Failed to load Inbox conversation", queryError);
     throw new Error("Não foi possível carregar a conversa do Inbox.");
@@ -35,7 +37,12 @@ export default async function ConversationPage({
   const messages = messagesResult.data;
   const summary = summaryResult.data;
   const suggestions = suggestionsResult.data;
+  const latestExecution = executionsResult.data;
+  const globalAiMode = settingsResult.data?.ai_global_mode ?? "off";
   if (!conversation) notFound();
+
+  const latestInbound = [...(messages ?? [])].reverse().find((message) => message.direction === "inbound");
+  const currentExecution = latestExecution?.request_message_id === latestInbound?.id ? latestExecution : null;
 
   const contact = Array.isArray(conversation.contacts) ? conversation.contacts[0] : conversation.contacts;
   const opportunity = Array.isArray(conversation.opportunities) ? conversation.opportunities[0] : conversation.opportunities;
@@ -52,7 +59,7 @@ export default async function ConversationPage({
         <span className={styles.contextBadge}>{connection?.name} · {connection?.provider}</span>
       </header>
       {feedback.erro ? <p className={styles.errorBanner}>{feedback.erro}</p> : null}
-      {feedback.sucesso ? <p className={styles.successBanner}>Mensagem registrada e enfileirada para envio.</p> : null}
+      {feedback.sucesso ? <p className={styles.successBanner}>{feedback.sucesso === "pedro-reprocessado" ? "Pedro recebeu a última mensagem novamente. O modo configurado definirá se ele cria uma sugestão ou responde automaticamente." : "Mensagem registrada e enfileirada para envio."}</p> : null}
 
       <div className={styles.chatLayout}>
         <section className={styles.chatPanel}>
@@ -82,9 +89,9 @@ export default async function ConversationPage({
         </section>
 
         <aside className={styles.contextPanel}>
-          <section><h2>Controle</h2><p>Versão {conversation.version} · {conversation.status} · {conversation.ownership}</p><div className={styles.controlGrid}>
+          <section><h2>Controle</h2><p>Versão {conversation.version} · {conversation.status} · {conversation.ownership}{currentExecution ? ` · IA ${currentExecution.status}` : " · última mensagem ainda sem execução"}</p><div className={styles.controlGrid}>
             <form action={conversationAction}><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} /><button name="action" type="submit" value="take_over"><UserRoundCheck size={14} /> Assumir</button></form>
-            <form action={conversationAction}><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} /><button name="action" type="submit" value="return_to_ai"><Bot size={14} /> Devolver</button></form>
+            <form action={conversationAction}><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} /><input name="reason" type="hidden" value="Reprocessamento manual solicitado no Inbox" /><button disabled={globalAiMode === "off" || conversation.status === "closed"} name="action" type="submit" value="return_to_ai"><Bot size={14} /> {globalAiMode === "off" ? "Pedro desativado" : conversation.ownership === "ai" ? "Reprocessar com Pedro" : "Devolver ao Pedro e processar"}</button></form>
             <form action={conversationAction}><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} /><button name="action" type="submit" value="pause"><Pause size={14} /> Pausar</button></form>
             <form action={conversationAction}><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} /><button name="action" type="submit" value="close"><X size={14} /> Encerrar</button></form>
           </div></section>
