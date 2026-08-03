@@ -179,7 +179,11 @@ export default async function WhatsappSettingsPage({
                       {connection.status !== "active" ? (
                         <>
                           <label>
-                            <input name="inboundEnabled" type="checkbox" />{" "}
+                            <input
+                              defaultChecked
+                              name="inboundEnabled"
+                              type="checkbox"
+                            />{" "}
                             inbound
                           </label>
                           <label>

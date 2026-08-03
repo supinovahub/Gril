@@ -195,10 +195,9 @@ export async function configureUazapiWebhook(input: { baseUrl: string; token: st
       enabled: true,
       url: callback.toString(),
       events: ["connection", "messages", "messages_update"],
-      excludeMessages: ["fromMeYes", "isGroupYes"],
+      excludeMessages: ["wasSentByApi", "isGroupYes"],
       addUrlEvents: false,
       addUrlTypesMessages: false,
-      action: "add",
     }),
   }, { providerLabel: "Uazapi" });
   return { callbackUrl: callback.toString() };

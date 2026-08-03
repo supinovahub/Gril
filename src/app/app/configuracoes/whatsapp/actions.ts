@@ -145,13 +145,18 @@ export async function changeConnectionStateAction(formData: FormData) {
   if (viewer.membership?.role !== "owner") {
     redirect(whatsappFeedback("erro", "Ação exclusiva do dono."));
   }
+  const campaignEnabled = formData.get("campaignEnabled") === "on";
+  const inboundRequested = formData.get("inboundEnabled") === "on";
+  const inboundEnabled = parsed.data.action === "activate" && !inboundRequested && !campaignEnabled
+    ? true
+    : inboundRequested;
   const supabase = await createClient();
   const { error } = await supabase.from("connection_activation_requests").insert({
     org_id: viewer.organization!.id,
     connection_id: parsed.data.connectionId,
     action: parsed.data.action,
-    inbound_enabled: formData.get("inboundEnabled") === "on",
-    campaign_enabled: formData.get("campaignEnabled") === "on",
+    inbound_enabled: inboundEnabled,
+    campaign_enabled: campaignEnabled,
     reason: String(formData.get("reason") ?? "").trim() || null,
     actor_user_id: viewer.userId,
   });
@@ -231,7 +236,7 @@ export async function configureUazapiWebhookAction(formData: FormData) {
   const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").replace(/\/$/, "");
   if (!appUrl.startsWith("https://")) redirect(whatsappFeedback("erro", "Configure NEXT_PUBLIC_APP_URL com a URL HTTPS do deploy final."));
   const admin = createAdminClient();
-  const { data: connection } = await admin.from("whatsapp_connections").select("id,org_id,provider,endpoint_url,integration_account_id,settings")
+  const { data: connection } = await admin.from("whatsapp_connections").select("id,org_id,provider,status,endpoint_url,integration_account_id,settings")
     .eq("id", connectionId.data).eq("org_id", viewer.organization!.id).maybeSingle();
   if (!connection?.integration_account_id || connection.provider !== "uazapi" || !connection.endpoint_url) redirect(whatsappFeedback("erro", "Conexão Uazapi não encontrada."));
   const { data: token } = await admin.rpc("get_integration_secret", { p_integration_account_id: connection.integration_account_id });
@@ -239,12 +244,19 @@ export async function configureUazapiWebhookAction(formData: FormData) {
   const callbackUrl = `${appUrl}/api/webhooks/whatsapp/${connection.id}`;
   try {
     await configureUazapiWebhook({ baseUrl: connection.endpoint_url, token, callbackUrl });
-    await admin.from("whatsapp_connections").update({ settings: { ...((connection.settings ?? {}) as Record<string, Json>), webhook_configured_at: new Date().toISOString(), webhook_callback: callbackUrl } }).eq("id", connection.id);
+    await admin.from("whatsapp_connections").update({
+      ...(connection.status === "active" ? { inbound_enabled: true } : {}),
+      settings: {
+        ...((connection.settings ?? {}) as Record<string, Json>),
+        webhook_configured_at: new Date().toISOString(),
+        webhook_callback: callbackUrl,
+      },
+    }).eq("id", connection.id);
   } catch (error) {
     redirect(whatsappFeedback("erro", integrationError(error)));
   }
   revalidatePath("/app/configuracoes/whatsapp");
-  redirect(whatsappFeedback("sucesso", "Webhook Uazapi configurado no endereço público."));
+  redirect(whatsappFeedback("sucesso", "Webhook Uazapi configurado e recebimento inbound habilitado."));
 }
 
 export type UazapiPairingState = { status: "idle" | "error" | "success"; message?: string; pairCode?: string; qrImage?: string };

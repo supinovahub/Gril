@@ -1,6 +1,6 @@
 import "server-only";
 
-import { createHmac, timingSafeEqual } from "node:crypto";
+import { createHash, createHmac, timingSafeEqual } from "node:crypto";
 import { z } from "zod";
 
 import type { Json } from "../database.types";
@@ -219,15 +219,52 @@ function findUazapiMessage(root: Record<string, unknown>) {
   return record(root.message) ?? record(data?.message) ?? data ?? root;
 }
 
+function uazapiInstanceId(root: Record<string, unknown>) {
+  const instance = record(root.instance);
+  const data = record(root.data);
+  const dataInstance = record(data?.instance);
+  return text(root.instance)
+    ?? text(instance?.id)
+    ?? text(instance?.instanceId)
+    ?? text(root.instanceId)
+    ?? text(root.InstanceId)
+    ?? text(data?.instance)
+    ?? text(dataInstance?.id)
+    ?? text(dataInstance?.instanceId);
+}
+
+function fallbackUazapiMessageId(
+  root: Record<string, unknown>,
+  message: Record<string, unknown>,
+) {
+  const eventType = text(root.EventType) ?? text(root.event) ?? text(root.type);
+  const instanceId = uazapiInstanceId(root);
+  const from = text(message.sender) ?? text(message.from) ?? text(message.chatid);
+  const timestamp = message.messageTimestamp ?? message.timestamp;
+  const body = text(message.text) ?? text(message.body) ?? text(message.caption);
+  if (!instanceId || !from || (!timestamp && !body)) return undefined;
+  return `uaz-${createHash("sha256")
+    .update(JSON.stringify([instanceId, eventType, from, timestamp ?? null, body ?? null]))
+    .digest("hex")}`;
+}
+
 export function verifyAndNormalizeUazapiWebhook(
   raw: unknown,
   credential: string,
   headerToken?: string | null,
+  expectedInstanceId?: string | readonly string[] | null,
 ): NormalizedWhatsappWebhook | null {
   const root = record(raw);
   if (!root) return null;
   const receivedToken = text(root.token) ?? headerToken ?? text(record(root.data)?.token);
-  if (!safeEqual(receivedToken, credential)) return null;
+  if (receivedToken) {
+    if (!safeEqual(receivedToken, credential)) return null;
+  } else {
+    const expectedInstances = typeof expectedInstanceId === "string"
+      ? [expectedInstanceId]
+      : expectedInstanceId ?? [];
+    if (!expectedInstances.includes(uazapiInstanceId(root) ?? "")) return null;
+  }
 
   const inbound: NormalizedInboundMessage[] = [];
   const statuses: NormalizedStatusUpdate[] = [];
@@ -235,7 +272,11 @@ export function verifyAndNormalizeUazapiWebhook(
   const eventType = (text(root.EventType) ?? text(root.event) ?? text(root.type) ?? "").toLowerCase();
   const message = findUazapiMessage(root);
   if (!message) return { inbound, statuses, mutations };
-  const providerMessageId = text(message.messageid) ?? text(message.messageId) ?? text(message.id) ?? text(record(message.key)?.id);
+  const providerMessageId = text(message.messageid)
+    ?? text(message.messageId)
+    ?? text(message.id)
+    ?? text(record(message.key)?.id)
+    ?? fallbackUazapiMessageId(root, message);
   const fromMe = message.fromMe === true || message.wasSentByApi === true;
   const reaction = record(message.reaction) ?? record(message.reactionMessage);
   const reactionTarget = text(reaction?.messageid) ?? text(reaction?.messageId) ?? text(reaction?.id) ?? text(record(reaction?.key)?.id) ?? text(message.targetMessageId);
@@ -267,7 +308,11 @@ export function verifyAndNormalizeUazapiWebhook(
   const rawFrom = text(message.sender) ?? text(message.from) ?? text(message.chatid)?.split("@")[0] ?? "";
   const fromE164 = normalizePhoneToE164(rawFrom);
   if (!fromMe && !isGroup && providerMessageId && fromE164) {
-    const contentType = mapContentType(text(message.messageType) ?? text(message.type));
+    const contentType = mapContentType(
+      text(message.messageType)
+        ?? text(message.type)
+        ?? ((text(message.text) ?? text(message.body)) ? "text" : undefined),
+    );
     const media = record(message.media) ?? record(message.file) ?? record(message.document) ?? record(message.image) ?? record(message.audio) ?? record(message.video);
     const sourceUrl = text(media?.url) ?? text(media?.URL) ?? text(message.fileURL) ?? text(message.mediaUrl) ?? text(message.url);
     inbound.push({
