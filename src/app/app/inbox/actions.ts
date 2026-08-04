@@ -153,7 +153,7 @@ export async function conversationAction(formData: FormData) {
 export async function reviewAiSuggestionAction(formData: FormData) {
   const parsed = z.object({
     suggestionId: z.string().uuid(), conversationId: z.string().uuid(),
-    action: z.enum(["send", "discard"]), body: z.string().trim().max(4096).optional(),
+    action: z.enum(["send", "discard", "teach_only"]), body: z.string().trim().max(4096).optional(),
     expectedVersion: z.coerce.number().int().positive(),
   }).refine((value) => value.action === "discard" || Boolean(value.body), { message: "A mensagem não pode ficar vazia." })
     .safeParse({

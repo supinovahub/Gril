@@ -21,6 +21,7 @@ import {
   configureUazapiWebhookAction,
   connectMetaAction,
   connectUazapiAction,
+  resumeConnectionOutboundAction,
   syncMetaTemplatesAction,
 } from "./actions";
 import styles from "../../inbox/inbox.module.css";
@@ -128,6 +129,7 @@ export default async function WhatsappSettingsPage({
                   ) : null}
                 </span>
                 <span className={styles.contextBadge}>{connection.status}</span>
+                {connection.outbound_paused ? <p className={styles.errorBanner}>Envios pausados: {connection.outbound_pause_reason ?? "revisão do dono necessária"}.</p> : null}
                 {isOwner && account ? (
                   <div className={styles.connectionActions}>
                     <form action={retestIntegrationAction}>
@@ -145,6 +147,7 @@ export default async function WhatsappSettingsPage({
                         <RefreshCw size={13} /> Testar
                       </button>
                     </form>
+                    {connection.outbound_paused ? <form action={resumeConnectionOutboundAction}><input name="connectionId" type="hidden" value={connection.id} /><button className={styles.actionButton} type="submit"><ShieldCheck size={13} /> Confirmar reativação</button></form> : null}
                     <form action={revokeIntegrationAction}>
                       <input
                         name="integrationAccountId"

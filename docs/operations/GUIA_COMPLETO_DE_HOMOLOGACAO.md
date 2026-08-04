@@ -1,6 +1,6 @@
 # Guia de homologação do Gril
 
-> Roteiro operacional do MVP, atualizado em 03/08/2026. Consolida os sete documentos iniciais, as decisões do Grill Me posterior e o produto implementado.
+> Roteiro operacional do MVP, atualizado em 04/08/2026. Consolida os sete documentos iniciais, as decisões do Grill Me posterior e o produto implementado.
 
 ## 1. Onde testar
 
@@ -176,6 +176,26 @@ No modo **Assistido**, aprove uma sugestão que contenha qualificação e depois
 ## 7. Simulador e regressão
 
 No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confirme que o Pedro lembra as mensagens anteriores, acumula a qualificação e mantém o resumo sem criar lead, Inbox, WhatsApp, call, follow-up real ou consumo de capacidade. Cubra saudação vaga, preço, disponibilidade, compra à vista/financiada/futura, falta de imóvel compatível, pergunta sem resposta, pedido humano, reclamação, opt-out, número errado, prompt injection, agendamento, cancelamento, reagendamento e recebimento de mídia.
+
+### 6.1 Modos, aprendizado e curadoria
+
+1. em `Pedro`, confirme que o atendimento normal oferece apenas `off`, `shadow` e `assisted`; `production` existe somente para reativação;
+2. configure reativação como `production + teste controlado`, cadastre seu telefone E.164 na allowlist e prove que um contato fora dela é bloqueado no servidor;
+3. em uma sugestão assisted, edite e aprove: a mensagem deve ser enviada e a correção deve criar um candidato para Lionel;
+4. use `Ensinar e gerar outra`: nada deve ser enviado ao lead e uma nova sugestão deve aparecer usando a orientação;
+5. use `Só descartar`: nada deve ser enviado nem exibido como sucesso de envio;
+6. abra `/app/lionel`, responda ao grill uma pergunta por vez e registre o consenso como candidato; confirme que ele aparece em `Aprendizados`, ainda sem ativação silenciosa;
+7. confirme que corretor não vê Lionel nem controles de aprendizado.
+
+### 6.2 Chat geral, intervenção humana e corretor
+
+1. abra `/app/chat-pedro`, envie mensagens no tópico geral, selecione uma mensagem anterior com `Responder` e confirme que a resposta fica vinculada;
+2. envie uma mensagem diretamente pelo celular conectado enquanto Pedro controla a conversa: o Inbox deve rotular `enviada pelo celular`, Pedro deve parar e criar tópico de alta prioridade;
+3. no tópico, teste separadamente `Continuar como humano`, `Devolver ao Pedro` e `Não reconheço o envio`; a última opção deve pausar todo outbound da conexão sem impedir novos inbound;
+4. conclua uma call com `iniciar negociação`, `perdido` ou `sem resultado`: o acesso operacional do corretor deve ser revogado, a conversa deve voltar ao dono/gestor em `assisted` e autonomia baixa, e Pedro deve abrir o tópico de próximo passo;
+5. durante uma janela ativa do corretor, use `Pedir ajuda ao Pedro`: `/app/assistente-corretor` deve mostrar somente aquele lead e responder de forma consultiva, sem enviar ao WhatsApp;
+6. depois do fim/revogação da janela, o corretor não deve mais acessar o tópico nem a conversa;
+7. confirme atualização automática, sem F5, e badges separados para Inbox, Chat com Pedro, Lionel e Assistente do corretor.
 
 Também valide:
 

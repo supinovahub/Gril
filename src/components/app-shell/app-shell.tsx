@@ -15,6 +15,8 @@ import {
   Menu,
   Megaphone,
   MessagesSquare,
+  MessageSquareText,
+  BrainCircuit,
   Search,
   ScrollText,
   Settings2,
@@ -45,10 +47,12 @@ function initials(name: string | undefined, email: string) {
 export function AppShell({
   viewer,
   inboxNotificationCount,
+  internalChatNotificationCounts,
   children,
 }: {
   viewer: Viewer;
   inboxNotificationCount: number;
+  internalChatNotificationCounts: { pedro: number; lionel: number; broker: number };
   children: React.ReactNode;
 }) {
   const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
@@ -112,6 +116,17 @@ export function AppShell({
             <MessagesSquare size={17} aria-hidden="true" /><span>Inbox</span>
             <NotificationBadge className={styles.navNotificationBadge} count={inboxNotificationCount} label={notificationLabel} />
           </NavLink>
+          {memberRole === "broker" ? (
+            <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/assistente-corretor">
+              <MessageSquareText size={17} aria-hidden="true" /><span>Assistente do corretor</span>
+              <NotificationBadge className={styles.navNotificationBadge} count={internalChatNotificationCounts.broker} label={`${internalChatNotificationCounts.broker} consultas pendentes`} />
+            </NavLink>
+          ) : (
+            <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/chat-pedro">
+              <MessageSquareText size={17} aria-hidden="true" /><span>Chat com Pedro</span>
+              <NotificationBadge className={styles.navNotificationBadge} count={internalChatNotificationCounts.pedro} label={`${internalChatNotificationCounts.pedro} tópicos pendentes`} />
+            </NavLink>
+          )}
           <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/leads">
             <ContactRound size={17} aria-hidden="true" /><span>Leads</span>
           </NavLink>
@@ -147,6 +162,12 @@ export function AppShell({
           {canManageAi ? (
             <NavLink activeClassName={styles.navItemActive} className={styles.navItem} exact href="/app/pedro">
               <Sparkles size={17} aria-hidden="true" /><span>Pedro IA</span>
+            </NavLink>
+          ) : null}
+          {canManageAi ? (
+            <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/lionel">
+              <BrainCircuit size={17} aria-hidden="true" /><span>Lionel</span>
+              <NotificationBadge className={styles.navNotificationBadge} count={internalChatNotificationCounts.lionel} label={`${internalChatNotificationCounts.lionel} curadorias pendentes`} />
             </NavLink>
           ) : null}
           {canManageAi ? (
@@ -261,6 +282,8 @@ export function AppShell({
             {canManageCampaigns ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/campanhas"><Megaphone size={17} />Campanhas</NavLink> : null}
             {canManageTeam(viewer) ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/equipe"><UsersRound size={17} />Equipe</NavLink> : null}
             {canManageAi ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} exact href="/app/pedro"><Sparkles size={17} />Pedro IA</NavLink> : null}
+            {memberRole === "broker" ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/assistente-corretor"><MessageSquareText size={17} />Assistente do corretor</NavLink> : <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/chat-pedro"><MessageSquareText size={17} />Chat com Pedro</NavLink>}
+            {canManageAi ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/lionel"><BrainCircuit size={17} />Lionel</NavLink> : null}
             {canManageAi ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/conhecimento"><BookOpenCheck size={17} />Empreendimentos</NavLink> : null}
             {canManageAi ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/simulador"><FlaskConical size={17} />Simulador</NavLink> : null}
             {canViewReports ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/relatorios"><BarChart3 size={17} />Relatórios</NavLink> : null}

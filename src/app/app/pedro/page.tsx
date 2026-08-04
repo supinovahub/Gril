@@ -3,7 +3,7 @@ import { Bot, BrainCircuit, CheckCircle2, CircleDashed, KeyRound, RefreshCw, Shi
 import { retestIntegrationAction, revokeIntegrationAction } from "@/app/app/integration-actions";
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { addPersonaSampleAction, changeGlobalAiModeAction, clonePersonaAction, configureFallbackModelAction, configureModelAction, connectOpenAiAction, createPersonaDraftAction, publishPersonaAction } from "./actions";
+import { addAiTestNumberAction, addPersonaSampleAction, changeGlobalAiModeAction, clonePersonaAction, configureFallbackModelAction, configureModelAction, configureReactivationAiAction, connectOpenAiAction, createPersonaDraftAction, publishPersonaAction, removeAiTestNumberAction } from "./actions";
 import styles from "./pedro.module.css";
 
 export default async function PedroPage({
@@ -29,6 +29,7 @@ export default async function PedroPage({
   const published = versionsResult.data?.find((item) => item.persona_id === defaultPersona?.id && item.status === "published");
   const drafts = versionsResult.data?.filter((item) => item.persona_id === defaultPersona?.id && item.status === "draft") ?? [];
   const openAiAccount = integrationsResult.data?.find((item) => item.status !== "revoked");
+  const { data: allowlist } = await supabase.from("ai_test_allowlist").select("id,phone_e164,active").eq("org_id", viewer.organization!.id).eq("active", true).order("created_at");
 
   return (
     <div className={styles.page}>
@@ -113,11 +114,22 @@ export default async function PedroPage({
 
         <aside className={styles.sideColumn}>
           <section className={styles.panel}>
-            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Ativação</p><h2>Modo global</h2></span></div>
+            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Atendimento normal</p><h2>Modo inbound</h2></span></div>
             <form action={changeGlobalAiModeAction} className={styles.modeForm}>
-              {["off", "shadow", "assisted", "production"].map((mode) => <button className={settings?.ai_global_mode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{mode}</button>)}
+              {["off", "shadow", "assisted"].map((mode) => <button className={settings?.inbound_ai_mode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{mode}</button>)}
             </form>
-            <p className={styles.notice}>Produção exige identidade institucional, persona, regras, qualificação, conhecimento válido, modelo principal e fallback, canal saudável e regressão real aprovada.</p>
+            <p className={styles.notice}>O atendimento normal não pode operar em production. Shadow observa; assisted sugere e aprende com correções aprovadas.</p>
+          </section>
+          <section className={styles.panel}>
+            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Reativação de base</p><h2>Produção controlada</h2></span></div>
+            <form action={configureReactivationAiAction} className={styles.promptForm}>
+              <label><span>Modo</span><select defaultValue={settings?.reactivation_ai_mode ?? "off"} name="reactivationMode"><option value="off">off</option><option value="shadow">shadow</option><option value="assisted">assisted</option><option value="production">production</option></select></label>
+              <label><span>Liberação</span><select defaultValue={settings?.reactivation_release_state ?? "blocked"} name="releaseState"><option value="blocked">Bloqueada</option><option value="test_controlled">Somente allowlist</option><option value="released">Liberada</option></select></label>
+              <label><span>Autonomia</span><select defaultValue={settings?.reactivation_autonomy ?? "low"} name="reactivationAutonomy"><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option></select></label>
+              <button type="submit">Salvar reativação</button>
+            </form>
+            <form action={addAiTestNumberAction} className={styles.keyForm}><label><span>Número liberado para teste</span><input name="phoneE164" placeholder="+5511999999999" required /></label><button type="submit">Adicionar</button></form>
+            <div className={styles.executionList}>{allowlist?.map((entry) => <article key={entry.id}><span><strong>{entry.phone_e164}</strong><small>Teste controlado</small></span><form action={removeAiTestNumberAction}><input name="allowlistId" type="hidden" value={entry.id} /><button type="submit">Remover</button></form></article>)}{!allowlist?.length ? <p className={styles.notice}>Nenhum número liberado. Production controlada não enviará para contatos fora da allowlist.</p> : null}</div>
           </section>
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Últimas execuções</p><h2>Rastreabilidade</h2></span></div>

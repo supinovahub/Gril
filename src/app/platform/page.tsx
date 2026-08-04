@@ -1,5 +1,6 @@
 import { Building2, KeyRound, ShieldCheck, UserCog, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 
 import { signOutAction } from "@/app/(auth)/actions";
 import { CopyButton } from "@/app/app/equipe/copy-button";
@@ -40,7 +41,7 @@ export default async function PlatformPage({ searchParams }: { searchParams: Pro
   const isAdmin = snapshot.role === "platform_admin";
 
   return <main className={styles.page}>
-    <header className={styles.hero}><div><p className={styles.eyebrow}>Plataforma Gril</p><h1>Controle geral e aprovações</h1><p>Solicitações, acessos contratuais e integridade das imobiliárias em um único registro auditável.</p></div><div className={styles.heroActions}><span>{snapshot.unread_notifications} novas</span><PlatformPushSubscription publicKey={process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY ?? ""} /><form action={signOutAction}><button>Sair</button></form></div></header>
+    <header className={styles.hero}><div><p className={styles.eyebrow}>Plataforma Gril</p><h1>Controle geral e aprovações</h1><p>Solicitações, acessos contratuais e integridade das imobiliárias em um único registro auditável.</p></div><div className={styles.heroActions}>{isAdmin ? <Link href="/platform/lionel">Abrir Lionel</Link> : null}<span>{snapshot.unread_notifications} novas</span><PlatformPushSubscription publicKey={process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY ?? ""} /><form action={signOutAction}><button>Sair</button></form></div></header>
     {viewer.supportAccess ? <section className={styles.notice}>Você está em contexto de suporte <strong>{viewer.supportAccess}</strong> para {viewer.organization?.name}.<form action={clearSupportContextAction}><button>Encerrar contexto</button></form></section> : null}
     {feedback.erro ? <p className={styles.error}>{feedback.erro}</p> : null}{feedback.sucesso ? <p className={styles.success}>{feedback.sucesso}</p> : null}
     {feedback.link ? <div className={styles.copyLine}><code>{feedback.link}</code><CopyButton value={feedback.link} /></div> : null}

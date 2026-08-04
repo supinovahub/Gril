@@ -116,6 +116,7 @@
 .suggestionCard textarea { border-color:var(--border); background:var(--control-bg); }
 .suggestionCard button { min-height:36px; border-radius:8px; background:var(--ink); }
 .suggestionCard .discardButton { background:var(--surface); }
+.suggestionCard .teachButton { background:var(--surface-muted); border:1px solid var(--border-strong); color:var(--ink); }
 @media(max-width:980px){.chatLayout,.settingsLayout{grid-template-columns:1fr}}
 @media(max-width:680px){
   .pageHeader h1{font-size:34px}

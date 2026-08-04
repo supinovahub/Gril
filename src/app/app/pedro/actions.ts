@@ -214,23 +214,13 @@ export async function clonePersonaAction(formData: FormData) {
 }
 
 export async function changeGlobalAiModeAction(formData: FormData) {
-  const mode = z.enum(["off", "shadow", "assisted", "production"]).safeParse(formData.get("mode"));
+  const mode = z.enum(["off", "shadow", "assisted"]).safeParse(formData.get("mode"));
   if (!mode.success) return;
   const viewer = await requireActiveViewer();
   if (viewer.membership?.role !== "owner") return;
   const supabase = await createClient();
 
-  if (mode.data === "production") {
-    const [{ count: modelCount }, { count: connectionCount }] = await Promise.all([
-      supabase.from("model_profiles").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).eq("status", "active").eq("is_default", true),
-      supabase.from("whatsapp_connections").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).eq("status", "active").eq("inbound_enabled", true),
-    ]);
-    if (!modelCount || !connectionCount) {
-      redirect(`/app/pedro?erro=${encodeURIComponent("Produção exige modelo ativo e ao menos um WhatsApp inbound ativo.")}`);
-    }
-  }
-
-  const { error } = await supabase.from("organization_settings").update({ ai_global_mode: mode.data }).eq("org_id", viewer.organization!.id);
+  const { error } = await supabase.from("organization_settings").update({ ai_global_mode: mode.data, inbound_ai_mode: mode.data }).eq("org_id", viewer.organization!.id);
   if (error) {
     const reason = error.message.includes("institutional") ? "Complete a identidade institucional."
       : error.message.includes("knowledge_or_rules") ? "Publique persona, regras, qualificação e ao menos um empreendimento válido."
@@ -240,6 +230,60 @@ export async function changeGlobalAiModeAction(formData: FormData) {
       : "O banco recusou a mudança de modo por um gate de segurança.";
     redirect(`/app/pedro?erro=${encodeURIComponent(reason)}`);
   }
+  revalidatePath("/app/pedro");
+}
+
+export async function configureReactivationAiAction(formData: FormData) {
+  const parsed = z.object({
+    mode: z.enum(["off", "shadow", "assisted", "production"]),
+    releaseState: z.enum(["blocked", "test_controlled", "released"]),
+    autonomy: z.enum(["low", "medium", "high"]),
+  }).safeParse({
+    mode: formData.get("reactivationMode"),
+    releaseState: formData.get("releaseState"),
+    autonomy: formData.get("reactivationAutonomy"),
+  });
+  if (!parsed.success) return;
+  const viewer = await requireActiveViewer();
+  if (viewer.membership?.role !== "owner") return;
+  const supabase = await createClient();
+  if (parsed.data.mode === "production" && parsed.data.releaseState === "blocked") {
+    redirect(`/app/pedro?erro=${encodeURIComponent("Produção de reativação precisa estar em teste controlado ou liberada.")}`);
+  }
+  const { error } = await supabase.from("organization_settings").update({
+    reactivation_ai_mode: parsed.data.mode,
+    reactivation_release_state: parsed.data.releaseState,
+    reactivation_autonomy: parsed.data.autonomy,
+  }).eq("org_id", viewer.organization!.id);
+  if (error) redirect(`/app/pedro?erro=${encodeURIComponent("Não foi possível salvar o modo de reativação.")}`);
+  revalidatePath("/app/pedro");
+}
+
+export async function addAiTestNumberAction(formData: FormData) {
+  const phone = z.string().trim().regex(/^\+[1-9][0-9]{7,14}$/).safeParse(formData.get("phoneE164"));
+  if (!phone.success) redirect(`/app/pedro?erro=${encodeURIComponent("Informe o telefone no formato E.164, como +5511999999999.")}`);
+  const viewer = await requireActiveViewer();
+  if (!viewer.membership || !["owner", "manager"].includes(viewer.membership.role)) return;
+  const supabase = await createClient();
+  const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
+  const { error } = await supabase.from("ai_test_allowlist").upsert({
+    org_id: viewer.organization!.id,
+    operation_id: operation?.id ?? null,
+    phone_e164: phone.data,
+    active: true,
+    created_by: viewer.userId,
+  }, { onConflict: "org_id,phone_e164" });
+  if (error) redirect(`/app/pedro?erro=${encodeURIComponent("Não foi possível liberar o número de teste.")}`);
+  revalidatePath("/app/pedro");
+}
+
+export async function removeAiTestNumberAction(formData: FormData) {
+  const id = z.string().uuid().safeParse(formData.get("allowlistId"));
+  if (!id.success) return;
+  const viewer = await requireActiveViewer();
+  if (!viewer.membership || !["owner", "manager"].includes(viewer.membership.role)) return;
+  const supabase = await createClient();
+  await supabase.from("ai_test_allowlist").update({ active: false }).eq("id", id.data).eq("org_id", viewer.organization!.id);
   revalidatePath("/app/pedro");
 }
 

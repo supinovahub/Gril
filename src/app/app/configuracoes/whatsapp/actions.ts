@@ -259,6 +259,27 @@ export async function configureUazapiWebhookAction(formData: FormData) {
   redirect(whatsappFeedback("sucesso", "Webhook Uazapi configurado e recebimento inbound habilitado."));
 }
 
+export async function resumeConnectionOutboundAction(formData: FormData) {
+  const connectionId = z.string().uuid().safeParse(formData.get("connectionId"));
+  if (!connectionId.success) return;
+  const viewer = await requireActiveViewer();
+  if (viewer.membership?.role !== "owner") redirect(whatsappFeedback("erro", "Ação exclusiva do dono."));
+  const admin = createAdminClient();
+  const { data: connection } = await admin.from("whatsapp_connections")
+    .select("id,org_id,status,last_health_at,outbound_paused")
+    .eq("id", connectionId.data)
+    .eq("org_id", viewer.organization!.id)
+    .maybeSingle();
+  if (!connection?.outbound_paused) return;
+  const healthAt = connection.last_health_at ? new Date(connection.last_health_at).valueOf() : 0;
+  if (connection.status !== "active" || healthAt < Date.now() - 15 * 60_000) {
+    redirect(whatsappFeedback("erro", "Teste a conexão com sucesso antes de reativar os envios."));
+  }
+  await admin.from("whatsapp_connections").update({ outbound_paused: false, outbound_pause_reason: null, outbound_paused_at: null }).eq("id", connection.id);
+  revalidatePath("/app/configuracoes/whatsapp");
+  redirect(whatsappFeedback("sucesso", "Envios reativados pelo dono após teste recente da conexão."));
+}
+
 export type UazapiPairingState = { status: "idle" | "error" | "success"; message?: string; pairCode?: string; qrImage?: string };
 export type UazapiInstanceState = { status: "idle" | "error" | "success"; message?: string; token?: string; baseUrl?: string };
 

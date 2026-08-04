@@ -185,18 +185,21 @@ async function runAiExecution(executionId: string) {
 
     const conversationMessages: Array<{ role: "user" | "assistant"; text: string }> = [];
     let priorSummary: { summary: string; facts: Json } | null = null;
+    let activeGuidance: { id: string; guidance: string; exact_reply: boolean } | null = null;
     let simulatorInitialState: unknown = {};
     let simulatorQualificationValues: QualificationValue[] = [];
     const simulatorSnapshot = execution.mode === "simulator"
       ? parseSimulatorExecutionSnapshot(execution.input_snapshot)
       : null;
     if (execution.conversation_id) {
-      const [{ data: messages, error: messagesError }, { data: summary }] = await Promise.all([
+      const [{ data: messages, error: messagesError }, { data: summary }, { data: guidance }] = await Promise.all([
         admin.from("messages").select("direction,content_type,body,created_at,metadata").eq("conversation_id", execution.conversation_id).order("created_at", { ascending: false }).limit(40),
         admin.from("conversation_summaries").select("summary,facts").eq("conversation_id", execution.conversation_id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+        admin.from("conversation_ai_guidance").select("id,guidance,exact_reply").eq("conversation_id", execution.conversation_id).eq("status", "active").maybeSingle(),
       ]);
       if (messagesError) throw messagesError;
       priorSummary = summary;
+      activeGuidance = guidance;
       for (const message of [...(messages ?? [])].reverse()) {
         if ((message.metadata as { excluded_from_ai?: boolean } | null)?.excluded_from_ai) continue;
         conversationMessages.push({
@@ -307,6 +310,11 @@ async function runAiExecution(executionId: string) {
         })),
         current_qualification: currentValues,
         previous_conversation_summary: priorSummary,
+        manager_guidance: activeGuidance ? {
+          instruction: activeGuidance.guidance,
+          exact_reply_requested: activeGuidance.exact_reply,
+          requirement: "Gere uma nova sugestão que aplique esta orientação ao contexto atual sem inventar fatos.",
+        } : null,
         simulator_state: simulatorSnapshot ? simulatorInitialState : null,
         simulator_session: simulatorSnapshot ? {
           id: simulatorSnapshot.simulator_session_id,
@@ -369,6 +377,12 @@ async function runAiExecution(executionId: string) {
       p_response_id: response.responseId,
     });
     if (completeError) throw completeError;
+    if (activeGuidance) {
+      await admin.from("conversation_ai_guidance").update({
+        status: "consumed",
+        consumed_at: new Date().toISOString(),
+      }).eq("id", activeGuidance.id).eq("status", "active");
+    }
     const { error: mediaEnqueueError } = await admin.rpc("enqueue_pedro_project_media", { p_execution_id: executionId });
     if (mediaEnqueueError) throw mediaEnqueueError;
     if (execution.conversation_id) {
@@ -580,6 +594,20 @@ async function processOutboundMessage(messageId: string) {
       p_message_id: messageId,
     });
     return "failed";
+  }
+  if (claim.connection_id) {
+    const { data: connection } = await admin.from("whatsapp_connections")
+      .select("outbound_paused")
+      .eq("id", claim.connection_id)
+      .maybeSingle();
+    if (connection?.outbound_paused) {
+      await admin.rpc("fail_outbound_message", {
+        p_error_code: "connection_outbound_paused",
+        p_error_redacted: "Os envios desta conexão estão pausados até o dono confirmar a reativação.",
+        p_message_id: messageId,
+      });
+      return "failed";
+    }
   }
   const [{ data: secret, error: secretError }, { data: account, error: accountError }] = await Promise.all([
     admin.rpc("get_integration_secret", { p_integration_account_id: claim.integration_account_id }),

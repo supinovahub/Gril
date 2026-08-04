@@ -15,6 +15,8 @@ const tables = [
   "call_offers",
   "campaigns",
   "campaign_waves",
+  "internal_threads",
+  "internal_messages",
 ] as const;
 
 export function RealtimeRefresh({ orgId }: { orgId: string }) {
@@ -36,7 +38,7 @@ export function RealtimeRefresh({ orgId }: { orgId: string }) {
   }, [orgId, router]);
 
   useEffect(() => {
-    if (!pathname.startsWith("/app/inbox")) return;
+    if (!["/app/inbox", "/app/chat-pedro", "/app/lionel", "/app/assistente-corretor"].some((route) => pathname.startsWith(route))) return;
 
     let refreshBlocked = false;
     const refresh = () => {

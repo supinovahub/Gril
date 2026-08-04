@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { conversationAction, reviewAiSuggestionAction, sendHumanMessageAction } from "../actions";
 import styles from "../inbox.module.css";
 import { ConversationReadMarker } from "./conversation-read-marker";
+import { startBrokerConsultationAction } from "../../chat-interno/actions";
 
 function senderLabel(senderType: string, metadata: unknown) {
   const source = metadata && typeof metadata === "object" && !Array.isArray(metadata)
@@ -64,9 +65,11 @@ export default async function ConversationPage({
     ? "Pedro recebeu a última mensagem novamente. O modo configurado definirá se ele cria uma sugestão ou responde automaticamente."
     : feedback.sucesso === "sugestao-discard"
       ? "Sugestão descartada. Nenhuma mensagem foi enviada."
-      : feedback.sucesso === "sugestao-send"
-        ? "Sugestão aprovada e enfileirada para envio."
-        : "Mensagem registrada e enfileirada para envio.";
+      : feedback.sucesso === "sugestao-teach_only"
+        ? "Ensinamento registrado. Nada foi enviado ao lead e Pedro está gerando uma nova sugestão."
+        : feedback.sucesso === "sugestao-send"
+          ? "Sugestão aprovada e enfileirada para envio."
+          : "Mensagem registrada e enfileirada para envio.";
 
   return (
     <div className={styles.page}>
@@ -86,7 +89,7 @@ export default async function ConversationPage({
               <input name="suggestionId" type="hidden" value={suggestion.id} /><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} />
               <header><span><Bot size={15} /> Sugestão do Pedro</span><small>{new Date(suggestion.created_at).toLocaleString("pt-BR")}</small></header>
               <textarea defaultValue={suggestion.body} maxLength={4096} name="body" required rows={4} />
-              <footer><button name="action" type="submit" value="send"><Send size={14} /> Aprovar e enviar</button><button className={styles.discardButton} formNoValidate name="action" type="submit" value="discard"><X size={14} /> Descartar</button></footer>
+              <footer><button name="action" type="submit" value="send"><Send size={14} /> Aprovar e enviar</button><button className={styles.teachButton} name="action" type="submit" value="teach_only"><Bot size={14} /> Ensinar e gerar outra</button><button className={styles.discardButton} formNoValidate name="action" type="submit" value="discard"><X size={14} /> Só descartar</button></footer>
             </form>)}
           </div> : null}
           <div className={styles.messages}>
@@ -116,6 +119,7 @@ export default async function ConversationPage({
           <section><h2>Resumo</h2><p>{summary?.summary || "O resumo versionado será gerado pelo motor Pedro quando houver contexto suficiente."}</p></section>
           <section><h2>Proteções</h2><p><CircleAlert size={14} /> Opt-out, supressão e versão da conversa são revalidados no banco antes de qualquer envio.</p></section>
           <Link className={styles.secondaryButton} href={`/app/leads/${opportunity?.id}`}>Abrir oportunidade</Link>
+          {viewer.membership?.role === "broker" ? <form action={startBrokerConsultationAction}><input name="conversationId" type="hidden" value={conversation.id} /><button className={styles.secondaryButton} type="submit"><Bot size={14} /> Pedir ajuda ao Pedro</button></form> : null}
         </aside>
       </div>
     </div>
