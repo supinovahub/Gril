@@ -11,6 +11,8 @@ import {
   type ProjectCandidate,
   type QualificationValue,
 } from "@/lib/ai/pedro-turn";
+import { classifyPedroControlIntent } from "@/lib/ai/control-intents";
+import { compilePedroInstructions } from "@/lib/ai/pedro-instructions";
 import { evaluateRegressionCase } from "@/lib/ai/regression";
 import {
   buildSimulatorConversation,
@@ -116,38 +118,6 @@ function validCallRequest(
   return Number.isFinite(startsAt.valueOf()) && startsAt.valueOf() > minimum && startsAt.valueOf() < maximum
     ? request
     : null;
-}
-
-function controlIntent(message: { body: string | null; content_type: string }) {
-  const body = message.body?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() ?? "";
-  if (message.content_type === "document") return "sensitive_document" as const;
-  if (/\b(pix|boleto|dados bancarios|chave pix|comprovante|pagar|pagamento|sinal|reserva)\b/.test(body)) return "payment" as const;
-  if (/\b(numero errado|pessoa errada|nao sou|nao conheco|esse numero nao e|esse numero nao pertence)\b/.test(body)) return "wrong_number" as const;
-  if (/\b(nunca me cadastrei|nao me cadastrei|nao autorizei|nao dei meu contato|de onde tirou meu numero)\b/.test(body)) return "origin_contested" as const;
-  if (/\b(voce e (uma )?(ia|inteligencia artificial|robo|bot)|estou falando com (uma )?(ia|robo|bot))\b/.test(body)) return "identity_question" as const;
-  if (/\b(lgpd|privacidade|meus dados|apagar meus dados|excluir meus dados|como conseguiu meu contato)\b/.test(body)) return "privacy" as const;
-  if (/\b(stop|pare|parar|sair|cancela|cancelar|nao quero mais|nao me mande|remova meu numero|descadastrar)\b/.test(body)) return "opt_out" as const;
-  return null;
-}
-
-function compilePedroInstructions(
-  personaPrompt: string | null | undefined,
-  compiledRules: Json,
-  institutionalSnapshot: Json,
-) {
-  const fallback = "Responda em português brasileiro. Use apenas fatos aprovados no contexto. Se faltar um fato necessário, escale em vez de inventar.";
-  return [
-    personaPrompt ?? fallback,
-    `Regras determinísticas: ${JSON.stringify(compiledRules ?? {})}`,
-    `Perfil institucional aprovado: ${JSON.stringify(institutionalSnapshot ?? {})}`,
-    "Nunca afirme experiência pessoal, preço, disponibilidade, rentabilidade ou condição comercial que não esteja explicitamente no contexto. Não revele ser IA. Não solicite documentos sensíveis. Para risco jurídico, privacidade, fraude ou ausência de fato aprovado, use action=escalate.",
-    "Registre qualificação somente quando o contato tiver informado o dado. Nunca estime renda, entrada, orçamento ou prazo.",
-    "Solicite curadoria apenas quando preço total e entrada estiverem disponíveis. O backend fará o filtro final e acrescentará os imóveis elegíveis.",
-    "Crie call somente quando o contato tiver aceitado explicitamente uma data e um horário. Caso contrário, pergunte a preferência sem criar a call.",
-    "Use followup_strategy=short quando a conversa deve ser retomada em curto prazo, long para nutrição, future quando o lead declarou compra futura sem prazo exato, e cancel para resposta, opt-out, call confirmada ou ownership humano.",
-    "Ao recomendar um empreendimento, project_media_request deve ficar null: o servidor enviará apenas a foto principal. Se o lead pedir mais material, primeiro pergunte se prefere mais fotos ou o book completo. Depois da escolha, use project_media_request com more_photos ou book, nunca ambos. Nunca envie áudio.",
-    "Uma reação 👍 só significa sim quando responde a uma pergunta binária textual clara; reação a imagem ou material não prova interesse.",
-  ].join("\n\n");
 }
 
 async function runAiExecution(executionId: string) {
@@ -283,7 +253,9 @@ async function runAiExecution(executionId: string) {
     const definitionById = new Map(definitions.map((item) => [item.id, item]));
     const definitionCodes = new Set(definitions.map((definition) => definition.code));
     const currentValues: QualificationValue[] = (opportunityId
-      ? (valuesResult.data ?? []).map((value) => ({
+      ? (valuesResult.data ?? [])
+        .filter((value) => !value.valid_until || value.valid_until >= new Date().toISOString().slice(0, 10))
+        .map((value) => ({
         code: definitionById.get(value.definition_id)?.code ?? "unknown",
         valueText: value.value_text,
         valueNumber: value.value_number === null ? null : Number(value.value_number),
@@ -465,9 +437,16 @@ async function processAiMessage(message: Record<string, unknown>) {
   const payload = message.payload && typeof message.payload === "object" ? message.payload as Record<string, unknown> : {};
   if (eventType.startsWith("message.inbound")) {
     const messageId = z.string().uuid().parse(payload.message_id);
-    const { data: inbound } = await admin.from("messages").select("body,content_type").eq("id", messageId).single();
+    const { data: inbound } = await admin.from("messages").select("body,content_type,conversation_id").eq("id", messageId).single();
     if (!inbound) return;
-    const intent = controlIntent(inbound);
+    const { data: recentInbound } = await admin.from("messages")
+      .select("body")
+      .eq("conversation_id", inbound.conversation_id)
+      .eq("direction", "inbound")
+      .neq("id", messageId)
+      .order("created_at", { ascending: false })
+      .limit(5);
+    const intent = classifyPedroControlIntent(inbound, (recentInbound ?? []).map((item) => item.body));
     if (intent) {
       const { error } = await admin.rpc("apply_inbound_control_intent", { p_intent: intent, p_message_id: messageId });
       if (error) throw error;
