@@ -45,6 +45,12 @@
 - Registrar cada novo defeito com esperado, observado, lead/canal, horário e IDs técnicos quando disponíveis.
 - Atualizar este arquivo após qualquer alteração de deployment, migration, conta/projeto ou conclusão material de homologação.
 
+## Protocolo compartilhado
+
+- Todo novo Codex deve iniciar na raiz do repositório e seguir `docs/agent/ONBOARDING_PROMPTS.md`.
+- Correções funcionais devem comparar os sete documentos originais, decisões posteriores, implementação atual e comportamento observado.
+- Bug técnico inequívoco pode ser corrigido diretamente quando autorizado; lacuna ou mudança de produto exige discussão e aprovação antes da implementação.
+
 ## Limites desta fonte
 
 Este documento não substitui:
