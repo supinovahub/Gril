@@ -11,6 +11,7 @@ import {
   type ProjectCandidate,
   type QualificationValue,
 } from "@/lib/ai/pedro-turn";
+import { guardUncommittedCallClaim, validCallRequest } from "@/lib/ai/call-request";
 import { classifyPedroControlIntent } from "@/lib/ai/control-intents";
 import { compilePedroInstructions } from "@/lib/ai/pedro-instructions";
 import { evaluateRegressionCase } from "@/lib/ai/regression";
@@ -97,28 +98,6 @@ const platformPushClaimSchema = z.array(z.object({
     id: z.string().uuid(), endpoint: z.string().url(), p256dh: z.string(), auth_key: z.string(),
   })).default([]),
 }));
-
-function hasExplicitCallConfirmation(messages: Array<{ role: "user" | "assistant"; text: string }>) {
-  const latest = [...messages].reverse().find((message) => message.role === "user")?.text
-    .normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase() ?? "";
-  const acceptance = /\b(sim|pode|confirmo|confirmado|fechado|combinado|marcar|agendar|agenda|vamos)\b/.test(latest);
-  const time = /\b(?:[01]?\d|2[0-3])(?::[0-5]\d|h(?:[0-5]\d)?)\b/.test(latest);
-  const date = /\b(hoje|amanha|segunda|terca|quarta|quinta|sexta|sabado|domingo|\d{1,2}[/-]\d{1,2})\b/.test(latest);
-  return acceptance && time && date;
-}
-
-function validCallRequest(
-  request: { starts_at: string; format: "video" | "phone" | "unknown" } | null,
-  messages: Array<{ role: "user" | "assistant"; text: string }>,
-) {
-  if (!request || !hasExplicitCallConfirmation(messages)) return null;
-  const startsAt = new Date(request.starts_at);
-  const minimum = Date.now() + 10 * 60_000;
-  const maximum = Date.now() + 365 * 24 * 60 * 60_000;
-  return Number.isFinite(startsAt.valueOf()) && startsAt.valueOf() > minimum && startsAt.valueOf() < maximum
-    ? request
-    : null;
-}
 
 async function runAiExecution(executionId: string) {
   const admin = createAdminClient();
@@ -347,7 +326,10 @@ async function runAiExecution(executionId: string) {
       ? selectEligibleProjects(projects, mergedValues)
       : [];
     const callRequest = validCallRequest(response.structured.call_request, conversationMessages);
-    const outputText = appendProjectRecommendations(response.outputText, recommendedProjects);
+    const outputText = appendProjectRecommendations(
+      guardUncommittedCallClaim(response.outputText, callRequest),
+      recommendedProjects,
+    );
     const structured = {
       ...response.structured,
       qualification_updates: qualificationUpdates,
