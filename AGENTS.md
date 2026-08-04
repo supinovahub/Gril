@@ -66,7 +66,7 @@ Correções exclusivamente tipográficas dentro de documentação podem ser agru
 - GitHub: `supinovahub/Gril`.
 - Supabase: projeto `frslhzwhaooqtivkzdez`.
 - Produção: `https://gril-lac.vercel.app`.
-- Neste host Windows, antes de qualquer alteração Vercel, execute `npx --yes vercel@latest --global-config "C:\Users\Windows 11\.vercel-profiles\supinovahub-7501" whoami` e prossiga somente se o resultado for `suporteinovahub-7501`. Em outro computador, use um perfil local isolado equivalente, confirme a mesma identidade e nunca reutilize silenciosamente a conta padrão da máquina.
+- Neste host Windows, antes de qualquer alteração Vercel, execute `npx --yes vercel@latest --global-config "C:\Users\arthu\.vercel-profiles\supinovahub-7501" whoami` e prossiga somente se o resultado for `suporteinovahub-7501`. Em outro computador, use um perfil local isolado equivalente, confirme a mesma identidade e nunca reutilize silenciosamente a conta padrão da máquina.
 - Não execute `vercel login`, `vercel logout` nem altere outros perfis Vercel deste computador.
 - Segredos ficam em `.env.local`, Supabase Vault ou Vercel; nunca entram em Markdown, logs versionados ou código cliente.
 

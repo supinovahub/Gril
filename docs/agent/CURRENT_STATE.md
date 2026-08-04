@@ -12,7 +12,7 @@
 ## Produção e infraestrutura
 
 - Aplicação: `https://gril-lac.vercel.app`.
-- Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
+- Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil isolado `C:\Users\arthu\.vercel-profiles\supinovahub-7501`, conforme registrado no `AGENTS.md` para este host.
 - Deployment de produção confirmado como `Ready` em 04/08/2026: `dpl_FNnTMDPjaWgoX5S91ybK6bfSTwPN`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
 - Migrations locais e remotas estavam alinhadas até `20260804180044_republish_requeued_ai_execution.sql`.
