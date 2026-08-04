@@ -11,13 +11,13 @@ Fonte de verdade: os sete documentos em `docs/product`. Esta matriz aponta a imp
 | WhatsApp oficial | Meta Cloud direta, assinatura, janela de 24 h, templates sincronizados | Implementado; WABA/número real pendentes |
 | Meta Leads | Webhook de formulários, pré-lead e enriquecimento tardio sem sobrescrever dados | Implementado; payload real pendente |
 | CRM e Inbox | Contatos, telefones, participantes, oportunidades, busca, ownership e histórico | Implementado; fases 2–3, 24/24 |
-| Persona, regras e conhecimento | Versões, publicação humana, snapshots, FAQ, fatos e catálogo de mídias | Implementado no núcleo; editor guiado e conflito/expiração avançados são P1 |
+| Persona, regras e conhecimento | Pacote Pedro v3, versões, snapshots, FAQ, fatos e catálogo de mídias | Implementado; fatos/FAQs reais continuam sendo cadastro da imobiliária |
 | Qualificação e score | Extração estruturada, evidência/confiança, regras obrigatórias e score explicável | Implementado; fase 6, 10/10 |
 | Curadoria | Filtro determinístico por orçamento/entrada e até dois projetos com snapshot | Implementado |
-| IA autônoma | Responses API, ferramenta estrita, resumo versionado, qualificação, curadoria, call e follow-up | Implementado; chave/modelo real pendentes |
-| Mídia | Áudio, visão, Storage privado, documento sensível e retenção | Parcial; catálogo e restrição existem, upload/envio binário real pendente |
+| IA autônoma | Responses API, ferramenta estrita, pacote comportamental v3, resumo, qualificação, curadoria, call e follow-up | Implementado; homologação com chave/modelo real permanece necessária |
+| Mídia | Entrada multimodal, Storage privado, catálogo e envio de fotos/PDF aprovados | Implementado; Pedro não envia áudio no MVP |
 | Campanhas | CSV, consentimento, revalidação, ondas 20/50/restante, revisão e pausas | Implementado; fase 7, 12/12; envio real pendente |
-| Follow-ups | Esteiras curta/longa, no-show, compra futura, cancelamentos e capacidade | Curta/longa/no-show implementadas; compra futura vaga aguarda data-base |
+| Follow-ups | Esteiras curta/longa, no-show, compra futura, cancelamentos e capacidade | Implementado em produção e assistido; modo assistido gera nova sugestão |
 | Agenda e distribuição | Agenda, exceções, 20+10, preferenciais, rodízio, aceite atômico e escaladas | Implementado; fase 8, 12/12 |
 | Videochamada | Link HTTPS auditado, dashboard, template/link no envio e alerta T-15 | Implementado; envio real pendente |
 | Kanban e pós-call | Etapas protegidas, próxima ação, checklist, pagamento humano e venda | Implementado |
@@ -33,9 +33,9 @@ Fonte de verdade: os sete documentos em `docs/product`. Esta matriz aponta a imp
 | Documento e seções | Código/contrato principal | Migração/teste | Situação comprovada |
 |---|---|---|---|
 | Especificação §§ 4–6: escopo, papéis e entrada | `src/app/(auth)`, `src/app/app/equipe`, guards server-side | fases 1 e 10; `phase_01_rls.sql` | automatizada |
-| Especificação §§ 7–9: persona, limites e ritmo | `src/app/app/pedro`, `src/lib/ai/pedro-turn.ts`, worker | fases 5, 13 e 19; testes Pedro/runtime | contrato automatizado; comportamento real pendente |
+| Especificação §§ 7–9: persona, limites e ritmo | `src/app/app/pedro`, `src/lib/ai/pedro-instructions.ts`, controles e worker | pacote v3; `phase_25_pedro_behavior_v3.sql` | contrato e controles automatizados; conversa real ainda exige homologação |
 | Especificação §§ 10–12: capacidade, estados e identidade | comandos SQL e `src/lib/runtime/worker.ts` | fases 2, 4 e 18; testes 2 e 4 | automatizada |
-| Especificação §§ 13–20: inbound, qualificação, conhecimento, mídia e privacidade | webhooks, adapters, `src/app/app/conhecimento` | fases 3, 6, 10, 15, 19 e 22; testes 3, 6 e 10 | contrato automatizado; payload real pendente |
+| Especificação §§ 13–20: inbound, qualificação, conhecimento, mídia e privacidade | webhooks, controles, worker, `src/app/app/conhecimento` | fases 3, 6, 10, 15, 19, 22 e 25 | contrato automatizado; payload real ainda exige homologação |
 | Especificação §§ 21–22: campanhas e follow-ups | `src/app/app/campanhas`, worker e jobs | fases 7, 13, 14 e 16; `phase_07_campaigns.sql` | automatizada; envio real pendente |
 | Especificação §§ 23–27: calls, distribuição, Kanban e pós-call | `src/app/app/agenda`, `src/app/app/kanban` | fases 8, 14, 18, 20 e 23; `phase_08_calls.sql` | concorrência automatizada; operação humana pendente |
 | Especificação §§ 28–35: Inbox, Central, modos, erros, métricas, auditoria e perfil | `src/app/app/inbox`, `central`, `relatorios`, `simulador`, `perfil` | fases 5, 9, 10, 17–21; testes 5, 9 e 10 | automatizada; UX/push real pendentes |

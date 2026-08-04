@@ -39,6 +39,13 @@ export const pedroTurnSchema = z
           "missing_approved_fact",
           "call_conflict",
           "human_requested",
+          "payment",
+          "identity_question",
+          "wrong_number",
+          "origin_contested",
+          "unsupported_language",
+          "abuse",
+          "discrimination",
           "other",
         ]),
         reason: z.string().trim().min(5).max(1000),
@@ -105,6 +112,13 @@ export const pedroTurnTool = {
                   "missing_approved_fact",
                   "call_conflict",
                   "human_requested",
+                  "payment",
+                  "identity_question",
+                  "wrong_number",
+                  "origin_contested",
+                  "unsupported_language",
+                  "abuse",
+                  "discrimination",
                   "other",
                 ],
               },
@@ -258,10 +272,9 @@ export function selectEligibleProjects(
 
 export function appendProjectRecommendations(reply: string, projects: ProjectCandidate[]) {
   if (projects.length === 0) return reply;
-  const money = new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL", maximumFractionDigits: 0 });
   const options = projects.map((project) => {
     const location = [project.neighborhood, project.region].filter(Boolean).join(", ");
-    return `${project.name} — ${location}; a partir de ${money.format(project.minPrice ?? 0)}; entrada mínima informada de ${money.format(project.minDownPayment ?? 0)}.`;
+    return `${project.name}${location ? ` — ${location}` : ""}.`;
   });
   return `${reply}\n\nEncontrei estas opções compatíveis com os valores informados:\n${options.map((item) => `• ${item}`).join("\n")}`.slice(0, 4096);
 }

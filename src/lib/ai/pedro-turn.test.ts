@@ -113,7 +113,8 @@ describe("curadoria determinística", () => {
   it("acrescenta apenas fatos estruturados ao texto", () => {
     const reply = appendProjectRecommendations("Separei duas opções.", projects.slice(0, 1));
     expect(reply).toContain("Centro Alto");
-    expect(reply).toContain("R$ 700.000");
+    expect(reply).toContain("Pinheiros, São Paulo");
+    expect(reply).not.toContain("700.000");
     expect(reply).not.toContain("Empreendimento pronto e aprovado");
   });
 });

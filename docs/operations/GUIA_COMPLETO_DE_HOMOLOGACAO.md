@@ -157,6 +157,9 @@ Cadastre inicialmente cinco empreendimentos. Para cada um, preencha informaçõe
 
 Valide:
 
+- uma conversa nova usa a persona **Pedro v3**; conversas antigas mantêm a versão já fixada;
+- Pedro responde primeiro a perguntas paralelas, não repete dado conhecido e aceita recusa sem pressionar;
+- humor, emoji e abreviações só aparecem depois de rapport e desaparecem diante de irritação;
 - fato vencido sai do contexto e gera alerta;
 - conflito de fatos exige decisão humana;
 - empreendimento arquivado não é recomendado;
@@ -167,6 +170,8 @@ Valide:
 - somente mídia publicada e aprovada é enviada;
 - Pedro recebe/transcreve áudio quando suportado, mas não envia áudio no MVP;
 - preço, entrada, disponibilidade, rentabilidade e crédito nunca são inventados.
+
+No modo **Assistido**, aprove uma sugestão que contenha qualificação e depois outra com agendamento ou follow-up. Confirme que a aprovação envia a mensagem e aplica, na mesma ação, os valores do lead, o match, a call, a cadência e a mídia aprovada. Edite uma sugestão antes de enviar e confirme que as ações estruturadas continuam coerentes; se o estado da conversa mudou, o sistema deve rejeitar tudo por conflito, sem envio parcial.
 
 ## 7. Simulador e regressão
 
