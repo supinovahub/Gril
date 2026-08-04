@@ -5,7 +5,9 @@ import { z } from "zod";
 import webpush from "web-push";
 
 import {
-  appendProjectRecommendations,
+  hasSpecificFinancialProfile,
+  inferProjectMaterialIntent,
+  isPedroQualificationComplete,
   mergeQualificationValues,
   selectEligibleProjects,
   type ProjectCandidate,
@@ -242,6 +244,7 @@ async function runAiExecution(executionId: string) {
         valueText: value.value_text,
         valueNumber: value.value_number === null ? null : Number(value.value_number),
         valueBoolean: value.value_boolean,
+        state: value.state as "valid" | "refused" | "unknown",
       }))
       : simulatorQualificationValues
     ).filter((value) => value.code !== "unknown" && definitionCodes.has(value.code));
@@ -276,6 +279,7 @@ async function runAiExecution(executionId: string) {
       messages: conversationMessages,
       businessContext: {
         now_iso: new Date().toISOString(),
+        execution_trigger: execution.input_snapshot,
         timezone: execution.operation_id
           ? (await admin.from("operations").select("timezone").eq("id", execution.operation_id).single()).data?.timezone ?? "America/Sao_Paulo"
           : "America/Sao_Paulo",
@@ -288,6 +292,22 @@ async function runAiExecution(executionId: string) {
           required: definition.required,
         })),
         current_qualification: currentValues,
+        qualification_flow: {
+          topics_before_call: [
+            "purchase_objective", "region", "down_payment", "monthly_installment",
+            "total_price", "delivery_preference", "purchase_timeline",
+          ],
+          call_preference_is_post_qualification: true,
+          accept_refused_or_unknown_as_answered: true,
+        },
+        project_material_policy: {
+          never_send_automatically_after_qualification: true,
+          explicit_lead_interest_required: true,
+          generic_request: "books",
+          photo_request: "principal_photos",
+          maximum_projects: 3,
+          book_followup_minutes: "4-6",
+        },
         previous_conversation_summary: priorSummary,
         manager_guidance: activeGuidance ? {
           instruction: activeGuidance.guidance,
@@ -322,20 +342,40 @@ async function runAiExecution(executionId: string) {
       return update.value_kind === "text";
     });
     const mergedValues = mergeQualificationValues(currentValues, qualificationUpdates);
-    const recommendedProjects = response.structured.request_project_match
-      ? selectEligibleProjects(projects, mergedValues)
+    const latestLeadMessage = [...conversationMessages].reverse().find((message) => message.role === "user")?.text ?? "";
+    const previousPedroMessage = [...conversationMessages].reverse().find((message) => message.role === "assistant")?.text ?? null;
+    const materialIntent = inferProjectMaterialIntent({
+      latestLeadMessage,
+      previousPedroMessage,
+      requestedKind: response.structured.project_media_request?.kind ?? null,
+    });
+    const qualificationComplete = isPedroQualificationComplete(mergedValues);
+    const specificFinancialProfile = hasSpecificFinancialProfile(mergedValues);
+    const availableMedia = projectMediaResult.data ?? [];
+    const projectsWithRequestedMaterial = projects.filter((project) => {
+      const media = availableMedia.filter((item) => item.project_id === project.id);
+      if (materialIntent === "books") return media.some((item) => item.media_type === "pdf");
+      if (materialIntent === "principal_photos") return media.some((item) => item.media_type === "cover");
+      if (materialIntent === "more_photos") return media.some((item) => item.media_type === "image");
+      return false;
+    });
+    const canSendProjectMaterial = qualificationComplete && specificFinancialProfile && materialIntent !== "none";
+    const recommendedProjects = canSendProjectMaterial
+      ? selectEligibleProjects(projectsWithRequestedMaterial, mergedValues, 3)
       : [];
     const callRequest = validCallRequest(response.structured.call_request, conversationMessages);
-    const outputText = appendProjectRecommendations(
-      guardUncommittedCallClaim(response.outputText, callRequest),
-      recommendedProjects,
-    );
+    const outputText = guardUncommittedCallClaim(response.outputText, callRequest);
     const structured = {
       ...response.structured,
       qualification_updates: qualificationUpdates,
+      qualification_complete: qualificationComplete,
+      qualification_specific: specificFinancialProfile,
       call_request: callRequest,
       action: response.structured.outcome,
       escalation_reason: response.structured.escalation?.reason ?? null,
+      request_project_match: canSendProjectMaterial && recommendedProjects.length > 0,
+      project_material_intent: recommendedProjects.length > 0 ? materialIntent : "none",
+      project_media_request: recommendedProjects.length > 0 ? response.structured.project_media_request : null,
       recommended_project_ids: recommendedProjects.map((project) => project.id),
       context_trace: {
         persona_version_id: personaVersionId,
@@ -569,7 +609,7 @@ async function processOutboundMessage(messageId: string) {
   if (error) throw error;
   const claim = outboundClaimSchema.parse(data);
   if (claim.status !== "claimed") return claim.status;
-  if (!claim.integration_account_id || !claim.provider || !claim.endpoint_url || !claim.to_e164 || !claim.body) {
+  if (!claim.integration_account_id || !claim.provider || !claim.endpoint_url || !claim.to_e164) {
     await admin.rpc("fail_outbound_message", {
       p_error_code: "outbound_context_missing",
       p_error_redacted: "A conexão não forneceu todos os dados necessários para o envio.",
@@ -596,7 +636,7 @@ async function processOutboundMessage(messageId: string) {
     admin.from("integration_accounts").select("external_phone_number_id").eq("id", claim.integration_account_id).single(),
   ]);
   if (secretError || accountError || !secret) throw secretError ?? accountError ?? new Error("integration_secret_missing");
-  let outboundBody = claim.body;
+  let outboundBody = claim.body ?? "";
   let callContext: { id: string; format: string; video_link: string | null; starts_at: string; org_id: string; operation_id: string; status: string } | null = null;
   const [{ data: conversationMessage }, { data: operationalMessage }] = await Promise.all([
     admin.from("messages").select("content_type,metadata").eq("id", messageId).maybeSingle(),
@@ -670,7 +710,7 @@ async function processOutboundMessage(messageId: string) {
         secret,
         externalPhoneNumberId: account.external_phone_number_id,
         toE164: claim.to_e164,
-        caption: outboundBody,
+        caption: outboundBody || undefined,
         messageId,
         mediaType: conversationMessage!.content_type as "image" | "document",
         mediaUrl: signed.signedUrl,
@@ -678,6 +718,7 @@ async function processOutboundMessage(messageId: string) {
         fileName: typeof metadata?.file_name === "string" ? metadata.file_name : undefined,
       });
     } else {
+      if (!outboundBody) throw new RuntimeProviderError("outbound_text_missing", "A mensagem de texto ficou sem conteúdo antes do envio.");
       sent = await sendWhatsappText({
         provider: claim.provider as WhatsappProvider,
         endpointUrl: claim.endpoint_url,

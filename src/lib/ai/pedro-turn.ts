@@ -204,7 +204,20 @@ export type QualificationValue = {
   valueText: string | null;
   valueNumber: number | null;
   valueBoolean: boolean | null;
+  state?: "valid" | "refused" | "unknown";
 };
+
+export type ProjectMaterialIntent = "none" | "books" | "principal_photos" | "more_photos";
+
+export const PEDRO_QUALIFICATION_CODES = [
+  "purchase_objective",
+  "region",
+  "down_payment",
+  "monthly_installment",
+  "total_price",
+  "delivery_preference",
+  "purchase_timeline",
+] as const;
 
 export type ProjectCandidate = {
   id: string;
@@ -222,6 +235,50 @@ function normalizedText(value: string | null | undefined) {
   return value?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() ?? "";
 }
 
+export function isPedroQualificationComplete(values: Map<string, QualificationValue>) {
+  return PEDRO_QUALIFICATION_CODES.every((code) => values.has(code));
+}
+
+export function hasSpecificFinancialProfile(values: Map<string, QualificationValue>) {
+  const totalPrice = values.get("total_price");
+  const downPayment = values.get("down_payment");
+  return totalPrice?.state !== "refused"
+    && totalPrice?.state !== "unknown"
+    && totalPrice?.valueNumber !== null
+    && totalPrice?.valueNumber !== undefined
+    && downPayment?.state !== "refused"
+    && downPayment?.state !== "unknown"
+    && downPayment?.valueNumber !== null
+    && downPayment?.valueNumber !== undefined;
+}
+
+export function inferProjectMaterialIntent(input: {
+  latestLeadMessage: string;
+  previousPedroMessage?: string | null;
+  requestedKind?: "principal" | "more_photos" | "book" | null;
+}): ProjectMaterialIntent {
+  const latest = normalizedText(input.latestLeadMessage);
+  const previous = normalizedText(input.previousPedroMessage);
+  if (/\b(mais|outras?)\s+(fotos?|imagens?)\b/.test(latest)) return "more_photos";
+  if (/\b(fotos?|imagens?)\b/.test(latest)) return "principal_photos";
+  if (/\b(book|pdf|catalogo|material|apresentacao)\b/.test(latest)) return "books";
+  if (
+    /(quais|manda|envia|mostra|mostrar|quero\s+ver|posso\s+ver|conhecer).*(opcoes|imoveis|apartamentos|empreendimentos|disponiveis)/.test(latest)
+    || /(o\s+que|oq).*(tem|disponivel)/.test(latest)
+  ) return "books";
+  if (/^(sim|quero|pode|manda|por\s+favor|pfv)[!. ]*$/.test(latest)) {
+    if (/\b(book|pdf|material)\b/.test(previous)) return "books";
+    if (/\b(mais\s+fotos|outras\s+fotos)\b/.test(previous)) return "more_photos";
+    if (/\b(fotos|imagens)\b/.test(previous)) return "principal_photos";
+  }
+  if (/\b(manda|envia|quero|mostrar|mostra)\b/.test(latest)) {
+    if (input.requestedKind === "book") return "books";
+    if (input.requestedKind === "principal") return "principal_photos";
+    if (input.requestedKind === "more_photos") return "more_photos";
+  }
+  return "none";
+}
+
 export function mergeQualificationValues(
   current: QualificationValue[],
   updates: PedroTurn["qualification_updates"],
@@ -233,6 +290,7 @@ export function mergeQualificationValues(
       valueText: update.value_text,
       valueNumber: update.value_number,
       valueBoolean: update.value_boolean,
+      ...(update.value_kind === "refused" || update.value_kind === "unknown" ? { state: update.value_kind } : {}),
     });
   }
   return merged;

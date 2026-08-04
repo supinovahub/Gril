@@ -2,7 +2,11 @@ import { describe, expect, it } from "vitest";
 
 import {
   appendProjectRecommendations,
+  hasSpecificFinancialProfile,
+  inferProjectMaterialIntent,
+  isPedroQualificationComplete,
   mergeQualificationValues,
+  PEDRO_QUALIFICATION_CODES,
   pedroTurnSchema,
   selectEligibleProjects,
   type ProjectCandidate,
@@ -116,5 +120,32 @@ describe("curadoria determinística", () => {
     expect(reply).toContain("Pinheiros, São Paulo");
     expect(reply).not.toContain("700.000");
     expect(reply).not.toContain("Empreendimento pronto e aprovado");
+  });
+
+  it("só conclui a qualificação depois dos sete tópicos comerciais", () => {
+    const incomplete = new Map(PEDRO_QUALIFICATION_CODES.slice(0, -1).map((code) => [code, {
+      code, valueText: "respondido", valueNumber: null, valueBoolean: null, state: "valid" as const,
+    }]));
+    expect(isPedroQualificationComplete(incomplete)).toBe(false);
+    incomplete.set("purchase_timeline", {
+      code: "purchase_timeline", valueText: null, valueNumber: null, valueBoolean: null, state: "unknown",
+    });
+    expect(isPedroQualificationComplete(incomplete)).toBe(true);
+  });
+
+  it("não considera um perfil financeiro vago específico", () => {
+    const values = mergeQualificationValues([], [
+      { code: "total_price", value_kind: "number", value_text: null, value_number: 900_000, value_boolean: null, confidence: 1 },
+      { code: "down_payment", value_kind: "unknown", value_text: null, value_number: null, value_boolean: null, confidence: 1 },
+    ]);
+    expect(hasSpecificFinancialProfile(values)).toBe(false);
+  });
+
+  it("distingue books, capas e fotos adicionais pela intenção explícita", () => {
+    expect(inferProjectMaterialIntent({ latestLeadMessage: "Quais opções vocês têm disponíveis?" })).toBe("books");
+    expect(inferProjectMaterialIntent({ latestLeadMessage: "Pode mandar umas fotos?" })).toBe("principal_photos");
+    expect(inferProjectMaterialIntent({ latestLeadMessage: "Quero ver mais fotos" })).toBe("more_photos");
+    expect(inferProjectMaterialIntent({ latestLeadMessage: "Até 7 mil de parcela está bom" })).toBe("none");
+    expect(inferProjectMaterialIntent({ latestLeadMessage: "Sim", previousPedroMessage: "Quer ver o book completo?" })).toBe("books");
   });
 });

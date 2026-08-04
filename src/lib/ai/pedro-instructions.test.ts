@@ -7,7 +7,9 @@ describe("compilePedroInstructions", () => {
     const instructions = compilePedroInstructions("Persona publicada", { opt_out: "immediate" }, { company: "Studio" });
     expect(instructions).toContain(PEDRO_BEHAVIOR_V3_MARKER);
     expect(instructions).toContain("Persona publicada");
-    expect(instructions).toContain("no máximo dois empreendimentos");
+    expect(instructions).toContain("até três elegíveis");
+    expect(instructions).toContain("Nunca envie capa automaticamente");
+    expect(instructions).toContain("aproximadamente 15 minutos");
     expect(instructions).toContain("nunca que está confirmado");
     expect(instructions).toContain("Não repita campos já preenchidos");
   });

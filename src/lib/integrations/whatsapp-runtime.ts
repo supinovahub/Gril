@@ -475,7 +475,7 @@ export async function sendWhatsappMedia(input: {
   secret: string;
   externalPhoneNumberId?: string | null;
   toE164: string;
-  caption: string;
+  caption?: string;
   messageId: string;
   mediaType: "image" | "document";
   mediaUrl: string;
@@ -501,7 +501,7 @@ export async function sendWhatsappMedia(input: {
         number: input.toE164.replace(/^\+/, ""),
         type: input.mediaType,
         file: input.mediaUrl,
-        text: input.caption.slice(0, 1024),
+        ...(input.caption ? { text: input.caption.slice(0, 1024) } : {}),
         ...(input.mediaType === "document" ? {
           docName: (input.fileName || "book.pdf").slice(0, 120),
           mimetype: input.mimeType,
@@ -518,8 +518,8 @@ export async function sendWhatsappMedia(input: {
   const parsedSecret = parseMetaSecret(input.secret);
   if (!input.externalPhoneNumberId) throw new RuntimeProviderError("meta_phone_id_missing", "O Phone Number ID da Meta não está configurado.");
   const media = input.mediaType === "image"
-    ? { link: input.mediaUrl, caption: input.caption.slice(0, 1024) }
-    : { link: input.mediaUrl, filename: (input.fileName || "book.pdf").slice(0, 120), caption: input.caption.slice(0, 1024) };
+    ? { link: input.mediaUrl, ...(input.caption ? { caption: input.caption.slice(0, 1024) } : {}) }
+    : { link: input.mediaUrl, filename: (input.fileName || "book.pdf").slice(0, 120), ...(input.caption ? { caption: input.caption.slice(0, 1024) } : {}) };
   const response = await runtimeFetch(`${input.endpointUrl.replace(/\/$/, "")}/${input.externalPhoneNumberId}/messages`, {
     method: "POST",
     headers: { "content-type": "application/json", accept: "application/json", authorization: `Bearer ${parsedSecret.accessToken}` },
