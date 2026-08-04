@@ -4,9 +4,9 @@ MVP do sistema operacional imobiliário com o Pedro, implementado a partir dos s
 
 ## Estado atual
 
-As 23 fases estão implementadas: fundação multi-tenant, CRM, inbox, filas, Pedro autônomo, conhecimento, campanhas, calls, mídia, templates Meta, regressão, integridade comercial, push, mutações de mensagens e reconciliação dos eventos. O banco remoto de desenvolvimento é `frslhzwhaooqtivkzdez`. Ainda não há deploy na Vercel.
+As 23 fases estão implementadas: fundação multi-tenant, CRM, inbox, filas, Pedro autônomo, conhecimento, campanhas, calls, mídia, templates Meta, regressão, integridade comercial, push, mutações de mensagens e reconciliação dos eventos. O banco remoto único é `frslhzwhaooqtivkzdez` e a produção está publicada em [gril-lac.vercel.app](https://gril-lac.vercel.app).
 
-O dono pode validar, armazenar, retestar, rotacionar e revogar sua Uazapi, Meta Cloud API e chave OpenAI. Também pode criar uma instância Uazapi, parear o número e configurar o webhook depois do deploy. Os segredos ficam criptografados no Supabase Vault e nunca são reexibidos. Webhooks nativos, recibos, Responses API, mídia, filas, jobs, push e purge físico do Storage estão implementados; o que falta para declarar operação real é publicar a URL HTTPS e homologar credenciais/números reais. Consulte `docs/operations/READINESS.md` e `docs/operations/MVP_VALIDATION_FLOWS.md`.
+O dono pode validar, armazenar, retestar, rotacionar e revogar sua Uazapi, Meta Cloud API e chave OpenAI. Também pode criar uma instância Uazapi, parear o número e configurar o webhook pela URL pública exibida no sistema. Os segredos ficam criptografados no Supabase Vault e nunca são reexibidos. Webhooks nativos, recibos, Responses API, mídia, filas, jobs, push e purge físico do Storage estão implementados e publicados; o que falta para declarar operação real integral é concluir a homologação com credenciais, números e pessoas reais. Consulte `docs/operations/READINESS.md` e `docs/operations/MVP_VALIDATION_FLOWS.md`.
 
 ## Requisitos
 
@@ -40,6 +40,7 @@ npm run build
 - `src/lib`: autenticação, Supabase e políticas de domínio;
 - `supabase/migrations`: schema, RLS, comandos atômicos e eventos;
 - `supabase/tests`: gates SQL documentados por fase;
+- `docs/agent`: estado atual, protocolo e histórico compartilhado entre agentes;
 - `docs/decisions`: decisões e evidências de cada fase;
 - `docs/operations`: checklist, runbooks e bloqueios do piloto.
 
