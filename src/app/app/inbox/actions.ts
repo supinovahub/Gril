@@ -25,6 +25,7 @@ function errorText(message: string | undefined) {
   if (message?.includes("opted_out")) return "O contato pediu opt-out e não pode receber mensagens.";
   if (message?.includes("suppressed")) return "O telefone está na lista de supressão.";
   if (message?.includes("not_active")) return "A conversa não está ativa.";
+  if (message?.includes("connection_inactive")) return "A conexão desta conversa está inativa. Reconecte o WhatsApp antes de enviar.";
   if (message?.includes("ai_global_mode_off")) return "Ative o Pedro antes de devolver esta conversa para a IA.";
   return "Não foi possível concluir a ação.";
 }

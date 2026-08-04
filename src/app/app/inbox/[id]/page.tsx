@@ -49,6 +49,13 @@ export default async function ConversationPage({
   const stage = Array.isArray(opportunity?.pipeline_stages) ? opportunity.pipeline_stages[0] : opportunity?.pipeline_stages;
   const connection = Array.isArray(conversation.whatsapp_connections) ? conversation.whatsapp_connections[0] : conversation.whatsapp_connections;
   const phones = (contact?.contact_phones ?? []) as Array<{ e164: string; is_primary: boolean; status: string }>;
+  const successText = feedback.sucesso === "pedro-reprocessado"
+    ? "Pedro recebeu a última mensagem novamente. O modo configurado definirá se ele cria uma sugestão ou responde automaticamente."
+    : feedback.sucesso === "sugestao-discard"
+      ? "Sugestão descartada. Nenhuma mensagem foi enviada."
+      : feedback.sucesso === "sugestao-send"
+        ? "Sugestão aprovada e enfileirada para envio."
+        : "Mensagem registrada e enfileirada para envio.";
 
   return (
     <div className={styles.page}>
@@ -59,7 +66,7 @@ export default async function ConversationPage({
         <span className={styles.contextBadge}>{connection?.name} · {connection?.provider}</span>
       </header>
       {feedback.erro ? <p className={styles.errorBanner}>{feedback.erro}</p> : null}
-      {feedback.sucesso ? <p className={styles.successBanner}>{feedback.sucesso === "pedro-reprocessado" ? "Pedro recebeu a última mensagem novamente. O modo configurado definirá se ele cria uma sugestão ou responde automaticamente." : "Mensagem registrada e enfileirada para envio."}</p> : null}
+      {feedback.sucesso ? <p className={styles.successBanner}>{successText}</p> : null}
 
       <div className={styles.chatLayout}>
         <section className={styles.chatPanel}>
@@ -73,9 +80,9 @@ export default async function ConversationPage({
           </div> : null}
           <div className={styles.messages}>
             {messages?.map((message) => (
-              <article className={message.direction === "inbound" ? styles.inbound : styles.outbound} key={message.id}>
+              <article className={`${message.direction === "inbound" ? styles.inbound : styles.outbound} ${message.provider_status === "failed" || message.provider_status === "suppressed" ? styles.notSent : ""}`} key={message.id}>
                 <p>{message.body || `[${message.content_type}]`}</p>
-                <footer><span>{message.sender_type}</span><time>{new Intl.DateTimeFormat("pt-BR", { timeStyle: "short", dateStyle: "short" }).format(new Date(message.created_at))}</time><span>{message.provider_status}</span></footer>
+                <footer><span>{message.sender_type}</span><time>{new Intl.DateTimeFormat("pt-BR", { timeStyle: "short", dateStyle: "short" }).format(new Date(message.created_at))}</time><span>{message.provider_status === "suppressed" ? "não enviada" : message.provider_status === "failed" ? "falha no envio" : message.provider_status}</span></footer>
               </article>
             ))}
             {!messages?.length ? <div className={styles.empty}><MessageCircle size={26} /><span>Sem mensagens.</span></div> : null}
