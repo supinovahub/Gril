@@ -13,7 +13,12 @@ import {
   type ProjectCandidate,
   type QualificationValue,
 } from "@/lib/ai/pedro-turn";
-import { guardUncommittedCallClaim, validCallRequest } from "@/lib/ai/call-request";
+import {
+  buildSchedulingAvailabilityReply,
+  guardUncommittedCallClaim,
+  isSchedulingAvailabilityRequest,
+  validCallRequest,
+} from "@/lib/ai/call-request";
 import { classifyPedroControlIntent } from "@/lib/ai/control-intents";
 import { compilePedroInstructions } from "@/lib/ai/pedro-instructions";
 import { evaluateRegressionCase } from "@/lib/ai/regression";
@@ -99,6 +104,11 @@ const platformPushClaimSchema = z.array(z.object({
   subscriptions: z.array(z.object({
     id: z.string().uuid(), endpoint: z.string().url(), p256dh: z.string(), auth_key: z.string(),
   })).default([]),
+}));
+
+const availableCallSlotsSchema = z.array(z.object({
+  starts_at: z.string().datetime({ offset: true }),
+  available_members: z.coerce.number().int().positive(),
 }));
 
 async function runAiExecution(executionId: string) {
@@ -209,9 +219,11 @@ async function runAiExecution(executionId: string) {
     }
     if (conversationMessages.length === 0) throw new Error("ai_input_missing");
 
-    const opportunityId = execution.conversation_id
-      ? (await admin.from("conversations").select("opportunity_id,operation_id").eq("id", execution.conversation_id).single()).data?.opportunity_id
+    const conversationScope = execution.conversation_id
+      ? (await admin.from("conversations").select("opportunity_id,operation_id").eq("id", execution.conversation_id).single()).data
       : null;
+    const opportunityId = conversationScope?.opportunity_id ?? null;
+    const operationId = execution.operation_id ?? conversationScope?.operation_id ?? null;
     const [definitionsResult, valuesResult, projectsResult, faqEntriesResult, projectFactsResult, projectMediaResult] = await Promise.all([
       admin.from("qualification_definitions")
         .select("id,code,name,intent,answer_type,required,priority,suggested_order")
@@ -269,6 +281,24 @@ async function runAiExecution(executionId: string) {
     if (faqVersionsResult.error) throw faqVersionsResult.error;
     const faqQuestionById = new Map((faqEntriesResult.data ?? []).map((item) => [item.id, item.canonical_question]));
 
+    const operationResult = operationId
+      ? await admin.from("operations").select("timezone").eq("id", operationId).single()
+      : { data: null, error: null };
+    if (operationResult.error) throw operationResult.error;
+    const operationTimezone = operationResult.data?.timezone ?? "America/Sao_Paulo";
+    const slotHorizonStart = new Date(Date.now() + 10 * 60_000);
+    const slotHorizonEnd = new Date(Date.now() + 7 * 24 * 60 * 60_000);
+    const slotsResult = operationId
+      ? await admin.rpc("get_pedro_available_call_slots", {
+        p_operation_id: operationId,
+        p_from: slotHorizonStart.toISOString(),
+        p_to: slotHorizonEnd.toISOString(),
+        p_limit: 16,
+      })
+      : { data: [], error: null };
+    if (slotsResult.error) throw slotsResult.error;
+    const availableCallSlots = availableCallSlotsSchema.parse(slotsResult.data ?? []);
+
     const startedAt = Date.now();
     const response = await createPedroResponse({
       apiKey,
@@ -280,9 +310,12 @@ async function runAiExecution(executionId: string) {
       businessContext: {
         now_iso: new Date().toISOString(),
         execution_trigger: execution.input_snapshot,
-        timezone: execution.operation_id
-          ? (await admin.from("operations").select("timezone").eq("id", execution.operation_id).single()).data?.timezone ?? "America/Sao_Paulo"
-          : "America/Sao_Paulo",
+        timezone: operationTimezone,
+        approved_call_availability: {
+          duration_minutes: 15,
+          slots: availableCallSlots,
+          instruction: "Ofereça apenas horários desta lista. Se o lead pedir disponibilidade sem escolher um horário, não escale: apresente até três opções.",
+        },
         opportunity_id: opportunityId,
         qualification_definitions: definitions.map((definition) => ({
           code: definition.code,
@@ -332,8 +365,26 @@ async function runAiExecution(executionId: string) {
       },
     });
 
+    const schedulingAvailabilityRequested = isSchedulingAvailabilityRequest(conversationMessages);
+    const recoverSchedulingEscalation = schedulingAvailabilityRequested
+      && response.structured.outcome === "escalate"
+      && response.structured.escalation?.category === "missing_approved_fact";
+    const responseStructured = recoverSchedulingEscalation
+      ? {
+        ...response.structured,
+        outcome: "reply" as const,
+        reply: buildSchedulingAvailabilityReply(availableCallSlots, operationTimezone),
+        escalation: null,
+        call_request: null,
+        followup_strategy: "short" as const,
+      }
+      : response.structured;
+    const responseOutputText = recoverSchedulingEscalation
+      ? responseStructured.reply!
+      : response.outputText;
+
     const allowedDefinitions = new Map(definitions.map((definition) => [definition.code, definition.answer_type]));
-    const qualificationUpdates = response.structured.qualification_updates.filter((update) => {
+    const qualificationUpdates = responseStructured.qualification_updates.filter((update) => {
       const answerType = allowedDefinitions.get(update.code);
       if (!answerType) return false;
       if (["refused", "unknown"].includes(update.value_kind)) return true;
@@ -344,11 +395,14 @@ async function runAiExecution(executionId: string) {
     const mergedValues = mergeQualificationValues(currentValues, qualificationUpdates);
     const latestLeadMessage = [...conversationMessages].reverse().find((message) => message.role === "user")?.text ?? "";
     const previousPedroMessage = [...conversationMessages].reverse().find((message) => message.role === "assistant")?.text ?? null;
-    const materialIntent = inferProjectMaterialIntent({
-      latestLeadMessage,
-      previousPedroMessage,
-      requestedKind: response.structured.project_media_request?.kind ?? null,
-    });
+    const isProjectMaterialNudge = (execution.input_snapshot as { source?: unknown } | null)?.source === "project_material_nudge";
+    const materialIntent = isProjectMaterialNudge
+      ? "none"
+      : inferProjectMaterialIntent({
+        latestLeadMessage,
+        previousPedroMessage,
+        requestedKind: responseStructured.project_media_request?.kind ?? null,
+      });
     const qualificationComplete = isPedroQualificationComplete(mergedValues);
     const specificFinancialProfile = hasSpecificFinancialProfile(mergedValues);
     const availableMedia = projectMediaResult.data ?? [];
@@ -363,19 +417,19 @@ async function runAiExecution(executionId: string) {
     const recommendedProjects = canSendProjectMaterial
       ? selectEligibleProjects(projectsWithRequestedMaterial, mergedValues, 3)
       : [];
-    const callRequest = validCallRequest(response.structured.call_request, conversationMessages);
-    const outputText = guardUncommittedCallClaim(response.outputText, callRequest);
+    const callRequest = validCallRequest(responseStructured.call_request, conversationMessages);
+    const outputText = guardUncommittedCallClaim(responseOutputText, callRequest);
     const structured = {
-      ...response.structured,
+      ...responseStructured,
       qualification_updates: qualificationUpdates,
       qualification_complete: qualificationComplete,
       qualification_specific: specificFinancialProfile,
       call_request: callRequest,
-      action: response.structured.outcome,
-      escalation_reason: response.structured.escalation?.reason ?? null,
+      action: responseStructured.outcome,
+      escalation_reason: responseStructured.escalation?.reason ?? null,
       request_project_match: canSendProjectMaterial && recommendedProjects.length > 0,
       project_material_intent: recommendedProjects.length > 0 ? materialIntent : "none",
-      project_media_request: recommendedProjects.length > 0 ? response.structured.project_media_request : null,
+      project_media_request: recommendedProjects.length > 0 ? responseStructured.project_media_request : null,
       recommended_project_ids: recommendedProjects.map((project) => project.id),
       context_trace: {
         persona_version_id: personaVersionId,
@@ -410,9 +464,9 @@ async function runAiExecution(executionId: string) {
     if (execution.conversation_id) {
       const { error: summaryError } = await admin.rpc("store_conversation_summary", {
         p_conversation_id: execution.conversation_id,
-        p_facts: response.structured.conversation_summary.facts as Json,
+        p_facts: responseStructured.conversation_summary.facts as Json,
         p_source_execution_id: executionId,
-        p_summary: response.structured.conversation_summary.summary,
+        p_summary: responseStructured.conversation_summary.summary,
       });
       if (summaryError) throw summaryError;
     }

@@ -11190,6 +11190,15 @@ export type Database = {
         Args: { p_execution_id: string }
         Returns: number
       }
+      get_pedro_available_call_slots: {
+        Args: {
+          p_from?: string
+          p_limit?: number
+          p_operation_id: string
+          p_to?: string
+        }
+        Returns: Json
+      }
       enqueue_storage_retention: {
         Args: {
           p_bucket: string
