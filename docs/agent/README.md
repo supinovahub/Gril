@@ -6,6 +6,7 @@ Esta pasta permite que desenvolvedores usando contas diferentes do Codex reconst
 
 - `AGENTS.md`: protocolo obrigatório carregado automaticamente pelo Codex.
 - `CURRENT_STATE.md`: retrato curto do estado atual; é atualizado, não usado como diário.
+- `ONBOARDING_PROMPTS.md`: sequência pronta para preparar um novo Codex em outra conta ou computador.
 - `CHANGE_TEMPLATE.md`: contrato mínimo de um registro de mudança.
 - `changes/`: um arquivo por mudança material, incluindo alterações externas sem diff local.
 - `../product/`: escopo e regras de produto consolidadas.

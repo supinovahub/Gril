@@ -25,6 +25,21 @@ Este repositório é trabalhado por pessoas e agentes em contas e computadores d
 - O banco Supabase remoto é único e não há staging. Antes de aplicar migration, confira `npx supabase migration list --linked`; migrations são serializadas e nunca devem ser aplicadas em paralelo por dois agentes.
 - Mudança externa feita somente no banco, Supabase, GitHub ou Vercel também precisa de registro, mesmo sem diff de código.
 
+## Protocolo de correções funcionais
+
+Antes de analisar ou implementar uma correção funcional:
+
+1. Consulte as partes relevantes dos sete documentos iniciais em `docs/product/`.
+2. Consulte também as decisões posteriores em `docs/decisions/`, `docs/agent/CURRENT_STATE.md`, registros relacionados em `docs/agent/changes/`, `docs/operations/PEDRO_BEHAVIOR_TRACEABILITY.md` e `docs/operations/GUIA_COMPLETO_DE_HOMOLOGACAO.md`.
+3. Compare quatro camadas: fluxo originalmente planejado, decisões posteriores, código/estado atual e comportamento observado.
+4. Considere que uma decisão posterior explícita pode substituir a regra original. Em caso de conflito não resolvido, não escolha silenciosamente uma versão.
+5. Não invente uma nova regra de produto apenas para corrigir o sintoma.
+6. Se for um defeito técnico evidente, a documentação for consistente e o usuário disser `Execute`, `Corrija` ou equivalente, implemente diretamente com validação proporcional ao risco.
+7. Se houver contradição, lacuna, nova decisão de produto ou impacto relevante em outros fluxos, apresente primeiro: fluxo canônico encontrado, comportamento atual, causa, correção proposta, impactos e dúvidas. Não implemente até o usuário aprovar.
+8. Se o usuário disser `só responda`, `explique primeiro`, `não execute` ou equivalente, não faça mutações.
+
+Os prompts recomendados para iniciar um novo Codex estão em `docs/agent/ONBOARDING_PROMPTS.md`.
+
 ## Contrato de documentação
 
 Toda mudança material deve criar um arquivo novo em `docs/agent/changes/` usando `docs/agent/CHANGE_TEMPLATE.md`. Não concentre o histórico em um único changelog, pois arquivos independentes reduzem conflitos entre branches.
