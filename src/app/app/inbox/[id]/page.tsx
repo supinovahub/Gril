@@ -8,6 +8,17 @@ import { conversationAction, reviewAiSuggestionAction, sendHumanMessageAction } 
 import styles from "../inbox.module.css";
 import { ConversationReadMarker } from "./conversation-read-marker";
 
+function senderLabel(senderType: string, metadata: unknown) {
+  const source = metadata && typeof metadata === "object" && !Array.isArray(metadata)
+    ? (metadata as Record<string, unknown>).source
+    : null;
+  if (source === "whatsapp_device") return "enviada pelo celular";
+  if (senderType === "system") return "automação";
+  if (senderType === "ai") return "Pedro";
+  if (senderType === "contact") return "lead";
+  return "equipe";
+}
+
 export default async function ConversationPage({
   params,
   searchParams,
@@ -82,7 +93,7 @@ export default async function ConversationPage({
             {messages?.map((message) => (
               <article className={`${message.direction === "inbound" ? styles.inbound : styles.outbound} ${message.provider_status === "failed" || message.provider_status === "suppressed" ? styles.notSent : ""}`} key={message.id}>
                 <p>{message.body || `[${message.content_type}]`}</p>
-                <footer><span>{message.sender_type}</span><time>{new Intl.DateTimeFormat("pt-BR", { timeStyle: "short", dateStyle: "short" }).format(new Date(message.created_at))}</time><span>{message.provider_status === "suppressed" ? "não enviada" : message.provider_status === "failed" ? "falha no envio" : message.provider_status}</span></footer>
+                <footer><span>{senderLabel(message.sender_type, message.metadata)}</span><time>{new Intl.DateTimeFormat("pt-BR", { timeStyle: "short", dateStyle: "short" }).format(new Date(message.created_at))}</time><span>{message.provider_status === "suppressed" ? "não enviada" : message.provider_status === "failed" ? "falha no envio" : message.provider_status}</span></footer>
               </article>
             ))}
             {!messages?.length ? <div className={styles.empty}><MessageCircle size={26} /><span>Sem mensagens.</span></div> : null}

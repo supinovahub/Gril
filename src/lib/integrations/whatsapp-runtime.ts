@@ -44,6 +44,7 @@ export type NormalizedMessageMutation = {
 
 export type NormalizedWhatsappWebhook = {
   inbound: NormalizedInboundMessage[];
+  externalOutbound: NormalizedInboundMessage[];
   statuses: NormalizedStatusUpdate[];
   mutations: NormalizedMessageMutation[];
 };
@@ -138,10 +139,11 @@ export function verifyMetaWebhook(rawBody: string, signature: string | null, app
 export function normalizeMetaWebhook(raw: unknown): NormalizedWhatsappWebhook {
   const root = record(raw);
   const inbound: NormalizedInboundMessage[] = [];
+  const externalOutbound: NormalizedInboundMessage[] = [];
   const statuses: NormalizedStatusUpdate[] = [];
   const mutations: NormalizedMessageMutation[] = [];
   if (!root || root.object !== "whatsapp_business_account" || !Array.isArray(root.entry)) {
-    return { inbound, statuses, mutations };
+    return { inbound, externalOutbound, statuses, mutations };
   }
 
   for (const entryValue of root.entry) {
@@ -211,7 +213,7 @@ export function normalizeMetaWebhook(raw: unknown): NormalizedWhatsappWebhook {
       }
     }
   }
-  return { inbound, statuses, mutations };
+  return { inbound, externalOutbound, statuses, mutations };
 }
 
 function findUazapiMessage(root: Record<string, unknown>) {
@@ -221,9 +223,9 @@ function findUazapiMessage(root: Record<string, unknown>) {
 
 function uazapiMessagePhone(message: Record<string, unknown>) {
   const candidates = [
+    text(message.chatid),
     text(message.sender_pn),
     text(message.from),
-    text(message.chatid),
     text(message.sender),
   ];
   for (const candidate of candidates) {
@@ -282,23 +284,26 @@ export function verifyAndNormalizeUazapiWebhook(
   }
 
   const inbound: NormalizedInboundMessage[] = [];
+  const externalOutbound: NormalizedInboundMessage[] = [];
   const statuses: NormalizedStatusUpdate[] = [];
   const mutations: NormalizedMessageMutation[] = [];
   const eventType = (text(root.EventType) ?? text(root.event) ?? text(root.type) ?? "").toLowerCase();
   const message = findUazapiMessage(root);
-  if (!message) return { inbound, statuses, mutations };
+  if (!message) return { inbound, externalOutbound, statuses, mutations };
   const providerMessageId = text(message.messageid)
     ?? text(message.messageId)
     ?? text(message.id)
     ?? text(record(message.key)?.id)
     ?? fallbackUazapiMessageId(root, message);
-  const fromMe = message.fromMe === true || message.wasSentByApi === true;
+  const fromMe = message.fromMe === true;
+  const wasSentByApi = message.wasSentByApi === true;
+  const incoming = !fromMe && !wasSentByApi;
   const reaction = record(message.reaction) ?? record(message.reactionMessage);
   const reactionTarget = text(reaction?.messageid) ?? text(reaction?.messageId) ?? text(reaction?.id) ?? text(record(reaction?.key)?.id) ?? text(message.targetMessageId);
   const reactionEmoji = text(reaction?.emoji) ?? text(reaction?.text);
-  if (!fromMe && reactionTarget && reactionEmoji) {
+  if (incoming && reactionTarget && reactionEmoji) {
     mutations.push({ externalEventId: `${providerMessageId ?? reactionTarget}:reaction:${reactionEmoji}`, targetProviderMessageId: reactionTarget, kind: "reaction", emoji: reactionEmoji, providerTimestamp: timestampFromSeconds(message.messageTimestamp ?? message.timestamp) });
-    return { inbound, statuses, mutations };
+    return { inbound, externalOutbound, statuses, mutations };
   }
 
   if (eventType.includes("update") || (!text(message.text) && providerStatus(message.status))) {
@@ -310,25 +315,47 @@ export function verifyAndNormalizeUazapiWebhook(
         providerTimestamp: timestampFromSeconds(message.messageTimestamp ?? message.timestamp),
         errorRedacted: status === "failed" ? "Uazapi informou falha no envio." : undefined,
       });
-    } else if (!fromMe && providerMessageId && (message.deleted === true || eventType.includes("delete") || eventType.includes("revoke"))) {
+    } else if (incoming && providerMessageId && (message.deleted === true || eventType.includes("delete") || eventType.includes("revoke"))) {
       mutations.push({ externalEventId: `${providerMessageId}:delete`, targetProviderMessageId: providerMessageId, kind: "delete", providerTimestamp: timestampFromSeconds(message.messageTimestamp ?? message.timestamp) });
-    } else if (!fromMe && providerMessageId && (text(message.text) ?? text(message.body))) {
+    } else if (incoming && providerMessageId && (text(message.text) ?? text(message.body))) {
       const editedBody = text(message.text) ?? text(message.body) ?? "";
       mutations.push({ externalEventId: `${providerMessageId}:edit:${String(message.messageTimestamp ?? message.timestamp ?? editedBody.slice(0,64))}`, targetProviderMessageId: providerMessageId, kind: "edit", body: editedBody, providerTimestamp: timestampFromSeconds(message.messageTimestamp ?? message.timestamp) });
     }
-    return { inbound, statuses, mutations };
+    return { inbound, externalOutbound, statuses, mutations };
   }
 
   const isGroup = message.isGroup === true || text(message.chatid)?.endsWith("@g.us") === true;
   const fromE164 = uazapiMessagePhone(message);
-  if (!fromMe && !isGroup && providerMessageId && fromE164) {
-    const contentType = mapContentType(
-      text(message.messageType)
-        ?? text(message.type)
-        ?? ((text(message.text) ?? text(message.body)) ? "text" : undefined),
-    );
-    const media = record(message.media) ?? record(message.file) ?? record(message.document) ?? record(message.image) ?? record(message.audio) ?? record(message.video);
-    const sourceUrl = text(media?.url) ?? text(media?.URL) ?? text(message.fileURL) ?? text(message.mediaUrl) ?? text(message.url);
+  const contentType = mapContentType(
+    text(message.messageType)
+      ?? text(message.type)
+      ?? ((text(message.text) ?? text(message.body)) ? "text" : undefined),
+  );
+  const media = record(message.media) ?? record(message.file) ?? record(message.document) ?? record(message.image) ?? record(message.audio) ?? record(message.video);
+  const sourceUrl = text(media?.url) ?? text(media?.URL) ?? text(message.fileURL) ?? text(message.mediaUrl) ?? text(message.url);
+  const normalizedMedia = contentType !== "text" ? {
+    providerMediaId: text(media?.id) ?? text(message.mediaId),
+    sourceUrl,
+    mimeType: text(media?.mimetype) ?? text(media?.mimeType) ?? text(message.mimetype),
+    fileName: text(media?.fileName) ?? text(media?.filename) ?? text(message.fileName),
+    sha256: text(media?.sha256),
+  } : undefined;
+
+  if (fromMe && !wasSentByApi && !isGroup && providerMessageId && fromE164) {
+    const rootChat = record(root.chat) ?? record(record(root.data)?.chat);
+    externalOutbound.push({
+      externalEventId: providerMessageId,
+      providerMessageId,
+      fromE164,
+      contactName: text(rootChat?.name) ?? text(rootChat?.wa_name),
+      contentType,
+      body: text(message.text) ?? text(message.body) ?? text(message.caption) ?? null,
+      providerTimestamp: timestampFromSeconds(message.messageTimestamp ?? message.timestamp),
+      media: normalizedMedia,
+      rawPayload: redactPayload(raw),
+    });
+  }
+  if (incoming && !isGroup && providerMessageId && fromE164) {
     inbound.push({
       externalEventId: providerMessageId,
       providerMessageId,
@@ -337,17 +364,11 @@ export function verifyAndNormalizeUazapiWebhook(
       contentType,
       body: text(message.text) ?? text(message.body) ?? text(message.caption) ?? null,
       providerTimestamp: timestampFromSeconds(message.messageTimestamp ?? message.timestamp),
-      media: contentType !== "text" ? {
-        providerMediaId: text(media?.id) ?? text(message.mediaId),
-        sourceUrl,
-        mimeType: text(media?.mimetype) ?? text(media?.mimeType) ?? text(message.mimetype),
-        fileName: text(media?.fileName) ?? text(media?.filename) ?? text(message.fileName),
-        sha256: text(media?.sha256),
-      } : undefined,
+      media: normalizedMedia,
       rawPayload: redactPayload(raw),
     });
   }
-  return { inbound, statuses, mutations };
+  return { inbound, externalOutbound, statuses, mutations };
 }
 
 async function runtimeFetch(

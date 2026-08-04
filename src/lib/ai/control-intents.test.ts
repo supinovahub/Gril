@@ -24,4 +24,11 @@ describe("classifyPedroControlIntent", () => {
     expect(classifyPedroControlIntent({ body: "Hello, I am looking for an apartment, please", content_type: "text" }))
       .toBe("unsupported_language");
   });
+
+  it("não confunde desconhecimento da região com número errado", () => {
+    expect(classifyPedroControlIntent({ body: "não conheço nada aí de São Paulo", content_type: "text" }))
+      .toBeNull();
+    expect(classifyPedroControlIntent({ body: "vocês falaram com a pessoa errada", content_type: "text" }))
+      .toBe("wrong_number");
+  });
 });

@@ -30,6 +30,14 @@ const normalizedWebhook = z.object({
 
 type RouteParams = { params: Promise<{ connectionId: string }> };
 
+function externalOutboundPayload(payload: Json): Json {
+  const marker = { event_kind: "external_outbound", source: "whatsapp_device" };
+  if (payload && typeof payload === "object" && !Array.isArray(payload)) {
+    return { ...payload, _gril: marker };
+  }
+  return { provider_payload: payload, _gril: marker };
+}
+
 export async function GET(request: Request, { params }: RouteParams) {
   const { connectionId } = await params;
   const query = new URL(request.url).searchParams;
@@ -126,6 +134,7 @@ export async function POST(request: Request, { params }: RouteParams) {
           } : undefined,
           rawPayload: (parsed.data.raw_payload ?? json) as Json,
         }],
+        externalOutbound: [],
         statuses: [],
         mutations: [],
       };
@@ -139,6 +148,7 @@ export async function POST(request: Request, { params }: RouteParams) {
     connection.provider === "uazapi"
     && rawEventType === "messages"
     && normalized.inbound.length === 0
+    && normalized.externalOutbound.length === 0
     && normalized.statuses.length === 0
     && normalized.mutations.length === 0
   ) {
@@ -148,6 +158,7 @@ export async function POST(request: Request, { params }: RouteParams) {
   let ingested = 0;
   let duplicates = 0;
   let operational = 0;
+  let externalOutbound = 0;
   for (const status of normalized.statuses) {
     await admin.rpc("apply_provider_message_status", {
       p_connection_id: connectionId,
@@ -167,6 +178,65 @@ export async function POST(request: Request, { params }: RouteParams) {
       p_provider_timestamp: mutation.providerTimestamp,
       p_target_provider_message_id: mutation.targetProviderMessageId,
     });
+  }
+  for (const message of normalized.externalOutbound) {
+    const { data: existing, error: existingError } = await admin
+      .from("messages")
+      .select("id")
+      .eq("org_id", connection.org_id)
+      .eq("provider_message_id", message.providerMessageId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (existingError) return NextResponse.json({ error: "external_outbound_lookup_failed" }, { status: 409 });
+    if (existing) {
+      duplicates += 1;
+      continue;
+    }
+
+    const { error } = await admin.from("webhook_ingest_requests").insert({
+      org_id: connection.org_id,
+      connection_id: connectionId,
+      external_event_id: message.externalEventId,
+      payload_sha256: sha256(JSON.stringify(message.rawPayload)),
+      payload: externalOutboundPayload(message.rawPayload),
+      from_e164: message.fromE164,
+      contact_name: message.contactName ?? null,
+      provider_message_id: message.providerMessageId,
+      content_type: message.contentType,
+      body: message.body ?? null,
+      provider_timestamp: message.providerTimestamp ?? null,
+    });
+    if (error) return NextResponse.json({ error: "external_outbound_ingest_rejected" }, { status: 409 });
+
+    const { data: storedMessage, error: storedMessageError } = await admin
+      .from("messages")
+      .select("id")
+      .eq("org_id", connection.org_id)
+      .eq("provider_message_id", message.providerMessageId)
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (storedMessageError || !storedMessage) {
+      return NextResponse.json({ error: "external_outbound_message_missing" }, { status: 409 });
+    }
+    externalOutbound += 1;
+
+    if (message.media && (message.media.providerMediaId || message.media.sourceUrl)) {
+      const { error: mediaError } = await admin.from("message_media_sources").insert({
+        message_id: storedMessage.id, org_id: connection.org_id, connection_id: connectionId,
+        provider_media_id: message.media.providerMediaId ?? null, source_url: message.media.sourceUrl ?? null,
+        mime_type: message.media.mimeType ?? null, file_name: message.media.fileName ?? null,
+        provider_sha256: message.media.sha256 ?? null,
+      });
+      if (mediaError) return NextResponse.json({ error: "external_outbound_media_rejected" }, { status: 409 });
+      const { error: jobError } = await admin.from("scheduled_jobs").insert({
+        org_id: connection.org_id, job_type: "media.inbound.process", aggregate_type: "message",
+        aggregate_id: storedMessage.id, target_queue: "media-processing", run_at: new Date().toISOString(),
+        dedupe_key: `media-process:${storedMessage.id}`, payload: { message_id: storedMessage.id },
+      });
+      if (jobError) return NextResponse.json({ error: "external_outbound_media_job_rejected" }, { status: 409 });
+    }
   }
   for (const message of normalized.inbound) {
     const { data: operationalResult, error: operationalError } = await admin.rpc("process_operational_whatsapp_reply", {
@@ -218,5 +288,5 @@ export async function POST(request: Request, { params }: RouteParams) {
       }
     }
   }
-  return NextResponse.json({ received: true, ingested, duplicates, operational, statuses: normalized.statuses.length, mutations: normalized.mutations.length });
+  return NextResponse.json({ received: true, ingested, externalOutbound, duplicates, operational, statuses: normalized.statuses.length, mutations: normalized.mutations.length });
 }

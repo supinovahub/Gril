@@ -58,12 +58,30 @@ describe("adapters de tráfego real", () => {
     expect(normalized.mutations[0]).toMatchObject({ kind: "reaction", targetProviderMessageId: "wamid.question", emoji: "👍" });
   });
 
-  it("autentica Uazapi, ignora mensagens próprias e remove o token do payload", () => {
+  it("autentica Uazapi, separa mensagem manual do celular e remove o token do payload", () => {
     const own = verifyAndNormalizeUazapiWebhook(
-      { EventType: "messages", token: "token-seguro", message: { messageid: "1", sender: "5511999999999", fromMe: true, text: "eco" } },
+      { EventType: "messages", token: "token-seguro", chat: { name: "João" }, message: { messageid: "1", chatid: "5511999999999@s.whatsapp.net", fromMe: true, wasSentByApi: false, text: "mensagem pelo celular" } },
       "token-seguro",
     );
     expect(own?.inbound).toHaveLength(0);
+    expect(own?.externalOutbound[0]).toMatchObject({
+      providerMessageId: "1",
+      fromE164: "+5511999999999",
+      contactName: "João",
+      body: "mensagem pelo celular",
+    });
+
+    const apiEcho = verifyAndNormalizeUazapiWebhook(
+      { EventType: "messages", token: "token-seguro", message: { messageid: "api-1", chatid: "5511999999999@s.whatsapp.net", fromMe: true, wasSentByApi: true, text: "eco" } },
+      "token-seguro",
+    );
+    expect(apiEcho?.externalOutbound).toHaveLength(0);
+    const apiEchoWithoutFromMe = verifyAndNormalizeUazapiWebhook(
+      { EventType: "messages", token: "token-seguro", message: { messageid: "api-2", chatid: "5511999999999@s.whatsapp.net", wasSentByApi: true, text: "eco" } },
+      "token-seguro",
+    );
+    expect(apiEchoWithoutFromMe?.inbound).toHaveLength(0);
+    expect(apiEchoWithoutFromMe?.externalOutbound).toHaveLength(0);
     expect(verifyAndNormalizeUazapiWebhook({ token: "errado" }, "token-seguro")).toBeNull();
 
     const inbound = verifyAndNormalizeUazapiWebhook(

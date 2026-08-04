@@ -42,7 +42,7 @@ export function classifyPedroControlIntent(
 
   if (/\b(falsificar|fraudar|forjar|documento falso|renda falsa|enganar o banco|burlar analise|laranja)\b/.test(body)) return "fraud";
   if (/\b(pix|boleto|dados bancarios|chave pix|comprovante|pagar|pagamento|sinal|reserva financeira)\b/.test(body)) return "payment";
-  if (/\b(numero errado|pessoa errada|nao sou|nao conheco|esse numero nao e|esse numero nao pertence)\b/.test(body)) return "wrong_number";
+  if (/\b(numero errado|pessoa errada|nao sou (?:o|a|eu|essa pessoa)|esse numero nao e|esse numero nao pertence)\b/.test(body)) return "wrong_number";
   if (/\b(nunca me cadastrei|nao me cadastrei|nao autorizei|nao dei meu contato|de onde tirou meu numero)\b/.test(body)) return "origin_contested";
   if (/\b(voce e (?:uma )?(?:ia|inteligencia artificial|robo|bot)|estou falando com (?:uma )?(?:ia|robo|bot))\b/.test(body)) return "identity_question";
   if (/\b(advogad[oa]|processar|processo judicial|procon|denuncia|acao judicial|medida judicial|crime|ilegal)\b/.test(body)) return "legal";
