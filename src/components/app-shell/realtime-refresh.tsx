@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect } from "react";
 
 import { createClient } from "@/lib/supabase/client";
@@ -19,6 +19,8 @@ const tables = [
 
 export function RealtimeRefresh({ orgId }: { orgId: string }) {
   const router = useRouter();
+  const pathname = usePathname();
+
   useEffect(() => {
     const supabase = createClient();
     let timer: ReturnType<typeof setTimeout> | undefined;
@@ -32,5 +34,28 @@ export function RealtimeRefresh({ orgId }: { orgId: string }) {
     channel.subscribe();
     return () => { clearTimeout(timer); void supabase.removeChannel(channel); };
   }, [orgId, router]);
+
+  useEffect(() => {
+    if (!pathname.startsWith("/app/inbox")) return;
+
+    let refreshBlocked = false;
+    const refresh = () => {
+      if (document.visibilityState !== "visible" || refreshBlocked) return;
+      refreshBlocked = true;
+      router.refresh();
+      window.setTimeout(() => { refreshBlocked = false; }, 1_000);
+    };
+
+    const interval = window.setInterval(refresh, 2_500);
+    window.addEventListener("focus", refresh);
+    document.addEventListener("visibilitychange", refresh);
+
+    return () => {
+      window.clearInterval(interval);
+      window.removeEventListener("focus", refresh);
+      document.removeEventListener("visibilitychange", refresh);
+    };
+  }, [pathname, router]);
+
   return null;
 }
