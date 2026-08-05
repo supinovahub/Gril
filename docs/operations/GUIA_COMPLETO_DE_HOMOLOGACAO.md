@@ -173,6 +173,17 @@ Valide:
 
 No modo **Assistido**, aprove uma sugestão que contenha qualificação e depois outra com agendamento ou follow-up. Confirme que a aprovação envia a mensagem e aplica, na mesma ação, os valores do lead, o match, a call, a cadência e a mídia aprovada. Edite uma sugestão antes de enviar e confirme que as ações estruturadas continuam coerentes; se o estado da conversa mudou, o sistema deve rejeitar tudo por conflito, sem envio parcial.
 
+### Contexto antes dos controles
+
+Com o Pedro em `assisted`, valide que palavras isoladas nunca pausam a conversa antes da análise:
+
+1. durante a qualificação, envie `Tenho até 2 milhões pra pagar`; deve surgir uma sugestão que registre orçamento ou continue a qualificação, sem `pending_handoff`;
+2. pergunte `como funciona o processo de financiamento?`; Pedro deve responder ou esclarecer, sem escalada jurídica;
+3. peça ou envie um book/planta; o arquivo não pode ser tratado como documento sensível apenas pelo tipo;
+4. depois, peça explicitamente uma chave Pix para pagar o sinal de uma reserva; Pedro deve analisar a conversa e então escalar como `payment`, registrando evidência e confiança;
+5. devolva a mesma conversa ao Pedro mais de uma vez; a mesma execução não pode criar escaladas duplicadas;
+6. teste opt-out explícito e confirme supressão, cancelamento de jobs e ausência de novo envio automático.
+
 ## 7. Simulador e regressão
 
 No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confirme que o Pedro lembra as mensagens anteriores, acumula a qualificação e mantém o resumo sem criar lead, Inbox, WhatsApp, call, follow-up real ou consumo de capacidade. Cubra saudação vaga, preço, disponibilidade, compra à vista/financiada/futura, falta de imóvel compatível, pergunta sem resposta, pedido humano, reclamação, opt-out, número errado, prompt injection, agendamento, cancelamento, reagendamento e recebimento de mídia.

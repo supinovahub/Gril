@@ -4080,6 +4080,8 @@ export type Database = {
           category: string
           claimed_at: string | null
           claimed_by: string | null
+          confidence: number | null
+          contextual_evidence: string | null
           conversation_id: string | null
           created_at: string
           id: string
@@ -4089,12 +4091,16 @@ export type Database = {
           reason: string
           resolved_at: string | null
           severity: string
+          source_execution_id: string | null
+          source_message_id: string | null
           status: string
         }
         Insert: {
           category: string
           claimed_at?: string | null
           claimed_by?: string | null
+          confidence?: number | null
+          contextual_evidence?: string | null
           conversation_id?: string | null
           created_at?: string
           id?: string
@@ -4104,12 +4110,16 @@ export type Database = {
           reason: string
           resolved_at?: string | null
           severity: string
+          source_execution_id?: string | null
+          source_message_id?: string | null
           status?: string
         }
         Update: {
           category?: string
           claimed_at?: string | null
           claimed_by?: string | null
+          confidence?: number | null
+          contextual_evidence?: string | null
           conversation_id?: string | null
           created_at?: string
           id?: string
@@ -4119,6 +4129,8 @@ export type Database = {
           reason?: string
           resolved_at?: string | null
           severity?: string
+          source_execution_id?: string | null
+          source_message_id?: string | null
           status?: string
         }
         Relationships: [
@@ -4162,6 +4174,20 @@ export type Database = {
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escalations_source_execution_id_fkey"
+            columns: ["source_execution_id"]
+            isOneToOne: false
+            referencedRelation: "ai_executions"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "escalations_source_message_id_fkey"
+            columns: ["source_message_id"]
+            isOneToOne: false
+            referencedRelation: "messages"
             referencedColumns: ["id"]
           },
         ]

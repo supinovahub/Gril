@@ -8,7 +8,7 @@ Fonte de verdade: `docs/product/Especificacao-do-Produto-v1.md`. O pacote v3 sep
 | Humor, emoji e abreviação somente após rapport; irritação sem humor | Persona v3 | campos `style` e prompt publicado |
 | Uma pergunta principal, sem interrogatório, repetição ou pressão após recusa | Persona v3 + estado de qualificação | prompt e instruções; `refused` é persistido |
 | Fatos aprovados e válidos; nenhuma promessa inventada | Contexto filtrado + instrução + escalada | worker filtra validade de fatos, projetos, FAQ e qualificação |
-| Opt-out, privacidade, documento, pagamento, jurídico, fraude, discriminação, idioma e abuso | Classificador e RPC determinísticos antes do modelo | `control-intents.ts`; `apply_inbound_control_intent` |
+| Opt-out, privacidade, documento, pagamento, jurídico, fraude, discriminação, idioma e abuso | Pedro analisa histórico + resumo + contexto; depois o backend aplica efeitos rígidos e idempotentes | `pedro-instructions.ts`; `pedro-turn.ts`; `complete_ai_execution`; `contextual-controls-after-ai.md` |
 | Pergunta direta sobre IA não recebe improviso | Controle determinístico | intent `identity_question` e handoff silencioso |
 | Qualificação só com dado explícito | Ferramenta estruturada + validação de tipo + request transacional | `pedro-turn.ts`; `qualification_value_requests` |
 | Curadoria exige preço e entrada, no máximo dois imóveis | Filtro do servidor | `selectEligibleProjects`; `project_match_requests` |

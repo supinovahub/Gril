@@ -8,7 +8,7 @@
 - mensagens operacionais para calls, aceite atômico, escaladas e resultados +1/+4/+24 horas;
 - áudio, imagem, documento sensível, Storage privado e mutações de mensagens;
 - CRM de participantes/telefones/mescla, score explicável, checklists e integridade da venda;
-- controles determinísticos de opt-out, privacidade, pagamento, número errado, origem e pergunta sobre IA;
+- efeitos determinísticos de opt-out, privacidade, pagamento, número errado, origem e pergunta sobre IA; a detecção lexical anterior ao modelo foi posteriormente substituída por análise contextual conforme `contextual-controls-after-ai.md`;
 - PWA, busca global, push, Uazapi criada/conectada, pareamento e configuração de webhook;
 - link de videochamada auditado, propagado a lembretes/templates e alerta crítico por ausência;
 - suíte de 100 regressões, sendo 52 críticas.

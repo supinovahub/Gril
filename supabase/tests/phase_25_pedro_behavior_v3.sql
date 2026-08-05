@@ -71,8 +71,8 @@ select extensions.ok(
 
 select extensions.ok(
   not has_function_privilege('authenticated','public.apply_inbound_control_intent(uuid,text)','execute')
-  and has_function_privilege('service_role','public.apply_inbound_control_intent(uuid,text)','execute'),
-  'only the runtime can apply inbound control intents'
+  and not has_function_privilege('service_role','public.apply_inbound_control_intent(uuid,text)','execute'),
+  'legacy pre-AI control intent mutation is disabled for every runtime role'
 );
 
 select * from extensions.finish();

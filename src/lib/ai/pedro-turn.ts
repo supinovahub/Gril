@@ -32,6 +32,8 @@ export const pedroTurnSchema = z
       .object({
         category: z.enum([
           "commercial_risk",
+          "opt_out",
+          "privacy_opt_out",
           "legal",
           "privacy",
           "fraud",
@@ -49,6 +51,8 @@ export const pedroTurnSchema = z
           "other",
         ]),
         reason: z.string().trim().min(5).max(1000),
+        contextual_evidence: z.string().trim().min(3).max(1000),
+        confidence: z.number().min(0.8).max(1),
       })
       .nullable(),
     qualification_updates: z.array(qualificationUpdateSchema).max(8),
@@ -105,6 +109,8 @@ export const pedroTurnTool = {
                 type: "string",
                 enum: [
                   "commercial_risk",
+                  "opt_out",
+                  "privacy_opt_out",
                   "legal",
                   "privacy",
                   "fraud",
@@ -123,8 +129,18 @@ export const pedroTurnTool = {
                 ],
               },
               reason: { type: "string" },
+              contextual_evidence: {
+                type: "string",
+                description: "Evidência curta que justifica a escalada após considerar a conversa completa, nunca uma palavra isolada.",
+              },
+              confidence: {
+                type: "number",
+                minimum: 0.8,
+                maximum: 1,
+                description: "Confiança contextual. Abaixo de 0,8, responda ou esclareça em vez de escalar.",
+              },
             },
-            required: ["category", "reason"],
+            required: ["category", "reason", "contextual_evidence", "confidence"],
           },
         ],
       },

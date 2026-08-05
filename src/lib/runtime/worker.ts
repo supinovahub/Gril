@@ -19,7 +19,6 @@ import {
   isSchedulingAvailabilityRequest,
   validCallRequest,
 } from "@/lib/ai/call-request";
-import { classifyPedroControlIntent } from "@/lib/ai/control-intents";
 import { compilePedroInstructions } from "@/lib/ai/pedro-instructions";
 import { evaluateRegressionCase } from "@/lib/ai/regression";
 import {
@@ -184,7 +183,7 @@ async function runAiExecution(executionId: string) {
       : null;
     if (execution.conversation_id) {
       const [{ data: messages, error: messagesError }, { data: summary }, { data: guidance }] = await Promise.all([
-        admin.from("messages").select("direction,content_type,body,created_at,metadata").eq("conversation_id", execution.conversation_id).order("created_at", { ascending: false }).limit(40),
+        admin.from("messages").select("direction,content_type,body,created_at,metadata").eq("conversation_id", execution.conversation_id).order("created_at", { ascending: false }).limit(120),
         admin.from("conversation_summaries").select("summary,facts").eq("conversation_id", execution.conversation_id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         admin.from("conversation_ai_guidance").select("id,guidance,exact_reply").eq("conversation_id", execution.conversation_id).eq("status", "active").maybeSingle(),
       ]);
@@ -342,6 +341,13 @@ async function runAiExecution(executionId: string) {
           book_followup_minutes: "4-6",
         },
         previous_conversation_summary: priorSummary,
+        context_interpretation_policy: {
+          analyze_before_rules: true,
+          isolated_keywords_never_trigger_controls: true,
+          ambiguous_intent_requires_clarification: true,
+          hard_rules_restrict_actions_not_understanding: true,
+          minimum_escalation_confidence: 0.8,
+        },
         manager_guidance: activeGuidance ? {
           instruction: activeGuidance.guidance,
           exact_reply_requested: activeGuidance.exact_reply,
@@ -384,7 +390,8 @@ async function runAiExecution(executionId: string) {
       : response.outputText;
 
     const allowedDefinitions = new Map(definitions.map((definition) => [definition.code, definition.answer_type]));
-    const qualificationUpdates = responseStructured.qualification_updates.filter((update) => {
+    const contextualEscalation = responseStructured.outcome === "escalate";
+    const qualificationUpdates = (contextualEscalation ? [] : responseStructured.qualification_updates).filter((update) => {
       const answerType = allowedDefinitions.get(update.code);
       if (!answerType) return false;
       if (["refused", "unknown"].includes(update.value_kind)) return true;
@@ -396,7 +403,7 @@ async function runAiExecution(executionId: string) {
     const latestLeadMessage = [...conversationMessages].reverse().find((message) => message.role === "user")?.text ?? "";
     const previousPedroMessage = [...conversationMessages].reverse().find((message) => message.role === "assistant")?.text ?? null;
     const isProjectMaterialNudge = (execution.input_snapshot as { source?: unknown } | null)?.source === "project_material_nudge";
-    const materialIntent = isProjectMaterialNudge
+    const materialIntent = contextualEscalation || isProjectMaterialNudge
       ? "none"
       : inferProjectMaterialIntent({
         latestLeadMessage,
@@ -417,7 +424,7 @@ async function runAiExecution(executionId: string) {
     const recommendedProjects = canSendProjectMaterial
       ? selectEligibleProjects(projectsWithRequestedMaterial, mergedValues, 3)
       : [];
-    const callRequest = validCallRequest(responseStructured.call_request, conversationMessages);
+    const callRequest = contextualEscalation ? null : validCallRequest(responseStructured.call_request, conversationMessages);
     const outputText = guardUncommittedCallClaim(responseOutputText, callRequest);
     const structured = {
       ...responseStructured,
@@ -425,6 +432,7 @@ async function runAiExecution(executionId: string) {
       qualification_complete: qualificationComplete,
       qualification_specific: specificFinancialProfile,
       call_request: callRequest,
+      followup_strategy: contextualEscalation ? "cancel" : responseStructured.followup_strategy,
       action: responseStructured.outcome,
       escalation_reason: responseStructured.escalation?.reason ?? null,
       request_project_match: canSendProjectMaterial && recommendedProjects.length > 0,
@@ -529,19 +537,6 @@ async function processAiMessage(message: Record<string, unknown>) {
     const messageId = z.string().uuid().parse(payload.message_id);
     const { data: inbound } = await admin.from("messages").select("body,content_type,conversation_id").eq("id", messageId).single();
     if (!inbound) return;
-    const { data: recentInbound } = await admin.from("messages")
-      .select("body")
-      .eq("conversation_id", inbound.conversation_id)
-      .eq("direction", "inbound")
-      .neq("id", messageId)
-      .order("created_at", { ascending: false })
-      .limit(5);
-    const intent = classifyPedroControlIntent(inbound, (recentInbound ?? []).map((item) => item.body));
-    if (intent) {
-      const { error } = await admin.rpc("apply_inbound_control_intent", { p_intent: intent, p_message_id: messageId });
-      if (error) throw error;
-      return;
-    }
     if (["image", "audio", "video"].includes(inbound.content_type) && !inbound.body) {
       const { data: media } = await admin.from("message_media_sources").select("status").eq("message_id", messageId).maybeSingle();
       if (!media || ["pending", "processing"].includes(media.status)) return;
