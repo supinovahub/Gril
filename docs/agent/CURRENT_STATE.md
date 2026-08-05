@@ -1,21 +1,21 @@
 # Estado atual compartilhado do Gril
 
-> Atualizado em 04/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
+> Atualizado em 05/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
 
 ## Repositório
 
 - GitHub: `https://github.com/supinovahub/Gril`.
 - Branch padrão confirmada: `phase/01-foundation`.
-- Último commit de código confirmado neste retrato: `24804c8` (`fix(ai): republish recovered executions`).
+- Último commit de código confirmado neste retrato: `2a58f82` (`feat(inbox): permitir editar nome dos contatos (#26)`).
 - Working tree estava limpa antes da criação desta camada de memória.
 
 ## Produção e infraestrutura
 
 - Aplicação: `https://gril-lac.vercel.app`.
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
-- Deployment de produção confirmado como `Ready` em 04/08/2026: `dpl_FNnTMDPjaWgoX5S91ybK6bfSTwPN`.
+- Deployment de produção confirmado como `Ready` em 05/08/2026: `gril-7gsl7tfd-brio5.vercel.app`, associado ao commit `2a58f82`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
-- Migrations locais e remotas estavam alinhadas até `20260804180044_republish_requeued_ai_execution.sql`.
+- Migrations locais e remotas estão alinhadas até `20260805124457_edit_contact_name.sql`.
 
 ## Estado funcional
 
@@ -28,6 +28,7 @@
 ## Últimas correções comprovadas
 
 - O inbox recebe e exibe conversas reais da Uazapi.
+- Dono ou gestor com permissão de CRM pode editar manualmente o nome do contato no detalhe do Inbox ou do lead; a alteração é auditada e preserva o telefone canônico.
 - Execuções recuperadas do Pedro republicam o evento necessário para o worker.
 - O nudge após envio de material não reenvia PDFs.
 - Pedido de disponibilidade usa horários aprovados e não cria handoff indevido quando existem slots válidos.
@@ -35,13 +36,15 @@
 
 ## Verificações deste retrato
 
-- `npm test`: 19 arquivos e 108 testes aprovados em 04/08/2026.
-- Migrações Supabase: local e remoto alinhados até a versão indicada acima.
-- Vercel: alias de produção respondendo por deployment `Ready`.
+- `npm run lint`, `npm test` (19 arquivos e 108 testes) e `npm run build` aprovados em 05/08/2026.
+- Migrações Supabase: local e remoto alinhados até a versão indicada acima; tabela, função, trigger e privilégios da edição de nome confirmados no remoto.
+- `npx supabase db lint --linked --fail-on error`: concluído sem erros; permanecem apenas avisos preexistentes.
+- Vercel: deployment de produção `Ready` associado ao commit indicado acima; alias canônico respondeu `200` e redirecionou para `/login`.
 
 ## Pendências operacionais
 
 - Continuar a homologação manual dos fluxos descritos no guia, especialmente comportamento do Pedro, agendamento, distribuição, reativação e integrações reais.
+- Homologar manualmente a edição de nome com dono/gestor e confirmar que corretor não recebe a ação nem consegue forjar a operação.
 - Registrar cada novo defeito com esperado, observado, lead/canal, horário e IDs técnicos quando disponíveis.
 - Atualizar este arquivo após qualquer alteração de deployment, migration, conta/projeto ou conclusão material de homologação.
 
