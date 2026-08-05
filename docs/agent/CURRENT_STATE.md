@@ -28,6 +28,7 @@
 ## Últimas correções comprovadas
 
 - O inbox recebe e exibe conversas reais da Uazapi.
+- O estado do lead de homologacao foi zerado novamente em 05/08/2026; o cadastro foi preservado e a conversa ficou pausada com a IA desligada.
 - Dono ou gestor com permissão de CRM pode editar manualmente o nome do contato no detalhe do Inbox ou do lead; a alteração é auditada e preserva o telefone canônico.
 - A edição de nome no Inbox envia o UUID canônico do contato e não retorna mais `invalid uuid`.
 - Execuções recuperadas do Pedro republicam o evento necessário para o worker.
