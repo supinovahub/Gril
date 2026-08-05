@@ -3,7 +3,7 @@
 - Data: 05/08/2026
 - Responsável: Codex
 - Branch/PR: `agent/fix-call-slot-preservation-published`
-- Commit: o commit que contém este arquivo
+- Commit: `fe3399a`
 
 ## Objetivo
 
@@ -18,7 +18,7 @@ Impedir que Pedro diga que uma call futura já passou e ofereça novos horários
 
 - Arquivos: `src/lib/runtime/worker.ts`, `src/lib/ai/pedro-turn.ts`, `src/lib/ai/pedro-turn.test.ts`, `src/lib/ai/pedro-instructions.ts`, `docs/operations/GUIA_COMPLETO_DE_HOMOLOGACAO.md`.
 - Migrations: nenhuma; a proteção de idempotência do slot existente permanece válida.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma nesta etapa; deploy de produção pendente de validação final.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: branch publicada no GitHub; deployment de produção `dpl_6CXsWB6HFg4YXrGCvQgJUeLf6JN2` em `https://gril-lha8b45yt-brio5.vercel.app`, alias `https://gril-lac.vercel.app`, confirmado como `Ready`.
 
 ## Validação
 
@@ -28,13 +28,12 @@ Impedir que Pedro diga que uma call futura já passou e ofereça novos horários
 
 ## Impacto operacional
 
-- Deploy necessário: sim, para publicar o worker atualizado.
+- Deploy necessário: sim; concluído em 05/08/2026 com build remoto Next.js 16.2.12 e 46 rotas.
 - Migração aplicada: não.
 - Compatibilidade/rollback: calls sem slot ativo seguem o fluxo atual; calls futuras já separadas continuam protegidas pelo reaproveitamento transacional. Em caso de regressão, reverter o deployment para a versão anterior e depois o commit de código.
 
 ## Pendências e riscos
 
-- Publicar em produção e confirmar o deployment `Ready`.
 - Repetir o cenário controlado: escolher horário com menos de 30 minutos de antecedência, responder vídeo ou telefone e confirmar que texto e slot permanecem iguais.
 
 ## Documentos relacionados
