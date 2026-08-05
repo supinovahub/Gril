@@ -30,8 +30,12 @@ const normalizedWebhook = z.object({
 
 type RouteParams = { params: Promise<{ connectionId: string }> };
 
-function externalOutboundPayload(payload: Json): Json {
-  const marker = { event_kind: "external_outbound", source: "whatsapp_device" };
+function externalOutboundPayload(payload: Json, contactName?: string): Json {
+  const marker = {
+    event_kind: "external_outbound",
+    source: "whatsapp_device",
+    contact_name: contactName?.trim() || null,
+  };
   if (payload && typeof payload === "object" && !Array.isArray(payload)) {
     return { ...payload, _gril: marker };
   }
@@ -199,7 +203,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       connection_id: connectionId,
       external_event_id: message.externalEventId,
       payload_sha256: sha256(JSON.stringify(message.rawPayload)),
-      payload: externalOutboundPayload(message.rawPayload),
+      payload: externalOutboundPayload(message.rawPayload, message.contactName),
       from_e164: message.fromE164,
       contact_name: message.contactName ?? null,
       provider_message_id: message.providerMessageId,

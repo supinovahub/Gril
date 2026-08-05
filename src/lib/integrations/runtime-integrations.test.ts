@@ -71,6 +71,12 @@ describe("adapters de tráfego real", () => {
       body: "mensagem pelo celular",
     });
 
+    const nestedChat = verifyAndNormalizeUazapiWebhook(
+      { EventType: "messages", token: "token-seguro", data: { message: { messageid: "nested-1", chatid: "5511999999999@s.whatsapp.net", fromMe: true, wasSentByApi: false, chat: { name: "Maria" }, text: "mensagem manual" } } },
+      "token-seguro",
+    );
+    expect(nestedChat?.externalOutbound[0]).toMatchObject({ contactName: "Maria" });
+
     const apiEcho = verifyAndNormalizeUazapiWebhook(
       { EventType: "messages", token: "token-seguro", message: { messageid: "api-1", chatid: "5511999999999@s.whatsapp.net", fromMe: true, wasSentByApi: true, text: "eco" } },
       "token-seguro",

@@ -78,6 +78,14 @@ function text(value: unknown) {
   return typeof value === "string" ? value : undefined;
 }
 
+function firstNonEmptyText(...values: unknown[]) {
+  for (const value of values) {
+    const normalized = text(value)?.trim();
+    if (normalized) return normalized;
+  }
+  return undefined;
+}
+
 function timestampFromSeconds(value: unknown) {
   const numeric = typeof value === "string" ? Number(value) : value;
   if (typeof numeric !== "number" || !Number.isFinite(numeric)) return undefined;
@@ -175,6 +183,8 @@ export function normalizeMetaWebhook(raw: unknown): NormalizedWhatsappWebhook {
           const textBody = text(record(message.text)?.body);
           const mediaObject = record(message[messageType ?? ""]);
           const caption = text(mediaObject?.caption);
+          const rawPayload: Record<string, unknown> = { entryId: entry.id, changeField: change.field, message };
+          if (contactName) rawPayload._gril = { contact_name: contactName };
           inbound.push({
             externalEventId: providerMessageId,
             providerMessageId,
@@ -189,7 +199,7 @@ export function normalizeMetaWebhook(raw: unknown): NormalizedWhatsappWebhook {
               fileName: text(mediaObject?.filename),
               sha256: text(mediaObject?.sha256),
             } : undefined,
-            rawPayload: redactPayload({ entryId: entry.id, changeField: change.field, message }),
+            rawPayload: redactPayload(rawPayload),
           });
         }
       }
@@ -219,6 +229,39 @@ export function normalizeMetaWebhook(raw: unknown): NormalizedWhatsappWebhook {
 function findUazapiMessage(root: Record<string, unknown>) {
   const data = record(root.data);
   return record(root.message) ?? record(data?.message) ?? data ?? root;
+}
+
+function uazapiChatName(value: unknown) {
+  const chat = record(value);
+  return chat
+    ? firstNonEmptyText(chat.name, chat.wa_name, chat.displayName, chat.display_name, chat.contactName, chat.contact_name)
+    : undefined;
+}
+
+function uazapiContactName(root: Record<string, unknown>, message: Record<string, unknown>) {
+  const data = record(root.data);
+  const dataMessage = record(data?.message);
+  return firstNonEmptyText(
+    uazapiChatName(root.chat),
+    uazapiChatName(data?.chat),
+    uazapiChatName(message.chat),
+    uazapiChatName(dataMessage?.chat),
+    root.chatName,
+    root.chat_name,
+    data?.chatName,
+    data?.chat_name,
+    message.chatName,
+    message.chat_name,
+  );
+}
+
+function uazapiInboundContactName(root: Record<string, unknown>, message: Record<string, unknown>) {
+  return firstNonEmptyText(
+    message.senderName,
+    message.pushName,
+    message.notifyName,
+    uazapiContactName(root, message),
+  );
 }
 
 function uazapiMessagePhone(message: Record<string, unknown>) {
@@ -342,12 +385,11 @@ export function verifyAndNormalizeUazapiWebhook(
   } : undefined;
 
   if (fromMe && !wasSentByApi && !isGroup && providerMessageId && fromE164) {
-    const rootChat = record(root.chat) ?? record(record(root.data)?.chat);
     externalOutbound.push({
       externalEventId: providerMessageId,
       providerMessageId,
       fromE164,
-      contactName: text(rootChat?.name) ?? text(rootChat?.wa_name),
+      contactName: uazapiContactName(root, message),
       contentType,
       body: text(message.text) ?? text(message.body) ?? text(message.caption) ?? null,
       providerTimestamp: timestampFromSeconds(message.messageTimestamp ?? message.timestamp),
@@ -360,7 +402,7 @@ export function verifyAndNormalizeUazapiWebhook(
       externalEventId: providerMessageId,
       providerMessageId,
       fromE164,
-      contactName: text(message.senderName) ?? text(message.pushName),
+      contactName: uazapiInboundContactName(root, message),
       contentType,
       body: text(message.text) ?? text(message.body) ?? text(message.caption) ?? null,
       providerTimestamp: timestampFromSeconds(message.messageTimestamp ?? message.timestamp),
