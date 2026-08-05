@@ -4,6 +4,7 @@ import {
   hasSpecificFinancialProfile,
   isPedroQualificationComplete,
   mergeQualificationValues,
+  normalizePedroCallRequest,
   PEDRO_QUALIFICATION_CODES,
   pedroTurnSchema,
   validatePedroDecision,
@@ -166,5 +167,20 @@ describe("plano explícito do Pedro", () => {
       approvedMedia: [],
       availableCallSlots: [],
     })).toEqual({ valid: false, errors: [`project_media_not_available:${unavailable}:book`] });
+  });
+
+  it("mantem o slot confirmado quando a ultima mensagem apenas escolhe o formato", () => {
+    const request = { starts_at: "2026-08-04T17:00:00-03:00", format: "video" as const };
+    const normalized = normalizePedroCallRequest(
+      request,
+      [
+        { role: "user" as const, text: "Pode ser hoje as 16h" },
+        { role: "assistant" as const, text: "Voce prefere video ou telefone?" },
+        { role: "user" as const, text: "Por video" },
+      ],
+      { starts_at: "2026-08-04T16:00:00-03:00", status: "awaiting_manager" },
+      Date.parse("2026-08-04T12:00:00-03:00"),
+    );
+    expect(normalized).toEqual({ starts_at: "2026-08-04T16:00:00-03:00", format: "video" });
   });
 });

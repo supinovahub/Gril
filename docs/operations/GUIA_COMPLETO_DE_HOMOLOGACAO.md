@@ -275,12 +275,13 @@ Confirme:
 3. somente imóveis publicados e compatíveis são recomendados;
 4. foto principal, fotos extras e book seguem a decisão do lead;
 5. horários respeitam disponibilidade;
-6. Pedro não confirma a call antes do aceite de um corretor;
-7. aceite atribui e bloqueia agenda atomicamente;
-8. follow-up é criado e cancelado na condição correta;
-9. pedido humano pausa Pedro imediatamente;
-10. opt-out bloqueia campanha, follow-up e retomada;
-11. pós-call, proposta, perda e venda encerram as automações adequadas.
+6. se o lead escolher vídeo ou telefone depois do horário, o horário permanece igual e não surge uma segunda call ativa;
+7. Pedro não confirma a call antes do aceite de um corretor;
+8. aceite atribui e bloqueia agenda atomicamente;
+9. follow-up é criado e cancelado na condição correta;
+10. pedido humano pausa Pedro imediatamente;
+11. opt-out bloqueia campanha, follow-up e retomada;
+12. pós-call, proposta, perda e venda encerram as automações adequadas.
 
 ## 10. Volume, campanhas e calls
 

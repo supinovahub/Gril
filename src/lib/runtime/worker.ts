@@ -8,6 +8,7 @@ import {
   hasSpecificFinancialProfile,
   isPedroQualificationComplete,
   mergeQualificationValues,
+  normalizePedroCallRequest,
   validatePedroDecision,
   type ProjectCandidate,
   type QualificationValue,
@@ -290,6 +291,20 @@ async function runAiExecution(executionId: string) {
       : { data: [], error: null };
     if (slotsResult.error) throw slotsResult.error;
     const availableCallSlots = availableCallSlotsSchema.parse(slotsResult.data ?? []);
+    const existingCallResult = opportunityId && operationId
+      ? await admin.from("calls")
+        .select("id,starts_at,status")
+        .eq("org_id", execution.org_id)
+        .eq("operation_id", operationId)
+        .eq("opportunity_id", opportunityId)
+        .in("status", ["awaiting_manager", "awaiting_distribution", "distributing", "unassigned_alerted", "assigned"])
+        .gt("starts_at", new Date().toISOString())
+        .order("starts_at", { ascending: true })
+        .limit(1)
+        .maybeSingle()
+      : { data: null, error: null };
+    if (existingCallResult.error) throw existingCallResult.error;
+    const existingCall = existingCallResult.data;
 
     const startedAt = Date.now();
     const response = await createPedroResponse({
@@ -365,7 +380,14 @@ async function runAiExecution(executionId: string) {
       },
     });
 
-    const responseStructured = response.structured;
+    const responseStructured = {
+      ...response.structured,
+      call_request: normalizePedroCallRequest(
+        response.structured.call_request,
+        conversationMessages,
+        existingCall,
+      ),
+    };
     const validation = validatePedroDecision({
       turn: responseStructured,
       qualificationDefinitions: definitions.map((definition) => ({
@@ -375,6 +397,7 @@ async function runAiExecution(executionId: string) {
       activeProjectIds: projects.map((project) => project.id),
       approvedMedia: projectMediaResult.data ?? [],
       availableCallSlots,
+      existingCallStartsAt: existingCall?.starts_at,
     });
     const decisionHash = createHash("sha256").update(JSON.stringify(responseStructured)).digest("hex");
     const { error: validationAuditError } = await admin

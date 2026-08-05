@@ -317,7 +317,44 @@ export type PedroDecisionValidationInput = {
   activeProjectIds: string[];
   approvedMedia: Array<{ project_id: string; media_type: string }>;
   availableCallSlots: Array<{ starts_at: string }>;
+  existingCallStartsAt?: string | null;
 };
+
+type PedroConversationMessage = { role: "user" | "assistant"; text: string };
+type ExistingCallSlot = { starts_at: string; status: string };
+
+function normalizeSchedulingText(value: string) {
+  return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function isFormatOnlyCallConfirmation(
+  messages: PedroConversationMessage[],
+  existingCall: ExistingCallSlot | null,
+  now: number,
+) {
+  if (!existingCall || ["completed", "no_show", "cancelled"].includes(existingCall.status)) return false;
+  if (new Date(existingCall.starts_at).valueOf() <= now) return false;
+  const userMessages = messages.filter((message) => message.role === "user");
+  const latest = normalizeSchedulingText(userMessages.at(-1)?.text ?? "");
+  const context = normalizeSchedulingText(userMessages.slice(-4).map((message) => message.text).join(" "));
+  const latestChoosesFormat = /\b(video|ligacao|whatsapp|telefone|celular)\b/.test(latest);
+  const latestAddsNewSlot = /\b(?:[01]?\d|2[0-3])(?::[0-5]\d|h(?:[0-5]\d)?)\b/.test(latest)
+    || /\b(hoje|amanha|segunda|terca|quarta|quinta|sexta|sabado|domingo|\d{1,2}[/-]\d{1,2})\b/.test(latest);
+  const priorTime = /\b(?:[01]?\d|2[0-3])(?::[0-5]\d|h(?:[0-5]\d)?)\b/.test(context);
+  return latestChoosesFormat && !latestAddsNewSlot && priorTime;
+}
+
+export function normalizePedroCallRequest(
+  request: PedroTurn["call_request"],
+  messages: PedroConversationMessage[],
+  existingCall: ExistingCallSlot | null,
+  now = Date.now(),
+) {
+  if (request && isFormatOnlyCallConfirmation(messages, existingCall, now)) {
+    return { ...request, starts_at: existingCall!.starts_at };
+  }
+  return request;
+}
 
 export function validatePedroDecision(input: PedroDecisionValidationInput) {
   const errors: string[] = [];
@@ -359,7 +396,9 @@ export function validatePedroDecision(input: PedroDecisionValidationInput) {
     const requestedAt = new Date(input.turn.call_request.starts_at).valueOf();
     const exactSlotExists = input.availableCallSlots.some(
       (slot) => new Date(slot.starts_at).valueOf() === requestedAt,
-    );
+    ) || (input.existingCallStartsAt
+      ? new Date(input.existingCallStartsAt).valueOf() === requestedAt
+      : false);
     if (!exactSlotExists) errors.push(`call_slot_not_available:${input.turn.call_request.starts_at}`);
   }
 

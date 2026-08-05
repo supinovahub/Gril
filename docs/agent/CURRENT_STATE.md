@@ -15,7 +15,7 @@
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
 - Deployment de produção confirmado como `Ready` em 05/08/2026: `gril-nulflfdwl-brio5.vercel.app`, após o merge `d7dd110`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
-- Migrations locais e remotas estão alinhadas até `20260805160806_pedro_explicit_actions_source_of_truth.sql`.
+- Migrations locais e remotas estão alinhadas até `20260805184410_preserve_confirmed_call_slot.sql`.
 
 ## Estado funcional
 
@@ -37,10 +37,11 @@
 - A conversa atual de Arthur Rocha permaneceu `active · ai · assisted`; três escaladas falsas de `payment` criadas pela regex antiga foram resolvidas sem reprocessar mensagens já superadas.
 - A decisão estruturada do Pedro passou a ser a fonte de verdade: o executor não seleciona projetos adicionais, não substitui mídia ou texto e bloqueia mutações semânticas. Um book escolhido gera somente a ação explícita correspondente.
 - Edição humana de sugestão envia somente o texto editado e invalida as ações estruturadas anteriores.
+- Quando o lead confirma o formato depois de escolher um horário, Pedro preserva o slot já confirmado; o banco reaproveita a call existente e impede duas calls ativas no mesmo slot.
 
 ## Verificações deste retrato
 
-- `npm run lint`, `npm test` (17 arquivos e 95 testes) e `npm run build` aprovados em 05/08/2026 após a remoção dos antigos reescritores determinísticos de agenda/material.
+- `npm run lint`, `npm test` (17 arquivos e 96 testes) e `npm run build` aprovados em 05/08/2026 após a proteção determinística do slot confirmado.
 - Migrações Supabase: local e remoto alinhados até a versão indicada acima; colunas de rastreabilidade, função pós-análise, índice idempotente e revogação das funções legadas confirmados no remoto.
 - `npx supabase db lint --linked --fail-on error`: concluído sem erros; permanecem apenas avisos preexistentes.
 - Vercel: deployment de produção `Ready` associado ao commit indicado acima; `/login` no alias canônico respondeu `200` e não houve erro de runtime nos logs recentes do deployment.
