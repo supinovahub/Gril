@@ -3262,6 +3262,51 @@ export type Database = {
           },
         ]
       }
+      contact_name_update_requests: {
+        Row: {
+          actor_user_id: string
+          contact_id: string
+          created_at: string
+          id: string
+          name: string
+          org_id: string
+          processed_at: string
+        }
+        Insert: {
+          actor_user_id?: string
+          contact_id: string
+          created_at?: string
+          id?: string
+          name: string
+          org_id: string
+          processed_at?: string
+        }
+        Update: {
+          actor_user_id?: string
+          contact_id?: string
+          created_at?: string
+          id?: string
+          name?: string
+          org_id?: string
+          processed_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "contact_name_update_requests_contact_id_org_id_fkey"
+            columns: ["contact_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "contact_name_update_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       contact_phones: {
         Row: {
           contact_id: string

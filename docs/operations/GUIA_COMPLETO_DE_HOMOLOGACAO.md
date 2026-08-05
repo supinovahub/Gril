@@ -226,6 +226,7 @@ Uma conexão real saudável basta para o piloto. Teste ambos os provedores antes
 - teste envio, recebimento, entregue, lido e falha;
 - envie uma mensagem pelo celular conectado e confirme que o nome do chat/cliente aparece no Inbox, em vez de `Contato do WhatsApp`;
 - repita o teste com uma conversa que já exista como placeholder e confirme que o nome recebido atualiza o contato sem substituir um nome cadastrado manualmente;
+- como dono/gestor, abra uma conversa ou lead, use o lápis ao lado do nome, salve uma alteração e confirme que o novo nome aparece no Inbox, no lead e após recarregar a página;
 - repita o mesmo webhook e confirme idempotência;
 - desconecte e reconecte.
 
