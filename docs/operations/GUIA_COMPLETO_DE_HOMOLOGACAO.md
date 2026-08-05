@@ -275,7 +275,7 @@ Confirme:
 3. somente imóveis publicados e compatíveis são recomendados;
 4. foto principal, fotos extras e book seguem a decisão do lead;
 5. horários respeitam disponibilidade;
-6. se o lead escolher vídeo ou telefone depois do horário, o horário permanece igual e não surge uma segunda call ativa;
+6. se o lead escolher vídeo ou telefone depois do horário, a resposta mantém o mesmo horário, a ação estruturada reaproveita o slot e não surge uma segunda call ativa;
 7. Pedro não confirma a call antes do aceite de um corretor;
 8. aceite atribui e bloqueia agenda atomicamente;
 9. follow-up é criado e cancelado na condição correta;

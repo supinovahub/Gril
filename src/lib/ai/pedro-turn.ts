@@ -356,6 +356,18 @@ export function normalizePedroCallRequest(
   return request;
 }
 
+export function hasFutureCallTemporalContradiction(
+  reply: string | null | undefined,
+  existingCall: ExistingCallSlot | null,
+  now = Date.now(),
+) {
+  if (!reply || !existingCall || ["completed", "no_show", "cancelled"].includes(existingCall.status)) return false;
+  if (new Date(existingCall.starts_at).valueOf() <= now) return false;
+  const normalized = normalizeSchedulingText(reply);
+  return /\bja\s+passou\b/.test(normalized)
+    || /\b(?:horario|hora|slot)\b[^.!?]{0,40}\bpassou\b/.test(normalized);
+}
+
 export function validatePedroDecision(input: PedroDecisionValidationInput) {
   const errors: string[] = [];
   const definitions = new Map(input.qualificationDefinitions.map((item) => [item.code, item.answerType]));

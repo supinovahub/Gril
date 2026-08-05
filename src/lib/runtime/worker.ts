@@ -5,6 +5,7 @@ import { z } from "zod";
 import webpush from "web-push";
 
 import {
+  hasFutureCallTemporalContradiction,
   hasSpecificFinancialProfile,
   isPedroQualificationComplete,
   mergeQualificationValues,
@@ -293,7 +294,7 @@ async function runAiExecution(executionId: string) {
     const availableCallSlots = availableCallSlotsSchema.parse(slotsResult.data ?? []);
     const existingCallResult = opportunityId && operationId
       ? await admin.from("calls")
-        .select("id,starts_at,status")
+        .select("id,starts_at,status,format")
         .eq("org_id", execution.org_id)
         .eq("operation_id", operationId)
         .eq("opportunity_id", opportunityId)
@@ -307,12 +308,15 @@ async function runAiExecution(executionId: string) {
     const existingCall = existingCallResult.data;
 
     const startedAt = Date.now();
-    const response = await createPedroResponse({
+    const activeCallInstruction = existingCall
+      ? "CALL ATIVA CANONICA: existe uma call ja separada para este lead. O campo active_call contem o unico horario valido para essa call. Se o lead estiver escolhendo o formato depois desse horario ter sido separado, preserve exatamente active_call.starts_at, preencha call_request com esse mesmo starts_at e o formato escolhido, e responda mantendo o mesmo horario. Nao diga que o horario passou enquanto active_call.starts_at ainda for futuro em relacao a now_iso. Nao ofereca outro horario nem transforme a escolha de formato em reagendamento. Ate um corretor aceitar, diga apenas que a conversa foi solicitada ou separada, nunca que esta confirmada."
+      : "";
+    const responseInput = {
       apiKey,
       model: model.model_identifier,
       reasoningEffort: model.reasoning_effort,
       textVerbosity: model.text_verbosity,
-      instructions,
+      instructions: [instructions, activeCallInstruction].filter(Boolean).join("\n\n"),
       messages: conversationMessages,
       businessContext: {
         now_iso: new Date().toISOString(),
@@ -323,6 +327,13 @@ async function runAiExecution(executionId: string) {
           slots: availableCallSlots,
           instruction: "Ofereça apenas horários desta lista. Se o lead pedir disponibilidade sem escolher um horário, não escale: apresente até três opções.",
         },
+        active_call: existingCall ? {
+          starts_at: existingCall.starts_at,
+          status: existingCall.status,
+          format: existingCall.format,
+          canonical: true,
+          instruction: "Este horario ja foi separado nesta oportunidade e nao deve ser substituido por uma nova opcao apenas porque o lead escolheu video ou telefone.",
+        } : null,
         opportunity_id: opportunityId,
         qualification_definitions: definitions.map((definition) => ({
           code: definition.code,
@@ -378,7 +389,22 @@ async function runAiExecution(executionId: string) {
           valid_until: faq.valid_until,
         })),
       },
-    });
+    };
+    let response = await createPedroResponse(responseInput);
+
+    if (existingCall && hasFutureCallTemporalContradiction(response.structured.reply, existingCall)) {
+      response = await createPedroResponse({
+        ...responseInput,
+        instructions: `${responseInput.instructions}\n\nA resposta anterior foi rejeitada porque contradisse uma call futura ja separada. Gere novamente este turno de forma coerente: preserve o horario exato de active_call, nao diga que ele passou, nao ofereca novos horarios e registre call_request com o mesmo starts_at e o formato escolhido pelo lead.`,
+      });
+      if (hasFutureCallTemporalContradiction(response.structured.reply, existingCall) || !response.structured.call_request) {
+        throw new OpenAiRuntimeError(
+          "active_call_response_conflict",
+          "A resposta do Pedro contradisse uma call futura ja separada e sera gerada novamente.",
+          true,
+        );
+      }
+    }
 
     const responseStructured = {
       ...response.structured,
