@@ -6,14 +6,14 @@
 
 - GitHub: `https://github.com/supinovahub/Gril`.
 - Branch padrão confirmada: `phase/01-foundation`.
-- Último commit de código confirmado neste retrato: `681dda07` (`fix(inbox): incluir id do contato na edição de nome (#28)`).
+- Último commit de código publicado em produção neste retrato: `fcc2060` (`fix(pedro): drive material delivery from structured action`), na branch `fix/project-book-delivery`.
 - Working tree estava limpa antes da criação desta camada de memória.
 
 ## Produção e infraestrutura
 
 - Aplicação: `https://gril-lac.vercel.app`.
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
-- Deployment de produção confirmado como `Ready` em 05/08/2026: `gril-rmlqyfs21-brio5.vercel.app`, associado ao commit `681dda07`.
+- Deployment de produção confirmado como `Ready` em 05/08/2026: `gril-bhqebkit6-brio5.vercel.app` (`dpl_A1SjNHC5vfDqLxC75nyJAPXG9aAg`), com alias `https://gril-lac.vercel.app`, contendo o commit `fcc2060`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
 - Migrations locais e remotas estão alinhadas até `20260805124457_edit_contact_name.sql`.
 
@@ -32,6 +32,7 @@
 - A edição de nome no Inbox envia o UUID canônico do contato e não retorna mais `invalid uuid`.
 - Execuções recuperadas do Pedro republicam o evento necessário para o worker.
 - O nudge após envio de material não reenvia PDFs.
+- A entrega de material usa `project_media_request.kind` da ação estruturada da IA e não depende do vocabulário usado pelo lead.
 - Pedido de disponibilidade usa horários aprovados e não cria handoff indevido quando existem slots válidos.
 - O lead de teste Arthur Rocha foi removido do banco em 04/08/2026 para reiniciar a homologação; não permaneceu fingerprint de supressão para o telefone utilizado.
 
@@ -40,7 +41,7 @@
 - `npm run lint`, `npm test` (19 arquivos e 108 testes) e `npm run build` aprovados em 05/08/2026.
 - Migrações Supabase: local e remoto alinhados até a versão indicada acima; tabela, função, trigger e privilégios da edição de nome confirmados no remoto.
 - `npx supabase db lint --linked --fail-on error`: concluído sem erros; permanecem apenas avisos preexistentes.
-- Vercel: deployment de produção `Ready` associado ao commit indicado acima; alias canônico respondeu `200` e redirecionou para `/login`.
+- Vercel: deployment de produção `Ready` associado ao commit indicado acima; inspeção confirmou o alvo `production` e o alias canônico respondeu `307` para `/login` seguido de `200`.
 
 ## Pendências operacionais
 
