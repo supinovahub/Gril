@@ -1,21 +1,21 @@
 # Estado atual compartilhado do Gril
 
-> Atualizado em 04/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
+> Atualizado em 05/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
 
 ## Repositório
 
 - GitHub: `https://github.com/supinovahub/Gril`.
 - Branch padrão confirmada: `phase/01-foundation`.
-- Último commit de código confirmado neste retrato: `24804c8` (`fix(ai): republish recovered executions`).
+- Último commit de código confirmado neste retrato: `6646516` (`fix(inbox): sync WhatsApp contact names`).
 - Working tree estava limpa antes da criação desta camada de memória.
 
 ## Produção e infraestrutura
 
 - Aplicação: `https://gril-lac.vercel.app`.
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
-- Deployment de produção confirmado como `Ready` em 04/08/2026: `dpl_FNnTMDPjaWgoX5S91ybK6bfSTwPN`.
+- Deployment de produção confirmado como `Ready` em 05/08/2026 no commit de merge `6646516` (`fix(inbox): sync WhatsApp contact names`).
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
-- Migrations locais e remotas estavam alinhadas até `20260804180044_republish_requeued_ai_execution.sql`.
+- Migrations locais e remotas estão alinhadas até `20260805121604_sync_whatsapp_contact_names.sql`.
 
 ## Estado funcional
 
@@ -28,6 +28,7 @@
 ## Últimas correções comprovadas
 
 - O inbox recebe e exibe conversas reais da Uazapi.
+- Nomes de contatos do WhatsApp são promovidos para contatos ainda genéricos; após a migration de 05/08, restaram 4 placeholders sem nome disponível no metadata histórico.
 - Execuções recuperadas do Pedro republicam o evento necessário para o worker.
 - O nudge após envio de material não reenvia PDFs.
 - Pedido de disponibilidade usa horários aprovados e não cria handoff indevido quando existem slots válidos.
@@ -36,7 +37,7 @@
 ## Verificações deste retrato
 
 - `npm test`: 19 arquivos e 108 testes aprovados em 04/08/2026.
-- Migrações Supabase: local e remoto alinhados até a versão indicada acima.
+- Migrações Supabase: local e remoto alinhados até `20260805121604_sync_whatsapp_contact_names.sql`; trigger de sincronização ativo no remoto.
 - Vercel: alias de produção respondendo por deployment `Ready`.
 
 ## Pendências operacionais
