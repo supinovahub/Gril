@@ -167,7 +167,7 @@ Valide:
 - Pedro recomenda somente imóvel compatível e publicado;
 - primeira recomendação envia a foto principal;
 - se o lead pedir mais material, Pedro oferece as fotos restantes ou o book;
-- um pedido natural como “pode me enviar mais informações sobre o imóvel?” deve enfileirar e enviar o book do empreendimento identificado pela ação estruturada;
+- quando Pedro disser que vai enviar o book, a entrega deve usar a ação estruturada e não depender das palavras usadas no último inbound;
 - somente mídia publicada e aprovada é enviada;
 - Pedro recebe/transcreve áudio quando suportado, mas não envia áudio no MVP;
 - preço, entrada, disponibilidade, rentabilidade e crédito nunca são inventados.

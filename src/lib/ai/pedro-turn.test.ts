@@ -3,11 +3,11 @@ import { describe, expect, it } from "vitest";
 import {
   appendProjectRecommendations,
   hasSpecificFinancialProfile,
-  inferProjectMaterialIntent,
   isPedroQualificationComplete,
   mergeQualificationValues,
   PEDRO_QUALIFICATION_CODES,
   pedroTurnSchema,
+  projectMaterialIntentFromRequest,
   selectEligibleProjects,
   type ProjectCandidate,
 } from "./pedro-turn";
@@ -141,15 +141,10 @@ describe("curadoria determinística", () => {
     expect(hasSpecificFinancialProfile(values)).toBe(false);
   });
 
-  it("distingue books, capas e fotos adicionais pela intenção explícita", () => {
-    expect(inferProjectMaterialIntent({ latestLeadMessage: "Quais opções vocês têm disponíveis?" })).toBe("books");
-    expect(inferProjectMaterialIntent({ latestLeadMessage: "Pode mandar umas fotos?" })).toBe("principal_photos");
-    expect(inferProjectMaterialIntent({ latestLeadMessage: "Quero ver mais fotos" })).toBe("more_photos");
-    expect(inferProjectMaterialIntent({ latestLeadMessage: "Até 7 mil de parcela está bom" })).toBe("none");
-    expect(inferProjectMaterialIntent({ latestLeadMessage: "Sim", previousPedroMessage: "Quer ver o book completo?" })).toBe("books");
-    expect(inferProjectMaterialIntent({
-      latestLeadMessage: "Pode me enviar mais informacoes sobre o imovel?",
-      requestedKind: "book",
-    })).toBe("books");
+  it("converte somente a ação estruturada de mídia em intenção de entrega", () => {
+    expect(projectMaterialIntentFromRequest("book")).toBe("books");
+    expect(projectMaterialIntentFromRequest("principal")).toBe("principal_photos");
+    expect(projectMaterialIntentFromRequest("more_photos")).toBe("more_photos");
+    expect(projectMaterialIntentFromRequest(null)).toBe("none");
   });
 });

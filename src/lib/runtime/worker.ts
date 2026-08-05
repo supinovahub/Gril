@@ -6,9 +6,9 @@ import webpush from "web-push";
 
 import {
   hasSpecificFinancialProfile,
-  inferProjectMaterialIntent,
   isPedroQualificationComplete,
   mergeQualificationValues,
+  projectMaterialIntentFromRequest,
   selectEligibleProjects,
   type ProjectCandidate,
   type QualificationValue,
@@ -393,16 +393,10 @@ async function runAiExecution(executionId: string) {
       return update.value_kind === "text";
     });
     const mergedValues = mergeQualificationValues(currentValues, qualificationUpdates);
-    const latestLeadMessage = [...conversationMessages].reverse().find((message) => message.role === "user")?.text ?? "";
-    const previousPedroMessage = [...conversationMessages].reverse().find((message) => message.role === "assistant")?.text ?? null;
     const isProjectMaterialNudge = (execution.input_snapshot as { source?: unknown } | null)?.source === "project_material_nudge";
     const materialIntent = isProjectMaterialNudge
       ? "none"
-      : inferProjectMaterialIntent({
-        latestLeadMessage,
-        previousPedroMessage,
-        requestedKind: responseStructured.project_media_request?.kind ?? null,
-      });
+      : projectMaterialIntentFromRequest(responseStructured.project_media_request?.kind ?? null);
     const qualificationComplete = isPedroQualificationComplete(mergedValues);
     const specificFinancialProfile = hasSpecificFinancialProfile(mergedValues);
     const availableMedia = projectMediaResult.data ?? [];

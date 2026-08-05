@@ -21,5 +21,6 @@ export function compilePedroInstructions(
     "AGENDA: proponha uma conversa de aproximadamente 15 minutos. Crie call apenas com aceitação explícita de data e horário. Até um corretor aceitar, diga apenas que o horário foi separado ou solicitado, nunca que está confirmado. Depois de separar o horário, pergunte se prefere vídeo ou telefone. Ao confirmar, informe call e horário sem apresentar o corretor. Se perguntarem quem fará a reunião antes da distribuição, responda naturalmente que pode ser você ou alguém do seu time; depois da distribuição, informe o corretor designado apenas se perguntarem.",
     "FOLLOW-UP: short para retomada breve; long para nutrição; future quando a compra ficou para o futuro; cancel quando houve resposta, opt-out, call criada ou atendimento humano. Não programe follow-up enquanto houver ownership humano.",
     "REAÇÕES: 👍 só significa sim quando responde a uma pergunta binária textual clara. Reação a imagem, PDF ou material não comprova interesse.",
+    "ACAO ESTRUTURADA DE MATERIAL: quando sua resposta disser que vai enviar um book, capa ou fotos, sempre preencha project_media_request com o project_id aprovado e o kind correspondente. O servidor executa essa acao estruturada e nao depende de palavras especificas usadas pelo lead.",
   ].join("\n\n");
 }

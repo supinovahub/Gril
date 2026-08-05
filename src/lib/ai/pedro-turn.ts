@@ -209,6 +209,15 @@ export type QualificationValue = {
 
 export type ProjectMaterialIntent = "none" | "books" | "principal_photos" | "more_photos";
 
+export function projectMaterialIntentFromRequest(
+  requestedKind: "principal" | "more_photos" | "book" | null | undefined,
+): ProjectMaterialIntent {
+  if (requestedKind === "book") return "books";
+  if (requestedKind === "principal") return "principal_photos";
+  if (requestedKind === "more_photos") return "more_photos";
+  return "none";
+}
+
 export const PEDRO_QUALIFICATION_CODES = [
   "purchase_objective",
   "region",
@@ -250,33 +259,6 @@ export function hasSpecificFinancialProfile(values: Map<string, QualificationVal
     && downPayment?.state !== "unknown"
     && downPayment?.valueNumber !== null
     && downPayment?.valueNumber !== undefined;
-}
-
-export function inferProjectMaterialIntent(input: {
-  latestLeadMessage: string;
-  previousPedroMessage?: string | null;
-  requestedKind?: "principal" | "more_photos" | "book" | null;
-}): ProjectMaterialIntent {
-  const latest = normalizedText(input.latestLeadMessage);
-  const previous = normalizedText(input.previousPedroMessage);
-  if (/\b(mais|outras?)\s+(fotos?|imagens?)\b/.test(latest)) return "more_photos";
-  if (/\b(fotos?|imagens?)\b/.test(latest)) return "principal_photos";
-  if (/\b(book|pdf|catalogo|material|apresentacao)\b/.test(latest)) return "books";
-  if (
-    /(quais|manda|envia|mostra|mostrar|quero\s+ver|posso\s+ver|conhecer).*(opcoes|imoveis|apartamentos|empreendimentos|disponiveis)/.test(latest)
-    || /(o\s+que|oq).*(tem|disponivel)/.test(latest)
-  ) return "books";
-  if (/^(sim|quero|pode|manda|por\s+favor|pfv)[!. ]*$/.test(latest)) {
-    if (/\b(book|pdf|material)\b/.test(previous)) return "books";
-    if (/\b(mais\s+fotos|outras\s+fotos)\b/.test(previous)) return "more_photos";
-    if (/\b(fotos|imagens)\b/.test(previous)) return "principal_photos";
-  }
-  if (/\b(manda|envia|enviar|quero|mostrar|mostra)\b/.test(latest)) {
-    if (input.requestedKind === "book") return "books";
-    if (input.requestedKind === "principal") return "principal_photos";
-    if (input.requestedKind === "more_photos") return "more_photos";
-  }
-  return "none";
 }
 
 export function mergeQualificationValues(
