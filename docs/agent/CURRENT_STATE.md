@@ -13,7 +13,7 @@
 
 - Aplicação: `https://gril-lac.vercel.app`.
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
-- Deployment de produção confirmado como `Ready` em 05/08/2026: `gril-nulflfdwl-brio5.vercel.app`, após o merge `d7dd110`.
+- Deployment de produção confirmado como `Ready` em 05/08/2026: `gril-ebgsafekr-brio5.vercel.app`, alias `https://gril-lac.vercel.app`, publicado a partir da branch `agent/fix-call-slot-preservation-published`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
 - Migrations locais e remotas estão alinhadas até `20260805184410_preserve_confirmed_call_slot.sql`.
 
@@ -44,7 +44,7 @@
 - `npm run lint`, `npm test` (17 arquivos e 96 testes) e `npm run build` aprovados em 05/08/2026 após a proteção determinística do slot confirmado.
 - Migrações Supabase: local e remoto alinhados até a versão indicada acima; colunas de rastreabilidade, função pós-análise, índice idempotente e revogação das funções legadas confirmados no remoto.
 - `npx supabase db lint --linked --fail-on error`: concluído sem erros; permanecem apenas avisos preexistentes.
-- Vercel: o deployment de produção continua no commit anterior (`d7dd110`); a publicação desta correção não foi executada porque o perfil obrigatório `C:\Users\Windows 11\.vercel-profiles\supinovahub-7501` não existe neste host e a verificação retornou `EPERM`.
+- Vercel: o deployment `gril-ebgsafekr-brio5.vercel.app` está `Ready`, o alias público responde HTTP 200 e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
 - Limpeza de contexto: o registro de homologação foi removido do Supabase remoto em 05/08/2026; a verificação zerou contato, oportunidade, conversa, mensagens, IA, calls, jobs, outbox e vínculos derivados. A auditoria relacionada permanece por regra do produto.
 
 ## Pendências operacionais
@@ -52,7 +52,6 @@
 - Continuar a homologação manual dos fluxos descritos no guia, especialmente comportamento do Pedro, agendamento, distribuição, reativação e integrações reais.
 - Homologar manualmente a edição de nome com dono/gestor e confirmar que corretor não recebe a ação nem consegue forjar a operação.
 - Registrar cada novo defeito com esperado, observado, lead/canal, horário e IDs técnicos quando disponíveis.
-- Publicar `db3fc4b` na produção usando o perfil Vercel canônico em um host que tenha esse perfil disponível.
 - Recriar um lead de teste somente quando necessário para nova homologação, sem reutilizar os dados removidos.
 - Atualizar este arquivo após qualquer alteração de deployment, migration, conta/projeto ou conclusão material de homologação.
 
