@@ -97,6 +97,42 @@ describe("pedroTurnSchema", () => {
       conversation_summary: { summary: "Lead pediu material e informou compra futura.", facts: [] },
     })).toMatchObject({ followup_strategy: "future", project_media_request: { kind: "more_photos" } });
   });
+
+  it("exige evidência e confiança contextual para escalar", () => {
+    expect(pedroTurnSchema.parse({
+      outcome: "escalate",
+      reply: null,
+      escalation: {
+        category: "payment",
+        reason: "O lead pediu a chave Pix para efetuar o sinal da reserva.",
+        contextual_evidence: "Após escolher o imóvel, pediu explicitamente a chave Pix para pagar o sinal.",
+        confidence: 0.96,
+      },
+      qualification_updates: [],
+      request_project_match: false,
+      project_media_request: null,
+      call_request: null,
+      followup_strategy: "cancel",
+      conversation_summary: { summary: "Lead pediu instruções para pagar o sinal.", facts: [] },
+    })).toMatchObject({ outcome: "escalate", escalation: { category: "payment", confidence: 0.96 } });
+
+    expect(() => pedroTurnSchema.parse({
+      outcome: "escalate",
+      reply: null,
+      escalation: {
+        category: "payment",
+        reason: "A palavra pagar apareceu.",
+        contextual_evidence: "pagar",
+        confidence: 0.5,
+      },
+      qualification_updates: [],
+      request_project_match: false,
+      project_media_request: null,
+      call_request: null,
+      followup_strategy: "cancel",
+      conversation_summary: { summary: "Lead informou orçamento.", facts: [] },
+    })).toThrow();
+  });
 });
 
 describe("curadoria determinística", () => {

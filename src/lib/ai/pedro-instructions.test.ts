@@ -12,5 +12,9 @@ describe("compilePedroInstructions", () => {
     expect(instructions).toContain("aproximadamente 15 minutos");
     expect(instructions).toContain("nunca que está confirmado");
     expect(instructions).toContain("Não repita campos já preenchidos");
+    expect(instructions).toContain("Nunca classifique por palavra isolada");
+    expect(instructions).toContain("As regras rígidas limitam o que você pode executar");
+    expect(instructions).toContain("Você pode tratar orçamento, entrada, parcelas, financiamento");
+    expect(instructions).toContain("book, planta e material imobiliário não são sensíveis");
   });
 });

@@ -7,7 +7,7 @@
 - Uazapi compara o token da instância em tempo constante, ignora grupos/eco e remove credenciais do payload persistido;
 - inbox/outbox e PGMQ continuam at-least-once; os consumers são idempotentes e bounded;
 - Pedro usa OpenAI Responses API com Structured Outputs estritos, chave BYOK resolvida server-side e contexto versionado;
-- opt-out, privacidade e documento sensível são interceptados deterministicamente antes do modelo;
+- opt-out, privacidade e documento sensível eram interceptados antes do modelo nesta fase; essa ordem foi substituída por `contextual-controls-after-ai.md`, mantendo os efeitos determinísticos somente depois da análise contextual;
 - cada envio revalida conexão, ownership, modo, opt-out e supressão; timeout ambíguo não é reenviado cegamente;
 - campanhas, ofertas/lembretes de call, notificações e retenção usam os jobs duráveis existentes;
 - Supabase Cron chama a rota protegida por `GRIL_WORKER_SECRET` depois que a URL final for conhecida.
