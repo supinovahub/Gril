@@ -10,8 +10,9 @@ import {
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { canManageTeam, requireActiveViewer } from "@/lib/auth/session";
+import { canManageCrm, canManageTeam, requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { updateContactNameAction } from "../../contact-actions";
 import {
   addContactPhoneAction,
   archiveContactAction,
@@ -51,6 +52,7 @@ export default async function LeadDetailPage({
   const supabase = await createClient();
 
   const canManage = canManageTeam(viewer);
+  const canEditContact = canManageCrm(viewer);
   const canManageArchive = viewer.membership?.role === "owner" ||
     (viewer.membership?.role === "manager" && viewer.permissions.includes("contacts.manage"));
   const [opportunityResult, stagesResult, reasonsResult, historyResult, actionsResult, sourcesResult, salesResult, definitionsResult, qualificationResult, matchesResult, participantsResult, contactsResult, scoresResult, checklistsResult] = await Promise.all([
@@ -103,7 +105,7 @@ export default async function LeadDetailPage({
           <span className={styles.largeAvatar}>{contact?.name?.slice(0, 1).toUpperCase()}</span>
           <div>
             <p className={styles.eyebrow}>Oportunidade · v{opportunity.version}</p>
-            <h1>{contact?.name}</h1>
+            <div className={styles.contactNameRow}><h1>{contact?.name}</h1>{canEditContact && contact ? <details className={styles.contactNameEditor}><summary aria-label="Editar nome do contato" title="Editar nome do contato"><UserRound size={14} /></summary><form action={updateContactNameAction} className={styles.contactNameForm}><input name="contactId" type="hidden" value={contact.id} /><input name="context" type="hidden" value="lead" /><input name="contextId" type="hidden" value={opportunity.id} /><label><span>Nome do contato</span><input defaultValue={contact.name} maxLength={160} minLength={2} name="name" required /></label><button type="submit">Salvar nome</button></form></details> : null}</div>
             <p>{opportunity.title} · {opportunity.source}</p>
           </div>
         </div>

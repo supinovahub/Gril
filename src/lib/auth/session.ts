@@ -163,6 +163,12 @@ export function canManageTeam(viewer: Viewer) {
   );
 }
 
+export function canManageCrm(viewer: Viewer) {
+  return viewer.membership?.role === "owner" ||
+    viewer.permissions.includes("contacts.manage") ||
+    viewer.permissions.includes("pipeline.manage");
+}
+
 export const roleLabels: Record<string, string> = {
   owner: "Dono",
   manager: "Gestor",

@@ -34,3 +34,10 @@
 - merge manual reversível de contatos;
 - drag-and-drop visual do Kanban. A mudança por formulário já usa o mesmo contrato transacional definitivo.
 
+## Decisão posterior — correção manual do nome
+
+- Dono ou usuário com permissão de gestão de CRM pode corrigir o nome do contato no detalhe do Inbox ou do lead.
+- A alteração usa comando auditável validado no banco e mantém o contato canônico por telefone.
+- O nome informado manualmente prevalece sobre nomes posteriores do provedor; a sincronização automática só promove placeholders.
+- Corretores não recebem essa ação e o servidor rejeita tentativas sem permissão.
+

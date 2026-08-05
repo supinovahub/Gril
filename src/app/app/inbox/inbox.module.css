@@ -25,6 +25,16 @@
 .empty span { max-width: 440px; font-size: 10px; line-height: 1.5; }
 .backLink { display: inline-flex; align-items: center; gap: 6px; margin-bottom: 18px; color: var(--ink-muted); font-size: 11px; font-weight: 700; }
 .chatHeader { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin-bottom: 18px; }
+.chatHeaderIdentity { display: flex; align-items: center; gap: 12px; }
+.contactNameRow { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.contactNameEditor { position: relative; }
+.contactNameEditor summary { display: inline-flex; width: 28px; height: 28px; align-items: center; justify-content: center; border: 1px solid var(--border); border-radius: 8px; background: var(--control-bg); color: var(--ink-muted); cursor: pointer; list-style: none; }
+.contactNameEditor summary::-webkit-details-marker { display: none; }
+.contactNameForm { position: absolute; z-index: 5; top: calc(100% + 8px); left: 0; display: grid; width: 250px; gap: 9px; padding: 13px; border: 1px solid var(--border); border-radius: 10px; background: var(--surface); box-shadow: var(--shadow); }
+.contactNameForm label { display: grid; gap: 5px; }
+.contactNameForm label span { color: var(--ink-muted); font-size: 9px; font-weight: 720; }
+.contactNameForm input { width: 100%; min-height: 38px; padding: 8px 9px; border: 1px solid var(--border); border-radius: 8px; background: var(--control-bg); font-size: 11px; }
+.contactNameForm button { min-height: 36px; border: 1px solid var(--ink); border-radius: 8px; background: var(--ink); color: white; font-size: 10px; font-weight: 720; cursor: pointer; }
 .chatHeader > div { display: flex; align-items: center; gap: 12px; }
 .chatHeader h1 { margin: 0; font-size: 24px; letter-spacing: -.03em; }
 .chatHeader p { margin: 4px 0 0; color: var(--ink-muted); font-size: 10px; }

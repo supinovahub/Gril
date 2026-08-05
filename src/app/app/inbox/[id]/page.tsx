@@ -1,10 +1,11 @@
-import { ArrowLeft, Bot, CircleAlert, MessageCircle, Pause, Send, UserRoundCheck, X } from "lucide-react";
+import { ArrowLeft, Bot, CircleAlert, MessageCircle, Pause, Pencil, Send, UserRoundCheck, X } from "lucide-react";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 
-import { requireActiveViewer } from "@/lib/auth/session";
+import { canManageCrm, requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { conversationAction, reviewAiSuggestionAction, sendHumanMessageAction } from "../actions";
+import { updateContactNameAction } from "../../contact-actions";
 import styles from "../inbox.module.css";
 import { ConversationReadMarker } from "./conversation-read-marker";
 import { startBrokerConsultationAction } from "../../chat-interno/actions";
@@ -61,6 +62,7 @@ export default async function ConversationPage({
   const stage = Array.isArray(opportunity?.pipeline_stages) ? opportunity.pipeline_stages[0] : opportunity?.pipeline_stages;
   const connection = Array.isArray(conversation.whatsapp_connections) ? conversation.whatsapp_connections[0] : conversation.whatsapp_connections;
   const phones = (contact?.contact_phones ?? []) as Array<{ e164: string; is_primary: boolean; status: string }>;
+  const canEditContact = canManageCrm(viewer);
   const successText = feedback.sucesso === "pedro-reprocessado"
     ? "Pedro recebeu a última mensagem novamente. O modo configurado definirá se ele cria uma sugestão ou responde automaticamente."
     : feedback.sucesso === "sugestao-discard"
@@ -69,14 +71,16 @@ export default async function ConversationPage({
         ? "Ensinamento registrado. Nada foi enviado ao lead e Pedro está gerando uma nova sugestão."
         : feedback.sucesso === "sugestao-send"
           ? "Sugestão aprovada e enfileirada para envio."
-          : "Mensagem registrada e enfileirada para envio.";
+          : feedback.sucesso === "nome-atualizado"
+            ? "Nome do contato atualizado."
+            : "Mensagem registrada e enfileirada para envio.";
 
   return (
     <div className={styles.page}>
       <ConversationReadMarker conversationId={conversation.id} />
       <Link className={styles.backLink} href="/app/inbox"><ArrowLeft size={15} /> Voltar para Inbox</Link>
       <header className={styles.chatHeader}>
-        <div><span className={styles.avatar}>{contact?.name?.slice(0, 1).toUpperCase()}</span><span><h1>{contact?.name}</h1><p>{phones.find((phone) => phone.is_primary && phone.status === "active")?.e164 ?? "Telefone protegido"} · {stage?.name}</p></span></div>
+        <div className={styles.chatHeaderIdentity}><span className={styles.avatar}>{contact?.name?.slice(0, 1).toUpperCase()}</span><div><div className={styles.contactNameRow}><h1>{contact?.name}</h1>{canEditContact ? <details className={styles.contactNameEditor}><summary aria-label="Editar nome do contato" title="Editar nome do contato"><Pencil size={14} /></summary><form action={updateContactNameAction} className={styles.contactNameForm}><input name="contactId" type="hidden" value={contact?.id ?? ""} /><input name="context" type="hidden" value="inbox" /><input name="contextId" type="hidden" value={conversation.id} /><label><span>Nome do contato</span><input defaultValue={contact?.name ?? ""} maxLength={160} minLength={2} name="name" required /></label><button type="submit">Salvar nome</button></form></details> : null}</div><p>{phones.find((phone) => phone.is_primary && phone.status === "active")?.e164 ?? "Telefone protegido"} · {stage?.name}</p></div></div>
         <span className={styles.contextBadge}>{connection?.name} · {connection?.provider}</span>
       </header>
       {feedback.erro ? <p className={styles.errorBanner}>{feedback.erro}</p> : null}
