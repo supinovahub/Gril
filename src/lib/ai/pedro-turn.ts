@@ -57,12 +57,13 @@ export const pedroTurnSchema = z
       .nullable(),
     qualification_updates: z.array(qualificationUpdateSchema).max(8),
     request_project_match: z.boolean(),
-    project_media_request: z
-      .object({
+    recommended_project_ids: z.array(z.string().uuid()),
+    project_media_requests: z.array(
+      z.object({
         project_id: z.string().uuid(),
         kind: z.enum(["principal", "more_photos", "book"]),
-      })
-      .nullable(),
+      }),
+    ),
     call_request: z
       .object({
         starts_at: z.string().datetime({ offset: true }),
@@ -81,6 +82,32 @@ export const pedroTurnSchema = z
     }
     if (turn.outcome === "escalate" && !turn.escalation) {
       context.addIssue({ code: "custom", path: ["escalation"], message: "A escalada é obrigatória." });
+    }
+    if (turn.request_project_match !== (turn.recommended_project_ids.length > 0)) {
+      context.addIssue({
+        code: "custom",
+        path: ["recommended_project_ids"],
+        message: "A decisão de match e a lista exata de empreendimentos devem ser coerentes.",
+      });
+    }
+    if (new Set(turn.recommended_project_ids).size !== turn.recommended_project_ids.length) {
+      context.addIssue({ code: "custom", path: ["recommended_project_ids"], message: "Não repita empreendimentos." });
+    }
+    const mediaKeys = turn.project_media_requests.map((item) => `${item.project_id}:${item.kind}`);
+    if (new Set(mediaKeys).size !== mediaKeys.length) {
+      context.addIssue({ code: "custom", path: ["project_media_requests"], message: "Não repita a mesma ação de mídia." });
+    }
+    if (turn.outcome === "escalate" && (
+      turn.qualification_updates.length > 0
+      || turn.request_project_match
+      || turn.project_media_requests.length > 0
+      || turn.call_request !== null
+    )) {
+      context.addIssue({
+        code: "custom",
+        path: ["outcome"],
+        message: "Uma escalada não pode carregar outras ações comerciais.",
+      });
     }
   });
 
@@ -162,10 +189,15 @@ export const pedroTurnTool = {
         },
       },
       request_project_match: { type: "boolean" },
-      project_media_request: {
-        anyOf: [
-          { type: "null" },
-          {
+      recommended_project_ids: {
+        type: "array",
+        items: { type: "string", description: "UUID exato de um empreendimento ativo presente no contexto aprovado." },
+        description: "Lista exata, escolhida pelo Pedro, dos empreendimentos envolvidos nesta resposta. Vazia quando não houver match.",
+      },
+      project_media_requests: {
+        type: "array",
+        description: "Ações exatas de mídia escolhidas pelo Pedro. O executor não selecionará, ampliará ou substituirá projetos.",
+        items: {
             type: "object",
             additionalProperties: false,
             properties: {
@@ -173,8 +205,7 @@ export const pedroTurnTool = {
               kind: { type: "string", enum: ["principal", "more_photos", "book"] },
             },
             required: ["project_id", "kind"],
-          },
-        ],
+        },
       },
       call_request: {
         anyOf: [
@@ -207,7 +238,8 @@ export const pedroTurnTool = {
       "escalation",
       "qualification_updates",
       "request_project_match",
-      "project_media_request",
+      "recommended_project_ids",
+      "project_media_requests",
       "call_request",
       "followup_strategy",
       "conversation_summary",
@@ -222,8 +254,6 @@ export type QualificationValue = {
   valueBoolean: boolean | null;
   state?: "valid" | "refused" | "unknown";
 };
-
-export type ProjectMaterialIntent = "none" | "books" | "principal_photos" | "more_photos";
 
 export const PEDRO_QUALIFICATION_CODES = [
   "purchase_objective",
@@ -247,10 +277,6 @@ export type ProjectCandidate = {
   commercialPriority: number;
 };
 
-function normalizedText(value: string | null | undefined) {
-  return value?.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().trim() ?? "";
-}
-
 export function isPedroQualificationComplete(values: Map<string, QualificationValue>) {
   return PEDRO_QUALIFICATION_CODES.every((code) => values.has(code));
 }
@@ -266,33 +292,6 @@ export function hasSpecificFinancialProfile(values: Map<string, QualificationVal
     && downPayment?.state !== "unknown"
     && downPayment?.valueNumber !== null
     && downPayment?.valueNumber !== undefined;
-}
-
-export function inferProjectMaterialIntent(input: {
-  latestLeadMessage: string;
-  previousPedroMessage?: string | null;
-  requestedKind?: "principal" | "more_photos" | "book" | null;
-}): ProjectMaterialIntent {
-  const latest = normalizedText(input.latestLeadMessage);
-  const previous = normalizedText(input.previousPedroMessage);
-  if (/\b(mais|outras?)\s+(fotos?|imagens?)\b/.test(latest)) return "more_photos";
-  if (/\b(fotos?|imagens?)\b/.test(latest)) return "principal_photos";
-  if (/\b(book|pdf|catalogo|material|apresentacao)\b/.test(latest)) return "books";
-  if (
-    /(quais|manda|envia|mostra|mostrar|quero\s+ver|posso\s+ver|conhecer).*(opcoes|imoveis|apartamentos|empreendimentos|disponiveis)/.test(latest)
-    || /(o\s+que|oq).*(tem|disponivel)/.test(latest)
-  ) return "books";
-  if (/^(sim|quero|pode|manda|por\s+favor|pfv)[!. ]*$/.test(latest)) {
-    if (/\b(book|pdf|material)\b/.test(previous)) return "books";
-    if (/\b(mais\s+fotos|outras\s+fotos)\b/.test(previous)) return "more_photos";
-    if (/\b(fotos|imagens)\b/.test(previous)) return "principal_photos";
-  }
-  if (/\b(manda|envia|quero|mostrar|mostra)\b/.test(latest)) {
-    if (input.requestedKind === "book") return "books";
-    if (input.requestedKind === "principal") return "principal_photos";
-    if (input.requestedKind === "more_photos") return "more_photos";
-  }
-  return "none";
 }
 
 export function mergeQualificationValues(
@@ -312,43 +311,57 @@ export function mergeQualificationValues(
   return merged;
 }
 
-export function selectEligibleProjects(
-  projects: ProjectCandidate[],
-  values: Map<string, QualificationValue>,
-  limit = 2,
-) {
-  const budget = values.get("total_price")?.valueNumber ?? null;
-  const downPayment = values.get("down_payment")?.valueNumber ?? null;
-  if (budget === null || downPayment === null) return [];
-  const region = normalizedText(values.get("region")?.valueText);
-  const delivery = normalizedText(values.get("delivery_preference")?.valueText);
+export type PedroDecisionValidationInput = {
+  turn: PedroTurn;
+  qualificationDefinitions: Array<{ code: string; answerType: string }>;
+  activeProjectIds: string[];
+  approvedMedia: Array<{ project_id: string; media_type: string }>;
+  availableCallSlots: Array<{ starts_at: string }>;
+};
 
-  return projects
-    .filter(
-      (project) =>
-        project.minPrice !== null &&
-        project.minDownPayment !== null &&
-        project.minPrice <= budget &&
-        project.minDownPayment <= downPayment,
-    )
-    .sort((left, right) => {
-      const leftRegion = normalizedText(`${left.region} ${left.neighborhood ?? ""}`).includes(region) ? 0 : 1;
-      const rightRegion = normalizedText(`${right.region} ${right.neighborhood ?? ""}`).includes(region) ? 0 : 1;
-      if (region && leftRegion !== rightRegion) return leftRegion - rightRegion;
-      const leftDelivery = delivery && normalizedText(left.deliveryType) === delivery ? 0 : 1;
-      const rightDelivery = delivery && normalizedText(right.deliveryType) === delivery ? 0 : 1;
-      if (leftDelivery !== rightDelivery) return leftDelivery - rightDelivery;
-      if (left.commercialPriority !== right.commercialPriority) return right.commercialPriority - left.commercialPriority;
-      return (left.minPrice ?? 0) - (right.minPrice ?? 0);
-    })
-    .slice(0, limit);
-}
+export function validatePedroDecision(input: PedroDecisionValidationInput) {
+  const errors: string[] = [];
+  const definitions = new Map(input.qualificationDefinitions.map((item) => [item.code, item.answerType]));
+  const activeProjects = new Set(input.activeProjectIds);
 
-export function appendProjectRecommendations(reply: string, projects: ProjectCandidate[]) {
-  if (projects.length === 0) return reply;
-  const options = projects.map((project) => {
-    const location = [project.neighborhood, project.region].filter(Boolean).join(", ");
-    return `${project.name}${location ? ` — ${location}` : ""}.`;
-  });
-  return `${reply}\n\nEncontrei estas opções compatíveis com os valores informados:\n${options.map((item) => `• ${item}`).join("\n")}`.slice(0, 4096);
+  for (const update of input.turn.qualification_updates) {
+    const answerType = definitions.get(update.code);
+    if (!answerType) {
+      errors.push(`qualification_definition_not_found:${update.code}`);
+      continue;
+    }
+    if (["refused", "unknown"].includes(update.value_kind)) continue;
+    if (["money", "number"].includes(answerType) && update.value_kind !== "number") {
+      errors.push(`qualification_type_mismatch:${update.code}`);
+    } else if (answerType === "boolean" && update.value_kind !== "boolean") {
+      errors.push(`qualification_type_mismatch:${update.code}`);
+    } else if (!["money", "number", "boolean"].includes(answerType) && update.value_kind !== "text") {
+      errors.push(`qualification_type_mismatch:${update.code}`);
+    }
+  }
+
+  for (const projectId of input.turn.recommended_project_ids) {
+    if (!activeProjects.has(projectId)) errors.push(`project_not_available:${projectId}`);
+  }
+
+  for (const request of input.turn.project_media_requests) {
+    if (!activeProjects.has(request.project_id)) {
+      errors.push(`project_not_available:${request.project_id}`);
+      continue;
+    }
+    const requiredType = request.kind === "book" ? "pdf" : request.kind === "principal" ? "cover" : "image";
+    if (!input.approvedMedia.some((item) => item.project_id === request.project_id && item.media_type === requiredType)) {
+      errors.push(`project_media_not_available:${request.project_id}:${request.kind}`);
+    }
+  }
+
+  if (input.turn.call_request) {
+    const requestedAt = new Date(input.turn.call_request.starts_at).valueOf();
+    const exactSlotExists = input.availableCallSlots.some(
+      (slot) => new Date(slot.starts_at).valueOf() === requestedAt,
+    );
+    if (!exactSlotExists) errors.push(`call_slot_not_available:${input.turn.call_request.starts_at}`);
+  }
+
+  return { valid: errors.length === 0, errors };
 }

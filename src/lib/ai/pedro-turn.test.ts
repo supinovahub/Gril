@@ -1,52 +1,13 @@
 import { describe, expect, it } from "vitest";
 
 import {
-  appendProjectRecommendations,
   hasSpecificFinancialProfile,
-  inferProjectMaterialIntent,
   isPedroQualificationComplete,
   mergeQualificationValues,
   PEDRO_QUALIFICATION_CODES,
   pedroTurnSchema,
-  selectEligibleProjects,
-  type ProjectCandidate,
+  validatePedroDecision,
 } from "./pedro-turn";
-
-const projects: ProjectCandidate[] = [
-  {
-    id: "1",
-    name: "Centro Alto",
-    region: "São Paulo",
-    neighborhood: "Pinheiros",
-    summary: "Empreendimento pronto e aprovado.",
-    deliveryType: "ready",
-    minPrice: 700_000,
-    minDownPayment: 140_000,
-    commercialPriority: 60,
-  },
-  {
-    id: "2",
-    name: "Praia Sul",
-    region: "Santos",
-    neighborhood: "Gonzaga",
-    summary: "Empreendimento em lançamento.",
-    deliveryType: "launch",
-    minPrice: 650_000,
-    minDownPayment: 120_000,
-    commercialPriority: 90,
-  },
-  {
-    id: "3",
-    name: "Fora do orçamento",
-    region: "São Paulo",
-    neighborhood: null,
-    summary: "Não deve ser oferecido.",
-    deliveryType: "ready",
-    minPrice: 1_500_000,
-    minDownPayment: 300_000,
-    commercialPriority: 100,
-  },
-];
 
 describe("pedroTurnSchema", () => {
   it("rejeita reply sem mensagem", () => {
@@ -56,7 +17,8 @@ describe("pedroTurnSchema", () => {
       escalation: null,
       qualification_updates: [],
       request_project_match: false,
-      project_media_request: null,
+      recommended_project_ids: [],
+      project_media_requests: [],
       call_request: null,
       followup_strategy: "none",
       conversation_summary: { summary: "Lead pediu informações iniciais.", facts: [] },
@@ -77,7 +39,8 @@ describe("pedroTurnSchema", () => {
         confidence: 0.9,
       }],
       request_project_match: false,
-      project_media_request: null,
+      recommended_project_ids: [],
+      project_media_requests: [],
       call_request: null,
       followup_strategy: "short",
       conversation_summary: { summary: "Lead confirmou orçamento.", facts: ["Orçamento confirmado"] },
@@ -90,12 +53,13 @@ describe("pedroTurnSchema", () => {
       reply: "Posso enviar mais fotos ou o book completo. O que você prefere?",
       escalation: null,
       qualification_updates: [],
-      request_project_match: false,
-      project_media_request: { project_id: "4c28007d-81bd-4c42-8b3e-7cc6e565b2e8", kind: "more_photos" },
+      request_project_match: true,
+      recommended_project_ids: ["4c28007d-81bd-4c42-8b3e-7cc6e565b2e8"],
+      project_media_requests: [{ project_id: "4c28007d-81bd-4c42-8b3e-7cc6e565b2e8", kind: "more_photos" }],
       call_request: null,
       followup_strategy: "future",
       conversation_summary: { summary: "Lead pediu material e informou compra futura.", facts: [] },
-    })).toMatchObject({ followup_strategy: "future", project_media_request: { kind: "more_photos" } });
+    })).toMatchObject({ followup_strategy: "future", project_media_requests: [{ kind: "more_photos" }] });
   });
 
   it("exige evidência e confiança contextual para escalar", () => {
@@ -110,7 +74,8 @@ describe("pedroTurnSchema", () => {
       },
       qualification_updates: [],
       request_project_match: false,
-      project_media_request: null,
+      recommended_project_ids: [],
+      project_media_requests: [],
       call_request: null,
       followup_strategy: "cancel",
       conversation_summary: { summary: "Lead pediu instruções para pagar o sinal.", facts: [] },
@@ -127,7 +92,8 @@ describe("pedroTurnSchema", () => {
       },
       qualification_updates: [],
       request_project_match: false,
-      project_media_request: null,
+      recommended_project_ids: [],
+      project_media_requests: [],
       call_request: null,
       followup_strategy: "cancel",
       conversation_summary: { summary: "Lead informou orçamento.", facts: [] },
@@ -135,29 +101,7 @@ describe("pedroTurnSchema", () => {
   });
 });
 
-describe("curadoria determinística", () => {
-  it("não recomenda sem preço total e entrada", () => {
-    expect(selectEligibleProjects(projects, new Map())).toEqual([]);
-  });
-
-  it("aplica limites financeiros e usa preferências apenas para ordenar", () => {
-    const values = mergeQualificationValues([], [
-      { code: "total_price", value_kind: "number", value_text: null, value_number: 800_000, value_boolean: null, confidence: 1 },
-      { code: "down_payment", value_kind: "number", value_text: null, value_number: 150_000, value_boolean: null, confidence: 1 },
-      { code: "region", value_kind: "text", value_text: "Pinheiros", value_number: null, value_boolean: null, confidence: 1 },
-      { code: "delivery_preference", value_kind: "text", value_text: "ready", value_number: null, value_boolean: null, confidence: 1 },
-    ]);
-    expect(selectEligibleProjects(projects, values).map((project) => project.id)).toEqual(["1", "2"]);
-  });
-
-  it("acrescenta apenas fatos estruturados ao texto", () => {
-    const reply = appendProjectRecommendations("Separei duas opções.", projects.slice(0, 1));
-    expect(reply).toContain("Centro Alto");
-    expect(reply).toContain("Pinheiros, São Paulo");
-    expect(reply).not.toContain("700.000");
-    expect(reply).not.toContain("Empreendimento pronto e aprovado");
-  });
-
+describe("plano explícito do Pedro", () => {
   it("só conclui a qualificação depois dos sete tópicos comerciais", () => {
     const incomplete = new Map(PEDRO_QUALIFICATION_CODES.slice(0, -1).map((code) => [code, {
       code, valueText: "respondido", valueNumber: null, valueBoolean: null, state: "valid" as const,
@@ -177,11 +121,50 @@ describe("curadoria determinística", () => {
     expect(hasSpecificFinancialProfile(values)).toBe(false);
   });
 
-  it("distingue books, capas e fotos adicionais pela intenção explícita", () => {
-    expect(inferProjectMaterialIntent({ latestLeadMessage: "Quais opções vocês têm disponíveis?" })).toBe("books");
-    expect(inferProjectMaterialIntent({ latestLeadMessage: "Pode mandar umas fotos?" })).toBe("principal_photos");
-    expect(inferProjectMaterialIntent({ latestLeadMessage: "Quero ver mais fotos" })).toBe("more_photos");
-    expect(inferProjectMaterialIntent({ latestLeadMessage: "Até 7 mil de parcela está bom" })).toBe("none");
-    expect(inferProjectMaterialIntent({ latestLeadMessage: "Sim", previousPedroMessage: "Quer ver o book completo?" })).toBe("books");
+  it("valida o projeto escolhido sem ampliar a decisão para outros projetos", () => {
+    const vogel = "4c28007d-81bd-4c42-8b3e-7cc6e565b2e8";
+    const turn = pedroTurnSchema.parse({
+      outcome: "reply",
+      reply: "Vou te mandar o book do Vogel.",
+      escalation: null,
+      qualification_updates: [],
+      request_project_match: true,
+      recommended_project_ids: [vogel],
+      project_media_requests: [{ project_id: vogel, kind: "book" }],
+      call_request: null,
+      followup_strategy: "none",
+      conversation_summary: { summary: "Lead pediu o book do Vogel.", facts: [] },
+    });
+    expect(validatePedroDecision({
+      turn,
+      qualificationDefinitions: [],
+      activeProjectIds: [vogel, "a5681220-401d-422b-b731-19d5eb41efba"],
+      approvedMedia: [{ project_id: vogel, media_type: "pdf" }],
+      availableCallSlots: [],
+    })).toEqual({ valid: true, errors: [] });
+    expect(turn.project_media_requests).toEqual([{ project_id: vogel, kind: "book" }]);
+  });
+
+  it("bloqueia ação indisponível sem selecionar um substituto", () => {
+    const unavailable = "4c28007d-81bd-4c42-8b3e-7cc6e565b2e8";
+    const turn = pedroTurnSchema.parse({
+      outcome: "reply",
+      reply: "Vou te mandar o book.",
+      escalation: null,
+      qualification_updates: [],
+      request_project_match: false,
+      recommended_project_ids: [],
+      project_media_requests: [{ project_id: unavailable, kind: "book" }],
+      call_request: null,
+      followup_strategy: "none",
+      conversation_summary: { summary: "Lead pediu material.", facts: [] },
+    });
+    expect(validatePedroDecision({
+      turn,
+      qualificationDefinitions: [],
+      activeProjectIds: [unavailable],
+      approvedMedia: [],
+      availableCallSlots: [],
+    })).toEqual({ valid: false, errors: [`project_media_not_available:${unavailable}:book`] });
   });
 });

@@ -6,19 +6,12 @@ import webpush from "web-push";
 
 import {
   hasSpecificFinancialProfile,
-  inferProjectMaterialIntent,
   isPedroQualificationComplete,
   mergeQualificationValues,
-  selectEligibleProjects,
+  validatePedroDecision,
   type ProjectCandidate,
   type QualificationValue,
 } from "@/lib/ai/pedro-turn";
-import {
-  buildSchedulingAvailabilityReply,
-  guardUncommittedCallClaim,
-  isSchedulingAvailabilityRequest,
-  validCallRequest,
-} from "@/lib/ai/call-request";
 import { compilePedroInstructions } from "@/lib/ai/pedro-instructions";
 import { evaluateRegressionCase } from "@/lib/ai/regression";
 import {
@@ -337,7 +330,8 @@ async function runAiExecution(executionId: string) {
           explicit_lead_interest_required: true,
           generic_request: "books",
           photo_request: "principal_photos",
-          maximum_projects: 3,
+          pedro_instruction_maximum_projects: 3,
+          executor_contract: "execute_exact_project_media_requests_only",
           book_followup_minutes: "4-6",
         },
         previous_conversation_summary: priorSummary,
@@ -371,74 +365,48 @@ async function runAiExecution(executionId: string) {
       },
     });
 
-    const schedulingAvailabilityRequested = isSchedulingAvailabilityRequest(conversationMessages);
-    const recoverSchedulingEscalation = schedulingAvailabilityRequested
-      && response.structured.outcome === "escalate"
-      && response.structured.escalation?.category === "missing_approved_fact";
-    const responseStructured = recoverSchedulingEscalation
-      ? {
-        ...response.structured,
-        outcome: "reply" as const,
-        reply: buildSchedulingAvailabilityReply(availableCallSlots, operationTimezone),
-        escalation: null,
-        call_request: null,
-        followup_strategy: "short" as const,
-      }
-      : response.structured;
-    const responseOutputText = recoverSchedulingEscalation
-      ? responseStructured.reply!
-      : response.outputText;
-
-    const allowedDefinitions = new Map(definitions.map((definition) => [definition.code, definition.answer_type]));
-    const contextualEscalation = responseStructured.outcome === "escalate";
-    const qualificationUpdates = (contextualEscalation ? [] : responseStructured.qualification_updates).filter((update) => {
-      const answerType = allowedDefinitions.get(update.code);
-      if (!answerType) return false;
-      if (["refused", "unknown"].includes(update.value_kind)) return true;
-      if (["money", "number"].includes(answerType)) return update.value_kind === "number";
-      if (answerType === "boolean") return update.value_kind === "boolean";
-      return update.value_kind === "text";
+    const responseStructured = response.structured;
+    const validation = validatePedroDecision({
+      turn: responseStructured,
+      qualificationDefinitions: definitions.map((definition) => ({
+        code: definition.code,
+        answerType: definition.answer_type,
+      })),
+      activeProjectIds: projects.map((project) => project.id),
+      approvedMedia: projectMediaResult.data ?? [],
+      availableCallSlots,
     });
+    const decisionHash = createHash("sha256").update(JSON.stringify(responseStructured)).digest("hex");
+    const { error: validationAuditError } = await admin
+      .from("ai_executions")
+      .update({
+        model_output_structured: responseStructured as Json,
+        validated_action_plan: validation.valid ? responseStructured as Json : null,
+        decision_validation_status: validation.valid ? "accepted" : "rejected",
+        decision_validation_errors: validation.errors as Json,
+        decision_hash: decisionHash,
+      })
+      .eq("id", executionId)
+      .eq("status", "running");
+    if (validationAuditError) throw validationAuditError;
+    if (!validation.valid) {
+      throw new OpenAiRuntimeError(
+        "pedro_decision_validation_failed",
+        "A decisão do Pedro não pôde ser executada exatamente como escolhida e será gerada novamente.",
+        true,
+      );
+    }
+
+    const qualificationUpdates = responseStructured.qualification_updates;
     const mergedValues = mergeQualificationValues(currentValues, qualificationUpdates);
-    const latestLeadMessage = [...conversationMessages].reverse().find((message) => message.role === "user")?.text ?? "";
-    const previousPedroMessage = [...conversationMessages].reverse().find((message) => message.role === "assistant")?.text ?? null;
-    const isProjectMaterialNudge = (execution.input_snapshot as { source?: unknown } | null)?.source === "project_material_nudge";
-    const materialIntent = contextualEscalation || isProjectMaterialNudge
-      ? "none"
-      : inferProjectMaterialIntent({
-        latestLeadMessage,
-        previousPedroMessage,
-        requestedKind: responseStructured.project_media_request?.kind ?? null,
-      });
     const qualificationComplete = isPedroQualificationComplete(mergedValues);
     const specificFinancialProfile = hasSpecificFinancialProfile(mergedValues);
-    const availableMedia = projectMediaResult.data ?? [];
-    const projectsWithRequestedMaterial = projects.filter((project) => {
-      const media = availableMedia.filter((item) => item.project_id === project.id);
-      if (materialIntent === "books") return media.some((item) => item.media_type === "pdf");
-      if (materialIntent === "principal_photos") return media.some((item) => item.media_type === "cover");
-      if (materialIntent === "more_photos") return media.some((item) => item.media_type === "image");
-      return false;
-    });
-    const canSendProjectMaterial = qualificationComplete && specificFinancialProfile && materialIntent !== "none";
-    const recommendedProjects = canSendProjectMaterial
-      ? selectEligibleProjects(projectsWithRequestedMaterial, mergedValues, 3)
-      : [];
-    const callRequest = contextualEscalation ? null : validCallRequest(responseStructured.call_request, conversationMessages);
-    const outputText = guardUncommittedCallClaim(responseOutputText, callRequest);
     const structured = {
       ...responseStructured,
-      qualification_updates: qualificationUpdates,
       qualification_complete: qualificationComplete,
       qualification_specific: specificFinancialProfile,
-      call_request: callRequest,
-      followup_strategy: contextualEscalation ? "cancel" : responseStructured.followup_strategy,
       action: responseStructured.outcome,
       escalation_reason: responseStructured.escalation?.reason ?? null,
-      request_project_match: canSendProjectMaterial && recommendedProjects.length > 0,
-      project_material_intent: recommendedProjects.length > 0 ? materialIntent : "none",
-      project_media_request: recommendedProjects.length > 0 ? responseStructured.project_media_request : null,
-      recommended_project_ids: recommendedProjects.map((project) => project.id),
       context_trace: {
         persona_version_id: personaVersionId,
         rule_version_id: ruleVersionId,
@@ -448,6 +416,8 @@ async function runAiExecution(executionId: string) {
         published_faq_count: faqVersionsResult.data?.length ?? 0,
         simulator_session_id: simulatorSnapshot?.simulator_session_id ?? null,
         simulator_turn_index: simulatorSnapshot?.simulator_turn_index ?? null,
+        decision_hash: decisionHash,
+        executor_contract: "exact_actions_only",
       },
     };
     const { error: completeError } = await admin.rpc("complete_pedro_turn", {
@@ -456,7 +426,7 @@ async function runAiExecution(executionId: string) {
       p_latency_ms: Date.now() - startedAt,
       p_model_returned: response.model,
       p_output_structured: structured as Json,
-      p_output_text: outputText,
+      p_output_text: response.outputText,
       p_output_tokens: response.outputTokens,
       p_response_id: response.responseId,
     });

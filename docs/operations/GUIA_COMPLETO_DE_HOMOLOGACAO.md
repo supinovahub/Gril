@@ -168,10 +168,14 @@ Valide:
 - primeira recomendação envia a foto principal;
 - se o lead pedir mais material, Pedro oferece as fotos restantes ou o book;
 - somente mídia publicada e aprovada é enviada;
+- quando Pedro disser que enviará o book de um empreendimento, somente esse book é enviado; a regra de até três opções nunca completa a lista automaticamente;
+- se o projeto, arquivo ou horário escolhido ficar indisponível, nada é substituído: o turno é bloqueado e precisa ser gerado novamente;
 - Pedro recebe/transcreve áudio quando suportado, mas não envia áudio no MVP;
 - preço, entrada, disponibilidade, rentabilidade e crédito nunca são inventados.
 
-No modo **Assistido**, aprove uma sugestão que contenha qualificação e depois outra com agendamento ou follow-up. Confirme que a aprovação envia a mensagem e aplica, na mesma ação, os valores do lead, o match, a call, a cadência e a mídia aprovada. Edite uma sugestão antes de enviar e confirme que as ações estruturadas continuam coerentes; se o estado da conversa mudou, o sistema deve rejeitar tudo por conflito, sem envio parcial.
+No modo **Assistido**, aprove sem editar uma sugestão que contenha qualificação e depois outra com agendamento ou follow-up. Confirme que a aprovação envia a mensagem e aplica, na mesma ação, os valores do lead, o match, a call, a cadência e a mídia escolhida pelo Pedro. Depois edite outra sugestão antes de enviar: somente o texto editado deve ser enviado, e nenhuma qualificação, call, follow-up ou mídia do plano antigo pode ser aplicada. Se o estado da conversa mudou, o sistema deve rejeitar tudo por conflito, sem envio parcial.
+
+Para reproduzir o incidente de material, peça o book de um empreendimento específico. Confirme no Inbox e no WhatsApp que somente o PDF desse empreendimento foi enviado, mesmo que existam dois ou mais imóveis compatíveis no contexto.
 
 ### Contexto antes dos controles
 

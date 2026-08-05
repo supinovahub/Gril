@@ -120,7 +120,7 @@ export async function createPedroResponse(input: {
     model: parsed.data.model ?? input.model,
     inputTokens: parsed.data.usage?.input_tokens ?? 0,
     outputTokens: parsed.data.usage?.output_tokens ?? 0,
-    outputText: turn.reply ?? "Vou encaminhar sua solicitação para a equipe responsável.",
+    outputText: turn.reply ?? turn.escalation?.reason ?? "Escalada sem mensagem ao lead.",
     structured: turn,
   };
 }
