@@ -47,10 +47,11 @@ select extensions.has_function(
 );
 
 select extensions.ok(
-  (select pg_get_functiondef(p.oid) like '%jsonb_array_elements_text%'
+  (select pg_get_functiondef(p.oid) like '%project_media_requests%'
+          and pg_get_functiondef(p.oid) not like '%jsonb_array_elements_text(coalesce(v_execution.output_structured->''recommended_project_ids''%'
    from pg_proc p join pg_namespace n on n.oid=p.pronamespace
    where n.nspname='public' and p.proname='enqueue_pedro_project_media'),
-  'project media delivery supports every recommended project'
+  'project media delivery executes only the exact requests chosen by Pedro'
 );
 
 select extensions.ok(

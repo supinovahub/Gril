@@ -288,6 +288,9 @@ export type Database = {
           context_version_id: string | null
           conversation_id: string | null
           created_at: string
+          decision_hash: string | null
+          decision_validation_errors: Json
+          decision_validation_status: string | null
           error_code: string | null
           error_redacted: string | null
           estimated_cost: number | null
@@ -299,6 +302,7 @@ export type Database = {
           mode: string
           model_profile_id: string | null
           model_returned: string | null
+          model_output_structured: Json | null
           operation_id: string | null
           org_id: string
           output_structured: Json | null
@@ -308,12 +312,16 @@ export type Database = {
           response_id: string | null
           started_at: string | null
           status: string
+          validated_action_plan: Json | null
         }
         Insert: {
           completed_at?: string | null
           context_version_id?: string | null
           conversation_id?: string | null
           created_at?: string
+          decision_hash?: string | null
+          decision_validation_errors?: Json
+          decision_validation_status?: string | null
           error_code?: string | null
           error_redacted?: string | null
           estimated_cost?: number | null
@@ -325,6 +333,7 @@ export type Database = {
           mode: string
           model_profile_id?: string | null
           model_returned?: string | null
+          model_output_structured?: Json | null
           operation_id?: string | null
           org_id: string
           output_structured?: Json | null
@@ -334,12 +343,16 @@ export type Database = {
           response_id?: string | null
           started_at?: string | null
           status?: string
+          validated_action_plan?: Json | null
         }
         Update: {
           completed_at?: string | null
           context_version_id?: string | null
           conversation_id?: string | null
           created_at?: string
+          decision_hash?: string | null
+          decision_validation_errors?: Json
+          decision_validation_status?: string | null
           error_code?: string | null
           error_redacted?: string | null
           estimated_cost?: number | null
@@ -351,6 +364,7 @@ export type Database = {
           mode?: string
           model_profile_id?: string | null
           model_returned?: string | null
+          model_output_structured?: Json | null
           operation_id?: string | null
           org_id?: string
           output_structured?: Json | null
@@ -360,6 +374,7 @@ export type Database = {
           response_id?: string | null
           started_at?: string | null
           status?: string
+          validated_action_plan?: Json | null
         }
         Relationships: [
           {

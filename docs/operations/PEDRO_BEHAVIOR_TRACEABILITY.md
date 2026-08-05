@@ -11,14 +11,15 @@ Fonte de verdade: `docs/product/Especificacao-do-Produto-v1.md`. O pacote v3 sep
 | Opt-out, privacidade, documento, pagamento, jurídico, fraude, discriminação, idioma e abuso | Pedro analisa histórico + resumo + contexto; depois o backend aplica efeitos rígidos e idempotentes | `pedro-instructions.ts`; `pedro-turn.ts`; `complete_ai_execution`; `contextual-controls-after-ai.md` |
 | Pergunta direta sobre IA não recebe improviso | Controle determinístico | intent `identity_question` e handoff silencioso |
 | Qualificação só com dado explícito | Ferramenta estruturada + validação de tipo + request transacional | `pedro-turn.ts`; `qualification_value_requests` |
-| Curadoria exige preço e entrada, no máximo dois imóveis | Filtro do servidor | `selectEligibleProjects`; `project_match_requests` |
-| Primeira indicação: nome, bairro/região e capa, sem preço/entrada | Composição determinística e mídia publicada | `appendProjectRecommendations`; `enqueue_pedro_project_media` |
-| Pedido de material oferece fotos restantes ou book | Persona + ação estruturada | `project_media_request`; catálogo publicado |
+| Curadoria e quantidade de imóveis são decididas contextualmente pelo Pedro | Plano explícito; backend apenas valida IDs ativos | `recommended_project_ids`; `validatePedroDecision` |
+| Texto e projetos recomendados não são recompostos depois do modelo | Guarda contra mutação semântica | `complete_pedro_turn`; `decision_hash` |
+| Pedido de material oferece fotos restantes ou book | Ações exatas por projeto; executor não amplia a lista | `project_media_requests`; `enqueue_pedro_project_media` |
 | Pedro não envia áudio | Instrução obrigatória | pacote v3 |
-| Call exige data e hora explícitas; só confirma após aceite do corretor | Validação determinística + distribuição | `validCallRequest`; requests de call e ofertas |
+| Call exige data e hora explícitas; só confirma após aceite do corretor | Pedro decide; backend valida o slot exato e distribui | `validatePedroDecision`; requests de call e ofertas |
 | Pedido nominal por humano | Escalada | categoria `human_requested` |
 | Follow-up curto, longo, compra futura e cancelamento | Jobs duráveis | triggers de cadência; runtime assistido ou produção |
-| Aprovação no modo assistido aplica qualificação, match, call, follow-up e mídia | Transação única antes do envio | `apply_approved_assisted_actions` |
+| Aprovação sem edição aplica qualificação, match, call, follow-up e mídia | Transação única antes do envio | `apply_approved_assisted_actions` |
+| Edição humana substitui a mensagem, mas nunca reutiliza ações antigas | Plano anterior invalidado; envio somente do texto editado | `process_ai_suggestion_review_request`; `validated_action_plan` |
 | Conversa antiga mantém sua persona; conversa nova recebe v3 | Snapshot imutável | `conversation_context_versions` aponta para a versão publicada na criação |
 
 ## Dados que continuam sendo responsabilidade da imobiliária
