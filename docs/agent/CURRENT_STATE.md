@@ -6,14 +6,14 @@
 
 - GitHub: `https://github.com/supinovahub/Gril`.
 - Branch padrão confirmada: `phase/01-foundation`.
-- Último commit de código confirmado neste retrato: `2a58f82` (`feat(inbox): permitir editar nome dos contatos (#26)`).
+- Último commit de código confirmado neste retrato: `681dda07` (`fix(inbox): incluir id do contato na edição de nome (#28)`).
 - Working tree estava limpa antes da criação desta camada de memória.
 
 ## Produção e infraestrutura
 
 - Aplicação: `https://gril-lac.vercel.app`.
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
-- Deployment de produção confirmado como `Ready` em 05/08/2026: `gril-7gsl7tfd-brio5.vercel.app`, associado ao commit `2a58f82`.
+- Deployment de produção confirmado como `Ready` em 05/08/2026: `gril-rmlqyfs21-brio5.vercel.app`, associado ao commit `681dda07`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
 - Migrations locais e remotas estão alinhadas até `20260805124457_edit_contact_name.sql`.
 
@@ -29,6 +29,7 @@
 
 - O inbox recebe e exibe conversas reais da Uazapi.
 - Dono ou gestor com permissão de CRM pode editar manualmente o nome do contato no detalhe do Inbox ou do lead; a alteração é auditada e preserva o telefone canônico.
+- A edição de nome no Inbox envia o UUID canônico do contato e não retorna mais `invalid uuid`.
 - Execuções recuperadas do Pedro republicam o evento necessário para o worker.
 - O nudge após envio de material não reenvia PDFs.
 - Pedido de disponibilidade usa horários aprovados e não cria handoff indevido quando existem slots válidos.
