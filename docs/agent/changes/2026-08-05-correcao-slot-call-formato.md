@@ -18,7 +18,7 @@ Impedir que uma resposta estruturada do Pedro altere silenciosamente o horário 
 
 - Arquivos: `src/lib/ai/pedro-turn.ts`, `src/lib/runtime/worker.ts`, testes de `pedro-turn`, teste SQL `phase_32_call_slot_preservation` e guia de homologação.
 - Migrations: `20260805184410_preserve_confirmed_call_slot.sql` cria índice único parcial para slots ativos e torna o trigger de criação idempotente por oportunidade/slot.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: migration aplicada no projeto Supabase `frslhzwhaooqtivkzdez`; deployment de produção será registrado após a confirmação do alias.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: migration aplicada no projeto Supabase `frslhzwhaooqtivkzdez`; branch publicada no GitHub; deployment de produção não executado porque o perfil Vercel canônico exigido pelo protocolo não existe neste host.
 
 ## Validação
 
@@ -28,13 +28,13 @@ Impedir que uma resposta estruturada do Pedro altere silenciosamente o horário 
 
 ## Impacto operacional
 
-- Deploy necessário: sim, para publicar a normalização no worker.
+- Deploy necessário: sim, para publicar a normalização no worker; bloqueado neste host pela ausência do perfil Vercel canônico.
 - Migração aplicada: sim, `20260805184410`.
 - Compatibilidade/rollback: requests para calls em novos horários mantêm o fluxo existente; retries e confirmações de formato no mesmo slot reaproveitam a call. Rollback deve remover a aplicação do código somente junto de uma decisão explícita sobre o índice e trigger, pois a migration é aditiva.
 
 ## Pendências e riscos
 
-- Confirmar no alias de produção que o deployment está `Ready` e que o worker carregou a nova versão.
+- Publicar no alias de produção e confirmar que o deployment está `Ready` e que o worker carregou a nova versão.
 - Homologar manualmente uma conversa em que o lead escolha o horário e, na mensagem seguinte, o formato.
 
 ## Documentos relacionados

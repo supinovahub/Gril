@@ -6,7 +6,7 @@
 
 - GitHub: `https://github.com/supinovahub/Gril`.
 - Branch padrão confirmada: `phase/01-foundation`.
-- Último commit de código confirmado neste retrato: `d7dd110` (`fix(ai): execute only Pedro explicit actions (#32)`).
+- Último commit de código confirmado nesta branch: `db3fc4b` (`fix(pedro): preserve confirmed call slot after format choice`).
 - Working tree estava limpa antes da criação desta camada de memória.
 
 ## Produção e infraestrutura
@@ -44,13 +44,14 @@
 - `npm run lint`, `npm test` (17 arquivos e 96 testes) e `npm run build` aprovados em 05/08/2026 após a proteção determinística do slot confirmado.
 - Migrações Supabase: local e remoto alinhados até a versão indicada acima; colunas de rastreabilidade, função pós-análise, índice idempotente e revogação das funções legadas confirmados no remoto.
 - `npx supabase db lint --linked --fail-on error`: concluído sem erros; permanecem apenas avisos preexistentes.
-- Vercel: deployment de produção `Ready` associado ao commit indicado acima; `/login` no alias canônico respondeu `200` e não houve erro de runtime nos logs recentes do deployment.
+- Vercel: o deployment de produção continua no commit anterior (`d7dd110`); a publicação desta correção não foi executada porque o perfil obrigatório `C:\Users\Windows 11\.vercel-profiles\supinovahub-7501` não existe neste host e a verificação retornou `EPERM`.
 
 ## Pendências operacionais
 
 - Continuar a homologação manual dos fluxos descritos no guia, especialmente comportamento do Pedro, agendamento, distribuição, reativação e integrações reais.
 - Homologar manualmente a edição de nome com dono/gestor e confirmar que corretor não recebe a ação nem consegue forjar a operação.
 - Registrar cada novo defeito com esperado, observado, lead/canal, horário e IDs técnicos quando disponíveis.
+- Publicar `db3fc4b` na produção usando o perfil Vercel canônico em um host que tenha esse perfil disponível.
 - Atualizar este arquivo após qualquer alteração de deployment, migration, conta/projeto ou conclusão material de homologação.
 
 ## Protocolo compartilhado
