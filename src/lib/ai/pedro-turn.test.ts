@@ -147,5 +147,9 @@ describe("curadoria determinística", () => {
     expect(inferProjectMaterialIntent({ latestLeadMessage: "Quero ver mais fotos" })).toBe("more_photos");
     expect(inferProjectMaterialIntent({ latestLeadMessage: "Até 7 mil de parcela está bom" })).toBe("none");
     expect(inferProjectMaterialIntent({ latestLeadMessage: "Sim", previousPedroMessage: "Quer ver o book completo?" })).toBe("books");
+    expect(inferProjectMaterialIntent({
+      latestLeadMessage: "Pode me enviar mais informacoes sobre o imovel?",
+      requestedKind: "book",
+    })).toBe("books");
   });
 });

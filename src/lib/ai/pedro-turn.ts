@@ -271,7 +271,7 @@ export function inferProjectMaterialIntent(input: {
     if (/\b(mais\s+fotos|outras\s+fotos)\b/.test(previous)) return "more_photos";
     if (/\b(fotos|imagens)\b/.test(previous)) return "principal_photos";
   }
-  if (/\b(manda|envia|quero|mostrar|mostra)\b/.test(latest)) {
+  if (/\b(manda|envia|enviar|quero|mostrar|mostra)\b/.test(latest)) {
     if (input.requestedKind === "book") return "books";
     if (input.requestedKind === "principal") return "principal_photos";
     if (input.requestedKind === "more_photos") return "more_photos";
