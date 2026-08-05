@@ -2,7 +2,7 @@
 
 - Data: 05/08/2026
 - Responsável: Codex na sessão principal do Gril
-- Branch/PR: `fix/pedro-explicit-actions-source-of-truth` / PR pendente
+- Branch/PR: `fix/pedro-explicit-actions-source-of-truth` / PR `#32`
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
@@ -18,7 +18,7 @@ Impedir que worker ou banco substituam a decisão contextual do Pedro, incluindo
 
 - Arquivos: schema/instruções do Pedro, worker, runtime OpenAI, testes, decisão, rastreabilidade e guia de homologação.
 - Migration: `20260805160806_pedro_explicit_actions_source_of_truth.sql`.
-- Mudanças externas: migration aplicada no Supabase `frslhzwhaooqtivkzdez`; publicação Vercel pendente neste registro inicial.
+- Mudanças externas: migration aplicada no Supabase `frslhzwhaooqtivkzdez`; PR `#32` mesclado em `d7dd110`; produção `Ready` em `gril-nulflfdwl-brio5.vercel.app`, com alias `https://gril-lac.vercel.app`.
 
 ## Validação
 
@@ -34,7 +34,7 @@ Impedir que worker ou banco substituam a decisão contextual do Pedro, incluindo
 
 ## Pendências e riscos
 
-- Publicar o worker e homologar um novo pedido de book específico.
+- Homologar um novo pedido de book específico no WhatsApp real.
 - Três asserções históricas do arquivo `phase_25_pedro_behavior_v3.sql` já estavam desatualizadas (pacote publicado v4 e texto de cadência); não pertencem a esta correção. O novo arquivo `phase_31` passou integralmente.
 
 ## Documentos relacionados

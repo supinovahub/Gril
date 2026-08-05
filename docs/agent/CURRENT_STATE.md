@@ -6,14 +6,14 @@
 
 - GitHub: `https://github.com/supinovahub/Gril`.
 - Branch padrão confirmada: `phase/01-foundation`.
-- Último commit de código confirmado neste retrato: `50985192` (`fix(ai): analyze context before control rules (#30)`).
+- Último commit de código confirmado neste retrato: `d7dd110` (`fix(ai): execute only Pedro explicit actions (#32)`).
 - Working tree estava limpa antes da criação desta camada de memória.
 
 ## Produção e infraestrutura
 
 - Aplicação: `https://gril-lac.vercel.app`.
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
-- Deployment de produção confirmado como `Ready` em 05/08/2026: `gril-ba388isp4-brio5.vercel.app`, associado ao commit `50985192`.
+- Deployment de produção confirmado como `Ready` em 05/08/2026: `gril-nulflfdwl-brio5.vercel.app`, após o merge `d7dd110`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
 - Migrations locais e remotas estão alinhadas até `20260805160806_pedro_explicit_actions_source_of_truth.sql`.
 
