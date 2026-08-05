@@ -33,7 +33,7 @@ export default async function ConversationPage({
   const feedback = await searchParams;
   const supabase = await createClient();
   const [conversationResult, messagesResult, summaryResult, suggestionsResult, executionsResult, settingsResult] = await Promise.all([
-    supabase.from("conversations").select("*,contacts!inner(name,contact_phones(e164,is_primary,status)),opportunities!conversations_opportunity_id_org_id_fkey(id,pipeline_stages!inner(name)),whatsapp_connections!inner(name,provider)").eq("id", id).maybeSingle(),
+    supabase.from("conversations").select("*,contacts!inner(id,name,contact_phones(e164,is_primary,status)),opportunities!conversations_opportunity_id_org_id_fkey(id,pipeline_stages!inner(name)),whatsapp_connections!inner(name,provider)").eq("id", id).maybeSingle(),
     supabase.from("messages").select("*").eq("conversation_id", id).order("created_at").limit(300),
     supabase.from("conversation_summaries").select("summary,facts,created_at").eq("conversation_id", id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("ai_suggestions").select("id,body,status,created_at").eq("conversation_id", id).eq("status", "pending").order("created_at", { ascending: false }),
