@@ -224,6 +224,8 @@ Uma conexão real saudável basta para o piloto. Teste ambos os provedores antes
 - conecte por QR Code quando aplicável;
 - configure o webhook fornecido pelo Gril;
 - teste envio, recebimento, entregue, lido e falha;
+- envie uma mensagem pelo celular conectado e confirme que o nome do chat/cliente aparece no Inbox, em vez de `Contato do WhatsApp`;
+- repita o teste com uma conversa que já exista como placeholder e confirme que o nome recebido atualiza o contato sem substituir um nome cadastrado manualmente;
 - repita o mesmo webhook e confirme idempotência;
 - desconecte e reconecte.
 
