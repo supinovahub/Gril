@@ -58,6 +58,10 @@
 
 ## Limites desta fonte
 
+## Registro operacional recente
+
+- Uma limpeza repetida do contexto historico do lead de homologacao foi executada em 05/08/2026; cadastro e oportunidade foram preservados, e a conversa ficou pausada com a IA desligada para nova homologacao.
+
 Este documento não substitui:
 
 - o banco para estado transacional;
