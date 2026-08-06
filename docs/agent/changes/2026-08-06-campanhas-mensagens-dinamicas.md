@@ -28,8 +28,9 @@ na planilha de leads.
   executor. As migrations remotas `20260806165000`, `20260806170711` e
   `20260806180518` também foram restauradas localmente para alinhar o histórico;
   elas não foram alteradas.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma.
-  A migration não foi aplicada remotamente.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: migration
+  aplicada no Supabase remoto e versão validada promovida para produção na
+  Vercel.
 
 ## Validação
 
@@ -38,15 +39,20 @@ na planilha de leads.
   --fail-on error`.
 - Evidência observada: lint sem erros; 19 arquivos e 103 testes aprovados;
   build produziu 46 rotas; lint remoto sem erros.
-- Validações não executadas e motivo: a migration ainda não foi aplicada nem
-  executada em um banco local; antes da reconciliação, o dry-run era bloqueado
-  pelas três versões remotas ausentes. Após restaurá-las, o dry-run passou e
-  listou somente `20260806202829_campaign_dynamic_messages.sql`.
+- Vercel: preview da branch ficou `Ready`, foi validado em `/login`, e o
+  deployment de produção `dpl_HkqFuKVWkFWZexPcQSzyKAsBwmnW` ficou `Ready`;
+  `https://gril-lac.vercel.app/login` respondeu HTTP 200 e não houve logs de
+  erro no intervalo verificado.
+- Validações não executadas e motivo: a migration não foi executada em um banco
+  local; Docker Desktop não está disponível neste host. O dry-run remoto passou
+  listando somente `20260806202829_campaign_dynamic_messages.sql`.
 
 ## Impacto operacional
 
-- Deploy necessário: sim, após reconciliar migrations e integrar a branch.
-- Migração aplicada: não.
+- Deploy necessário: concluído em 06/08/2026.
+- Migração aplicada: sim, `20260806202829_campaign_dynamic_messages.sql`.
+- Deployment Vercel: `dpl_HkqFuKVWkFWZexPcQSzyKAsBwmnW`, status `Ready`, alias
+  `https://gril-lac.vercel.app`.
 - Compatibilidade/rollback: campanhas antigas usam a abertura anterior; o
   rollback de código deve ser acompanhado da reversão da migration após
   interromper novas campanhas com variações.
