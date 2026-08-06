@@ -30,7 +30,8 @@ na planilha de leads.
   elas não foram alteradas.
 - Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: migration
   aplicada no Supabase remoto e versão validada promovida para produção na
-  Vercel.
+  Vercel. Duas tentativas intermediárias da CLI ficaram `UNKNOWN` sem build
+  utilizável; não receberam o alias público `gril-lac`.
 
 ## Validação
 
