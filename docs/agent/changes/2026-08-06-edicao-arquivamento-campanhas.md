@@ -18,17 +18,17 @@ Permitir que dono ou gestor edite a configuração de uma campanha de reativaç�
 
 - Arquivos: `src/app/app/campanhas/actions.ts`, `src/app/app/campanhas/page.tsx`, `src/app/app/campanhas/campaigns.module.css`, `src/lib/database.types.ts`, este registro, decisão de produto e guia de homologação.
 - Migrations: `20260806165000_chat_pedro_assisted_queue.sql` foi incluída para alinhar o histórico local ao remoto; `20260806170711_campaign_edit_archive.sql` cria o comando de edição, o status `archived` e a transição de arquivamento.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: a migration `20260806170711_campaign_edit_archive.sql` foi aplicada ao projeto Supabase canônico após validação; nenhum dado de lead foi alterado por esta implementação.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: a migration `20260806170711_campaign_edit_archive.sql` foi aplicada ao projeto Supabase canônico; o branch foi publicado no GitHub; e o deployment `dpl_6fHG59SPq3QmNBFbxsThK8LLeKhz` foi promovido para `https://gril-lac.vercel.app`. Nenhum dado de lead foi alterado por esta implementação.
 
 ## Validação
 
-- Comandos/testes executados: `npm test`, `npm run lint`, `npm run build`, `npx supabase db lint --linked --fail-on error`, `npx supabase migration list --linked`, `npx supabase db push --linked --dry-run` e `npx supabase db query --linked --file supabase/tests/phase_35_campaign_edit_archive.sql`.
-- Evidência observada: 18 arquivos e 99 testes Vitest passaram; lint passou; build gerou 46 rotas; o dry-run mostrou somente a migration da campanha; o pgTAP confirmou 9 cenários; o schema remoto contém `campaign_edit_requests`, `archived_at` e `archived_by`.
-- Validações não executadas e motivo: homologação visual e deploy Vercel ainda não foram executados nesta branch.
+- Comandos/testes executados: `npm test`, `npm run lint`, `npm run build`, `npx supabase db lint --linked --fail-on error`, `npx supabase migration list --linked`, `npx supabase db push --linked --dry-run`, `npx supabase db query --linked --file supabase/tests/phase_35_campaign_edit_archive.sql`, `vercel inspect` e requisição HTTP para `/login`.
+- Evidência observada: 18 arquivos e 99 testes Vitest passaram; lint passou; build gerou 46 rotas; o dry-run mostrou somente a migration da campanha; o pgTAP confirmou 9 cenários; o schema remoto contém `campaign_edit_requests`, `archived_at` e `archived_by`; Vercel ficou `Ready` e `/login` respondeu HTTP 200.
+- Validações não executadas e motivo: homologação visual do fluxo autenticado ainda depende de uma campanha de teste.
 
 ## Impacto operacional
 
-- Deploy necessário: sim, para disponibilizar a tela no ambiente de produção.
+- Deploy necessário: concluído; a tela está disponível no ambiente de produção.
 - Migração aplicada: sim, `20260806170711_campaign_edit_archive.sql`.
 - Compatibilidade/rollback: campanhas existentes continuam ativas; arquivamento é terminal e não reinicia jobs. O rollback exige migration específica de reversão e não deve remover auditoria.
 

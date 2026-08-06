@@ -16,7 +16,7 @@
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
 - Migrations locais e remotas estão alinhadas até `20260806170711_campaign_edit_archive.sql`, incluindo as migrations concorrentes `20260806165000_chat_pedro_assisted_queue.sql` e `20260806165243_enforce_pedro_inbound_allowlist.sql`.
 - A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
-- Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-1jotu4cvc-brio5.vercel.app` (`dpl_HXdp4BrqHY7zCDQtG6F7d9BUSZpx`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `d930949`.
+- Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-qv5adl7zl-brio5.vercel.app` (`dpl_6fHG59SPq3QmNBFbxsThK8LLeKhz`), alias `https://gril-lac.vercel.app`, publicado a partir do commit integrado `a7e730c`.
 
 ## Estado funcional
 
@@ -67,7 +67,7 @@
 - Repetir a homologação manual do registro de resultado no dashboard.
 - Homologar com um corretor novo o link de confirmação em um navegador que possui outra conta localmente autenticada, confirmando que a sessão final pertence ao e-mail convidado e retorna ao convite.
 - Homologar manualmente a exibição do fuso operacional no Inbox/CRM e o comportamento de um pedido explícito de call abaixo de uma hora com um lead de teste novo.
-- Publicar o código da edição/arquivamento de campanhas no Vercel e homologar o fluxo com uma campanha de teste nova; a migration já está aplicada no Supabase remoto.
+- Homologar o fluxo de edição/arquivamento com uma campanha de teste nova; a migration e o código já estão publicados no Supabase e Vercel.
 
 ## Protocolo compartilhado
 
