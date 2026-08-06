@@ -3,7 +3,7 @@
 - Data: 06/08/2026
 - Responsável: Codex
 - Branch/PR: `agent/fix-call-lead-time-timezone`
-- Commit: o commit que contém este arquivo
+- Commit: `d930949` (`fix(agenda): enforce one-hour call lead time`)
 
 ## Objetivo
 
@@ -18,7 +18,7 @@ Corrigir a oferta de calls com antecedência inferior a uma hora e a exibição 
 
 - Arquivos: helper/teste de antecedência; helper de fuso operacional; worker; listas e detalhes de Inbox; detalhe do lead; guia de homologação; estado compartilhado.
 - Migrations: `20260806144434_enforce_one_hour_call_lead_time.sql`, substituindo a função de disponibilidade para impor uma hora no banco.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: migration aplicada no projeto Supabase `frslhzwhaooqtivkzdez`; publicação Vercel fica registrada após a confirmação do deployment.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: migration aplicada no projeto Supabase `frslhzwhaooqtivkzdez`; branch publicada no GitHub; deployment Vercel de produção `dpl_HXdp4BrqHY7zCDQtG6F7d9BUSZpx` (`gril-1jotu4cvc-brio5.vercel.app`) em `Ready`, com alias `https://gril-lac.vercel.app`.
 
 ## Validação
 
@@ -28,7 +28,7 @@ Corrigir a oferta de calls com antecedência inferior a uma hora e a exibição 
 
 ## Impacto operacional
 
-- Deploy necessário: sim, para publicar o worker e os formatadores de horário. A migration já foi aplicada remotamente.
+- Deploy necessário: sim, concluído para publicar o worker e os formatadores de horário. Deployment `dpl_HXdp4BrqHY7zCDQtG6F7d9BUSZpx` está `Ready` e o alias público respondeu HTTP 200 em `/login`.
 - Migração aplicada: sim, no Supabase remoto único do projeto `frslhzwhaooqtivkzdez`.
 - Compatibilidade/rollback: pedidos explícitos abaixo de uma hora continuam compatíveis com a escalada para o gestor. O rollback do código pode usar o deployment anterior; a alteração da função de banco deve ser revertida por uma migration posterior, se necessário.
 

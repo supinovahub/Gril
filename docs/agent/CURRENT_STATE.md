@@ -6,7 +6,7 @@
 
 - GitHub: `https://github.com/supinovahub/Gril`.
 - Branch padrão confirmada: `phase/01-foundation`.
-- Último commit de código confirmado nesta branch: a correção de antecedência mínima e fuso operacional registrada em `docs/agent/changes/2026-08-06-correcao-antecedencia-fuso-call.md`.
+- Último commit de código confirmado nesta branch: `d930949` (`fix(agenda): enforce one-hour call lead time`).
 - Working tree estava limpa antes da criação desta camada de memória.
 
 ## Produção e infraestrutura
@@ -16,7 +16,7 @@
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
 - Migrations locais e remotas estão alinhadas até `20260806144434_enforce_one_hour_call_lead_time.sql`, incluindo a restauração de inbound em produção `20260806140816_restore_inbound_production.sql`.
 - A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
-- Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-fejl110ao-brio5.vercel.app` (`dpl_2RMP14xp41hB2YRds46EoQN8gRCN`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `cea8119`.
+- Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-1jotu4cvc-brio5.vercel.app` (`dpl_HXdp4BrqHY7zCDQtG6F7d9BUSZpx`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `d930949`.
 
 ## Estado funcional
 
@@ -53,6 +53,7 @@
 - Migration `20260806125009_add_call_grant_revoked_by.sql`: aplicada remotamente; `npx supabase db push --linked --dry-run` confirmou o banco atualizado; simulações autenticadas de `no_result` e `start_negotiation` passaram com `ROLLBACK`.
 - Migration `20260806144434_enforce_one_hour_call_lead_time.sql`: aplicada remotamente; o dry-run mostrou somente essa migration; a função remota rejeita o bypass de uma hora e uma chamada iniciada em 10 minutos retornou primeiro slot com mais de uma hora de antecedência.
 - Vercel: o deployment `gril-fejl110ao-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
+- Vercel: o deployment `gril-1jotu4cvc-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
 - Limpeza de contexto: os registros de homologação foram removidos do Supabase remoto em 05/08/2026 e 06/08/2026; a verificação mais recente zerou contato, oportunidade, conversa, mensagens, qualificações, IA, calls, campanha do contato, jobs, outbox, ingestões e vínculos derivados. A auditoria relacionada permanece por regra do produto.
 
 ## Pendências operacionais
