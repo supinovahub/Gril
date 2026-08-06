@@ -18,7 +18,7 @@ Permitir o registro do resultado de uma call encerrada. O dashboard mostrava a r
 
 - Arquivos: migration, teste pgTAP, tipos TypeScript e mensagens de erro da ação de agenda.
 - Migrations: `20260806125009_add_call_grant_revoked_by.sql` adiciona `revoked_by uuid` com `ON DELETE SET NULL`.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: migration aplicada ao projeto Supabase `frslhzwhaooqtivkzdez`. Nenhuma alteração foi publicada na Vercel ou no GitHub.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: migration aplicada ao projeto Supabase `frslhzwhaooqtivkzdez`; commit `c77b2f9` publicado em produção na Vercel como `dpl_45xGM9si33VDgEHpaAgPawecCMjS`, alias `https://gril-lac.vercel.app`.
 
 ## Validação
 
@@ -28,13 +28,12 @@ Permitir o registro do resultado de uma call encerrada. O dashboard mostrava a r
 
 ## Impacto operacional
 
-- Deploy necessário: sim, para publicar a melhoria de mensagens em `actions.ts`; a correção de schema já está ativa no Supabase.
+- Deploy necessário: concluído; a melhoria de mensagens em `actions.ts` e a correção de schema estão disponíveis em produção.
 - Migração aplicada: sim, remotamente; `db push --dry-run` confirmou que não há migrations pendentes.
 - Compatibilidade/rollback: a coluna é anulável e preserva chamadas existentes; remoção exige migration explícita e não é recomendada enquanto o roteamento a utiliza.
 
 ## Pendências e riscos
 
-- Publicar o código pela conta Vercel autorizada pelo protocolo. A verificação obrigatória da identidade falhou neste host por ausência/expiração do refresh token, portanto a publicação foi bloqueada.
 - Repetir o registro no dashboard após o deploy e confirmar visualmente o resultado esperado.
 
 ## Documentos relacionados
