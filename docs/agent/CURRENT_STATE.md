@@ -14,15 +14,16 @@
 - Aplicação: `https://gril-lac.vercel.app`.
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
-- Migrations locais e remotas estão alinhadas até `20260806125009_add_call_grant_revoked_by.sql`.
+- Migrations locais e remotas estão alinhadas até `20260806140816_restore_inbound_production.sql`.
 - A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
-- Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-gxbdyb828-brio5.vercel.app` (`dpl_45xGM9si33VDgEHpaAgPawecCMjS`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `c77b2f9`.
+- A migration `20260806140816_restore_inbound_production.sql` foi aplicada no Supabase remoto para restaurar `production` no atendimento inbound, mantendo os gates de prontidão.
+- Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-ns0qtvkbr-brio5.vercel.app` (`dpl_9hEURMxYCbkujSUpArLZik81rjVG`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `91fcf24`.
 
 ## Estado funcional
 
 - O MVP cobre onboarding multi-tenant, CRM, inbox WhatsApp, Pedro, qualificação, imóveis, campanhas, agenda/distribuição, follow-ups, simulador, colaboração interna, curadoria e administração da plataforma.
 - Uazapi, OpenAI e worker foram conectados ao fluxo real; a homologação operacional pelo dono continua em andamento.
-- Pedro deve permanecer em `shadow` ou `assisted` nos atendimentos normais enquanto o comportamento não for integralmente homologado. O modo `production` tem liberação controlada conforme as decisões do produto.
+- Pedro permanece desligado por padrão nos atendimentos normais; `shadow`, `assisted` e `production` ficam disponíveis com liberação controlada pelos gates e pelas decisões do produto.
 - O roteiro humano canônico é `docs/operations/GUIA_COMPLETO_DE_HOMOLOGACAO.md`.
 - Regras comportamentais do Pedro estão resumidas em `docs/operations/PEDRO_BEHAVIOR_TRACEABILITY.md` e detalhadas nos documentos de produto/decisão.
 
@@ -41,7 +42,8 @@
 - Quando o lead confirma o formato depois de escolher um horário, Pedro preserva o slot já confirmado; o banco reaproveita a call existente e impede duas calls ativas no mesmo slot.
 - Quando existe uma call futura ativa, Pedro recebe esse slot como estado canônico; respostas que dizem que o horário passou são regeneradas ou bloqueadas antes do envio.
 - O registro de resultado de call após o início agora conclui a revogação da liberação operacional da conversa, preservando `revoked_by` e evitando o erro de coluna inexistente.
-- No código atual, a confirmação de e-mail de um convite individual recupera o convite pelo cookie, encerra apenas a sessão local anterior e retorna ao e-mail convidado; a publicação e a homologação manual ainda estão pendentes.
+- O atendimento normal voltou a oferecer o modo `production`; a Server Action e o banco aceitam o modo, mas a ativação continua condicionada aos gates de identidade, conhecimento, modelo, canal saudável e regressão aprovada.
+- No código atual, a confirmação de e-mail de um convite individual recupera o convite pelo cookie, encerra apenas a sessão local anterior e retorna ao e-mail convidado; a publicação está confirmada e a homologação manual continua pendente.
 
 ## Verificações deste retrato
 
@@ -49,8 +51,8 @@
 - Migrações Supabase: local e remoto alinhados até a versão indicada acima; colunas de rastreabilidade, função pós-análise, índice idempotente e revogação das funções legadas confirmados no remoto.
 - `npx supabase db lint --linked --fail-on error`: concluído sem erros; permanecem apenas avisos preexistentes.
 - Após a correção do fluxo de convite: `npm test` com 98 testes, `npm run lint` e `npm run build` com 46 rotas aprovados localmente; não houve deploy nesta tarefa.
-- Migration `20260806125009_add_call_grant_revoked_by.sql`: aplicada remotamente; `npx supabase db push --linked --dry-run` confirmou o banco atualizado; simulações autenticadas de `no_result` e `start_negotiation` passaram com `ROLLBACK`.
-- Vercel: o deployment `gril-gxbdyb828-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
+- Migrations `20260806125009_add_call_grant_revoked_by.sql` e `20260806140816_restore_inbound_production.sql`: aplicadas remotamente; `npx supabase migration list --linked` confirmou alinhamento; a consulta remota confirmou o check inbound com `production` e a remoção da trava antiga.
+- Vercel: o deployment `gril-ns0qtvkbr-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, não houve log de erro na janela verificada, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
 - Limpeza de contexto: o registro de homologação foi removido do Supabase remoto em 05/08/2026; a verificação zerou contato, oportunidade, conversa, mensagens, IA, calls, jobs, outbox e vínculos derivados. A auditoria relacionada permanece por regra do produto.
 
 ## Pendências operacionais

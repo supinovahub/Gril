@@ -25,36 +25,41 @@ qualquer envio automático.
 - Migrations: `20260806140816_restore_inbound_production.sql`, que remove a
   restrição específica do inbound, aceita `production` no campo contextual e
   sincroniza os campos de modo existentes.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma; a
-  migration ainda não foi aplicada remotamente e não houve deploy.
+- Mudanças externas: a migration `20260806140816_restore_inbound_production.sql`
+  foi aplicada no projeto Supabase `frslhzwhaooqtivkzdez`. O commit foi
+  publicado na Vercel; o primeiro deploy direto ficou `BLOCKED`, então o
+  deployment `Ready` do mesmo commit (`gril-jbq6j27pq-brio5.vercel.app`) foi
+  promovido para Production como `gril-ns0qtvkbr-brio5.vercel.app`.
 
 ## Validação
 
 - Comandos/testes executados: `npm run lint`, `npm test`, `npm run build`,
   `git diff --check`, `npx supabase migration list --linked`,
   `npx supabase db push --linked --dry-run`,
+  `npx supabase db push --linked --yes`, `npx supabase db query --linked`,
   `npx supabase db lint --linked --fail-on error` e uma simulação remota da
-  migration em transação com `ROLLBACK`.
+  migration em transação com `ROLLBACK`; na Vercel, identidade, promoção,
+  inspeção do deployment, rota pública e logs de erro também foram verificados.
 - Evidência observada: lint, 98 testes e build com 46 rotas passaram; o banco
-  remoto está alinhado até `20260806125009`; o dry-run detectou somente
-  `20260806140816`; o lint do banco terminou sem erros; a simulação confirmou
-  que o novo check aceita `production` e que a trava antiga não permanece.
+  remoto está alinhado até `20260806140816`; a consulta remota confirmou que
+  o novo check aceita `production`, o check global continua aceitando o modo e
+  a trava antiga não permanece; o deployment promovido está `Ready`, o alias
+  `https://gril-lac.vercel.app` responde `200` em `/login` e não houve log de
+  erro na janela de uma hora verificada.
 - Validações não executadas e motivo: o teste pgTAP novo não foi executado
-  contra o remoto porque a migration ainda não foi aplicada; homologação
-  visual/WhatsApp real e aplicação remota ficam para a etapa de publicação.
+  contra o remoto; a homologação visual/WhatsApp real continua pendente.
 
 ## Impacto operacional
 
 - Deploy necessário: sim, para expor o botão e a Server Action.
-- Migração aplicada: não; precisa ser aplicada junto do deploy.
+- Migração aplicada: sim, `20260806140816_restore_inbound_production.sql`.
 - Compatibilidade/rollback: reverter código e migration restaura a separação
   anterior; nenhum dado operacional é removido.
 
 ## Pendências e riscos
 
-- Aplicar a migration no Supabase remoto antes de usar o novo botão.
-- Publicar o código e repetir a homologação inbound em `shadow`, `assisted` e
-  `production` com o roteiro humano.
+- Repetir a homologação inbound em `shadow`, `assisted` e `production` com o
+  roteiro humano.
 - O modo permanece desligado por padrão; ativar `production` sem homologação
   continua bloqueado pelos gates técnicos.
 
