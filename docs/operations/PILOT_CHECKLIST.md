@@ -20,11 +20,12 @@
 
 1. Ativar uma única conexão com inbound habilitado e campanhas desabilitadas.
 2. Rodar atendimentos internos nos modos sombra e assistido.
-3. Autorizar produção apenas após revisar os casos críticos.
-4. Liberar a primeira onda com no máximo 20 contatos e revisar 100% das conversas.
-5. Liberar manualmente a segunda onda com no máximo 50 contatos, revisando ao menos 30%, somente se os gates estiverem verdes.
-6. Nas ondas posteriores, revisar ao menos 10% mais todos os casos obrigatórios de risco.
-7. Interromper imediatamente diante de promessa proibida, violação de opt-out, dado sensível exposto, duplicidade de envio ou divergência de capacidade.
+3. Cadastrar na Whitelist de produção somente os números internos autorizados para o primeiro teste.
+4. Autorizar produção apenas após revisar os casos críticos e comprovar bloqueio server-side de um número fora da whitelist.
+5. Liberar a primeira onda com no máximo 20 contatos e revisar 100% das conversas.
+6. Liberar manualmente a segunda onda com no máximo 50 contatos, revisando ao menos 30%, somente se os gates estiverem verdes.
+7. Nas ondas posteriores, revisar ao menos 10% mais todos os casos obrigatórios de risco.
+8. Interromper imediatamente diante de promessa proibida, violação de opt-out, dado sensível exposto, duplicidade de envio ou divergência de capacidade.
 
 ## Saída do piloto
 

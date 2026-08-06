@@ -121,15 +121,19 @@ export default async function PedroPage({
             <p className={styles.notice}>Production envia automaticamente, mas exige os gates de identidade, conhecimento, modelo, canal saudável e regressão aprovada. Shadow observa; assisted sugere e aprende com correções aprovadas.</p>
           </section>
           <section className={styles.panel}>
-            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Reativação de base</p><h2>Produção controlada</h2></span></div>
+            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Reativação de base</p><h2>Configuração da reativação</h2></span></div>
             <form action={configureReactivationAiAction} className={styles.promptForm}>
               <label><span>Modo</span><select defaultValue={settings?.reactivation_ai_mode ?? "off"} name="reactivationMode"><option value="off">off</option><option value="shadow">shadow</option><option value="assisted">assisted</option><option value="production">production</option></select></label>
               <label><span>Liberação</span><select defaultValue={settings?.reactivation_release_state ?? "blocked"} name="releaseState"><option value="blocked">Bloqueada</option><option value="test_controlled">Somente allowlist</option><option value="released">Liberada</option></select></label>
               <label><span>Autonomia</span><select defaultValue={settings?.reactivation_autonomy ?? "low"} name="reactivationAutonomy"><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option></select></label>
               <button type="submit">Salvar reativação</button>
             </form>
+          </section>
+          <section className={styles.panel}>
+            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Teste controlado</p><h2>Whitelist de produção</h2></span></div>
+            <p className={styles.notice}>No atendimento normal em <strong>production</strong>, somente estes números podem gerar execução e receber mensagens automáticas do Pedro. A regra é aplicada no banco e vale para todas as operações da imobiliária. Shadow e assisted continuam disponíveis para os demais contatos.</p>
             <form action={addAiTestNumberAction} className={styles.keyForm}><label><span>Número liberado para teste</span><input name="phoneE164" placeholder="+5511999999999" required /></label><button type="submit">Adicionar</button></form>
-            <div className={styles.executionList}>{allowlist?.map((entry) => <article key={entry.id}><span><strong>{entry.phone_e164}</strong><small>Teste controlado</small></span><form action={removeAiTestNumberAction}><input name="allowlistId" type="hidden" value={entry.id} /><button type="submit">Remover</button></form></article>)}{!allowlist?.length ? <p className={styles.notice}>Nenhum número liberado. Production controlada não enviará para contatos fora da allowlist.</p> : null}</div>
+            <div className={styles.executionList}>{allowlist?.map((entry) => <article key={entry.id}><span><strong>{entry.phone_e164}</strong><small>Inbound production liberado</small></span><form action={removeAiTestNumberAction}><input name="allowlistId" type="hidden" value={entry.id} /><button type="submit">Remover</button></form></article>)}{!allowlist?.length ? <p className={styles.notice}>Nenhum número liberado. O inbound em production permanecerá sem respostas automáticas.</p> : null}</div>
           </section>
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Últimas execuções</p><h2>Rastreabilidade</h2></span></div>

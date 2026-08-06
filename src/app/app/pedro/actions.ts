@@ -265,10 +265,9 @@ export async function addAiTestNumberAction(formData: FormData) {
   const viewer = await requireActiveViewer();
   if (!viewer.membership || !["owner", "manager"].includes(viewer.membership.role)) return;
   const supabase = await createClient();
-  const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
   const { error } = await supabase.from("ai_test_allowlist").upsert({
     org_id: viewer.organization!.id,
-    operation_id: operation?.id ?? null,
+    operation_id: null,
     phone_e164: phone.data,
     active: true,
     created_by: viewer.userId,

@@ -195,12 +195,15 @@ No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confir
 ### 6.1 Modos, aprendizado e curadoria
 
 1. em `Pedro`, confirme que o atendimento normal oferece `off`, `shadow`, `assisted` e `production`; `production` só pode ser salvo quando os portões técnicos de produção estiverem aprovados;
-2. configure reativação como `production + teste controlado`, cadastre seu telefone E.164 na allowlist e prove que um contato fora dela é bloqueado no servidor;
-3. em uma sugestão assisted, edite e aprove: a mensagem deve ser enviada e a correção deve criar um candidato para Lionel;
-4. use `Ensinar e gerar outra`: nada deve ser enviado ao lead e uma nova sugestão deve aparecer usando a orientação;
-5. use `Só descartar`: nada deve ser enviado nem exibido como sucesso de envio;
-6. abra `/app/lionel`, responda ao grill uma pergunta por vez e registre o consenso como candidato; confirme que ele aparece em `Aprendizados`, ainda sem ativação silenciosa;
-7. confirme que corretor não vê Lionel nem controles de aprendizado.
+2. na seção **Whitelist de produção**, cadastre o telefone E.164 do lead de teste, coloque o inbound em `production` e confirme que esse número pode receber a resposta automática;
+3. envie um inbound de um contato fora da whitelist e prove no banco/log que ele foi registrado no Inbox, mas não criou execução nem mensagem outbound automática;
+4. remova um número da whitelist com uma execução pendente e confirme que o worker bloqueia a execução antes do envio;
+5. configure reativação como `production + teste controlado`, cadastre seu telefone E.164 na allowlist e prove que um contato fora dela é bloqueado no servidor;
+6. em uma sugestão assisted, edite e aprove: a mensagem deve ser enviada e a correção deve criar um candidato para Lionel;
+7. use `Ensinar e gerar outra`: nada deve ser enviado ao lead e uma nova sugestão deve aparecer usando a orientação;
+8. use `Só descartar`: nada deve ser enviado nem exibido como sucesso de envio;
+9. abra `/app/lionel`, responda ao grill uma pergunta por vez e registre o consenso como candidato; confirme que ele aparece em `Aprendizados`, ainda sem ativação silenciosa;
+10. confirme que corretor não vê Lionel nem controles de aprendizado.
 
 ### 6.2 Chat geral, intervenção humana e corretor
 
