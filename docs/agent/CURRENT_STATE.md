@@ -16,7 +16,7 @@
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
 - Migrations locais e remotas estão alinhadas até `20260806125009_add_call_grant_revoked_by.sql`.
 - A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
-- Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-gxbdyb828-brio5.vercel.app` (`dpl_45xGM9si33VDgEHpaAgPawecCMjS`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `c77b2f9`.
+- Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-fejl110ao-brio5.vercel.app` (`dpl_2RMP14xp41hB2YRds46EoQN8gRCN`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `cea8119`.
 
 ## Estado funcional
 
@@ -41,16 +41,16 @@
 - Quando o lead confirma o formato depois de escolher um horário, Pedro preserva o slot já confirmado; o banco reaproveita a call existente e impede duas calls ativas no mesmo slot.
 - Quando existe uma call futura ativa, Pedro recebe esse slot como estado canônico; respostas que dizem que o horário passou são regeneradas ou bloqueadas antes do envio.
 - O registro de resultado de call após o início agora conclui a revogação da liberação operacional da conversa, preservando `revoked_by` e evitando o erro de coluna inexistente.
-- No código atual, a confirmação de e-mail de um convite individual recupera o convite pelo cookie, encerra apenas a sessão local anterior e retorna ao e-mail convidado; a publicação e a homologação manual ainda estão pendentes.
+- No código atual, a confirmação de e-mail de um convite individual recupera o convite pelo cookie, encerra apenas a sessão local anterior e retorna ao e-mail convidado; a correção está publicada e a homologação manual ainda está pendente.
 
 ## Verificações deste retrato
 
 - `npm run lint`, `npm test` (17 arquivos e 97 testes) e `npm run build` aprovados em 05/08/2026 após a proteção da resposta para call futura.
 - Migrações Supabase: local e remoto alinhados até a versão indicada acima; colunas de rastreabilidade, função pós-análise, índice idempotente e revogação das funções legadas confirmados no remoto.
 - `npx supabase db lint --linked --fail-on error`: concluído sem erros; permanecem apenas avisos preexistentes.
-- Após a correção do fluxo de convite: `npm test` com 98 testes, `npm run lint` e `npm run build` com 46 rotas aprovados localmente; não houve deploy nesta tarefa.
+- Após a correção do fluxo de convite: `npm test` com 98 testes, `npm run lint` e `npm run build` com 46 rotas aprovados localmente; o commit `cea8119` foi publicado em produção no deployment `dpl_2RMP14xp41hB2YRds46EoQN8gRCN`.
 - Migration `20260806125009_add_call_grant_revoked_by.sql`: aplicada remotamente; `npx supabase db push --linked --dry-run` confirmou o banco atualizado; simulações autenticadas de `no_result` e `start_negotiation` passaram com `ROLLBACK`.
-- Vercel: o deployment `gril-gxbdyb828-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
+- Vercel: o deployment `gril-fejl110ao-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
 - Limpeza de contexto: os registros de homologação foram removidos do Supabase remoto em 05/08/2026 e 06/08/2026; a verificação mais recente zerou contato, oportunidade, conversa, mensagens, qualificações, IA, calls, campanha do contato, jobs, outbox, ingestões e vínculos derivados. A auditoria relacionada permanece por regra do produto.
 
 ## Pendências operacionais
