@@ -310,11 +310,15 @@ Confirme:
 
 - preferenciais recebem oferta simultânea;
 - fluxo comum segue 5/5/5 minutos e depois broadcast;
+- slots oferecidos devem ter no mínimo uma hora de antecedência em relação ao momento atual;
+- pedido explícito abaixo de uma hora sobe silenciosamente para o gestor, gera o alerta crítico correspondente e não inicia ofertas aos corretores;
 - dois aceites simultâneos produzem um vencedor;
 - aceite, recusa e devolução funcionam no app e WhatsApp;
 - cancelamento/reagendamento anulam holds, ofertas e jobs anteriores;
 - somente humano registra no-show;
 - terceiro reagendamento alerta o gestor.
+
+Inbox, CRM e agenda devem exibir datas e horários no fuso configurado da operação, nunca no UTC do servidor.
 
 ## 11. CRM, privacidade e encerramento
 
@@ -362,6 +366,7 @@ Valide ainda Central, push, pausa emergencial, relatórios, custos, carga por co
 | Agrupamento | 10 s; máximo total 30 s |
 | Capacidade | inbound 10; campanha 25; total 30; sleeping 5 min |
 | Call | 20 min + intervalo de 10 min |
+| Lead time de call | mínimo 1 h; abaixo disso sobe silenciosamente para o gestor |
 | Preferenciais | simultâneo por até 30 min |
 | Fluxo comum | 5 min + 5 min + 5 min + broadcast |
 | Fotos | até 5; exatamente 1 principal; 5 MB; JPEG/PNG |

@@ -12,6 +12,7 @@ import { notFound } from "next/navigation";
 
 import { canManageCrm, canManageTeam, requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { formatOperationDateTime } from "@/lib/time/operation-format";
 import { updateContactNameAction } from "../../contact-actions";
 import {
   addContactPhoneAction,
@@ -80,6 +81,7 @@ export default async function LeadDetailPage({
   if (!opportunity) notFound();
 
   const contact = Array.isArray(opportunity.contacts) ? opportunity.contacts[0] : opportunity.contacts;
+  const operationTimezone = viewer.operations.find((operation) => operation.id === opportunity.operation_id)?.timezone;
   const stage = Array.isArray(opportunity.pipeline_stages) ? opportunity.pipeline_stages[0] : opportunity.pipeline_stages;
   const phones = (contact?.contact_phones ?? []) as Array<{
     id: string;
@@ -186,7 +188,7 @@ export default async function LeadDetailPage({
             <div className={styles.actionList}>
               {actionsResult.data?.map((action) => (
                 <div className={styles.actionRow} key={action.id}>
-                  <span><strong>{action.description}</strong><small>{new Intl.DateTimeFormat("pt-BR", { dateStyle: "medium", timeStyle: "short" }).format(new Date(action.due_at))}</small></span>
+                  <span><strong>{action.description}</strong><small>{formatOperationDateTime(action.due_at, operationTimezone, { dateStyle: "medium", timeStyle: "short" })}</small></span>
                   {action.status === "open" ? (
                     <form action={completeNextActionAction}>
                       <input name="actionId" type="hidden" value={action.id} />
@@ -210,7 +212,7 @@ export default async function LeadDetailPage({
                   <li key={item.id}>
                     <span className={styles.timelineDot} />
                     <div><strong>{from?.name ? `${from.name} → ` : ""}{to?.name}</strong><small>{item.reason || "Mudança registrada"} · v{item.opportunity_version}</small></div>
-                    <time>{new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(item.created_at))}</time>
+                    <time>{formatOperationDateTime(item.created_at, operationTimezone)}</time>
                   </li>
                 );
               })}
@@ -253,7 +255,7 @@ export default async function LeadDetailPage({
 
           <section className={styles.compactCard}>
             <h3>Origem</h3>
-            {sourcesResult.data?.map((source) => <p key={source.id}><strong>{source.source}</strong><span>{source.attribution_type} · {new Date(source.attributed_at).toLocaleDateString("pt-BR")}</span></p>)}
+            {sourcesResult.data?.map((source) => <p key={source.id}><strong>{source.source}</strong><span>{source.attribution_type} · {formatOperationDateTime(source.attributed_at, operationTimezone, { dateStyle: "short" })}</span></p>)}
           </section>
 
           {canManageArchive && contact ? (

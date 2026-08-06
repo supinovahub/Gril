@@ -1,0 +1,2 @@
+export const PEDRO_CALL_LEAD_TIME_MINUTES = 60;
+

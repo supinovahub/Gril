@@ -15,6 +15,7 @@ import {
   type QualificationValue,
 } from "@/lib/ai/pedro-turn";
 import { compilePedroInstructions } from "@/lib/ai/pedro-instructions";
+import { PEDRO_CALL_LEAD_TIME_MINUTES } from "@/lib/calls/lead-time";
 import { evaluateRegressionCase } from "@/lib/ai/regression";
 import {
   buildSimulatorConversation,
@@ -280,7 +281,7 @@ async function runAiExecution(executionId: string) {
       : { data: null, error: null };
     if (operationResult.error) throw operationResult.error;
     const operationTimezone = operationResult.data?.timezone ?? "America/Sao_Paulo";
-    const slotHorizonStart = new Date(Date.now() + 10 * 60_000);
+    const slotHorizonStart = new Date(Date.now() + PEDRO_CALL_LEAD_TIME_MINUTES * 60_000);
     const slotHorizonEnd = new Date(Date.now() + 7 * 24 * 60 * 60_000);
     const slotsResult = operationId
       ? await admin.rpc("get_pedro_available_call_slots", {

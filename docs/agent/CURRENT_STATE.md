@@ -6,7 +6,7 @@
 
 - GitHub: `https://github.com/supinovahub/Gril`.
 - Branch padrão confirmada: `phase/01-foundation`.
-- Último commit de código confirmado nesta branch: `fe3399a` (`fix(pedro): preserve active call in response context`).
+- Último commit de código confirmado nesta branch: a correção de antecedência mínima e fuso operacional registrada em `docs/agent/changes/2026-08-06-correcao-antecedencia-fuso-call.md`.
 - Working tree estava limpa antes da criação desta camada de memória.
 
 ## Produção e infraestrutura
@@ -14,7 +14,7 @@
 - Aplicação: `https://gril-lac.vercel.app`.
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
-- Migrations locais e remotas estão alinhadas até `20260806125009_add_call_grant_revoked_by.sql`.
+- Migrations locais e remotas estão alinhadas até `20260806144434_enforce_one_hour_call_lead_time.sql`, incluindo a restauração de inbound em produção `20260806140816_restore_inbound_production.sql`.
 - A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
 - Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-fejl110ao-brio5.vercel.app` (`dpl_2RMP14xp41hB2YRds46EoQN8gRCN`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `cea8119`.
 
@@ -41,15 +41,17 @@
 - Quando o lead confirma o formato depois de escolher um horário, Pedro preserva o slot já confirmado; o banco reaproveita a call existente e impede duas calls ativas no mesmo slot.
 - Quando existe uma call futura ativa, Pedro recebe esse slot como estado canônico; respostas que dizem que o horário passou são regeneradas ou bloqueadas antes do envio.
 - O registro de resultado de call após o início agora conclui a revogação da liberação operacional da conversa, preservando `revoked_by` e evitando o erro de coluna inexistente.
+- A janela de slots de call do worker e do banco agora respeita no mínimo uma hora de antecedência; pedidos explícitos abaixo desse limite continuam escalando silenciosamente para o gestor sem acionar corretores. Inbox e CRM formatam timestamps no fuso da operação.
 - No código atual, a confirmação de e-mail de um convite individual recupera o convite pelo cookie, encerra apenas a sessão local anterior e retorna ao e-mail convidado; a correção está publicada e a homologação manual ainda está pendente.
 
 ## Verificações deste retrato
 
-- `npm run lint`, `npm test` (17 arquivos e 97 testes) e `npm run build` aprovados em 05/08/2026 após a proteção da resposta para call futura.
+- `npm run lint`, `npm test` (18 arquivos e 99 testes) e `npm run build` aprovados em 06/08/2026 após a correção de antecedência e fuso; o build confirmou 46 rotas.
 - Migrações Supabase: local e remoto alinhados até a versão indicada acima; colunas de rastreabilidade, função pós-análise, índice idempotente e revogação das funções legadas confirmados no remoto.
 - `npx supabase db lint --linked --fail-on error`: concluído sem erros; permanecem apenas avisos preexistentes.
 - Após a correção do fluxo de convite: `npm test` com 98 testes, `npm run lint` e `npm run build` com 46 rotas aprovados localmente; o commit `cea8119` foi publicado em produção no deployment `dpl_2RMP14xp41hB2YRds46EoQN8gRCN`.
 - Migration `20260806125009_add_call_grant_revoked_by.sql`: aplicada remotamente; `npx supabase db push --linked --dry-run` confirmou o banco atualizado; simulações autenticadas de `no_result` e `start_negotiation` passaram com `ROLLBACK`.
+- Migration `20260806144434_enforce_one_hour_call_lead_time.sql`: aplicada remotamente; o dry-run mostrou somente essa migration; a função remota rejeita o bypass de uma hora e uma chamada iniciada em 10 minutos retornou primeiro slot com mais de uma hora de antecedência.
 - Vercel: o deployment `gril-fejl110ao-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
 - Limpeza de contexto: os registros de homologação foram removidos do Supabase remoto em 05/08/2026 e 06/08/2026; a verificação mais recente zerou contato, oportunidade, conversa, mensagens, qualificações, IA, calls, campanha do contato, jobs, outbox, ingestões e vínculos derivados. A auditoria relacionada permanece por regra do produto.
 
@@ -62,6 +64,7 @@
 - Atualizar este arquivo após qualquer alteração de deployment, migration, conta/projeto ou conclusão material de homologação.
 - Repetir a homologação manual do registro de resultado no dashboard.
 - Homologar com um corretor novo o link de confirmação em um navegador que possui outra conta localmente autenticada, confirmando que a sessão final pertence ao e-mail convidado e retorna ao convite.
+- Homologar manualmente a exibição do fuso operacional no Inbox/CRM e o comportamento de um pedido explícito de call abaixo de uma hora com um lead de teste novo.
 
 ## Protocolo compartilhado
 
