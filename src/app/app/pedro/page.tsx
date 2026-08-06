@@ -116,9 +116,9 @@ export default async function PedroPage({
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Atendimento normal</p><h2>Modo inbound</h2></span></div>
             <form action={changeGlobalAiModeAction} className={styles.modeForm}>
-              {["off", "shadow", "assisted"].map((mode) => <button className={settings?.inbound_ai_mode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{mode}</button>)}
+              {["off", "shadow", "assisted", "production"].map((mode) => <button className={settings?.inbound_ai_mode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{mode}</button>)}
             </form>
-            <p className={styles.notice}>O atendimento normal não pode operar em production. Shadow observa; assisted sugere e aprende com correções aprovadas.</p>
+            <p className={styles.notice}>Production envia automaticamente, mas exige os gates de identidade, conhecimento, modelo, canal saudável e regressão aprovada. Shadow observa; assisted sugere e aprende com correções aprovadas.</p>
           </section>
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Reativação de base</p><h2>Produção controlada</h2></span></div>

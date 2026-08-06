@@ -194,7 +194,7 @@ No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confir
 
 ### 6.1 Modos, aprendizado e curadoria
 
-1. em `Pedro`, confirme que o atendimento normal oferece apenas `off`, `shadow` e `assisted`; `production` existe somente para reativação;
+1. em `Pedro`, confirme que o atendimento normal oferece `off`, `shadow`, `assisted` e `production`; `production` só pode ser salvo quando os portões técnicos de produção estiverem aprovados;
 2. configure reativação como `production + teste controlado`, cadastre seu telefone E.164 na allowlist e prove que um contato fora dela é bloqueado no servidor;
 3. em uma sugestão assisted, edite e aprove: a mensagem deve ser enviada e a correção deve criar um candidato para Lionel;
 4. use `Ensinar e gerar outra`: nada deve ser enviado ao lead e uma nova sugestão deve aparecer usando a orientação;
