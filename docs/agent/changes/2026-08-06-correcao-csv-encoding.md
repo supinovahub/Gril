@@ -18,17 +18,17 @@ Impedir que nomes com acentos de bases CSV sejam gravados como U+FFFD (`�`) e 
 
 - Arquivos: `src/lib/campaigns/csv.ts`, `src/lib/campaigns/csv.test.ts`, `src/app/app/campanhas/actions.ts`, `src/app/app/campanhas/page.tsx`, este registro, `CURRENT_STATE.md` e o guia de homologação.
 - Migrations: nenhuma nova migration foi criada ou aplicada.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: os registros históricos encontrados com U+FFFD foram corrigidos no projeto Supabase canônico, incluindo nomes de contatos e cópias derivadas de importação/campanha. Nenhum outro contato foi alterado.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: os registros históricos encontrados com U+FFFD foram corrigidos no projeto Supabase canônico, incluindo nomes de contatos e cópias derivadas de importação/campanha. Nenhum outro contato foi alterado. A branch foi publicada no GitHub e o deployment `dpl_EBua95QaseciRZBjJEqVYvtetekp` foi promovido para `https://gril-lac.vercel.app`.
 
 ## Validação
 
-- Comandos/testes executados: `npx supabase migration list --linked`, consulta de diagnóstico no Supabase, `npm test -- --run src/lib/campaigns/csv.test.ts`, `npm run lint -- --ignore-pattern .vercel/output`.
-- Evidência observada: os testes do parser passaram (5/5), o lint passou e a consulta final não encontrou U+FFFD em `contacts.name`, `campaign_import_rows`, `campaign_import_requests`, `campaign_contacts.campaign_first_name` ou `campaigns.opening_examples`.
-- Validações não executadas e motivo: suíte/build completos e deploy ainda dependem da conclusão da documentação e do commit; homologação visual com arquivo real UTF-8 e Windows-1252 continua pendente.
+- Comandos/testes executados: `npx supabase migration list --linked`, consulta de diagnóstico e reparo transacional no Supabase, `npm test`, `npm run lint -- --ignore-pattern .vercel/output`, `npm run build`, `vercel inspect` e requisição HTTP para `/login`.
+- Evidência observada: 18 arquivos e 101 testes passaram, lint passou, build gerou 46 rotas, a consulta final não encontrou U+FFFD em `contacts.name`, `campaign_import_rows`, `campaign_import_requests`, `campaign_contacts.campaign_first_name` ou `campaigns.opening_examples`; preview e produção ficaram `Ready`, e o alias público respondeu HTTP 200.
+- Validações não executadas e motivo: homologação visual com arquivo real UTF-8 e Windows-1252 continua pendente.
 
 ## Impacto operacional
 
-- Deploy necessário: sim, para que novos imports usem a decodificação corrigida.
+- Deploy necessário: sim, concluído no deployment `dpl_EBua95QaseciRZBjJEqVYvtetekp`.
 - Migração aplicada: não.
 - Compatibilidade/rollback: CSVs UTF-8 continuam funcionando; CSVs Windows-1252/ANSI passam a ser aceitos. O rollback de código restauraria o risco de corromper novos imports; os dados históricos corrigidos não devem ser revertidos.
 

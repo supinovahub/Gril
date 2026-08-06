@@ -16,7 +16,7 @@
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
 - Migrations locais e remotas estão alinhadas até `20260806170711_campaign_edit_archive.sql`, incluindo as migrations concorrentes `20260806165000_chat_pedro_assisted_queue.sql` e `20260806165243_enforce_pedro_inbound_allowlist.sql`; o remoto também registra `20260806171000` (`campaign_first_name`), ainda sem arquivo correspondente nesta branch e pendente de reconciliação.
 - A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
-- Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-qv5adl7zl-brio5.vercel.app` (`dpl_6fHG59SPq3QmNBFbxsThK8LLeKhz`), alias `https://gril-lac.vercel.app`, publicado a partir do commit integrado `a7e730c`.
+- Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-bj31r8feq-brio5.vercel.app` (`dpl_EBua95QaseciRZBjJEqVYvtetekp`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `a8dd01e`.
 
 ## Estado funcional
 
@@ -52,6 +52,7 @@
 - Migrações Supabase: local e remoto alinhados até a versão indicada acima; colunas de rastreabilidade, função pós-análise, índice idempotente e revogação das funções legadas confirmados no remoto.
 - `npx supabase db lint --linked --fail-on error`: concluído sem erros; permanecem apenas avisos preexistentes.
 - Após a correção do fluxo de convite: `npm test` com 98 testes, `npm run lint` e `npm run build` com 46 rotas aprovados localmente; o commit `cea8119` foi publicado em produção no deployment `dpl_2RMP14xp41hB2YRds46EoQN8gRCN`.
+- Após a correção de encoding dos CSVs: `npm test` com 101 testes, `npm run lint` e `npm run build` com 46 rotas passaram; o preview `dpl_6caBsqrkPAjC4a1UADpQkEZe4xbL` ficou `Ready`, a produção `dpl_EBua95QaseciRZBjJEqVYvtetekp` ficou `Ready` e `https://gril-lac.vercel.app/login` respondeu HTTP 200.
 - Migration `20260806125009_add_call_grant_revoked_by.sql`: aplicada remotamente; `npx supabase db push --linked --dry-run` confirmou o banco atualizado; simulações autenticadas de `no_result` e `start_negotiation` passaram com `ROLLBACK`.
 - Migration `20260806144434_enforce_one_hour_call_lead_time.sql`: aplicada remotamente; o dry-run mostrou somente essa migration; a função remota rejeita o bypass de uma hora e uma chamada iniciada em 10 minutos retornou primeiro slot com mais de uma hora de antecedência.
 - Vercel: o deployment `gril-fejl110ao-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
