@@ -35,7 +35,7 @@
 - O nudge após envio de material não reenvia PDFs.
 - Pedido de disponibilidade usa horários aprovados e não cria handoff indevido quando existem slots válidos.
 - Nenhuma palavra isolada executa controle antes do Pedro: o worker envia mensagens elegíveis para análise contextual, escaladas exigem evidência e confiança, e as funções legadas pré-IA estão sem permissão até para `service_role`.
-- Os contextos de teste usados na homologação foram removidos do banco remoto com todo o contexto operacional associado; os eventos de auditoria imutáveis foram preservados. A limpeza mais recente, em 06/08/2026, zerou contato, conversa, mensagens, qualificações, IA, oportunidade, call, campanha do contato, ingestões, reservas, jobs, outbox e payloads brutos do alvo.
+- Os contextos de teste usados na homologação foram removidos do banco remoto com todo o contexto operacional associado; os eventos de auditoria imutáveis foram preservados. A limpeza mais recente, repetida em 06/08/2026, zerou contato, telefone, conversa, mensagens, qualificações, IA, oportunidade, call, reservas, ingestões, jobs e outbox do alvo.
 - A decisão estruturada do Pedro passou a ser a fonte de verdade: o executor não seleciona projetos adicionais, não substitui mídia ou texto e bloqueia mutações semânticas. Um book escolhido gera somente a ação explícita correspondente.
 - Edição humana de sugestão envia somente o texto editado e invalida as ações estruturadas anteriores.
 - Quando o lead confirma o formato depois de escolher um horário, Pedro preserva o slot já confirmado; o banco reaproveita a call existente e impede duas calls ativas no mesmo slot.
@@ -54,7 +54,7 @@
 - Migration `20260806144434_enforce_one_hour_call_lead_time.sql`: aplicada remotamente; o dry-run mostrou somente essa migration; a função remota rejeita o bypass de uma hora e uma chamada iniciada em 10 minutos retornou primeiro slot com mais de uma hora de antecedência.
 - Vercel: o deployment `gril-fejl110ao-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
 - Vercel: o deployment `gril-1jotu4cvc-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
-- Limpeza de contexto: os registros de homologação foram removidos do Supabase remoto em 05/08/2026 e 06/08/2026; a verificação mais recente zerou contato, oportunidade, conversa, mensagens, qualificações, IA, calls, campanha do contato, jobs, outbox, ingestões e vínculos derivados. A auditoria relacionada permanece por regra do produto.
+- Limpeza de contexto: os registros de homologação foram removidos do Supabase remoto em 05/08/2026 e 06/08/2026; a segunda limpeza de 06/08 zerou contato, oportunidade, conversa, mensagens, qualificações, IA, call, hold, reservas, jobs, outbox, ingestões e vínculos derivados. A auditoria relacionada permanece por regra do produto.
 
 ## Pendências operacionais
 
