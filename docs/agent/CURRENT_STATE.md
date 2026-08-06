@@ -35,7 +35,7 @@
 - O nudge após envio de material não reenvia PDFs.
 - Pedido de disponibilidade usa horários aprovados e não cria handoff indevido quando existem slots válidos.
 - Nenhuma palavra isolada executa controle antes do Pedro: o worker envia mensagens elegíveis para análise contextual, escaladas exigem evidência e confiança, e as funções legadas pré-IA estão sem permissão até para `service_role`.
-- Os contextos de teste usados na homologação foram removidos do banco remoto com todo o contexto operacional associado; os eventos de auditoria imutáveis foram preservados. A limpeza mais recente zerou contato, conversa, mensagens, IA, oportunidade, call, reservas, jobs e outbox do alvo.
+- Os contextos de teste usados na homologação foram removidos do banco remoto com todo o contexto operacional associado; os eventos de auditoria imutáveis foram preservados. A limpeza mais recente, em 06/08/2026, zerou contato, conversa, mensagens, qualificações, IA, oportunidade, call, campanha do contato, ingestões, reservas, jobs, outbox e payloads brutos do alvo.
 - A decisão estruturada do Pedro passou a ser a fonte de verdade: o executor não seleciona projetos adicionais, não substitui mídia ou texto e bloqueia mutações semânticas. Um book escolhido gera somente a ação explícita correspondente.
 - Edição humana de sugestão envia somente o texto editado e invalida as ações estruturadas anteriores.
 - Quando o lead confirma o formato depois de escolher um horário, Pedro preserva o slot já confirmado; o banco reaproveita a call existente e impede duas calls ativas no mesmo slot.
@@ -51,7 +51,7 @@
 - Após a correção do fluxo de convite: `npm test` com 98 testes, `npm run lint` e `npm run build` com 46 rotas aprovados localmente; não houve deploy nesta tarefa.
 - Migration `20260806125009_add_call_grant_revoked_by.sql`: aplicada remotamente; `npx supabase db push --linked --dry-run` confirmou o banco atualizado; simulações autenticadas de `no_result` e `start_negotiation` passaram com `ROLLBACK`.
 - Vercel: o deployment `gril-gxbdyb828-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
-- Limpeza de contexto: o registro de homologação foi removido do Supabase remoto em 05/08/2026; a verificação zerou contato, oportunidade, conversa, mensagens, IA, calls, jobs, outbox e vínculos derivados. A auditoria relacionada permanece por regra do produto.
+- Limpeza de contexto: os registros de homologação foram removidos do Supabase remoto em 05/08/2026 e 06/08/2026; a verificação mais recente zerou contato, oportunidade, conversa, mensagens, qualificações, IA, calls, campanha do contato, jobs, outbox, ingestões e vínculos derivados. A auditoria relacionada permanece por regra do produto.
 
 ## Pendências operacionais
 
