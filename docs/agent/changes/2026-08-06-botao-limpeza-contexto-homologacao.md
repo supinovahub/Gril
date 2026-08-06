@@ -28,13 +28,12 @@ Permitir que o dono ou gestor autorizado limpe o contexto de homologação pelo 
 
 ## Impacto operacional
 
-- Deploy necessário: sim, para publicar o dashboard e a Server Action; confirmar identidade Vercel canônica antes do deploy.
+- Deploy necessário: concluído em produção; deployment `dpl_5NHYjVdK4kQjwKKX8mkeNiXzUYTH` ficou `Ready`, alias `https://gril-lac.vercel.app` respondeu `200` em `/login`.
 - Migração aplicada: sim, as duas migrations foram aplicadas no Supabase remoto; funções públicas aceitam somente usuários autenticados e dono/gestor com `team.manage`.
 - Compatibilidade/rollback: a ação só seleciona contatos `HML-`, bloqueia mais de 20 e referências cruzadas, exige confirmação literal e preserva auditoria/configuração. Rollback de código não restaura dados já limpos; por isso a seleção é deliberadamente restrita.
 
 ## Pendências e riscos
 
-- Publicar o commit e confirmar o deployment `Ready` e a rota `/app`.
 - Executar manualmente o botão com um lead HML- real autorizado, primeiro um contato e depois, se necessário, até 20.
 - Confirmar visualmente a remoção de arquivos e registrar qualquer pendência de storage.
 
