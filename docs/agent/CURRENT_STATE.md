@@ -14,7 +14,7 @@
 - Aplicação: `https://gril-lac.vercel.app`.
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
-- Migrations locais e remotas estão alinhadas até `20260806144434_enforce_one_hour_call_lead_time.sql`, incluindo a restauração de inbound em produção `20260806140816_restore_inbound_production.sql`.
+- Migrations remotas estão aplicadas até `20260806165243_enforce_pedro_inbound_allowlist.sql`, incluindo a restauração de inbound em produção `20260806140816_restore_inbound_production.sql`; a migration `20260806165420` de outra frente continua pendente.
 - A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
 - Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-1jotu4cvc-brio5.vercel.app` (`dpl_HXdp4BrqHY7zCDQtG6F7d9BUSZpx`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `d930949`.
 
@@ -86,10 +86,12 @@
 
 - A tela de Pedro agora permite cadastrar números E.164 em escopo da
   organização para testes controlados do inbound normal em `production`.
-- A migration `20260806165243_enforce_pedro_inbound_allowlist.sql` adiciona
-  bloqueio na elegibilidade, revalidação antes do worker e trigger final antes
-  de qualquer outbound de IA; ela ainda não foi aplicada no Supabase remoto.
-- A homologação funcional e a publicação dessa mudança continuam pendentes.
+- A migration `20260806165243_enforce_pedro_inbound_allowlist.sql` foi aplicada
+  no Supabase remoto e adiciona bloqueio na elegibilidade, revalidação antes
+  do worker e trigger final antes de qualquer outbound de IA.
+- A mudança foi publicada no deployment Vercel
+  `dpl_APSFrhXy7vtcrJBWDaN9g6KA6gq9`, alias `https://gril-lac.vercel.app`,
+  com status `Ready`; a homologação funcional continua pendente.
 - O registro detalhado está em
   `docs/agent/changes/20260806-pedro-inbound-production-allowlist.md`.
 
