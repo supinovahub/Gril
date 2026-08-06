@@ -46,6 +46,8 @@
 - O registro de resultado de call após o início agora conclui a revogação da liberação operacional da conversa, preservando `revoked_by` e evitando o erro de coluna inexistente.
 - A janela de slots de call do worker e do banco agora respeita no mínimo uma hora de antecedência; pedidos explícitos abaixo desse limite continuam escalando silenciosamente para o gestor sem acionar corretores. Inbox e CRM formatam timestamps no fuso da operação.
 - No código atual, a confirmação de e-mail de um convite individual recupera o convite pelo cookie, encerra apenas a sessão local anterior e retorna ao e-mail convidado; a correção está publicada e a homologação manual ainda está pendente.
+- O atendimento normal voltou a oferecer o modo `production`; a Server Action e o banco aceitam o modo, mas a ativação continua condicionada aos gates de identidade, conhecimento, modelo, canal saudável e regressão aprovada.
+- A branch atual recompõe a fila de sugestões `assisted` no Chat com Pedro, com resposta exata, link para o Inbox e revisão humana pelo mesmo fluxo transacional; a publicação e a homologação desta composição continuam pendentes.
 
 ## Verificações deste retrato
 
@@ -67,6 +69,7 @@
 - Recriar um lead de teste somente quando necessário para nova homologação, sem reutilizar os dados removidos.
 - Atualizar este arquivo após qualquer alteração de deployment, migration, conta/projeto ou conclusão material de homologação.
 - Repetir a homologação manual do registro de resultado no dashboard.
+- Homologar no Chat com Pedro a fila de sugestões `assisted`, a edição/aprovação, o descarte e o conflito de versão com o Inbox.
 - Homologar com um corretor novo o link de confirmação em um navegador que possui outra conta localmente autenticada, confirmando que a sessão final pertence ao e-mail convidado e retorna ao convite.
 - Homologar manualmente a exibição do fuso operacional no Inbox/CRM e o comportamento de um pedido explícito de call abaixo de uma hora com um lead de teste novo.
 
