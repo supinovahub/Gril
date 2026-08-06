@@ -75,6 +75,12 @@
 
 ## Limites desta fonte
 
+## Atualização de 06/08/2026
+
+- As migrations `20260806151846_add_homologation_context_cleanup.sql` e `20260806153847_add_homologation_context_catalog_anchors.sql` foram aplicadas ao Supabase remoto e estão alinhadas localmente.
+- O dashboard agora oferece preview e limpeza protegida somente para contexto HML-, limitada a 20 contatos, com bloqueio de referências cruzadas, confirmação literal, transação no banco e auditoria preservada.
+- Preview autenticado e smoke test com contato sintético em transação revertida passaram; `npx supabase db lint --linked --fail-on error` passou com avisos preexistentes.
+
 Este documento não substitui:
 
 - o banco para estado transacional;

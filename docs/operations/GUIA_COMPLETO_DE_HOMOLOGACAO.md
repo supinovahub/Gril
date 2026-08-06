@@ -326,6 +326,19 @@ Teste criação, deduplicação e merge de leads; co-comprador; origem; Kanban; 
 
 O dono/gestor pode arquivar e restaurar um lead, devolvê-lo ao Pedro e reativar follow-up conforme permissões.
 
+### Limpeza do contexto de homologação
+
+No dashboard, dono ou gestor com `team.manage` pode usar **Limpar contexto de homologação** para remover o contexto de teste da própria imobiliária. O preview considera somente contatos cujo nome começa por `HML-` e limita a operação a 20 contatos.
+
+1. Crie os registros de teste com o prefixo `HML-` e use somente contatos autorizados.
+2. Confira no preview contatos, oportunidades, conversas, mensagens, chamadas e jobs pendentes.
+3. Não prossiga se houver bloqueio por merge ou referência cruzada com uma oportunidade fora de HML-.
+4. Clique na ação, digite exatamente `CONFIRMAR AÇÃO` e confirme.
+5. Valide que leads, conversas, mensagens, chamadas, IA, qualificações, jobs, outbox e mídias do contexto foram removidos; configurações, equipe e auditoria permanecem.
+6. Consulte `/app/configuracoes/auditoria` e registre o horário, o ator, os IDs e os contadores do recibo.
+
+O suporte externo não executa esta ação. A limpeza é transacional no banco; remoção de arquivos usa a rotina de storage e qualquer pendência deve ser registrada antes de repetir o piloto.
+
 Em privacidade, teste acesso, exportação, correção e anonimização; legal hold; documento sensível com e sem liberação; e trilha de auditoria. A decisão jurídica e o atendimento de LGPD pertencem à imobiliária; o sistema oferece os controles, mas não substitui sua decisão.
 
 Valide ainda Central, push, pausa emergencial, relatórios, custos, carga por corretor, alertas de orçamento em 50/80/100% e auditoria. Em um notebook com altura reduzida e zoom de 100%, confirme que a sidebar rola verticalmente, mantém o rodapé acessível e permite alcançar todos os botões. A revisão visual em desktop/celular e o teste de restore seguro são etapas humanas finais.

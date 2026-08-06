@@ -7,21 +7,35 @@ import {
   UsersRound,
 } from "lucide-react";
 
+import { TypedConfirmationButton } from "@/components/typed-confirmation-button";
 import { canManageTeam, requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { purgeHomologationContextAction } from "./homologation-actions";
 import styles from "./dashboard.module.css";
 
-export default async function DashboardPage() {
+type HomologationPreview = {
+  eligible: boolean;
+  blocked: string[];
+  counts: Record<string, number>;
+};
+
+export default async function DashboardPage({
+  searchParams,
+}: {
+  searchParams?: Promise<{ erro?: string; limpeza?: string }>;
+}) {
   const viewer = await requireActiveViewer();
   const supabase = await createClient();
   const managesTeam = canManageTeam(viewer);
+  const feedback: { erro?: string; limpeza?: string } = searchParams ? await searchParams : {};
 
   let activeMembers = 1;
   let pendingMembers = 0;
   let activeInvites = 0;
+  let homologationPreview: HomologationPreview | null = null;
 
   if (managesTeam) {
-    const [activeResult, pendingResult, inviteResult] = await Promise.all([
+    const [activeResult, pendingResult, inviteResult, previewResult] = await Promise.all([
       supabase
         .from("memberships")
         .select("id", { count: "exact", head: true })
@@ -37,11 +51,15 @@ export default async function DashboardPage() {
         .select("id", { count: "exact", head: true })
         .eq("org_id", viewer.organization!.id)
         .eq("status", "active"),
+      supabase.rpc("preview_homologation_context", { p_org_id: viewer.organization!.id }),
     ]);
 
     activeMembers = activeResult.count ?? 0;
     pendingMembers = pendingResult.count ?? 0;
     activeInvites = inviteResult.count ?? 0;
+    if (!previewResult.error && previewResult.data) {
+      homologationPreview = previewResult.data as unknown as HomologationPreview;
+    }
   }
 
   return (
@@ -56,6 +74,11 @@ export default async function DashboardPage() {
           <CheckCircle2 size={15} aria-hidden="true" /> Homologação em andamento
         </span>
       </header>
+
+      {feedback.erro ? <p className={styles.feedbackError}>{feedback.erro}</p> : null}
+      {feedback.limpeza === "concluida" ? <p className={styles.feedbackSuccess}>Contexto HML- limpo. Auditoria e configurações foram preservadas.</p> : null}
+      {feedback.limpeza === "concluida-com-arquivos-pendentes" ? <p className={styles.feedbackWarning}>Contexto HML- limpo no banco, mas alguns arquivos não puderam ser removidos agora. Revise a auditoria e a retenção.</p> : null}
+      {feedback.limpeza === "nenhum-contexto-elegivel" ? <p className={styles.feedbackSuccess}>Nenhum contexto HML- elegível foi encontrado.</p> : null}
 
       <section className={styles.stats} aria-label="Resumo de acesso">
         <article className={styles.stat}>
@@ -119,6 +142,43 @@ export default async function DashboardPage() {
           </p>
         </aside>
       </div>
+
+      {managesTeam ? (
+        <section className={styles.cleanupPanel} aria-labelledby="homologation-cleanup-title">
+          <div>
+            <p className={styles.eyebrow}>Operação protegida</p>
+            <h2 id="homologation-cleanup-title">Limpar contexto de homologação</h2>
+            <p>Remove somente registros de teste com prefixo <code>HML-</code> desta imobiliária: leads, conversas, mensagens, chamadas e efeitos pendentes. Configurações, equipe e auditoria ficam preservadas.</p>
+          </div>
+          {homologationPreview ? (
+            <div className={styles.cleanupBody}>
+              <dl className={styles.cleanupCounts}>
+                <div><dt>Contatos</dt><dd>{homologationPreview.counts.contacts ?? 0}</dd></div>
+                <div><dt>Oportunidades</dt><dd>{homologationPreview.counts.opportunities ?? 0}</dd></div>
+                <div><dt>Conversas</dt><dd>{homologationPreview.counts.conversations ?? 0}</dd></div>
+                <div><dt>Mensagens</dt><dd>{homologationPreview.counts.messages ?? 0}</dd></div>
+                <div><dt>Chamadas</dt><dd>{homologationPreview.counts.calls ?? 0}</dd></div>
+                <div><dt>Jobs</dt><dd>{homologationPreview.counts.scheduled_jobs ?? 0}</dd></div>
+              </dl>
+              {homologationPreview.blocked?.length ? (
+                <div className={styles.cleanupBlocked}>
+                  <strong>Limpeza bloqueada por segurança</strong>
+                  <ul>{homologationPreview.blocked.map((reason) => <li key={reason}>{reason}</li>)}</ul>
+                </div>
+              ) : homologationPreview.eligible ? (
+                <form action={purgeHomologationContextAction} className={styles.cleanupAction}>
+                  <p>Preview atualizado. A execução é limitada a 20 contatos e exige digitar exatamente <code>CONFIRMAR AÇÃO</code>.</p>
+                  <TypedConfirmationButton description="Somente registros HML- desta imobiliária serão removidos. Configurações, equipe e auditoria serão preservadas." title="Limpar contexto de homologação">Limpar contexto HML-</TypedConfirmationButton>
+                </form>
+              ) : (
+                <p className={styles.cleanupEmpty}>Nenhum registro HML- elegível para limpar.</p>
+              )}
+            </div>
+          ) : (
+            <p className={styles.cleanupEmpty}>Não foi possível carregar o preview. A ação ficará indisponível até a verificação funcionar.</p>
+          )}
+        </section>
+      ) : null}
     </div>
   );
 }

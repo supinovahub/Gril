@@ -11444,6 +11444,14 @@ export type Database = {
         Returns: string
       }
       platform_control_snapshot: { Args: never; Returns: Json }
+      preview_homologation_context: {
+        Args: { p_org_id: string }
+        Returns: Json
+      }
+      purge_homologation_context: {
+        Args: { p_confirmation: string; p_org_id: string }
+        Returns: Json
+      }
       platform_control_user: {
         Args: {
           p_action: string
