@@ -300,7 +300,7 @@ Confirme:
 
 ### Campanha
 
-1. importe CSV sintético e mapeie colunas;
+1. importe CSV sintético salvo em UTF-8 e repita com Windows-1252/ANSI, usando nomes com `ç`, `ã` e `í`; confirme que um arquivo que ainda contenha `�` é recusado;
 2. revise amostras, telefones, duplicados e opt-outs;
 3. confirme bloqueio do mesmo hash;
 4. aprove exemplos de abertura;

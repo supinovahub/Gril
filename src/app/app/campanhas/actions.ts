@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireActiveViewer } from "@/lib/auth/session";
-import { campaignCsvRow, parseCsvLine, resolveCampaignCsvColumns } from "@/lib/campaigns/csv";
+import { campaignCsvRow, decodeCsvBytes, parseCsvLine, resolveCampaignCsvColumns } from "@/lib/campaigns/csv";
 import { normalizePhoneToE164 } from "@/lib/crm/phone";
 import { createClient } from "@/lib/supabase/server";
 
@@ -84,7 +84,10 @@ export async function importCampaignAction(formData: FormData) {
   let filename = "base-colada.csv";
   if (file instanceof File && file.size > 0) {
     if (file.size > 1_000_000) campaignRedirect("O CSV do MVP deve ter até 1 MB.");
-    text = await file.text(); filename = file.name;
+    text = decodeCsvBytes(new Uint8Array(await file.arrayBuffer())); filename = file.name;
+  }
+  if (text.includes("\uFFFD")) {
+    campaignRedirect("O CSV contém caracteres inválidos. Salve o arquivo como UTF-8 ou Windows-1252/ANSI e tente novamente.");
   }
   const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   if (lines.length < 2) campaignRedirect("Informe cabeçalho e ao menos um contato.");

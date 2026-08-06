@@ -14,7 +14,7 @@
 - Aplicação: `https://gril-lac.vercel.app`.
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
-- Migrations locais e remotas estão alinhadas até `20260806170711_campaign_edit_archive.sql`, incluindo as migrations concorrentes `20260806165000_chat_pedro_assisted_queue.sql` e `20260806165243_enforce_pedro_inbound_allowlist.sql`.
+- Migrations locais e remotas estão alinhadas até `20260806170711_campaign_edit_archive.sql`, incluindo as migrations concorrentes `20260806165000_chat_pedro_assisted_queue.sql` e `20260806165243_enforce_pedro_inbound_allowlist.sql`; o remoto também registra `20260806171000` (`campaign_first_name`), ainda sem arquivo correspondente nesta branch e pendente de reconciliação.
 - A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
 - Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-qv5adl7zl-brio5.vercel.app` (`dpl_6fHG59SPq3QmNBFbxsThK8LLeKhz`), alias `https://gril-lac.vercel.app`, publicado a partir do commit integrado `a7e730c`.
 
@@ -43,6 +43,7 @@
 - O registro de resultado de call após o início agora conclui a revogação da liberação operacional da conversa, preservando `revoked_by` e evitando o erro de coluna inexistente.
 - A janela de slots de call do worker e do banco agora respeita no mínimo uma hora de antecedência; pedidos explícitos abaixo desse limite continuam escalando silenciosamente para o gestor sem acionar corretores. Inbox e CRM formatam timestamps no fuso da operação.
 - Campanhas de reativação agora permitem edição segura antes de ondas liberadas e arquivamento terminal auditado, com aba separada para campanhas arquivadas e cancelamento de jobs pendentes.
+- O importador de campanhas agora decodifica CSV UTF-8, Windows-1252/ANSI e UTF-16, bloqueia U+FFFD antes da gravação e os registros históricos afetados por essa falha foram corrigidos no banco remoto; a validação visual ainda deve ser repetida com um CSV acentuado.
 - No código atual, a confirmação de e-mail de um convite individual recupera o convite pelo cookie, encerra apenas a sessão local anterior e retorna ao e-mail convidado; a correção está publicada e a homologação manual ainda está pendente.
 
 ## Verificações deste retrato

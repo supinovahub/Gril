@@ -3,6 +3,22 @@ import { normalizePhoneToE164 } from "../crm/phone";
 const PHONE_WORDS = new Set(["telefone", "phone", "celular", "whatsapp", "fone", "mobile", "numero"]);
 const NAME_WORDS = new Set(["nome", "name", "cliente", "lead", "contato"]);
 
+export function decodeCsvBytes(bytes: Uint8Array) {
+  let decoded: string;
+  if (bytes[0] === 0xff && bytes[1] === 0xfe) {
+    decoded = new TextDecoder("utf-16le").decode(bytes);
+  } else if (bytes[0] === 0xfe && bytes[1] === 0xff) {
+    decoded = new TextDecoder("utf-16be").decode(bytes);
+  } else {
+    try {
+      decoded = new TextDecoder("utf-8", { fatal: true }).decode(bytes);
+    } catch {
+      decoded = new TextDecoder("windows-1252").decode(bytes);
+    }
+  }
+  return decoded.replace(/^\uFEFF/, "");
+}
+
 export function parseCsvLine(line: string) {
   const result: string[] = [];
   let current = "";
