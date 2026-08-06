@@ -306,6 +306,15 @@ Confirme:
 7. libere o restante;
 8. teste pausa, retomada, exclusão e arquivamento.
 
+#### Edição e arquivamento
+
+1. na aba **Ativas**, abra **Editar configuração** de uma campanha em rascunho, importação, revisão ou aprovada sem ondas;
+2. altere nome, conexão ativa, modo do Pedro e abertura; para Meta, selecione um template aprovado da conexão escolhida;
+3. confirme que a edição é auditada, incrementa a versão e que uma campanha aprovada volta para revisão antes de qualquer novo envio;
+4. confirme que uma campanha com onda liberada, em execução, pausada, concluída, cancelada ou arquivada não pode ser editada;
+5. clique em **Arquivar** em uma campanha não arquivada e confirme que jobs pendentes são cancelados, contatos ainda não enviados ficam excluídos e o status passa a `archived`;
+6. abra a aba **Arquivadas** e confirme que a campanha permanece consultável, sem ações de edição, retomada ou liberação de onda.
+
 ### Agenda e distribuição
 
 - preferenciais recebem oferta simultânea;

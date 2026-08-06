@@ -14,7 +14,7 @@
 - Aplicação: `https://gril-lac.vercel.app`.
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
-- Migrations locais e remotas estão alinhadas até `20260806144434_enforce_one_hour_call_lead_time.sql`, incluindo a restauração de inbound em produção `20260806140816_restore_inbound_production.sql`.
+- Migrations locais e remotas estão alinhadas até `20260806170711_campaign_edit_archive.sql`, incluindo as migrations concorrentes `20260806165000_chat_pedro_assisted_queue.sql` e `20260806165243_enforce_pedro_inbound_allowlist.sql`.
 - A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
 - Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-1jotu4cvc-brio5.vercel.app` (`dpl_HXdp4BrqHY7zCDQtG6F7d9BUSZpx`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `d930949`.
 
@@ -42,6 +42,7 @@
 - Quando existe uma call futura ativa, Pedro recebe esse slot como estado canônico; respostas que dizem que o horário passou são regeneradas ou bloqueadas antes do envio.
 - O registro de resultado de call após o início agora conclui a revogação da liberação operacional da conversa, preservando `revoked_by` e evitando o erro de coluna inexistente.
 - A janela de slots de call do worker e do banco agora respeita no mínimo uma hora de antecedência; pedidos explícitos abaixo desse limite continuam escalando silenciosamente para o gestor sem acionar corretores. Inbox e CRM formatam timestamps no fuso da operação.
+- Campanhas de reativação agora permitem edição segura antes de ondas liberadas e arquivamento terminal auditado, com aba separada para campanhas arquivadas e cancelamento de jobs pendentes.
 - No código atual, a confirmação de e-mail de um convite individual recupera o convite pelo cookie, encerra apenas a sessão local anterior e retorna ao e-mail convidado; a correção está publicada e a homologação manual ainda está pendente.
 
 ## Verificações deste retrato
@@ -66,6 +67,7 @@
 - Repetir a homologação manual do registro de resultado no dashboard.
 - Homologar com um corretor novo o link de confirmação em um navegador que possui outra conta localmente autenticada, confirmando que a sessão final pertence ao e-mail convidado e retorna ao convite.
 - Homologar manualmente a exibição do fuso operacional no Inbox/CRM e o comportamento de um pedido explícito de call abaixo de uma hora com um lead de teste novo.
+- Publicar o código da edição/arquivamento de campanhas no Vercel e homologar o fluxo com uma campanha de teste nova; a migration já está aplicada no Supabase remoto.
 
 ## Protocolo compartilhado
 

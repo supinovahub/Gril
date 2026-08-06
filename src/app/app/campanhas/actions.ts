@@ -39,6 +39,42 @@ export async function createCampaignAction(formData: FormData) {
   campaignRedirect("Campanha criada. Importe e revise a base.", "sucesso");
 }
 
+export async function editCampaignAction(formData: FormData) {
+  const parsed = z.object({
+    campaignId: z.string().uuid(),
+    expectedVersion: z.coerce.number().int().positive(),
+    connectionId: z.string().uuid(),
+    name: z.string().trim().min(2).max(160),
+    aiMode: z.enum(["off", "shadow", "assisted", "production"]),
+    openingTemplate: z.string().trim().min(10).max(2000),
+    messageTemplateId: z.string().uuid().optional().or(z.literal("")),
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) campaignRedirect(parsed.error.issues[0]?.message ?? "Revise os dados da campanha.");
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { error } = await supabase.from("campaign_edit_requests").insert({
+    org_id: viewer.organization!.id,
+    campaign_id: parsed.data.campaignId,
+    connection_id: parsed.data.connectionId,
+    name: parsed.data.name,
+    ai_mode: parsed.data.aiMode,
+    opening_template: parsed.data.openingTemplate,
+    message_template_id: parsed.data.messageTemplateId || null,
+    message_template_provided: true,
+    expected_version: parsed.data.expectedVersion,
+    actor_user_id: viewer.userId,
+  });
+  if (error) {
+    if (error.message.includes("campaign_version_conflict")) campaignRedirect("A campanha mudou; atualize a página e tente novamente.");
+    if (error.message.includes("campaign_not_editable")) campaignRedirect("Campanhas aprovadas com ondas, em execução, concluídas ou arquivadas não podem ser editadas.");
+    if (error.message.includes("approved_meta_campaign_template_required")) campaignRedirect("Selecione um template Meta aprovado para esta conexão.");
+    if (error.message.includes("active_campaign_connection_required")) campaignRedirect("Escolha uma conexão ativa e habilitada para campanhas.");
+    campaignRedirect("Não foi possível editar a campanha. Revise os dados e tente novamente.");
+  }
+  revalidatePath("/app/campanhas");
+  campaignRedirect("Campanha atualizada. Se necessário, a aprovação foi solicitada novamente.", "sucesso");
+}
+
 export async function importCampaignAction(formData: FormData) {
   const campaignId = z.string().uuid().safeParse(formData.get("campaignId"));
   if (!campaignId.success) campaignRedirect("Campanha inválida.");
@@ -98,12 +134,16 @@ export async function importCampaignAction(formData: FormData) {
 }
 
 export async function transitionCampaignAction(formData: FormData) {
-  const parsed = z.object({ campaignId: z.string().uuid(), action: z.enum(["approve","start","pause","resume","cancel","complete"]), expectedVersion: z.coerce.number().int().positive(), reason: z.string().trim().max(500).optional() }).safeParse({ campaignId: formData.get("campaignId"), action: formData.get("action"), expectedVersion: formData.get("expectedVersion"), reason: formData.get("reason") || undefined });
+  const parsed = z.object({ campaignId: z.string().uuid(), action: z.enum(["approve","start","pause","resume","cancel","complete","archive"]), expectedVersion: z.coerce.number().int().positive(), reason: z.string().trim().max(500).optional() }).safeParse({ campaignId: formData.get("campaignId"), action: formData.get("action"), expectedVersion: formData.get("expectedVersion"), reason: formData.get("reason") || undefined });
   if (!parsed.success) campaignRedirect("Ação de campanha inválida.");
   const viewer = await requireActiveViewer(); const supabase = await createClient();
   const { error } = await supabase.from("campaign_transition_requests").insert({ org_id: viewer.organization!.id, campaign_id: parsed.data.campaignId, requested_action: parsed.data.action, expected_version: parsed.data.expectedVersion, reason: parsed.data.reason ?? null, actor_user_id: viewer.userId });
-  if (error) campaignRedirect(error.message.includes("version") ? "A campanha mudou; atualize a página." : "Transição recusada pelas regras da campanha.");
-  revalidatePath("/app/campanhas"); campaignRedirect("Estado atualizado.", "sucesso");
+  if (error) {
+    if (error.message.includes("version")) campaignRedirect("A campanha mudou; atualize a página.");
+    if (error.message.includes("campaign_already_archived")) campaignRedirect("Esta campanha já está arquivada.");
+    campaignRedirect(parsed.data.action === "archive" ? "Não foi possível arquivar a campanha." : "Transição recusada pelas regras da campanha.");
+  }
+  revalidatePath("/app/campanhas"); campaignRedirect(parsed.data.action === "archive" ? "Campanha arquivada e jobs pendentes cancelados." : "Estado atualizado.", "sucesso");
 }
 
 export async function releaseWaveAction(formData: FormData) {

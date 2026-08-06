@@ -1858,6 +1858,86 @@ export type Database = {
           },
         ]
       }
+      campaign_edit_requests: {
+        Row: {
+          actor_user_id: string
+          ai_mode: string | null
+          campaign_id: string
+          connection_id: string | null
+          created_at: string
+          expected_version: number
+          id: string
+          message_template_id: string | null
+          message_template_provided: boolean
+          name: string | null
+          opening_template: string | null
+          org_id: string
+          processed_at: string
+          resulting_status: string | null
+        }
+        Insert: {
+          actor_user_id?: string
+          ai_mode?: string | null
+          campaign_id: string
+          connection_id?: string | null
+          created_at?: string
+          expected_version: number
+          id?: string
+          message_template_id?: string | null
+          message_template_provided?: boolean
+          name?: string | null
+          opening_template?: string | null
+          org_id: string
+          processed_at?: string
+          resulting_status?: string | null
+        }
+        Update: {
+          actor_user_id?: string
+          ai_mode?: string | null
+          campaign_id?: string
+          connection_id?: string | null
+          created_at?: string
+          expected_version?: number
+          id?: string
+          message_template_id?: string | null
+          message_template_provided?: boolean
+          name?: string | null
+          opening_template?: string | null
+          org_id?: string
+          processed_at?: string
+          resulting_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_edit_requests_campaign_id_org_id_fkey"
+            columns: ["campaign_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_edit_requests_connection_id_org_id_fkey"
+            columns: ["connection_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_edit_requests_message_template_id_org_id_fkey"
+            columns: ["message_template_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_message_templates"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_edit_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       campaign_import_requests: {
         Row: {
           actor_user_id: string
@@ -2396,6 +2476,8 @@ export type Database = {
           ai_mode: string
           approved_at: string | null
           approved_by: string | null
+          archived_at: string | null
+          archived_by: string | null
           campaign_type: string
           completed_at: string | null
           connection_id: string
@@ -2423,6 +2505,8 @@ export type Database = {
           ai_mode?: string
           approved_at?: string | null
           approved_by?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           campaign_type?: string
           completed_at?: string | null
           connection_id: string
@@ -2450,6 +2534,8 @@ export type Database = {
           ai_mode?: string
           approved_at?: string | null
           approved_by?: string | null
+          archived_at?: string | null
+          archived_by?: string | null
           campaign_type?: string
           completed_at?: string | null
           connection_id?: string
