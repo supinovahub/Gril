@@ -305,9 +305,13 @@ Confirme:
 3. confirme bloqueio do mesmo hash;
 4. aprove exemplos de abertura;
 5. confirme que cada abertura usa somente o primeiro nome do CSV ou o primeiro nome do CRM como fallback, sem alterar o nome completo do contato;
-6. libere 20 e revise todas as conversas;
-7. libere 50 e revise novamente;
-8. libere o restante;
+6. confirme que a campanha exibe três variações diferentes para a mesma finalidade e que cada uma preserva o objetivo do lead;
+7. use uma base sintética com `principal_objetivo`, `ja_investiu_em_studio`, `limite_entrada` e `limite_parcela`; verifique que entrada, parcela e objetivo aparecem na mensagem sem underscores;
+8. remova um campo da linha e confirme que a mensagem usa o fallback de orçamento, sem `undefined`, `null` ou placeholder aberto;
+9. importe novamente a mesma linha em uma prévia/reprocessamento e confirme que `campaign_contacts.variant` permanece estável;
+10. libere 20 e revise todas as conversas;
+11. libere 50 e revise novamente;
+12. libere o restante;
 9. teste pausa, retomada, exclusão e arquivamento.
 
 ### Agenda e distribuição

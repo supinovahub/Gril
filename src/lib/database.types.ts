@@ -1703,6 +1703,7 @@ export type Database = {
         Row: {
           attempts: number
           campaign_id: string
+          campaign_first_name: string | null
           contact_id: string
           created_at: string
           id: string
@@ -1721,6 +1722,7 @@ export type Database = {
         Insert: {
           attempts?: number
           campaign_id: string
+          campaign_first_name?: string | null
           contact_id: string
           created_at?: string
           id?: string
@@ -1739,6 +1741,7 @@ export type Database = {
         Update: {
           attempts?: number
           campaign_id?: string
+          campaign_first_name?: string | null
           contact_id?: string
           created_at?: string
           id?: string
@@ -1811,6 +1814,7 @@ export type Database = {
           id: string
           message_template_id: string | null
           name: string
+          opening_variants: Json
           opening_template: string
           operation_id: string
           org_id: string
@@ -1827,6 +1831,7 @@ export type Database = {
           id?: string
           message_template_id?: string | null
           name: string
+          opening_variants?: Json
           opening_template: string
           operation_id: string
           org_id: string
@@ -1843,6 +1848,7 @@ export type Database = {
           id?: string
           message_template_id?: string | null
           name?: string
+          opening_variants?: Json
           opening_template?: string
           operation_id?: string
           org_id?: string
@@ -2407,6 +2413,7 @@ export type Database = {
           message_template_id: string | null
           name: string
           opening_examples: Json
+          opening_variants: Json
           opening_template: string
           operation_id: string
           org_id: string
@@ -2434,6 +2441,7 @@ export type Database = {
           message_template_id?: string | null
           name: string
           opening_examples?: Json
+          opening_variants?: Json
           opening_template: string
           operation_id: string
           org_id: string
@@ -2461,6 +2469,7 @@ export type Database = {
           message_template_id?: string | null
           name?: string
           opening_examples?: Json
+          opening_variants?: Json
           opening_template?: string
           operation_id?: string
           org_id?: string

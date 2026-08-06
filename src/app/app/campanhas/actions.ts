@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireActiveViewer } from "@/lib/auth/session";
-import { campaignCsvRow, parseCsvLine, resolveCampaignCsvColumns } from "@/lib/campaigns/csv";
+import { campaignCsvRow, decodeCsvBytes, normalizeCampaignFieldKey, parseCsvLine, resolveCampaignCsvColumns } from "@/lib/campaigns/csv";
+import { DEFAULT_CAMPAIGN_VARIANTS } from "@/lib/campaigns/message-variants";
 import { normalizePhoneToE164 } from "@/lib/crm/phone";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,7 +19,9 @@ export async function createCampaignAction(formData: FormData) {
   const parsed = z.object({
     connectionId: z.string().uuid(), name: z.string().trim().min(2).max(160),
     aiMode: z.enum(["off", "shadow", "assisted", "production"]),
-    openingTemplate: z.string().trim().min(10).max(2000),
+    openingVariant1: z.string().trim().min(10).max(2000),
+    openingVariant2: z.string().trim().min(10).max(2000),
+    openingVariant3: z.string().trim().min(10).max(2000),
     consentStatement: z.string().trim().min(20).max(4000),
     consentSource: z.string().trim().min(5).max(1000), consentConfirmed: z.literal("on"),
     messageTemplateId: z.string().uuid().optional().or(z.literal("")),
@@ -30,7 +33,12 @@ export async function createCampaignAction(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.from("campaign_creation_requests").insert({
     org_id: viewer.organization!.id, operation_id: operation.id, connection_id: parsed.data.connectionId,
-    name: parsed.data.name, ai_mode: parsed.data.aiMode, opening_template: parsed.data.openingTemplate,
+    name: parsed.data.name, ai_mode: parsed.data.aiMode, opening_template: parsed.data.openingVariant1,
+    opening_variants: [
+      { ...DEFAULT_CAMPAIGN_VARIANTS[0], template: parsed.data.openingVariant1 },
+      { ...DEFAULT_CAMPAIGN_VARIANTS[1], template: parsed.data.openingVariant2 },
+      { ...DEFAULT_CAMPAIGN_VARIANTS[2], template: parsed.data.openingVariant3 },
+    ],
     message_template_id: parsed.data.messageTemplateId || null,
     consent_statement: parsed.data.consentStatement, consent_source: parsed.data.consentSource, actor_user_id: viewer.userId,
   });
@@ -48,7 +56,7 @@ export async function importCampaignAction(formData: FormData) {
   let filename = "base-colada.csv";
   if (file instanceof File && file.size > 0) {
     if (file.size > 1_000_000) campaignRedirect("O CSV do MVP deve ter até 1 MB.");
-    text = await file.text(); filename = file.name;
+    text = decodeCsvBytes(new Uint8Array(await file.arrayBuffer())); filename = file.name;
   }
   const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   if (lines.length < 2) campaignRedirect("Informe cabeçalho e ao menos um contato.");
@@ -60,7 +68,7 @@ export async function importCampaignAction(formData: FormData) {
     campaignRedirect(`Não encontramos as colunas informadas. Cabeçalhos disponíveis: ${rawHeader.join(", ")}.`);
   }
   const rows = lines.slice(1).map((line) => campaignCsvRow(
-    parseCsvLine(line), mapping.nameIndex, mapping.phoneIndex,
+    parseCsvLine(line), rawHeader, mapping.nameIndex, mapping.phoneIndex,
   ));
   if (rows.length > 500) campaignRedirect("O MVP aceita até 500 contatos por campanha.");
   const invalidNameLines = rows.flatMap((row, index) => row.name.length < 2 ? [index + 2] : []);
@@ -76,7 +84,11 @@ export async function importCampaignAction(formData: FormData) {
   const supabase = await createClient();
   const { data: result, error } = await supabase.from("campaign_import_requests").insert({
     org_id: viewer.organization!.id, campaign_id: campaignId.data, filename, rows,
-    mapping: { name: rawHeader[mapping.nameIndex], phone: rawHeader[mapping.phoneIndex] },
+    mapping: {
+      name: rawHeader[mapping.nameIndex],
+      phone: rawHeader[mapping.phoneIndex],
+      fields: rawHeader.map(normalizeCampaignFieldKey),
+    },
     file_sha256: createHash("sha256").update(text).digest("hex"), actor_user_id: viewer.userId,
   }).select("valid_rows,duplicate_rows,error_rows").single();
   if (error) {

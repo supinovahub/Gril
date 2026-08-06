@@ -61,6 +61,10 @@
 
 ## Pendências operacionais
 
+- A branch `feat/campaign-dynamic-messages` implementa variações de abertura
+  para reativação com campos da planilha, mas ainda aguarda reconciliação do
+  histórico remoto de migrations antes de aplicação e deploy. A decisão está
+  em `docs/decisions/campaign-dynamic-messages.md`.
 - Continuar a homologação manual dos fluxos descritos no guia, especialmente comportamento do Pedro, agendamento, distribuição, reativação e integrações reais.
 - Homologar manualmente a edição de nome com dono/gestor e confirmar que corretor não recebe a ação nem consegue forjar a operação.
 - Registrar cada novo defeito com esperado, observado, lead/canal, horário e IDs técnicos quando disponíveis.
