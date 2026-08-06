@@ -1,5 +1,15 @@
 # Estado atual compartilhado do Gril
 
+## Atualizacao de producao (06/08/2026)
+
+- O Chat com Pedro com fila de sugestoes `assisted` esta publicado em producao.
+- A migration `20260806165000_chat_pedro_assisted_queue.sql` foi aplicada no
+  Supabase remoto e as triggers/funcoes foram verificadas.
+- O deployment `gril-1dv2hcpa3-brio5.vercel.app` esta `Ready` e o alias
+  `https://gril-lac.vercel.app` respondeu HTTP 200 em `/login`.
+- Esta atualizacao substitui a pendencia anterior que indicava a publicacao
+  como aguardando.
+
 > Atualizado em 06/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
 
 ## Repositório
