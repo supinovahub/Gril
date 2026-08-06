@@ -14,7 +14,10 @@
 - Aplicação: `https://gril-lac.vercel.app`.
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
-- Migrations remotas estão aplicadas até `20260806165243_enforce_pedro_inbound_allowlist.sql`, incluindo a restauração de inbound em produção `20260806140816_restore_inbound_production.sql`; a migration `20260806165420` de outra frente continua pendente.
+- Migrations remotas incluem `20260806170711_campaign_edit_archive` e
+  `20260806171000_campaign_first_name`; a working tree ainda contém a versão
+  não rastreada `20260806165420_campaign_edit_archive.sql` com timestamp local
+  divergente da migration de arquivamento já aplicada.
 - A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
 - Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-1jotu4cvc-brio5.vercel.app` (`dpl_HXdp4BrqHY7zCDQtG6F7d9BUSZpx`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `d930949`.
 
@@ -94,6 +97,23 @@
   com status `Ready`; a homologação funcional continua pendente.
 - O registro detalhado está em
   `docs/agent/changes/20260806-pedro-inbound-production-allowlist.md`.
+
+## Atualização de 06/08/2026 — primeiro nome na campanha de reativação
+
+- A migration `20260806171000_campaign_first_name.sql` foi aplicada no
+  Supabase remoto. Ela cria o snapshot `campaign_contacts.campaign_first_name`
+  e faz preview e runtime usarem o primeiro termo, sem alterar o nome completo
+  do CRM.
+- A verificação remota confirmou migration, coluna, trigger, renderizador e
+  executor de campanha ativos; a aplicação publicada continua `Ready` no
+  deployment `dpl_APSFrhXy7vtcrJBWDaN9g6KA6gq9`, alias
+  `https://gril-lac.vercel.app`.
+- Não houve novo deploy Vercel porque a correção não altera o bundle da
+  aplicação; a publicação efetiva foi a migration no banco único.
+- O histórico local ainda tem a migration não rastreada
+  `20260806165420_campaign_edit_archive.sql`, enquanto o remoto registra essa
+  frente como `20260806170711`. O push desta alteração usou uma cópia temporária
+  alinhada; não foi feito `migration repair`.
 
 Este documento não substitui:
 

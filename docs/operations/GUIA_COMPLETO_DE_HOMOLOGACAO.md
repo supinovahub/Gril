@@ -304,10 +304,11 @@ Confirme:
 2. revise amostras, telefones, duplicados e opt-outs;
 3. confirme bloqueio do mesmo hash;
 4. aprove exemplos de abertura;
-5. libere 20 e revise todas as conversas;
-6. libere 50 e revise novamente;
-7. libere o restante;
-8. teste pausa, retomada, exclusão e arquivamento.
+5. confirme que cada abertura usa somente o primeiro nome do CSV ou o primeiro nome do CRM como fallback, sem alterar o nome completo do contato;
+6. libere 20 e revise todas as conversas;
+7. libere 50 e revise novamente;
+8. libere o restante;
+9. teste pausa, retomada, exclusão e arquivamento.
 
 ### Agenda e distribuição
 

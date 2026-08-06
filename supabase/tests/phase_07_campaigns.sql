@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(12);
+select extensions.plan(14);
 create temporary table _tap_results (n integer primary key, tap text not null) on commit drop;
 grant select, insert on _tap_results to authenticated;
 
@@ -55,7 +55,7 @@ values (
   '36000000-0000-0000-0000-000000000001',
   '56000000-0000-0000-0000-000000000001',
   'Campaign Gate', 'off',
-  'Olá, gostaria de retomar nossa conversa sobre imóveis.',
+  'Hello {{name}}, retomar imoveis.',
   'Os contatos autorizaram o relacionamento comercial.',
   'CRM legado autorizado',
   '16000000-0000-0000-0000-000000000001'
@@ -182,6 +182,32 @@ select * from (
     'first wave is persisted once'
   )
 ) wave_assertions
+order by 1;
+
+insert into _tap_results (n, tap)
+select * from (
+  select 13, extensions.is(
+    (
+      select string_agg(campaign_first_name, ',' order by campaign_first_name)
+      from public.campaign_contacts
+      where campaign_id=(select campaign_id from public.campaign_creation_requests where id='66000000-0000-0000-0000-000000000001')
+    ),
+    'Alice,Bruno'::text,
+    'campaign contacts snapshot the first name independently from CRM lookup'
+  )
+  union all
+  select 14, extensions.ok(
+    (
+      select opening_examples::text like '%Hello Alice,%'
+        and opening_examples::text like '%Hello Bruno,%'
+        and opening_examples::text not like '%Alice Gate%'
+        and opening_examples::text not like '%Bruno Gate%'
+      from public.campaigns
+      where id=(select campaign_id from public.campaign_creation_requests where id='66000000-0000-0000-0000-000000000001')
+    ),
+    'campaign opening examples use only the first name'
+  )
+) first_name_assertions
 order by 1;
 
 select set_config('request.jwt.claims', '{"sub":"16000000-0000-0000-0000-000000000002","role":"authenticated"}', true);
