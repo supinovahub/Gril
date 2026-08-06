@@ -104,7 +104,7 @@ Repita o caminho anterior como corretor. Dono ou gestor com `team.manage` pode a
 1. como dono, crie um convite de gestor; como gestor autorizado, crie um convite de corretor;
 2. copie o link e abra-o em janela anônima, sem conta criada;
 3. confirme que aparecem somente imobiliária, papel e validade, sem e-mail completo ou operação interna;
-4. crie a conta pelo próprio convite, confirme o e-mail e entre sem reabrir manualmente o link;
+4. crie a conta pelo próprio convite, confirme o e-mail e entre sem reabrir manualmente o link; o link deve encerrar apenas a sessão local anterior, autenticar o e-mail convidado e retornar diretamente ao convite, sem abrir a conta que estava logada;
 5. na tela final, informe o WhatsApp e clique em `Salvar WhatsApp e aceitar convite`;
 6. confirme ativação imediata, sem segunda aprovação, e a notificação `Convite aceito` na Central do dono/criador;
 7. repita com uma conta logada no e-mail errado: o aceite deve ser bloqueado, o e-mail convidado deve aparecer mascarado e `Trocar de conta` deve preservar o convite;
