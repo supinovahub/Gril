@@ -43,6 +43,7 @@
 - Quando existe uma call futura ativa, Pedro recebe esse slot como estado canônico; respostas que dizem que o horário passou são regeneradas ou bloqueadas antes do envio.
 - O registro de resultado de call após o início agora conclui a revogação da liberação operacional da conversa, preservando `revoked_by` e evitando o erro de coluna inexistente.
 - O atendimento normal voltou a oferecer o modo `production`; a Server Action e o banco aceitam o modo, mas a ativação continua condicionada aos gates de identidade, conhecimento, modelo, canal saudável e regressão aprovada.
+- O Chat com Pedro agora está preparado para receber sugestões `assisted` por lead, com resposta exata, link para o Inbox e revisão humana pelo mesmo fluxo transacional; a publicação dessa mudança ainda está pendente.
 - No código atual, a confirmação de e-mail de um convite individual recupera o convite pelo cookie, encerra apenas a sessão local anterior e retorna ao e-mail convidado; a publicação está confirmada e a homologação manual continua pendente.
 
 ## Verificações deste retrato
@@ -63,6 +64,7 @@
 - Recriar um lead de teste somente quando necessário para nova homologação, sem reutilizar os dados removidos.
 - Atualizar este arquivo após qualquer alteração de deployment, migration, conta/projeto ou conclusão material de homologação.
 - Repetir a homologação manual do registro de resultado no dashboard.
+- Homologar no Chat com Pedro a fila de sugestões `assisted`, a edição/aprovação, o descarte e o conflito de versão com o Inbox.
 - Homologar com um corretor novo o link de confirmação em um navegador que possui outra conta localmente autenticada, confirmando que a sessão final pertence ao e-mail convidado e retorna ao convite.
 
 ## Protocolo compartilhado
