@@ -25,7 +25,9 @@ na planilha de leads.
   testes unitários, tipos gerados, decisão de produto e guia de homologação.
 - Migrations: `20260806202829_campaign_dynamic_messages.sql` adiciona o pack
   de variações, renderização no banco, distribuição determinística e uso no
-  executor.
+  executor. As migrations remotas `20260806165000`, `20260806170711` e
+  `20260806180518` também foram restauradas localmente para alinhar o histórico;
+  elas não foram alteradas.
 - Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma.
   A migration não foi aplicada remotamente.
 
@@ -36,10 +38,10 @@ na planilha de leads.
   --fail-on error`.
 - Evidência observada: lint sem erros; 19 arquivos e 103 testes aprovados;
   build produziu 46 rotas; lint remoto sem erros.
-- Validações não executadas e motivo: a migration não foi aplicada nem
-  executada em um banco local. O dry-run do Supabase foi bloqueado porque o
-  remoto possui as migrations `20260806165000`, `20260806170711` e
-  `20260806180518` ausentes nesta branch.
+- Validações não executadas e motivo: a migration ainda não foi aplicada nem
+  executada em um banco local; antes da reconciliação, o dry-run era bloqueado
+  pelas três versões remotas ausentes. Após restaurá-las, o dry-run passou e
+  listou somente `20260806202829_campaign_dynamic_messages.sql`.
 
 ## Impacto operacional
 
@@ -51,8 +53,6 @@ na planilha de leads.
 
 ## Pendências e riscos
 
-- Reconciliar a divergência entre o histórico remoto e esta branch antes de
-  aplicar a migration.
 - Confirmar na homologação que uma onda com vários contatos gera alternância
   de templates e que textos/IDs duplicados são recusados na criação.
 - Homologar com uma base sintética: três mensagens diferentes, objetivo,
