@@ -1,6 +1,6 @@
 # Estado atual compartilhado do Gril
 
-> Atualizado em 05/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
+> Atualizado em 06/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
 
 ## Repositório
 
@@ -15,7 +15,9 @@
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
 - Deployment de produção confirmado como `Ready` em 05/08/2026: `gril-lha8b45yt-brio5.vercel.app` (`dpl_6CXsWB6HFg4YXrGCvQgJUeLf6JN2`), alias `https://gril-lac.vercel.app`, publicado a partir da branch `agent/fix-call-slot-preservation-published` com o commit `fe3399a`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
-- Migrations locais e remotas estão alinhadas até `20260805184410_preserve_confirmed_call_slot.sql`.
+- Migrations locais e remotas estão alinhadas até `20260806125009_add_call_grant_revoked_by.sql`.
+- A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
+- O deployment de produção continua sendo o de `fe3399a`; a publicação deste ajuste de código está pendente porque a identidade Vercel obrigatória não pôde ser validada neste host.
 
 ## Estado funcional
 
@@ -39,12 +41,14 @@
 - Edição humana de sugestão envia somente o texto editado e invalida as ações estruturadas anteriores.
 - Quando o lead confirma o formato depois de escolher um horário, Pedro preserva o slot já confirmado; o banco reaproveita a call existente e impede duas calls ativas no mesmo slot.
 - Quando existe uma call futura ativa, Pedro recebe esse slot como estado canônico; respostas que dizem que o horário passou são regeneradas ou bloqueadas antes do envio.
+- O registro de resultado de call após o início agora conclui a revogação da liberação operacional da conversa, preservando `revoked_by` e evitando o erro de coluna inexistente.
 
 ## Verificações deste retrato
 
 - `npm run lint`, `npm test` (17 arquivos e 97 testes) e `npm run build` aprovados em 05/08/2026 após a proteção da resposta para call futura.
 - Migrações Supabase: local e remoto alinhados até a versão indicada acima; colunas de rastreabilidade, função pós-análise, índice idempotente e revogação das funções legadas confirmados no remoto.
 - `npx supabase db lint --linked --fail-on error`: concluído sem erros; permanecem apenas avisos preexistentes.
+- Migration `20260806125009_add_call_grant_revoked_by.sql`: aplicada remotamente; `npx supabase db push --linked --dry-run` confirmou o banco atualizado; simulações autenticadas de `no_result` e `start_negotiation` passaram com `ROLLBACK`.
 - Vercel: o deployment `gril-lha8b45yt-brio5.vercel.app` está `Ready`, o alias público responde `307` para `/login` e depois `200`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
 - Limpeza de contexto: o registro de homologação foi removido do Supabase remoto em 05/08/2026; a verificação zerou contato, oportunidade, conversa, mensagens, IA, calls, jobs, outbox e vínculos derivados. A auditoria relacionada permanece por regra do produto.
 
@@ -55,6 +59,7 @@
 - Registrar cada novo defeito com esperado, observado, lead/canal, horário e IDs técnicos quando disponíveis.
 - Recriar um lead de teste somente quando necessário para nova homologação, sem reutilizar os dados removidos.
 - Atualizar este arquivo após qualquer alteração de deployment, migration, conta/projeto ou conclusão material de homologação.
+- Publicar o commit desta correção pela identidade Vercel autorizada e repetir a homologação manual do registro de resultado no dashboard.
 
 ## Protocolo compartilhado
 

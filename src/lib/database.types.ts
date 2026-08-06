@@ -3479,6 +3479,7 @@ export type Database = {
           membership_id: string
           org_id: string
           reason: string
+          revoked_by: string | null
           revoked_at: string | null
           starts_at: string
         }
@@ -3491,6 +3492,7 @@ export type Database = {
           membership_id: string
           org_id: string
           reason: string
+          revoked_by?: string | null
           revoked_at?: string | null
           starts_at?: string
         }
@@ -3503,6 +3505,7 @@ export type Database = {
           membership_id?: string
           org_id?: string
           reason?: string
+          revoked_by?: string | null
           revoked_at?: string | null
           starts_at?: string
         }
