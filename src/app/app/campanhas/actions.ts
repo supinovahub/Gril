@@ -111,42 +111,7 @@ export async function releaseWaveAction(formData: FormData) {
   if (!parsed.success) campaignRedirect("Volume de onda inválido.");
   const viewer = await requireActiveViewer(); const supabase = await createClient();
   const { error } = await supabase.from("campaign_wave_release_requests").insert({ org_id: viewer.organization!.id, campaign_id: parsed.data.campaignId, requested_count: parsed.data.count, actor_user_id: viewer.userId });
-  if (error) campaignRedirect(error.message.includes("previous_campaign_wave_review_required")
-    ? "Conclua e aprove a revisão da onda anterior antes de liberar a próxima."
-    : "Onda recusada: revise aprovação, limite, conexão, pausa e capacidade.");
+  if (error) campaignRedirect("Onda recusada: revise aprovação, limite, conexão, pausa e capacidade.");
   revalidatePath("/app/campanhas"); campaignRedirect("Onda liberada e contatos revalidados.", "sucesso");
 }
 
-export async function reviewWaveItemAction(formData: FormData) {
-  const parsed = z.object({
-    waveId: z.string().uuid(), reviewId: z.string().uuid(),
-    outcome: z.enum(["approved", "needs_adjustment", "critical"]),
-    notes: z.string().trim().max(1000).optional(),
-  }).refine((data) => data.outcome === "approved" || Boolean(data.notes), {
-    path: ["notes"], message: "Explique o ajuste ou problema crítico.",
-  }).safeParse({
-    waveId: formData.get("waveId"), reviewId: formData.get("reviewId"),
-    outcome: formData.get("outcome"), notes: String(formData.get("notes") ?? "") || undefined,
-  });
-  if (!parsed.success) campaignRedirect(parsed.error.issues[0]?.message ?? "Revisão inválida.");
-  const viewer = await requireActiveViewer(); const supabase = await createClient();
-  const { error } = await supabase.from("campaign_wave_review_requests").insert({
-    org_id: viewer.organization!.id, wave_id: parsed.data.waveId, review_id: parsed.data.reviewId,
-    requested_action: "review_item", outcome: parsed.data.outcome, notes: parsed.data.notes ?? null,
-    actor_user_id: viewer.userId,
-  });
-  if (error) campaignRedirect("Não foi possível registrar esta revisão.");
-  revalidatePath("/app/campanhas"); campaignRedirect("Item de qualidade revisado.", "sucesso");
-}
-
-export async function approveWaveReviewAction(formData: FormData) {
-  const waveId = z.string().uuid().safeParse(formData.get("waveId"));
-  if (!waveId.success) campaignRedirect("Onda inválida.");
-  const viewer = await requireActiveViewer(); const supabase = await createClient();
-  const { error } = await supabase.from("campaign_wave_review_requests").insert({
-    org_id: viewer.organization!.id, wave_id: waveId.data, requested_action: "approve_wave",
-    actor_user_id: viewer.userId,
-  });
-  if (error) campaignRedirect("A revisão ainda tem itens pendentes, ajustes ou problemas críticos.");
-  revalidatePath("/app/campanhas"); campaignRedirect("Onda aprovada. A próxima liberação está habilitada.", "sucesso");
-}
