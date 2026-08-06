@@ -23,10 +23,17 @@ linha. Valores vazios recebem fallback de linguagem e nunca aparecem como
 
 ## Distribuição e consistência
 
-As variações são atribuídas de forma determinística, em rotação pela ordem das
-linhas válidas importadas. O identificador da variação fica salvo em
-`campaign_contacts.variant`; o preview e o worker usam o mesmo identificador e
+O identificador da variação fica salvo em `campaign_contacts.variant`. A
+atribuição final acontece na liberação da onda, usando a mesma ordem em que os
+contatos elegíveis são selecionados para aquela onda. Assim, dentro de uma
+onda com mais de um contato, as mensagens alternam entre os templates e não
+repetem a mesma abertura consecutivamente; opt-outs e supressões não consomem
+uma posição da rotação. O preview e o worker usam o identificador persistido e
 os mesmos campos da linha.
+
+Na criação, os identificadores e os textos dos templates precisam ser únicos.
+Isso evita que uma configuração válida formalmente produza duas mensagens
+exatamente iguais.
 
 Não há sorteio por envio nem alteração artificial de texto para contornar
 políticas de plataforma. A diversidade vem de abordagens de conversa reais e

@@ -15,9 +15,9 @@ na planilha de leads.
 
 - Antes: a importação enviava apenas nome e telefone; todos os contatos usavam
   uma única abertura.
-- Depois: os campos extras são preservados, a campanha aceita três templates,
-  cada contato recebe uma variação estável e preview/envio renderizam os mesmos
-  dados.
+- Depois: os campos extras são preservados, a campanha aceita três templates e,
+  na liberação de cada onda, os contatos elegíveis alternam entre aberturas
+  distintas. Preview/envio renderizam os mesmos dados.
 
 ## Escopo executado
 
@@ -53,6 +53,8 @@ na planilha de leads.
 
 - Reconciliar a divergência entre o histórico remoto e esta branch antes de
   aplicar a migration.
+- Confirmar na homologação que uma onda com vários contatos gera alternância
+  de templates e que textos/IDs duplicados são recusados na criação.
 - Homologar com uma base sintética: três mensagens diferentes, objetivo,
   entrada e parcela corretos, campos ausentes com fallback, opt-out e
   revalidação no
