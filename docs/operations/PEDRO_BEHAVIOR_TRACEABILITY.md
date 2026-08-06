@@ -18,6 +18,7 @@ Fonte de verdade: `docs/product/Especificacao-do-Produto-v1.md`. O pacote v3 sep
 | Call exige data e hora explícitas; só confirma após aceite do corretor | Pedro decide; backend valida o slot exato e distribui | `validatePedroDecision`; requests de call e ofertas |
 | Pedido nominal por humano | Escalada | categoria `human_requested` |
 | Follow-up curto, longo, compra futura e cancelamento | Jobs duráveis | triggers de cadência; runtime assistido ou produção |
+| Inbound normal em production é controlado por whitelist | Execução não é criada fora da lista; revalidação antes do worker e trigger final antes de qualquer outbound AI | `ai_test_allowlist`; `is_conversation_ai_eligible`; `start_ai_execution`; `messages_pedro_inbound_allowlist` |
 | Aprovação sem edição aplica qualificação, match, call, follow-up e mídia | Transação única antes do envio | `apply_approved_assisted_actions` |
 | Edição humana substitui a mensagem, mas nunca reutiliza ações antigas | Plano anterior invalidado; envio somente do texto editado | `process_ai_suggestion_review_request`; `validated_action_plan` |
 | Conversa antiga mantém sua persona; conversa nova recebe v3 | Snapshot imutável | `conversation_context_versions` aponta para a versão publicada na criação |
@@ -31,4 +32,5 @@ O sistema não inventa informação operacional. Antes da homologação real, o 
 - **Shadow:** registra a decisão sem enviar ou alterar CRM.
 - **Assistido:** cria sugestão; somente a aprovação humana aplica todas as ações e envia texto/mídia.
 - **Produção:** aplica ações e envia automaticamente, sujeito aos mesmos controles determinísticos.
+- **Whitelist de produção:** no inbound normal, somente números ativos cadastrados pelo dono/gestor podem gerar respostas automáticas; sem cadastro, nenhuma resposta é enviada.
 - **Simulador:** valida conversa e estado sem criar efeitos operacionais reais.

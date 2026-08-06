@@ -82,6 +82,17 @@
 - Preview autenticado e smoke test com contato sintético em transação revertida passaram; `npx supabase db lint --linked --fail-on error` passou com avisos preexistentes.
 - Deployment de produção `dpl_5NHYjVdK4kQjwKKX8mkeNiXzUYTH` ficou `Ready`, com alias `https://gril-lac.vercel.app`; `/login` respondeu HTTP 200.
 
+## Atualização de 06/08/2026 — whitelist do inbound do Pedro
+
+- A tela de Pedro agora permite cadastrar números E.164 em escopo da
+  organização para testes controlados do inbound normal em `production`.
+- A migration `20260806165243_enforce_pedro_inbound_allowlist.sql` adiciona
+  bloqueio na elegibilidade, revalidação antes do worker e trigger final antes
+  de qualquer outbound de IA; ela ainda não foi aplicada no Supabase remoto.
+- A homologação funcional e a publicação dessa mudança continuam pendentes.
+- O registro detalhado está em
+  `docs/agent/changes/20260806-pedro-inbound-production-allowlist.md`.
+
 Este documento não substitui:
 
 - o banco para estado transacional;
