@@ -175,3 +175,31 @@ Este documento não substitui:
   aplicada no Supabase remoto.
 - A homologação manual da rotação sem repetição, dos dados adicionais da
   planilha e das abas “Ativas”/“Arquivadas” permanece pendente.
+
+## Atualização de 08/08/2026 — integração do Chat com Pedro
+
+- A mudança omitida foi reintegrada sobre a produção atual pelos commits
+  funcionais `61f3efa` e `104f13c`, com a decisão normalizada em `14174ea`.
+- O Chat com Pedro agora recebe sugestões `assisted` por lead, mostra a
+  resposta exata, o resumo e a mensagem inbound analisada, permite abrir o
+  Inbox e usa o mesmo fluxo transacional de aprovação, edição, ensino e
+  descarte.
+- Foram incluídas as migrations `20260806165000_chat_pedro_assisted_queue.sql`
+  e `20260807130110_chat_pedro_suggestion_context.sql`, além dos testes SQL e
+  registros de mudança correspondentes; ambas já constam aplicadas no Supabase
+  remoto.
+- O deploy do bundle permanece pendente nesta etapa; a homologação manual do
+  mesmo caso no Inbox e no Chat também permanece pendente.
+
+## Atualização de 07/08/2026 — publicação do Chat com Pedro
+
+- O PR `#36` foi mergeado na branch padrão pelo commit `2bc673d`.
+- O deployment de produção do Vercel foi concluído com sucesso no deployment
+  `2RbxCrjPHvvy6485j7DtMhvQWz9g`; a rota pública é
+  `https://gril-lac.vercel.app`.
+- A raiz pública respondeu HTTP 200 e `/app/chat-pedro` respondeu HTTP 307 para
+  `/login?next=%2Fapp%2Fchat-pedro`, confirmando a proteção esperada da rota.
+- As migrations do Chat já constavam aplicadas no Supabase remoto; nenhuma
+  alteração de banco foi executada nesta publicação.
+- A homologação manual autenticada do fluxo do Chat com Pedro permanece
+  pendente.
