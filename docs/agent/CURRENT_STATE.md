@@ -1,12 +1,12 @@
 # Estado atual compartilhado do Gril
 
-> Atualizado em 06/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
+> Atualizado em 07/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
 
 ## Repositório
 
 - GitHub: `https://github.com/supinovahub/Gril`.
 - Branch padrão confirmada: `phase/01-foundation`.
-- Último commit de código confirmado nesta branch: `b3720f9` (`fix(campaigns): restore dynamic messages with archive separation`).
+- Último commit de código confirmado nesta branch: `4aaf8f9` (`feat(agenda): add weekly availability editor`).
 - Working tree estava limpa antes da criação desta camada de memória.
 
 ## Produção e infraestrutura
@@ -19,7 +19,7 @@
   não rastreada `20260806165420_campaign_edit_archive.sql` com timestamp local
   divergente da migration de arquivamento já aplicada.
 - A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
-- Deployment de produção confirmado como `Ready` em 07/08/2026: `dpl_GYof2cybajLb18xQJhF3n4YfoSBh`, alias `https://gril-lac.vercel.app`, publicado a partir do merge `b3720f9`.
+- Deployment de produção confirmado como concluído em 07/08/2026: referência Vercel `GfiLCa9mvTYcTJA81AyLq379NKPU`, alias `https://gril-lac.vercel.app`, publicado a partir do merge `4aaf8f9`.
 
 ## Estado funcional
 
@@ -203,3 +203,14 @@ Este documento não substitui:
   alteração de banco foi executada nesta publicação.
 - A homologação manual autenticada do fluxo do Chat com Pedro permanece
   pendente.
+
+## Atualização de 07/08/2026 — editor semanal de disponibilidade
+
+- O PR `#38` foi mergeado na branch padrão pelo commit `4aaf8f9`.
+- O deployment Vercel associado ao commit foi concluído com sucesso, com a
+  referência `GfiLCa9mvTYcTJA81AyLq379NKPU`; o alias de produção é
+  `https://gril-lac.vercel.app`.
+- `https://gril-lac.vercel.app/login` respondeu HTTP 200 após a publicação.
+- Nenhuma migration ou alteração de dados foi aplicada.
+- A homologação manual autenticada da seleção múltipla, presets, edição,
+  remoção e períodos divididos permanece pendente.
