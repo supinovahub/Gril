@@ -1,5 +1,4 @@
 begin;
-
 do $$
 declare v_constraint record;
 begin
@@ -16,7 +15,6 @@ end;
 $$;
 alter table public.internal_threads add constraint internal_threads_source_check
   check (source in ('manual','escalation','assisted_correction','assisted_suggestion','external_device','post_call','runtime_failure'));
-
 create or replace function private.sync_assisted_suggestion_topic(p_suggestion_id uuid)
 returns void language plpgsql security definer set search_path=pg_catalog as $$
 declare
@@ -113,7 +111,6 @@ begin
 end;
 $$;
 revoke all on function private.sync_assisted_suggestion_topic(uuid) from public,anon,authenticated,service_role;
-
 create or replace function private.create_assisted_suggestion_topic()
 returns trigger language plpgsql security definer set search_path=pg_catalog as $$
 begin
@@ -126,7 +123,6 @@ drop trigger if exists ai_suggestion_assisted_topic on public.ai_suggestions;
 create trigger ai_suggestion_assisted_topic
 after insert on public.ai_suggestions
 for each row execute function private.create_assisted_suggestion_topic();
-
 create or replace function private.sync_assisted_suggestion_review_topic()
 returns trigger language plpgsql security definer set search_path=pg_catalog as $$
 declare
@@ -208,7 +204,6 @@ drop trigger if exists ai_suggestion_review_sync_topic on public.ai_suggestion_r
 create trigger ai_suggestion_review_sync_topic
 after insert on public.ai_suggestion_review_requests
 for each row execute function private.sync_assisted_suggestion_review_topic();
-
 do $$
 declare v_suggestion_id uuid;
 begin
@@ -222,5 +217,4 @@ begin
   end loop;
 end;
 $$;
-
 commit;

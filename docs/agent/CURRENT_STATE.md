@@ -20,6 +20,11 @@
   divergente da migration de arquivamento já aplicada.
 - A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
 - Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-1jotu4cvc-brio5.vercel.app` (`dpl_HXdp4BrqHY7zCDQtG6F7d9BUSZpx`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `d930949`.
+- A migration `20260806202829_campaign_dynamic_messages.sql` foi aplicada no
+  Supabase remoto; o histórico local/remoto está alinhado até essa versão.
+- O deployment `dpl_HkqFuKVWkFWZexPcQSzyKAsBwmnW` está `Ready` em produção,
+  com alias `https://gril-lac.vercel.app`, publicado a partir da branch
+  `feat/campaign-dynamic-messages`; `/login` respondeu HTTP 200.
 
 ## Estado funcional
 
@@ -63,6 +68,10 @@
 
 ## Pendências operacionais
 
+- A branch `feat/campaign-dynamic-messages` implementa variações de abertura
+  para reativação com campos da planilha. A decisão está em
+  `docs/decisions/campaign-dynamic-messages.md`; falta homologação manual com
+  uma base sintética e uma onda controlada.
 - Continuar a homologação manual dos fluxos descritos no guia, especialmente comportamento do Pedro, agendamento, distribuição, reativação e integrações reais.
 - Homologar manualmente a edição de nome com dono/gestor e confirmar que corretor não recebe a ação nem consegue forjar a operação.
 - Registrar cada novo defeito com esperado, observado, lead/canal, horário e IDs técnicos quando disponíveis.
