@@ -8,6 +8,7 @@ import {
   loadInboxNotificationCounts,
 } from "@/lib/inbox/notifications";
 import { createClient } from "@/lib/supabase/server";
+import { formatOperationDateTime } from "@/lib/time/operation-format";
 import styles from "./inbox.module.css";
 
 export default async function InboxPage() {
@@ -16,7 +17,7 @@ export default async function InboxPage() {
   const [conversationsResult, notifications] = await Promise.all([
     supabase
       .from("conversations")
-      .select("id,status,ownership,ai_mode,last_inbound_at,last_message_preview,updated_at,contacts!inner(name),opportunities!conversations_opportunity_id_org_id_fkey(id,pipeline_stages!inner(name))")
+      .select("id,operation_id,status,ownership,ai_mode,last_inbound_at,last_message_preview,updated_at,contacts!inner(name),opportunities!conversations_opportunity_id_org_id_fkey(id,pipeline_stages!inner(name))")
       .eq("org_id", viewer.organization!.id)
       .order("updated_at", { ascending: false })
       .limit(100),
@@ -28,6 +29,8 @@ export default async function InboxPage() {
     console.error("Failed to load Inbox conversations", conversationsError);
     throw new Error("Não foi possível carregar as conversas do Inbox.");
   }
+
+  const operationTimezones = new Map(viewer.operations.map((operation) => [operation.id, operation.timezone]));
 
   return (
     <div className={styles.page}>
@@ -57,7 +60,7 @@ export default async function InboxPage() {
                       label={describeInboxNotifications(notification)}
                     />
                   ) : null}
-                  <time>{new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(conversation.updated_at))}</time>
+                  <time>{formatOperationDateTime(conversation.updated_at, operationTimezones.get(conversation.operation_id))}</time>
                 </span>
               </Link>
             );

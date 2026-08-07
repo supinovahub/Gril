@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 
 import {
   invitationGatewayPath,
+  isInvitationGatewayPath,
   pendingInvitationPath,
   resolveAuthNext,
 } from "./pending-invitation";
@@ -22,5 +23,11 @@ describe("pending invitation handoff", () => {
   it("falls back to the pending invitation when next is absent or unsafe", () => {
     expect(resolveAuthNext(undefined, `/convite/${token}`, "/app")).toBe(`/convite/${token}`);
     expect(resolveAuthNext("https://evil.test", `/convite/${token}`, "/app")).toBe(`/convite/${token}`);
+  });
+
+  it("identifies only safe invitation return paths", () => {
+    expect(isInvitationGatewayPath(`/convite/${token}`)).toBe(true);
+    expect(isInvitationGatewayPath("/app")).toBe(false);
+    expect(isInvitationGatewayPath("//evil.test/convite/token")).toBe(false);
   });
 });

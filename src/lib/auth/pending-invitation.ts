@@ -23,6 +23,10 @@ export function pendingInvitationPath(value: string | null | undefined) {
   return match ? invitationGatewayPath(match[1]) : null;
 }
 
+export function isInvitationGatewayPath(value: string | null | undefined) {
+  return pendingInvitationPath(value) !== null;
+}
+
 export function resolveAuthNext(
   explicitNext: string | null | undefined,
   pendingInvitation: string | null | undefined,

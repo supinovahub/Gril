@@ -1,21 +1,25 @@
 # Estado atual compartilhado do Gril
 
-> Atualizado em 05/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
+> Atualizado em 06/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
 
 ## Repositório
 
 - GitHub: `https://github.com/supinovahub/Gril`.
 - Branch padrão confirmada: `phase/01-foundation`.
-- Último commit de código confirmado neste retrato: `d7dd110` (`fix(ai): execute only Pedro explicit actions (#32)`).
+- Último commit de código confirmado nesta branch: `d930949` (`fix(agenda): enforce one-hour call lead time`).
 - Working tree estava limpa antes da criação desta camada de memória.
 
 ## Produção e infraestrutura
 
 - Aplicação: `https://gril-lac.vercel.app`.
 - Vercel CLI deve autenticar como `suporteinovahub-7501` pelo perfil explícito registrado no `AGENTS.md`.
-- Deployment de produção confirmado como `Ready` em 05/08/2026: `gril-nulflfdwl-brio5.vercel.app`, após o merge `d7dd110`.
 - Supabase remoto único: projeto `frslhzwhaooqtivkzdez`; não existe staging separado.
-- Migrations locais e remotas estão alinhadas até `20260805160806_pedro_explicit_actions_source_of_truth.sql`.
+- Migrations remotas incluem `20260806170711_campaign_edit_archive` e
+  `20260806171000_campaign_first_name`; a working tree ainda contém a versão
+  não rastreada `20260806165420_campaign_edit_archive.sql` com timestamp local
+  divergente da migration de arquivamento já aplicada.
+- A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
+- Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-1jotu4cvc-brio5.vercel.app` (`dpl_HXdp4BrqHY7zCDQtG6F7d9BUSZpx`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `d930949`.
 
 ## Estado funcional
 
@@ -34,23 +38,37 @@
 - O nudge após envio de material não reenvia PDFs.
 - Pedido de disponibilidade usa horários aprovados e não cria handoff indevido quando existem slots válidos.
 - Nenhuma palavra isolada executa controle antes do Pedro: o worker envia mensagens elegíveis para análise contextual, escaladas exigem evidência e confiança, e as funções legadas pré-IA estão sem permissão até para `service_role`.
-- A conversa atual de Arthur Rocha permaneceu `active · ai · assisted`; três escaladas falsas de `payment` criadas pela regex antiga foram resolvidas sem reprocessar mensagens já superadas.
+- Os contextos de teste usados na homologação foram removidos do banco remoto com todo o contexto operacional associado; os eventos de auditoria imutáveis foram preservados. A limpeza mais recente, repetida em 06/08/2026, zerou contato, telefone, conversa, mensagens, qualificações, IA, oportunidade, call, reservas, ingestões, jobs e outbox do alvo.
 - A decisão estruturada do Pedro passou a ser a fonte de verdade: o executor não seleciona projetos adicionais, não substitui mídia ou texto e bloqueia mutações semânticas. Um book escolhido gera somente a ação explícita correspondente.
 - Edição humana de sugestão envia somente o texto editado e invalida as ações estruturadas anteriores.
+- Quando o lead confirma o formato depois de escolher um horário, Pedro preserva o slot já confirmado; o banco reaproveita a call existente e impede duas calls ativas no mesmo slot.
+- Quando existe uma call futura ativa, Pedro recebe esse slot como estado canônico; respostas que dizem que o horário passou são regeneradas ou bloqueadas antes do envio.
+- O registro de resultado de call após o início agora conclui a revogação da liberação operacional da conversa, preservando `revoked_by` e evitando o erro de coluna inexistente.
+- A janela de slots de call do worker e do banco agora respeita no mínimo uma hora de antecedência; pedidos explícitos abaixo desse limite continuam escalando silenciosamente para o gestor sem acionar corretores. Inbox e CRM formatam timestamps no fuso da operação.
+- No código atual, a confirmação de e-mail de um convite individual recupera o convite pelo cookie, encerra apenas a sessão local anterior e retorna ao e-mail convidado; a correção está publicada e a homologação manual ainda está pendente.
 
 ## Verificações deste retrato
 
-- `npm run lint`, `npm test` (17 arquivos e 95 testes) e `npm run build` aprovados em 05/08/2026 após a remoção dos antigos reescritores determinísticos de agenda/material.
+- `npm run lint`, `npm test` (18 arquivos e 99 testes) e `npm run build` aprovados em 06/08/2026 após a correção de antecedência e fuso; o build confirmou 46 rotas.
 - Migrações Supabase: local e remoto alinhados até a versão indicada acima; colunas de rastreabilidade, função pós-análise, índice idempotente e revogação das funções legadas confirmados no remoto.
 - `npx supabase db lint --linked --fail-on error`: concluído sem erros; permanecem apenas avisos preexistentes.
-- Vercel: deployment de produção `Ready` associado ao commit indicado acima; `/login` no alias canônico respondeu `200` e não houve erro de runtime nos logs recentes do deployment.
+- Após a correção do fluxo de convite: `npm test` com 98 testes, `npm run lint` e `npm run build` com 46 rotas aprovados localmente; o commit `cea8119` foi publicado em produção no deployment `dpl_2RMP14xp41hB2YRds46EoQN8gRCN`.
+- Migration `20260806125009_add_call_grant_revoked_by.sql`: aplicada remotamente; `npx supabase db push --linked --dry-run` confirmou o banco atualizado; simulações autenticadas de `no_result` e `start_negotiation` passaram com `ROLLBACK`.
+- Migration `20260806144434_enforce_one_hour_call_lead_time.sql`: aplicada remotamente; o dry-run mostrou somente essa migration; a função remota rejeita o bypass de uma hora e uma chamada iniciada em 10 minutos retornou primeiro slot com mais de uma hora de antecedência.
+- Vercel: o deployment `gril-fejl110ao-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
+- Vercel: o deployment `gril-1jotu4cvc-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
+- Limpeza de contexto: os registros de homologação foram removidos do Supabase remoto em 05/08/2026 e 06/08/2026; a segunda limpeza de 06/08 zerou contato, oportunidade, conversa, mensagens, qualificações, IA, call, hold, reservas, jobs, outbox, ingestões e vínculos derivados. A auditoria relacionada permanece por regra do produto.
 
 ## Pendências operacionais
 
 - Continuar a homologação manual dos fluxos descritos no guia, especialmente comportamento do Pedro, agendamento, distribuição, reativação e integrações reais.
 - Homologar manualmente a edição de nome com dono/gestor e confirmar que corretor não recebe a ação nem consegue forjar a operação.
 - Registrar cada novo defeito com esperado, observado, lead/canal, horário e IDs técnicos quando disponíveis.
+- Recriar um lead de teste somente quando necessário para nova homologação, sem reutilizar os dados removidos.
 - Atualizar este arquivo após qualquer alteração de deployment, migration, conta/projeto ou conclusão material de homologação.
+- Repetir a homologação manual do registro de resultado no dashboard.
+- Homologar com um corretor novo o link de confirmação em um navegador que possui outra conta localmente autenticada, confirmando que a sessão final pertence ao e-mail convidado e retorna ao convite.
+- Homologar manualmente a exibição do fuso operacional no Inbox/CRM e o comportamento de um pedido explícito de call abaixo de uma hora com um lead de teste novo.
 
 ## Protocolo compartilhado
 
@@ -60,6 +78,59 @@
 
 ## Limites desta fonte
 
+## Atualização de 06/08/2026
+
+- As migrations `20260806151846_add_homologation_context_cleanup.sql` e `20260806153847_add_homologation_context_catalog_anchors.sql` foram aplicadas ao Supabase remoto e estão alinhadas localmente.
+- O dashboard agora oferece preview e limpeza protegida somente para contexto HML-, limitada a 20 contatos, com bloqueio de referências cruzadas, confirmação literal, transação no banco e auditoria preservada.
+- Preview autenticado e smoke test com contato sintético em transação revertida passaram; `npx supabase db lint --linked --fail-on error` passou com avisos preexistentes.
+- Deployment de produção `dpl_5NHYjVdK4kQjwKKX8mkeNiXzUYTH` ficou `Ready`, com alias `https://gril-lac.vercel.app`; `/login` respondeu HTTP 200.
+
+## Atualização de 06/08/2026 — whitelist do inbound do Pedro
+
+- A tela de Pedro agora permite cadastrar números E.164 em escopo da
+  organização para testes controlados do inbound normal em `production`.
+- A migration `20260806165243_enforce_pedro_inbound_allowlist.sql` foi aplicada
+  no Supabase remoto e adiciona bloqueio na elegibilidade, revalidação antes
+  do worker e trigger final antes de qualquer outbound de IA.
+- A mudança foi publicada no deployment Vercel
+  `dpl_APSFrhXy7vtcrJBWDaN9g6KA6gq9`, alias `https://gril-lac.vercel.app`,
+  com status `Ready`; a homologação funcional continua pendente.
+- O registro detalhado está em
+  `docs/agent/changes/20260806-pedro-inbound-production-allowlist.md`.
+
+## Atualização de 06/08/2026 — primeiro nome na campanha de reativação
+
+- A migration `20260806171000_campaign_first_name.sql` foi aplicada no
+  Supabase remoto. Ela cria o snapshot `campaign_contacts.campaign_first_name`
+  e faz preview e runtime usarem o primeiro termo, sem alterar o nome completo
+  do CRM.
+- A verificação remota confirmou migration, coluna, trigger, renderizador e
+  executor de campanha ativos; a aplicação publicada continua `Ready` no
+  deployment `dpl_APSFrhXy7vtcrJBWDaN9g6KA6gq9`, alias
+  `https://gril-lac.vercel.app`.
+- Não houve novo deploy Vercel porque a correção não altera o bundle da
+  aplicação; a publicação efetiva foi a migration no banco único.
+- O histórico local ainda tem a migration não rastreada
+  `20260806165420_campaign_edit_archive.sql`, enquanto o remoto registra essa
+  frente como `20260806170711`. O push desta alteração usou uma cópia temporária
+  alinhada; não foi feito `migration repair`.
+
+## Atualização de 06/08/2026 — remoção da revisão individual da onda
+
+- A migration `20260806180518_remove_campaign_wave_review_gate.sql` foi
+  aplicada no Supabase remoto. Ondas novas não criam revisões por contato e não
+  dependem da aprovação da onda anterior; revalidação de opt-out, supressão,
+  conexão ativa, pausa e limite de volume permanecem ativas.
+- Ondas existentes foram normalizadas para não manter uma revisão pendente; os
+  14 registros históricos de revisão foram preservados.
+- A interface e as actions de revisão individual foram removidas no commit
+  `a68701c`, publicado na branch `feat/remove-campaign-wave-review-gate`.
+- O deployment de produção `dpl_2C2rC72vcxhnoPbWQxQGTD9DZXmh` está `Ready`,
+  com alias `https://gril-lac.vercel.app`; `/login` respondeu HTTP 200.
+- A regra foi registrada em
+  `docs/decisions/campaign-wave-review-gate-disabled.md` e o detalhe da
+  mudança em `docs/agent/changes/2026-08-06-remocao-revisao-onda.md`.
+
 Este documento não substitui:
 
 - o banco para estado transacional;
@@ -67,3 +138,28 @@ Este documento não substitui:
 - Vercel para estado de deployment;
 - os sete documentos de produto para regras consolidadas;
 - os registros em `changes/` para histórico detalhado.
+
+## Atualização de 06/08/2026 — whitelist somente em production
+
+- A migration `20260806193000_allow_assisted_inbound_ai.sql` foi aplicada no
+  Supabase remoto e registrada como aplicada.
+- A elegibilidade do inbound agora ignora a whitelist nos modos `shadow` e
+  `assisted`; a revalidação antes do worker e o trigger final continuam
+  exigindo whitelist somente para `production`.
+- A conversa de homologação do João passou a retornar `ai_eligible = true`
+  em `assisted`, sem alterar registros nem disparar reprocessamento durante a
+  validação.
+- O `db push --linked` continua impedido pela divergência histórica já
+  existente entre `20260806165420_campaign_edit_archive` local e
+  `20260806170711` remoto; a migration corretiva foi aplicada por SQL
+  transacional e sua versão foi registrada explicitamente.
+
+## Atualização de 07/08/2026 — publicação da separação de campanhas arquivadas
+
+- A correção da listagem de campanhas foi publicada no deployment de produção
+  `dpl_5Cg5HadfzakZAT4WtRi82EVbhP8s`, com status `READY`, no projeto Vercel
+  `gril` do time `brio5`.
+- O alias público `https://gril-lac.vercel.app/login` respondeu HTTP 200 após
+  a publicação; o último deployment do projeto aponta para esse deployment.
+- Nenhuma migration ou alteração de dados foi aplicada nesta publicação.
+- A homologação manual das abas “Ativas” e “Arquivadas” permanece pendente.

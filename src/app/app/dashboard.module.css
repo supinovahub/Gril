@@ -203,6 +203,47 @@
 .checklist span { color: rgba(255, 254, 250, 0.62); font-size: 10px; line-height: 1.45; }
 .nextStep { padding-top: 17px; margin-top: 21px; border-top: 1px solid rgba(255,255,255,.1); color: rgba(255,254,250,.72); font-size: 10px; line-height: 1.55; }
 
+.feedbackError,
+.feedbackSuccess,
+.feedbackWarning {
+  margin: 0 0 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.feedbackError { border-color: rgba(151, 64, 52, .24); background: rgba(151, 64, 52, .07); color: #8d382d; }
+.feedbackSuccess { border-color: rgba(40, 98, 79, .22); background: var(--pine-soft); color: var(--positive); }
+.feedbackWarning { border-color: rgba(174, 116, 31, .25); background: rgba(174, 116, 31, .08); color: #875a16; }
+
+.cleanupPanel {
+  display: grid;
+  gap: 18px;
+  margin-top: 20px;
+  padding: 22px;
+  border: 1px solid rgba(151, 64, 52, .2);
+  border-radius: var(--radius-panel);
+  background: linear-gradient(135deg, rgba(255, 254, 250, .98), rgba(251, 244, 235, .94));
+  box-shadow: var(--shadow);
+}
+
+.cleanupPanel h2 { margin: 0; font-size: 17px; letter-spacing: -0.03em; }
+.cleanupPanel > div:first-child > p:last-child { max-width: 740px; margin: 8px 0 0; color: var(--ink-muted); font-size: 11px; line-height: 1.55; }
+.cleanupBody { display: grid; gap: 16px; }
+.cleanupCounts { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 1px; margin: 0; overflow: hidden; border: 1px solid var(--border-soft); border-radius: 12px; background: var(--border-soft); }
+.cleanupCounts div { padding: 12px; background: rgba(255,255,255,.7); }
+.cleanupCounts dt { color: var(--ink-muted); font-size: 9px; }
+.cleanupCounts dd { margin: 7px 0 0; font-size: 20px; font-variant-numeric: tabular-nums; }
+.cleanupAction { display: flex; align-items: center; justify-content: space-between; gap: 18px; padding-top: 16px; border-top: 1px solid var(--border-soft); }
+.cleanupAction p { max-width: 620px; margin: 0; color: var(--ink-muted); font-size: 10px; line-height: 1.5; }
+.cleanupAction button { flex: 0 0 auto; min-height: 38px; padding: 0 14px; border: 0; border-radius: 9px; background: #8d382d; color: #fffefa; cursor: pointer; font-size: 10px; font-weight: 750; }
+.cleanupAction button:hover { background: #743027; }
+.cleanupEmpty { margin: 0; color: var(--ink-muted); font-size: 11px; }
+.cleanupBlocked { padding: 13px 15px; border-left: 3px solid #b66d29; background: rgba(174, 116, 31, .08); color: #704d18; font-size: 10px; line-height: 1.5; }
+.cleanupBlocked ul { margin: 8px 0 0; padding-left: 18px; }
+
 @media (max-width: 980px) { .grid { grid-template-columns: 1fr; } }
 @media (max-width: 620px) {
   .pageHeader { align-items: flex-start; flex-direction: column; }
@@ -210,4 +251,6 @@
   .stat { min-height: 90px; }
   .operationRow { grid-template-columns: 1fr auto; }
   .operationMeta { display: none; }
+  .cleanupCounts { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .cleanupAction { align-items: stretch; flex-direction: column; }
 }

@@ -119,6 +119,6 @@ export async function switchInvitationAccountAction(token: string) {
   );
 
   const supabase = await createClient();
-  await supabase.auth.signOut({ scope: "global" });
+  await supabase.auth.signOut({ scope: "local" });
   redirect(`/login?next=${encodeURIComponent(gatewayPath)}`);
 }

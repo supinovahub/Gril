@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 
 import {
+  isInvitationGatewayPath,
   PENDING_INVITATION_COOKIE,
   resolveAuthNext,
 } from "@/lib/auth/pending-invitation";
@@ -16,11 +17,18 @@ export async function GET(request: NextRequest) {
 
   if (code) {
     const supabase = await createClient();
+    if (isInvitationGatewayPath(next)) {
+      await supabase.auth.signOut({ scope: "local" });
+    }
     const { error } = await supabase.auth.exchangeCodeForSession(code);
     if (!error) {
-      return NextResponse.redirect(new URL(next, request.url));
+      const response = NextResponse.redirect(new URL(next, request.url));
+      response.headers.set("Cache-Control", "private, no-store");
+      return response;
     }
   }
 
-  return NextResponse.redirect(new URL("/login?error=callback", request.url));
+  const response = NextResponse.redirect(new URL("/login?error=callback", request.url));
+  response.headers.set("Cache-Control", "private, no-store");
+  return response;
 }

@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 
 import { canManageCrm, requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { formatOperationDateTime } from "@/lib/time/operation-format";
 import { conversationAction, reviewAiSuggestionAction, sendHumanMessageAction } from "../actions";
 import { updateContactNameAction } from "../../contact-actions";
 import styles from "../inbox.module.css";
@@ -54,6 +55,8 @@ export default async function ConversationPage({
   const globalAiMode = settingsResult.data?.ai_global_mode ?? "off";
   if (!conversation) notFound();
 
+  const operationTimezone = viewer.operations.find((operation) => operation.id === conversation.operation_id)?.timezone;
+
   const latestInbound = [...(messages ?? [])].reverse().find((message) => message.direction === "inbound");
   const currentExecution = latestExecution?.request_message_id === latestInbound?.id ? latestExecution : null;
 
@@ -91,7 +94,7 @@ export default async function ConversationPage({
           {suggestions?.length ? <div className={styles.suggestionStack}>
             {suggestions.map((suggestion) => <form action={reviewAiSuggestionAction} className={styles.suggestionCard} key={suggestion.id}>
               <input name="suggestionId" type="hidden" value={suggestion.id} /><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} />
-              <header><span><Bot size={15} /> Sugestão do Pedro</span><small>{new Date(suggestion.created_at).toLocaleString("pt-BR")}</small></header>
+              <header><span><Bot size={15} /> Sugestão do Pedro</span><small>{formatOperationDateTime(suggestion.created_at, operationTimezone)}</small></header>
               <textarea defaultValue={suggestion.body} maxLength={4096} name="body" required rows={4} />
               <footer><button name="action" type="submit" value="send"><Send size={14} /> Aprovar e enviar</button><button className={styles.teachButton} name="action" type="submit" value="teach_only"><Bot size={14} /> Ensinar e gerar outra</button><button className={styles.discardButton} formNoValidate name="action" type="submit" value="discard"><X size={14} /> Só descartar</button></footer>
             </form>)}
@@ -100,7 +103,7 @@ export default async function ConversationPage({
             {messages?.map((message) => (
               <article className={`${message.direction === "inbound" ? styles.inbound : styles.outbound} ${message.provider_status === "failed" || message.provider_status === "suppressed" ? styles.notSent : ""}`} key={message.id}>
                 <p>{message.body || `[${message.content_type}]`}</p>
-                <footer><span>{senderLabel(message.sender_type, message.metadata)}</span><time>{new Intl.DateTimeFormat("pt-BR", { timeStyle: "short", dateStyle: "short" }).format(new Date(message.created_at))}</time><span>{message.provider_status === "suppressed" ? "não enviada" : message.provider_status === "failed" ? "falha no envio" : message.provider_status}</span></footer>
+                <footer><span>{senderLabel(message.sender_type, message.metadata)}</span><time>{formatOperationDateTime(message.created_at, operationTimezone)}</time><span>{message.provider_status === "suppressed" ? "não enviada" : message.provider_status === "failed" ? "falha no envio" : message.provider_status}</span></footer>
               </article>
             ))}
             {!messages?.length ? <div className={styles.empty}><MessageCircle size={26} /><span>Sem mensagens.</span></div> : null}

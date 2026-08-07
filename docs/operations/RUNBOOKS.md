@@ -7,7 +7,8 @@
 3. Depois do deploy, chamar `configure_runtime_worker(base_url, worker_secret)` com `service_role`; conferir `gril-runtime-worker` em `cron.job` e uma resposta 200 de `/api/internal/workers/drain`.
 4. Copiar da tela de WhatsApp a URL de callback. Na Uazapi, assinar `messages`, `messages_update` e excluir mensagens `wasSentByApi`; na Meta, usar a mesma URL e o token de verificação exibido.
 5. Ativar primeiro inbound, validar recibos e só depois habilitar campanhas ou modo produção.
-6. Habilitar proteção contra senhas vazadas no Supabase Auth e repetir o advisor de segurança.
+6. Antes de habilitar inbound em `production`, cadastrar somente os números autorizados na **Whitelist de produção** e validar um contato listado e outro fora da lista.
+7. Habilitar proteção contra senhas vazadas no Supabase Auth e repetir o advisor de segurança.
 
 ## Provedor indisponível
 

@@ -104,7 +104,7 @@ Repita o caminho anterior como corretor. Dono ou gestor com `team.manage` pode a
 1. como dono, crie um convite de gestor; como gestor autorizado, crie um convite de corretor;
 2. copie o link e abra-o em janela anônima, sem conta criada;
 3. confirme que aparecem somente imobiliária, papel e validade, sem e-mail completo ou operação interna;
-4. crie a conta pelo próprio convite, confirme o e-mail e entre sem reabrir manualmente o link;
+4. crie a conta pelo próprio convite, confirme o e-mail e entre sem reabrir manualmente o link; o link deve encerrar apenas a sessão local anterior, autenticar o e-mail convidado e retornar diretamente ao convite, sem abrir a conta que estava logada;
 5. na tela final, informe o WhatsApp e clique em `Salvar WhatsApp e aceitar convite`;
 6. confirme ativação imediata, sem segunda aprovação, e a notificação `Convite aceito` na Central do dono/criador;
 7. repita com uma conta logada no e-mail errado: o aceite deve ser bloqueado, o e-mail convidado deve aparecer mascarado e `Trocar de conta` deve preservar o convite;
@@ -194,13 +194,17 @@ No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confir
 
 ### 6.1 Modos, aprendizado e curadoria
 
-1. em `Pedro`, confirme que o atendimento normal oferece apenas `off`, `shadow` e `assisted`; `production` existe somente para reativação;
-2. configure reativação como `production + teste controlado`, cadastre seu telefone E.164 na allowlist e prove que um contato fora dela é bloqueado no servidor;
-3. em uma sugestão assisted, edite e aprove: a mensagem deve ser enviada e a correção deve criar um candidato para Lionel;
-4. use `Ensinar e gerar outra`: nada deve ser enviado ao lead e uma nova sugestão deve aparecer usando a orientação;
-5. use `Só descartar`: nada deve ser enviado nem exibido como sucesso de envio;
-6. abra `/app/lionel`, responda ao grill uma pergunta por vez e registre o consenso como candidato; confirme que ele aparece em `Aprendizados`, ainda sem ativação silenciosa;
-7. confirme que corretor não vê Lionel nem controles de aprendizado.
+1. em `Pedro`, confirme que o atendimento normal oferece `off`, `shadow`, `assisted` e `production`; `production` só pode ser salvo quando os portões técnicos de produção estiverem aprovados;
+2. na seção **Whitelist de produção**, cadastre o telefone E.164 do lead de teste, coloque o inbound em `production` e confirme que esse número pode receber a resposta automática;
+3. coloque o inbound em `assisted` e envie uma mensagem de um contato fora da whitelist; prove no banco/log que ele criou execução/sugestão, mas não enviou mensagem outbound automaticamente;
+4. coloque o inbound em `production` e envie uma mensagem de um contato fora da whitelist; prove que ele foi registrado no Inbox, mas não criou execução nem mensagem outbound automática;
+5. remova um número da whitelist com uma execução `production` pendente e confirme que o worker bloqueia a execução antes do envio;
+6. configure reativação como `production + teste controlado`, cadastre seu telefone E.164 na allowlist e prove que um contato fora dela é bloqueado no servidor;
+7. em uma sugestão assisted, edite e aprove: a mensagem deve ser enviada e a correção deve criar um candidato para Lionel;
+8. use `Ensinar e gerar outra`: nada deve ser enviado ao lead e uma nova sugestão deve aparecer usando a orientação;
+9. use `Só descartar`: nada deve ser enviado nem exibido como sucesso de envio;
+10. abra `/app/lionel`, responda ao grill uma pergunta por vez e registre o consenso como candidato; confirme que ele aparece em `Aprendizados`, ainda sem ativação silenciosa;
+11. confirme que corretor não vê Lionel nem controles de aprendizado.
 
 ### 6.2 Chat geral, intervenção humana e corretor
 
@@ -275,12 +279,13 @@ Confirme:
 3. somente imóveis publicados e compatíveis são recomendados;
 4. foto principal, fotos extras e book seguem a decisão do lead;
 5. horários respeitam disponibilidade;
-6. Pedro não confirma a call antes do aceite de um corretor;
-7. aceite atribui e bloqueia agenda atomicamente;
-8. follow-up é criado e cancelado na condição correta;
-9. pedido humano pausa Pedro imediatamente;
-10. opt-out bloqueia campanha, follow-up e retomada;
-11. pós-call, proposta, perda e venda encerram as automações adequadas.
+6. se o lead escolher vídeo ou telefone depois do horário, a resposta mantém o mesmo horário, a ação estruturada reaproveita o slot e não surge uma segunda call ativa;
+7. Pedro não confirma a call antes do aceite de um corretor;
+8. aceite atribui e bloqueia agenda atomicamente;
+9. follow-up é criado e cancelado na condição correta;
+10. pedido humano pausa Pedro imediatamente;
+11. opt-out bloqueia campanha, follow-up e retomada;
+12. pós-call, proposta, perda e venda encerram as automações adequadas.
 
 ## 10. Volume, campanhas e calls
 
@@ -300,26 +305,59 @@ Confirme:
 2. revise amostras, telefones, duplicados e opt-outs;
 3. confirme bloqueio do mesmo hash;
 4. aprove exemplos de abertura;
-5. libere 20 e revise todas as conversas;
-6. libere 50 e revise novamente;
-7. libere o restante;
-8. teste pausa, retomada, exclusão e arquivamento.
+5. confirme que cada abertura usa somente o primeiro nome do CSV ou o primeiro nome do CRM como fallback, sem alterar o nome completo do contato;
+6. libere a onda de 20 sem revisão individual por contato;
+7. confirme no CRM a fila, os opt-outs e os status enfileirados;
+8. libere a onda de 50 sem revisão individual por contato;
+9. libere o restante;
+10. teste pausa, retomada, exclusão e arquivamento.
+
+Para a personalização dinâmica, use uma base sintética com pelo menos três
+linhas válidas e colunas de objetivo, investimento anterior, entrada e parcela.
+Confirme que:
+
+- a tela de criação mostra três aberturas diferentes para o mesmo objetivo;
+- a revisão substitui `{{first_name}}`, `{{objetivo}}`, `{{entrada}}`,
+  `{{parcela}}`, `{{orcamento}}` e `{{historico}}` com os dados de cada linha;
+- nenhum preview contém `undefined`, `null` ou placeholder aberto;
+- os contatos elegíveis de uma mesma onda alternam os IDs de variante e uma
+  supressão/opt-out não consome uma posição da rotação;
+- o corpo persistido pelo worker é igual ao preview da mesma linha e variante;
+- campanhas antigas sem `opening_variants` continuam usando
+  `opening_template`.
 
 ### Agenda e distribuição
 
 - preferenciais recebem oferta simultânea;
 - fluxo comum segue 5/5/5 minutos e depois broadcast;
+- slots oferecidos devem ter no mínimo uma hora de antecedência em relação ao momento atual;
+- pedido explícito abaixo de uma hora sobe silenciosamente para o gestor, gera o alerta crítico correspondente e não inicia ofertas aos corretores;
 - dois aceites simultâneos produzem um vencedor;
 - aceite, recusa e devolução funcionam no app e WhatsApp;
 - cancelamento/reagendamento anulam holds, ofertas e jobs anteriores;
 - somente humano registra no-show;
 - terceiro reagendamento alerta o gestor.
 
+Inbox, CRM e agenda devem exibir datas e horários no fuso configurado da operação, nunca no UTC do servidor.
+
 ## 11. CRM, privacidade e encerramento
 
 Teste criação, deduplicação e merge de leads; co-comprador; origem; Kanban; checklists; proposta; perda; venda; ações em massa com prévia; exportação CSV; arquivamento e restauração manual, com Pedro ou com Pedro e follow-up.
 
 O dono/gestor pode arquivar e restaurar um lead, devolvê-lo ao Pedro e reativar follow-up conforme permissões.
+
+### Limpeza do contexto de homologação
+
+No dashboard, dono ou gestor com `team.manage` pode usar **Limpar contexto de homologação** para remover o contexto de teste da própria imobiliária. O preview considera somente contatos cujo nome começa por `HML-` e limita a operação a 20 contatos.
+
+1. Crie os registros de teste com o prefixo `HML-` e use somente contatos autorizados.
+2. Confira no preview contatos, oportunidades, conversas, mensagens, chamadas e jobs pendentes.
+3. Não prossiga se houver bloqueio por merge ou referência cruzada com uma oportunidade fora de HML-.
+4. Clique na ação, digite exatamente `CONFIRMAR AÇÃO` e confirme.
+5. Valide que leads, conversas, mensagens, chamadas, IA, qualificações, jobs, outbox e mídias do contexto foram removidos; configurações, equipe e auditoria permanecem.
+6. Consulte `/app/configuracoes/auditoria` e registre o horário, o ator, os IDs e os contadores do recibo.
+
+O suporte externo não executa esta ação. A limpeza é transacional no banco; remoção de arquivos usa a rotina de storage e qualquer pendência deve ser registrada antes de repetir o piloto.
 
 Em privacidade, teste acesso, exportação, correção e anonimização; legal hold; documento sensível com e sem liberação; e trilha de auditoria. A decisão jurídica e o atendimento de LGPD pertencem à imobiliária; o sistema oferece os controles, mas não substitui sua decisão.
 
@@ -361,6 +399,7 @@ Valide ainda Central, push, pausa emergencial, relatórios, custos, carga por co
 | Agrupamento | 10 s; máximo total 30 s |
 | Capacidade | inbound 10; campanha 25; total 30; sleeping 5 min |
 | Call | 20 min + intervalo de 10 min |
+| Lead time de call | mínimo 1 h; abaixo disso sobe silenciosamente para o gestor |
 | Preferenciais | simultâneo por até 30 min |
 | Fluxo comum | 5 min + 5 min + 5 min + broadcast |
 | Fotos | até 5; exatamente 1 principal; 5 MB; JPEG/PNG |

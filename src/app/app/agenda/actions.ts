@@ -12,6 +12,19 @@ function agendaRedirect(message: string, kind: "erro" | "sucesso" = "erro"): nev
   redirect(`/app/agenda?${kind}=${encodeURIComponent(message)}`);
 }
 
+function callResultErrorMessage(message: string): string {
+  if (message.includes("negotiation_result_requires")) {
+    return "Negociação exige resumo, próxima ação com data e previsão de compra.";
+  }
+  if (message.includes("call_not_started")) {
+    return "O resultado só pode ser registrado a partir do início da call.";
+  }
+  if (message.includes("call_result_forbidden")) {
+    return "Você não pode registrar o resultado desta call ou ela foi atualizada. Atualize a página e tente novamente.";
+  }
+  return "Não foi possível registrar o resultado da call. Atualize a página e tente novamente.";
+}
+
 export async function updateCallSettingsAction(formData: FormData) {
   const viewer = await requireActiveViewer();
   if (!viewer.membership) agendaRedirect("Membership não encontrada.");
@@ -132,6 +145,6 @@ export async function recordCallResultAction(formData: FormData) {
   if (!parsed.success) agendaRedirect("Resultado inválido.");
   const viewer = await requireActiveViewer(); const supabase = await createClient();
   const { error } = await supabase.from("call_result_requests").insert({ org_id: viewer.organization!.id, call_id: parsed.data.callId, expected_call_version: parsed.data.expectedVersion, result: parsed.data.result, reason: parsed.data.reason ?? null, context: parsed.data.context ?? null, next_action: parsed.data.nextAction ?? null, next_action_due_at: parsed.data.nextActionDueAt ? new Date(parsed.data.nextActionDueAt).toISOString() : null, purchase_month: parsed.data.purchaseMonth ?? null, purchase_year: parsed.data.purchaseYear ?? null, actor_user_id: viewer.userId });
-  if (error) agendaRedirect(error.message.includes("negotiation_result_requires") ? "Negociação exige resumo, próxima ação com data e previsão de compra." : "Resultado recusado: a call ainda não começou, mudou ou já foi concluída.");
+  if (error) agendaRedirect(callResultErrorMessage(error.message));
   revalidatePath("/app/agenda"); revalidatePath("/app/kanban"); agendaRedirect("Resultado registrado.", "sucesso");
 }
