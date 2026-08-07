@@ -27,14 +27,14 @@ validações transacionais do Inbox.
 Existe no máximo um tópico ativo de sugestão por conversa; novas sugestões do
 mesmo lead entram no histórico do tópico, evitando uma lista fragmentada.
 
-## Contexto visÃ­vel da sugestÃ£o
+## Contexto visível da sugestão
 
-Cada proposta pendente deve apresentar, no prÃ³prio tÃ³pico, a resposta exata
-gerada por Pedro e um contexto suficiente para a revisÃ£o humana. Quando
-disponÃ­vel, isso inclui o resumo factual anterior da conversa e a mensagem
-inbound exata que originou a execuÃ§Ã£o. O link para o Inbox continua disponÃ­vel
-para consulta do histÃ³rico completo; o Chat nÃ£o deve depender de uma frase
-genÃ©rica para explicar o que foi analisado.
+Cada proposta pendente deve apresentar, no próprio tópico, a resposta exata
+gerada por Pedro e um contexto suficiente para a revisão humana. Quando
+disponível, isso inclui o resumo factual anterior da conversa e a mensagem
+inbound exata que originou a execução. O link para o Inbox continua disponível
+para consulta do histórico completo; o Chat não deve depender de uma frase
+genérica para explicar o que foi analisado.
 
 ## Limites
 
