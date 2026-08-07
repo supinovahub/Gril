@@ -6,7 +6,7 @@
 
 - GitHub: `https://github.com/supinovahub/Gril`.
 - Branch padrão confirmada: `phase/01-foundation`.
-- Último commit de código confirmado nesta branch: `d930949` (`fix(agenda): enforce one-hour call lead time`).
+- Último commit de código confirmado nesta branch: `b3720f9` (`fix(campaigns): restore dynamic messages with archive separation`).
 - Working tree estava limpa antes da criação desta camada de memória.
 
 ## Produção e infraestrutura
@@ -19,7 +19,7 @@
   não rastreada `20260806165420_campaign_edit_archive.sql` com timestamp local
   divergente da migration de arquivamento já aplicada.
 - A migration `20260806125009_add_call_grant_revoked_by.sql` foi aplicada no Supabase remoto para permitir que o roteamento pós-call registre quem revogou a liberação operacional da conversa.
-- Deployment de produção confirmado como `Ready` em 06/08/2026: `gril-1jotu4cvc-brio5.vercel.app` (`dpl_HXdp4BrqHY7zCDQtG6F7d9BUSZpx`), alias `https://gril-lac.vercel.app`, publicado a partir do commit `d930949`.
+- Deployment de produção confirmado como `Ready` em 07/08/2026: `dpl_GYof2cybajLb18xQJhF3n4YfoSBh`, alias `https://gril-lac.vercel.app`, publicado a partir do merge `b3720f9`.
 
 ## Estado funcional
 
@@ -163,3 +163,16 @@ Este documento não substitui:
   a publicação; o último deployment do projeto aponta para esse deployment.
 - Nenhuma migration ou alteração de dados foi aplicada nesta publicação.
 - A homologação manual das abas “Ativas” e “Arquivadas” permanece pendente.
+
+## Atualização de 07/08/2026 — restauração das mensagens dinâmicas
+
+- A lógica de mensagens dinâmicas foi reintegrada à separação entre campanhas
+  ativas e arquivadas no commit `1d3867a`, mergeado na branch padrão pelo PR
+  `#34` no commit `b3720f9`.
+- O deployment de produção `dpl_GYof2cybajLb18xQJhF3n4YfoSBh` ficou `Ready`;
+  o alias `https://gril-lac.vercel.app/login` respondeu HTTP 200.
+- O CI do merge passou com lint, testes e build; nenhuma migration foi
+  aplicada, pois `20260806202829_campaign_dynamic_messages.sql` já estava
+  aplicada no Supabase remoto.
+- A homologação manual da rotação sem repetição, dos dados adicionais da
+  planilha e das abas “Ativas”/“Arquivadas” permanece pendente.

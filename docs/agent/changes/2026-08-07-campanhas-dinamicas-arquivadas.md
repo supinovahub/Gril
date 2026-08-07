@@ -2,8 +2,8 @@
 
 - Data: 07/08/2026
 - Responsável: Codex
-- Branch/PR: `fix/campaign-dynamic-messages-archive`
-- Commit: o commit que contém este arquivo
+- Branch/PR: `fix/campaign-dynamic-messages-archive` / PR #34
+- Commit: merge `b3720f9` (correção `1d3867a`)
 
 ## Objetivo
 
@@ -27,8 +27,9 @@ outra.
 - Migrations: `20260806202829_campaign_dynamic_messages.sql` foi recuperada
   para o histórico local na versão final com rotação por onda; ela já constava
   como aplicada no Supabase remoto e não foi reaplicada nesta tarefa.
-- Mudanças externas: deploy de produção será registrado após a confirmação do
-  deployment final.
+- Mudanças externas: PR #34 mergeado na branch `phase/01-foundation`; o
+  deployment de produção `dpl_GYof2cybajLb18xQJhF3n4YfoSBh` ficou `Ready` e o
+  alias `https://gril-lac.vercel.app/login` respondeu HTTP 200.
 
 ## Validação
 
@@ -40,10 +41,12 @@ outra.
   `src/lib/ai/pedro-turn.test.ts`, fora do escopo.
 - `npx supabase db lint --linked` não concluiu por falha de autenticação do
   usuário temporário da CLI; não foi feita alteração remota como alternativa.
+- CI do PR #34: lint, `npm test` e `npm run build` concluídos com sucesso.
 
 ## Impacto operacional
 
-- Deploy necessário: sim, após a validação final do pacote.
+- Deploy necessário: sim, concluído no deployment
+  `dpl_GYof2cybajLb18xQJhF3n4YfoSBh`.
 - Migração aplicada: não nesta tarefa; a versão correspondente já estava
   aplicada remotamente.
 - Compatibilidade/rollback: campanhas sem pack continuam usando
