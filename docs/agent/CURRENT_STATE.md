@@ -163,7 +163,6 @@ Este documento não substitui:
   a publicação; o último deployment do projeto aponta para esse deployment.
 - Nenhuma migration ou alteração de dados foi aplicada nesta publicação.
 - A homologação manual das abas “Ativas” e “Arquivadas” permanece pendente.
-
 ## Atualização de 07/08/2026 — restauração das mensagens dinâmicas
 
 - A lógica de mensagens dinâmicas foi reintegrada à separação entre campanhas
