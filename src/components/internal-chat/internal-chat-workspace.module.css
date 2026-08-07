@@ -38,6 +38,12 @@
 .message footer { align-items:center; display:flex; justify-content:space-between; }
 .message footer a { align-items:center; color:inherit; display:inline-flex; font-size:.68rem; gap:4px; opacity:.7; text-decoration:none; }
 .suggestionProposal { display: grid; gap: 10px; }
+.suggestionContext { background: color-mix(in srgb, var(--clay) 5%, var(--paper)); border: 1px solid color-mix(in srgb, var(--clay) 22%, var(--border)); border-radius: 12px; display: grid; gap: 12px; padding: 12px; }
+.suggestionContextBlock { display: grid; gap: 5px; }
+.suggestionContextBlock > strong, .analyzedLeadMessage > strong { color: var(--accent-dark); font-size: .7rem; letter-spacing: .04em; text-transform: uppercase; }
+.suggestionContextBlock p, .analyzedLeadMessage p { color: var(--ink); font-size: .78rem; line-height: 1.5; margin: 0; }
+.analyzedLeadMessage { border-left: 3px solid var(--clay); display: grid; gap: 5px; margin: 0; padding: 2px 0 2px 10px; }
+.analyzedLeadMessage footer { color: var(--ink-muted); display: block; font-size: .66rem; }
 .suggestionProposalCard { background: var(--paper); border: 1px solid color-mix(in srgb, var(--clay) 35%, var(--border)); border-radius: 12px; display: grid; gap: 10px; padding: 12px; }
 .suggestionProposalHeader { align-items: center; display: flex; gap: 10px; justify-content: space-between; }
 .suggestionProposalHeader strong { color: var(--ink); font-size: .78rem; }

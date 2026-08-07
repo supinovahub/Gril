@@ -13,6 +13,9 @@ type AssistedSuggestionProposal = {
   expectedVersion: number;
   body: string;
   status: string;
+  analyzedMessage?: string;
+  analyzedMessageAt?: string;
+  contextSummary?: string;
 };
 
 const statusLabels: Record<string, string> = {
@@ -43,6 +46,9 @@ function assistedSuggestionProposal(message: Message): AssistedSuggestionProposa
     expectedVersion,
     body: metadata.suggestion_body,
     status: typeof metadata.status === "string" ? metadata.status : "pending",
+    analyzedMessage: typeof metadata.analyzed_message === "string" && metadata.analyzed_message.trim() ? metadata.analyzed_message : undefined,
+    analyzedMessageAt: typeof metadata.analyzed_message_at === "string" ? metadata.analyzed_message_at : undefined,
+    contextSummary: typeof metadata.context_summary === "string" && metadata.context_summary.trim() ? metadata.context_summary : undefined,
   };
 }
 
@@ -134,6 +140,19 @@ export function InternalChatWorkspace({
                       {proposal ? (
                         <div className={styles.suggestionProposal}>
                           <p>{message.body}</p>
+                          {proposal.contextSummary || proposal.analyzedMessage ? (
+                            <div className={styles.suggestionContext}>
+                              {proposal.contextSummary ? <div className={styles.suggestionContextBlock}>
+                                <strong>Contexto resumido</strong>
+                                <p>{proposal.contextSummary}</p>
+                              </div> : null}
+                              {proposal.analyzedMessage ? <blockquote className={styles.analyzedLeadMessage}>
+                                <strong>Mensagem do lead analisada</strong>
+                                <p>{proposal.analyzedMessage}</p>
+                                {proposal.analyzedMessageAt ? <footer>{dateLabel(proposal.analyzedMessageAt)}</footer> : null}
+                              </blockquote> : null}
+                            </div>
+                          ) : null}
                           <div className={styles.suggestionProposalCard}>
                             <div className={styles.suggestionProposalHeader}>
                               <strong>Resposta sugerida ao lead</strong>

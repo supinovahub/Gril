@@ -27,6 +27,15 @@ validações transacionais do Inbox.
 Existe no máximo um tópico ativo de sugestão por conversa; novas sugestões do
 mesmo lead entram no histórico do tópico, evitando uma lista fragmentada.
 
+## Contexto visÃ­vel da sugestÃ£o
+
+Cada proposta pendente deve apresentar, no prÃ³prio tÃ³pico, a resposta exata
+gerada por Pedro e um contexto suficiente para a revisÃ£o humana. Quando
+disponÃ­vel, isso inclui o resumo factual anterior da conversa e a mensagem
+inbound exata que originou a execuÃ§Ã£o. O link para o Inbox continua disponÃ­vel
+para consulta do histÃ³rico completo; o Chat nÃ£o deve depender de uma frase
+genÃ©rica para explicar o que foi analisado.
+
 ## Limites
 
 - Sugestões de `shadow` não entram na fila de aprovação humana.
