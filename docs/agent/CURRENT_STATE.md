@@ -1,6 +1,6 @@
 # Estado atual compartilhado do Gril
 
-> Atualizado em 06/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
+> Atualizado em 07/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
 
 ## Repositório
 
@@ -25,6 +25,12 @@
 - O deployment `dpl_HkqFuKVWkFWZexPcQSzyKAsBwmnW` está `Ready` em produção,
   com alias `https://gril-lac.vercel.app`, publicado a partir da branch
   `feat/campaign-dynamic-messages`; `/login` respondeu HTTP 200.
+- A migration `20260807130110_chat_pedro_suggestion_context.sql` foi aplicada
+  no Supabase remoto, com o histórico local/remoto alinhado até essa versão.
+- O preview da branch `fix/chat-pedro-suggestion-context-current`, commit
+  `14174ea`, foi promovido para produção como `dpl_5NeSvVfQ95GH1EiW1wm7u25bNSVA`;
+  o alias `https://gril-lac.vercel.app` respondeu HTTP 200 em `/login` após a
+  promoção.
 
 ## Estado funcional
 
@@ -52,11 +58,11 @@
 - A janela de slots de call do worker e do banco agora respeita no mínimo uma hora de antecedência; pedidos explícitos abaixo desse limite continuam escalando silenciosamente para o gestor sem acionar corretores. Inbox e CRM formatam timestamps no fuso da operação.
 - No código atual, a confirmação de e-mail de um convite individual recupera o convite pelo cookie, encerra apenas a sessão local anterior e retorna ao e-mail convidado; a correção está publicada e a homologação manual ainda está pendente.
 - O atendimento normal voltou a oferecer o modo `production`; a Server Action e o banco aceitam o modo, mas a ativação continua condicionada aos gates de identidade, conhecimento, modelo, canal saudável e regressão aprovada.
-- A branch atual recompõe a fila de sugestões `assisted` no Chat com Pedro, com resposta exata, contexto da mensagem inbound analisada, link para o Inbox e revisão humana pelo mesmo fluxo transacional; a publicação e a homologação desta composição continuam pendentes.
+- A branch atual recompõe a fila de sugestões `assisted` no Chat com Pedro, com resposta exata, contexto da mensagem inbound analisada, link para o Inbox e revisão humana pelo mesmo fluxo transacional; a composição está publicada e a homologação manual continua pendente.
 
 ## Verificações deste retrato
 
-- `npm run lint`, `npm test` (18 arquivos e 99 testes) e `npm run build` aprovados em 06/08/2026 após a correção de antecedência e fuso; o build confirmou 46 rotas.
+- `npm run lint`, `npm test` (19 arquivos e 103 testes) e `npm run build` aprovados em 07/08/2026 após a composição do Chat com a feature de campanhas; o build confirmou 46 rotas.
 - Migrações Supabase: local e remoto alinhados até a versão indicada acima; colunas de rastreabilidade, função pós-análise, índice idempotente e revogação das funções legadas confirmados no remoto.
 - `npx supabase db lint --linked --fail-on error`: concluído sem erros; permanecem apenas avisos preexistentes.
 - Após a correção do fluxo de convite: `npm test` com 98 testes, `npm run lint` e `npm run build` com 46 rotas aprovados localmente; o commit `cea8119` foi publicado em produção no deployment `dpl_2RMP14xp41hB2YRds46EoQN8gRCN`.
@@ -64,6 +70,7 @@
 - Migration `20260806144434_enforce_one_hour_call_lead_time.sql`: aplicada remotamente; o dry-run mostrou somente essa migration; a função remota rejeita o bypass de uma hora e uma chamada iniciada em 10 minutos retornou primeiro slot com mais de uma hora de antecedência.
 - Vercel: o deployment `gril-fejl110ao-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
 - Vercel: o deployment `gril-1jotu4cvc-brio5.vercel.app` está `Ready`, o alias público responde `200` em `/login`, e a identidade usada foi `suporteinovahub-7501` pelo perfil explícito obrigatório.
+- Vercel: a promoção do Chat com Pedro foi executada no dashboard autenticado como `suporteinovahub-7501`; o alias público respondeu `200` em `/login`.
 - Limpeza de contexto: os registros de homologação foram removidos do Supabase remoto em 05/08/2026 e 06/08/2026; a segunda limpeza de 06/08 zerou contato, oportunidade, conversa, mensagens, qualificações, IA, call, hold, reservas, jobs, outbox, ingestões e vínculos derivados. A auditoria relacionada permanece por regra do produto.
 
 ## Pendências operacionais
