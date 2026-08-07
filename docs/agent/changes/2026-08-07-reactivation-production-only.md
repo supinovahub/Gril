@@ -27,8 +27,9 @@ para campanhas de reativacao de base.
   conversa pela abertura da campanha.
 - Testes: `supabase/tests/phase_38_reactivation_production_only.sql` cobre os
   constraints, triggers e funcoes principais.
-- Mudancas externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma. A
-  migration nao foi aplicada ao Supabase remoto e nao houve deploy.
+- Mudancas externas em Supabase, Vercel, GitHub ou fornecedores: a migration
+  `20260807180741` foi aplicada no projeto remoto `frslhzwhaooqtivkzdez` e sua
+  history foi registrada; nenhum deploy Vercel foi feito.
 
 ## Validacao
 
@@ -46,17 +47,19 @@ para campanhas de reativacao de base.
 ## Impacto operacional
 
 - Deploy necessario: sim, junto com a migration.
-- Migracao aplicada: nao.
+- Migracao aplicada: sim, no Supabase remoto em 07/08/2026; nenhum dado de
+  lead foi apagado ou alterado por esta migration.
 - Compatibilidade/rollback: a migration normaliza configuracoes globais
   antigas de production para `assisted`; rollback exige uma decisao explicita,
   pois reabrir production no inbound contradiz esta regra atual.
 
 ## Pendencias e riscos
 
-- Executar a migration em ambiente local com Docker e repetir os testes pgTAP.
 - Homologar uma campanha reactivation em `test_controlled` e depois `released`.
 - Investigar o erro de prerender do Next em `/app/conhecimento` antes do build
   de release.
+- Confirmar no dashboard de produção uma campanha de teste antes de habilitar
+  qualquer campanha real.
 
 ## Documentos relacionados
 

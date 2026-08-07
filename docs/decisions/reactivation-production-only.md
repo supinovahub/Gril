@@ -28,7 +28,7 @@ permitia `production` para atendimento normal.
 
 ## Rollout
 
-Código e migration devem ser publicados juntos. A migration não foi aplicada
-ao Supabase remoto nesta tarefa. A homologação deve provar que uma campanha de
-reativação liberada responde, enquanto uma conversa inbound normal permanece
-sem resposta automática.
+Código e migration devem ser publicados juntos. A migration foi aplicada ao
+Supabase remoto em 07/08/2026; nenhum bundle Vercel foi alterado. A homologação
+deve provar que uma campanha de reativação liberada responde, enquanto uma
+conversa inbound normal permanece sem resposta automática.
