@@ -175,3 +175,18 @@ Este documento não substitui:
   aplicada no Supabase remoto.
 - A homologação manual da rotação sem repetição, dos dados adicionais da
   planilha e das abas “Ativas”/“Arquivadas” permanece pendente.
+
+## Atualização de 08/08/2026 — integração do Chat com Pedro
+
+- A mudança omitida foi reintegrada sobre a produção atual pelos commits
+  funcionais `61f3efa` e `104f13c`, com a decisão normalizada em `14174ea`.
+- O Chat com Pedro agora recebe sugestões `assisted` por lead, mostra a
+  resposta exata, o resumo e a mensagem inbound analisada, permite abrir o
+  Inbox e usa o mesmo fluxo transacional de aprovação, edição, ensino e
+  descarte.
+- Foram incluídas as migrations `20260806165000_chat_pedro_assisted_queue.sql`
+  e `20260807130110_chat_pedro_suggestion_context.sql`, além dos testes SQL e
+  registros de mudança correspondentes; ambas já constam aplicadas no Supabase
+  remoto.
+- O deploy do bundle permanece pendente nesta etapa; a homologação manual do
+  mesmo caso no Inbox e no Chat também permanece pendente.

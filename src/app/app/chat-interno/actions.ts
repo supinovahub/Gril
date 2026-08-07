@@ -15,6 +15,14 @@ const sendSchema = z.object({
   replyToMessageId: z.string().uuid().optional(),
 });
 
+const assistedSuggestionReviewSchema = z.object({
+  threadId: z.string().uuid(),
+  suggestionId: z.string().uuid(),
+  action: z.enum(["send", "discard", "teach_only"]),
+  body: z.string().trim().max(4096).optional(),
+  expectedVersion: z.coerce.number().int().positive(),
+}).refine((value) => value.action === "discard" || Boolean(value.body), { message: "A mensagem não pode ficar vazia." });
+
 function canManageAi(viewer: Awaited<ReturnType<typeof requireActiveViewer>>) {
   return viewer.membership?.role === "owner"
     || viewer.membership?.role === "manager"
@@ -166,6 +174,52 @@ export async function markInternalThreadReadAction(threadId: string) {
   const supabase = await createClient();
   await supabase.rpc("mark_internal_thread_read", { p_thread_id: parsed.data });
   revalidatePath("/app", "layout");
+}
+
+export async function reviewAiSuggestionFromChatAction(formData: FormData) {
+  const parsed = assistedSuggestionReviewSchema.safeParse({
+    threadId: formData.get("threadId"),
+    suggestionId: formData.get("suggestionId"),
+    action: formData.get("action"),
+    body: formData.get("body") || undefined,
+    expectedVersion: formData.get("expectedVersion"),
+  });
+  if (!parsed.success) return;
+
+  const viewer = await requireActiveViewer();
+  if (!canManageAi(viewer)) return;
+  const supabase = await createClient();
+  const { data: thread } = await supabase
+    .from("internal_threads")
+    .select("id,org_id,conversation_id,assistant_role,thread_type,source")
+    .eq("id", parsed.data.threadId)
+    .maybeSingle();
+  if (!thread || thread.org_id !== viewer.organization!.id || thread.assistant_role !== "pedro" || thread.thread_type !== "lead_case" || thread.source !== "assisted_suggestion" || !thread.conversation_id) return;
+
+  const { data: suggestion } = await supabase
+    .from("ai_suggestions")
+    .select("id,conversation_id")
+    .eq("id", parsed.data.suggestionId)
+    .eq("org_id", thread.org_id)
+    .maybeSingle();
+  if (!suggestion || suggestion.conversation_id !== thread.conversation_id) return;
+
+  const { error } = await supabase.from("ai_suggestion_review_requests").insert({
+    org_id: thread.org_id,
+    suggestion_id: suggestion.id,
+    action: parsed.data.action,
+    edited_body: parsed.data.body ?? null,
+    expected_conversation_version: parsed.data.expectedVersion,
+    actor_user_id: viewer.userId,
+  });
+  const returnPath = `/app/chat-pedro?topico=${thread.id}`;
+  if (error) {
+    redirect(`${returnPath}&erro=${encodeURIComponent("Não foi possível processar a sugestão. Verifique se a conversa ainda está na mesma versão.")}`);
+  }
+  revalidatePath("/app/chat-pedro");
+  revalidatePath(`/app/inbox/${thread.conversation_id}`);
+  revalidatePath("/app", "layout");
+  redirect(`${returnPath}&sucesso=sugestao-processada`);
 }
 
 export async function createLearningCandidateAction(formData: FormData) {
