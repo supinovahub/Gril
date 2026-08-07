@@ -257,6 +257,7 @@ export async function configureReactivationAiAction(formData: FormData) {
   }).eq("org_id", viewer.organization!.id);
   if (error) redirect(`/app/pedro?erro=${encodeURIComponent("Não foi possível salvar o modo de reativação.")}`);
   revalidatePath("/app/pedro");
+  redirect(`/app/pedro?sucesso=${encodeURIComponent("Configuração da reativação salva.")}`);
 }
 
 export async function addAiTestNumberAction(formData: FormData) {
