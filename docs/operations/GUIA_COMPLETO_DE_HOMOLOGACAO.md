@@ -205,6 +205,9 @@ No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confir
 9. use `Só descartar`: nada deve ser enviado nem exibido como sucesso de envio;
 10. abra `/app/lionel`, responda ao grill uma pergunta por vez e registre o consenso como candidato; confirme que ele aparece em `Aprendizados`, ainda sem ativação silenciosa;
 11. confirme que corretor não vê Lionel nem controles de aprendizado.
+12. com uma sugestão `assisted` pendente, abra `/app/chat-pedro`: o tópico do lead deve mostrar a mesma resposta proposta no Inbox, o contexto resumido da análise, a mensagem inbound exata e o link para a conversa;
+13. edite a resposta no tópico e aprove: somente o texto editado deve ser enviado, o Inbox deve refletir o resultado e o tópico deve deixar de exigir ação;
+14. gere duas sugestões para a mesma conversa: elas devem permanecer no mesmo tópico do lead, sem duplicar tópicos, e a fila só pode ser resolvida depois da última pendência.
 
 ### 6.2 Chat geral, intervenção humana e corretor
 
