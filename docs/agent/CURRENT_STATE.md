@@ -190,3 +190,16 @@ Este documento não substitui:
   remoto.
 - O deploy do bundle permanece pendente nesta etapa; a homologação manual do
   mesmo caso no Inbox e no Chat também permanece pendente.
+
+## Atualização de 07/08/2026 — publicação do Chat com Pedro
+
+- O PR `#36` foi mergeado na branch padrão pelo commit `2bc673d`.
+- O deployment de produção do Vercel foi concluído com sucesso no deployment
+  `2RbxCrjPHvvy6485j7DtMhvQWz9g`; a rota pública é
+  `https://gril-lac.vercel.app`.
+- A raiz pública respondeu HTTP 200 e `/app/chat-pedro` respondeu HTTP 307 para
+  `/login?next=%2Fapp%2Fchat-pedro`, confirmando a proteção esperada da rota.
+- As migrations do Chat já constavam aplicadas no Supabase remoto; nenhuma
+  alteração de banco foi executada nesta publicação.
+- A homologação manual autenticada do fluxo do Chat com Pedro permanece
+  pendente.
