@@ -23,3 +23,46 @@
 .ruleList span,.exceptionList span { background:var(--ledger); }
 .exception,.result { border-color:var(--border-soft); }
 @media(max-width:1000px){.layout{grid-template-columns:1fr}}
+
+.page :global(.agendaAvailabilityEditor) { display:grid; gap:18px; margin-top:18px; padding-top:18px; border-top:1px solid var(--border-soft); }
+.page :global(.agendaAvailabilityIntro) { display:flex; align-items:flex-start; justify-content:space-between; gap:18px; }
+.page :global(.agendaAvailabilityIntro h3) { margin:0; font-size:20px; letter-spacing:-.025em; }
+.page :global(.agendaAvailabilityIntro p:last-child) { margin:6px 0 0; max-width:620px; color:var(--ink-muted); font-size:12px; line-height:1.5; }
+.page :global(.agendaEyebrow) { margin:0 0 5px; color:var(--accent-dark); font-size:9px; font-weight:800; letter-spacing:.14em; text-transform:uppercase; }
+.page :global(.agendaTimezone) { padding:7px 9px; border-radius:8px; background:var(--ledger); color:var(--ink-muted); font-size:11px; white-space:nowrap; }
+.page :global(.agendaPresets) { display:flex; flex-wrap:wrap; align-items:center; gap:8px; color:var(--ink-muted); font-size:11px; }
+.page :global(.agendaPresetButton),.page :global(.agendaDayButton) { border:1px solid var(--border); border-radius:8px; background:var(--control-bg); color:var(--ink); font:inherit; font-weight:750; cursor:pointer; }
+.page :global(.agendaPresetButton) { padding:8px 10px; font-size:11px; }
+.page :global(.agendaPresetButton:hover),.page :global(.agendaDayButton:hover) { border-color:var(--accent); }
+.page :global(.agendaWeekdayPicker) { display:grid; gap:8px; }
+.page :global(.agendaFieldLabel),.page :global(.agendaPeriodComposer label span) { color:var(--ink-muted); font-size:11px; font-weight:750; }
+.page :global(.agendaWeekdayButtons) { display:grid; grid-template-columns:repeat(7,minmax(0,1fr)); gap:7px; }
+.page :global(.agendaDayButton) { min-height:42px; padding:7px 4px; }
+.page :global(.agendaDayButtonActive) { border-color:var(--accent); background:var(--accent); color:#fff; }
+.page :global(.agendaPeriodComposer) { display:flex; flex-wrap:wrap; align-items:end; gap:9px; }
+.page :global(.agendaPeriodComposer label) { display:grid; gap:5px; }
+.page :global(.agendaPeriodComposer input),.page :global(.agendaRuleRow input) { min-height:40px; border:1px solid var(--border); border-radius:8px; background:var(--control-bg); padding:8px 9px; font:inherit; }
+.page :global(.agendaAddPeriodButton),.page :global(.agendaSaveButton) { min-height:40px; border:0; border-radius:8px; background:var(--ink); color:#fff; padding:0 13px; font:inherit; font-size:12px; font-weight:800; cursor:pointer; }
+.page :global(.agendaEditorError) { margin:0; padding:10px 12px; border-radius:8px; background:#f9ebe9; color:#982c21; font-size:12px; }
+.page :global(.agendaWeekGrid) { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:9px; }
+.page :global(.agendaDayCard) { min-width:0; border:1px solid var(--border-soft); border-radius:10px; background:var(--paper); padding:11px; }
+.page :global(.agendaDayCardHeader) { display:flex; align-items:baseline; justify-content:space-between; gap:8px; margin-bottom:9px; }
+.page :global(.agendaDayCardHeader strong) { font-size:13px; }
+.page :global(.agendaDayCardHeader span),.page :global(.agendaDayEmpty) { color:var(--ink-muted); font-size:10px; }
+.page :global(.agendaDayEmpty) { margin:0; }
+.page :global(.agendaDayRules) { display:grid; gap:7px; }
+.page :global(.agendaRuleRow) { display:grid; grid-template-columns:minmax(0,1fr) auto minmax(0,1fr) auto; align-items:center; gap:6px; }
+.page :global(.agendaRuleRow span) { color:var(--ink-muted); font-size:10px; }
+.page :global(.agendaRemoveButton) { border:0; background:transparent; color:var(--ink-muted); padding:5px 0 5px 4px; font:inherit; font-size:10px; cursor:pointer; }
+.page :global(.agendaRemoveButton:hover) { color:#982c21; }
+.page :global(.agendaEditorFooter) { display:flex; align-items:center; justify-content:space-between; gap:12px; padding-top:2px; }
+.page :global(.agendaEditorFooter p) { margin:0; color:var(--ink-muted); font-size:11px; }
+@media(max-width:700px){
+  .page :global(.agendaAvailabilityIntro),.page :global(.agendaEditorFooter) { align-items:stretch; flex-direction:column; }
+  .page :global(.agendaWeekdayButtons) { grid-template-columns:repeat(4,minmax(0,1fr)); }
+  .page :global(.agendaWeekGrid) { grid-template-columns:1fr; }
+  .page :global(.agendaPeriodComposer) { align-items:stretch; }
+  .page :global(.agendaPeriodComposer label),.page :global(.agendaAddPeriodButton),.page :global(.agendaSaveButton) { flex:1 1 100%; }
+  .page :global(.agendaRuleRow) { grid-template-columns:minmax(0,1fr) auto minmax(0,1fr); }
+  .page :global(.agendaRemoveButton) { grid-column:1/-1; justify-self:start; padding-left:0; }
+}
