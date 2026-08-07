@@ -196,14 +196,15 @@ No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confir
 
 1. em `Pedro`, confirme que o atendimento normal oferece `off`, `shadow`, `assisted` e `production`; `production` só pode ser salvo quando os portões técnicos de produção estiverem aprovados;
 2. na seção **Whitelist de produção**, cadastre o telefone E.164 do lead de teste, coloque o inbound em `production` e confirme que esse número pode receber a resposta automática;
-3. envie um inbound de um contato fora da whitelist e prove no banco/log que ele foi registrado no Inbox, mas não criou execução nem mensagem outbound automática;
-4. remova um número da whitelist com uma execução pendente e confirme que o worker bloqueia a execução antes do envio;
-5. configure reativação como `production + teste controlado`, cadastre seu telefone E.164 na allowlist e prove que um contato fora dela é bloqueado no servidor;
-6. em uma sugestão assisted, edite e aprove: a mensagem deve ser enviada e a correção deve criar um candidato para Lionel;
-7. use `Ensinar e gerar outra`: nada deve ser enviado ao lead e uma nova sugestão deve aparecer usando a orientação;
-8. use `Só descartar`: nada deve ser enviado nem exibido como sucesso de envio;
-9. abra `/app/lionel`, responda ao grill uma pergunta por vez e registre o consenso como candidato; confirme que ele aparece em `Aprendizados`, ainda sem ativação silenciosa;
-10. confirme que corretor não vê Lionel nem controles de aprendizado.
+3. coloque o inbound em `assisted` e envie uma mensagem de um contato fora da whitelist; prove no banco/log que ele criou execução/sugestão, mas não enviou mensagem outbound automaticamente;
+4. coloque o inbound em `production` e envie uma mensagem de um contato fora da whitelist; prove que ele foi registrado no Inbox, mas não criou execução nem mensagem outbound automática;
+5. remova um número da whitelist com uma execução `production` pendente e confirme que o worker bloqueia a execução antes do envio;
+6. configure reativação como `production + teste controlado`, cadastre seu telefone E.164 na allowlist e prove que um contato fora dela é bloqueado no servidor;
+7. em uma sugestão assisted, edite e aprove: a mensagem deve ser enviada e a correção deve criar um candidato para Lionel;
+8. use `Ensinar e gerar outra`: nada deve ser enviado ao lead e uma nova sugestão deve aparecer usando a orientação;
+9. use `Só descartar`: nada deve ser enviado nem exibido como sucesso de envio;
+10. abra `/app/lionel`, responda ao grill uma pergunta por vez e registre o consenso como candidato; confirme que ele aparece em `Aprendizados`, ainda sem ativação silenciosa;
+11. confirme que corretor não vê Lionel nem controles de aprendizado.
 
 ### 6.2 Chat geral, intervenção humana e corretor
 
@@ -305,10 +306,25 @@ Confirme:
 3. confirme bloqueio do mesmo hash;
 4. aprove exemplos de abertura;
 5. confirme que cada abertura usa somente o primeiro nome do CSV ou o primeiro nome do CRM como fallback, sem alterar o nome completo do contato;
-6. libere 20 e revise todas as conversas;
-7. libere 50 e revise novamente;
-8. libere o restante;
-9. teste pausa, retomada, exclusão e arquivamento.
+6. libere a onda de 20 sem revisão individual por contato;
+7. confirme no CRM a fila, os opt-outs e os status enfileirados;
+8. libere a onda de 50 sem revisão individual por contato;
+9. libere o restante;
+10. teste pausa, retomada, exclusão e arquivamento.
+
+Para a personalização dinâmica, use uma base sintética com pelo menos três
+linhas válidas e colunas de objetivo, investimento anterior, entrada e parcela.
+Confirme que:
+
+- a tela de criação mostra três aberturas diferentes para o mesmo objetivo;
+- a revisão substitui `{{first_name}}`, `{{objetivo}}`, `{{entrada}}`,
+  `{{parcela}}`, `{{orcamento}}` e `{{historico}}` com os dados de cada linha;
+- nenhum preview contém `undefined`, `null` ou placeholder aberto;
+- os contatos elegíveis de uma mesma onda alternam os IDs de variante e uma
+  supressão/opt-out não consome uma posição da rotação;
+- o corpo persistido pelo worker é igual ao preview da mesma linha e variante;
+- campanhas antigas sem `opening_variants` continuam usando
+  `opening_template`.
 
 ### Agenda e distribuição
 

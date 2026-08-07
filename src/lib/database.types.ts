@@ -1703,6 +1703,7 @@ export type Database = {
         Row: {
           attempts: number
           campaign_id: string
+          campaign_first_name: string | null
           contact_id: string
           created_at: string
           id: string
@@ -1721,6 +1722,7 @@ export type Database = {
         Insert: {
           attempts?: number
           campaign_id: string
+          campaign_first_name?: string | null
           contact_id: string
           created_at?: string
           id?: string
@@ -1739,6 +1741,7 @@ export type Database = {
         Update: {
           attempts?: number
           campaign_id?: string
+          campaign_first_name?: string | null
           contact_id?: string
           created_at?: string
           id?: string
@@ -1811,6 +1814,7 @@ export type Database = {
           id: string
           message_template_id: string | null
           name: string
+          opening_variants: Json
           opening_template: string
           operation_id: string
           org_id: string
@@ -1827,6 +1831,7 @@ export type Database = {
           id?: string
           message_template_id?: string | null
           name: string
+          opening_variants?: Json
           opening_template: string
           operation_id: string
           org_id: string
@@ -1843,6 +1848,7 @@ export type Database = {
           id?: string
           message_template_id?: string | null
           name?: string
+          opening_variants?: Json
           opening_template?: string
           operation_id?: string
           org_id?: string
@@ -1851,6 +1857,86 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "campaign_creation_requests_org_id_fkey"
+            columns: ["org_id"]
+            isOneToOne: false
+            referencedRelation: "organizations"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      campaign_edit_requests: {
+        Row: {
+          actor_user_id: string
+          ai_mode: string | null
+          campaign_id: string
+          connection_id: string | null
+          created_at: string
+          expected_version: number
+          id: string
+          message_template_id: string | null
+          message_template_provided: boolean
+          name: string | null
+          opening_template: string | null
+          org_id: string
+          processed_at: string
+          resulting_status: string | null
+        }
+        Insert: {
+          actor_user_id?: string
+          ai_mode?: string | null
+          campaign_id: string
+          connection_id?: string | null
+          created_at?: string
+          expected_version: number
+          id?: string
+          message_template_id?: string | null
+          message_template_provided?: boolean
+          name?: string | null
+          opening_template?: string | null
+          org_id: string
+          processed_at?: string
+          resulting_status?: string | null
+        }
+        Update: {
+          actor_user_id?: string
+          ai_mode?: string | null
+          campaign_id?: string
+          connection_id?: string | null
+          created_at?: string
+          expected_version?: number
+          id?: string
+          message_template_id?: string | null
+          message_template_provided?: boolean
+          name?: string | null
+          opening_template?: string | null
+          org_id?: string
+          processed_at?: string
+          resulting_status?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "campaign_edit_requests_campaign_id_org_id_fkey"
+            columns: ["campaign_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "campaigns"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_edit_requests_connection_id_org_id_fkey"
+            columns: ["connection_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_connections"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_edit_requests_message_template_id_org_id_fkey"
+            columns: ["message_template_id", "org_id"]
+            isOneToOne: false
+            referencedRelation: "whatsapp_message_templates"
+            referencedColumns: ["id", "org_id"]
+          },
+          {
+            foreignKeyName: "campaign_edit_requests_org_id_fkey"
             columns: ["org_id"]
             isOneToOne: false
             referencedRelation: "organizations"
@@ -2394,6 +2480,8 @@ export type Database = {
       campaigns: {
         Row: {
           ai_mode: string
+          archived_at: string | null
+          archived_by: string | null
           approved_at: string | null
           approved_by: string | null
           campaign_type: string
@@ -2407,6 +2495,7 @@ export type Database = {
           message_template_id: string | null
           name: string
           opening_examples: Json
+          opening_variants: Json
           opening_template: string
           operation_id: string
           org_id: string
@@ -2421,6 +2510,8 @@ export type Database = {
         }
         Insert: {
           ai_mode?: string
+          archived_at?: string | null
+          archived_by?: string | null
           approved_at?: string | null
           approved_by?: string | null
           campaign_type?: string
@@ -2434,6 +2525,7 @@ export type Database = {
           message_template_id?: string | null
           name: string
           opening_examples?: Json
+          opening_variants?: Json
           opening_template: string
           operation_id: string
           org_id: string
@@ -2448,6 +2540,8 @@ export type Database = {
         }
         Update: {
           ai_mode?: string
+          archived_at?: string | null
+          archived_by?: string | null
           approved_at?: string | null
           approved_by?: string | null
           campaign_type?: string
@@ -2461,6 +2555,7 @@ export type Database = {
           message_template_id?: string | null
           name?: string
           opening_examples?: Json
+          opening_variants?: Json
           opening_template?: string
           operation_id?: string
           org_id?: string

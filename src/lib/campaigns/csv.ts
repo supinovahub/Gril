@@ -3,6 +3,14 @@ import { normalizePhoneToE164 } from "../crm/phone";
 const PHONE_WORDS = new Set(["telefone", "phone", "celular", "whatsapp", "fone", "mobile", "numero"]);
 const NAME_WORDS = new Set(["nome", "name", "cliente", "lead", "contato"]);
 
+export type CampaignCsvFields = Record<string, string>;
+
+export type CampaignCsvRow = {
+  name: string;
+  phone: string;
+  fields: CampaignCsvFields;
+};
+
 export function parseCsvLine(line: string) {
   const result: string[] = [];
   let current = "";
@@ -27,6 +35,20 @@ export function normalizeCsvHeader(value: string) {
     .replace(/[^a-z0-9]+/g, " ")
     .trim()
     .replace(/\s+/g, " ");
+}
+
+export function normalizeCampaignFieldKey(value: string) {
+  const normalized = normalizeCsvHeader(value);
+  if (normalized.includes("voce ja investiu") && normalized.includes("studio")) {
+    return "ja_investiu_em_studio";
+  }
+  if (normalized.includes("valor de entrada")) return "limite_entrada";
+  if (normalized.includes("valor de parcela")) return "limite_parcela";
+  if (normalized.includes("principal objetivo") && normalized.includes("studio")) {
+    return "objetivo_studio";
+  }
+  if (normalized === "principal objetivo") return "principal_objetivo";
+  return normalized.replace(/\s+/g, "_") || "campo";
 }
 
 function isPhoneHeader(value: string) {
@@ -64,8 +86,39 @@ export function resolveCampaignCsvColumns(header: string[], requestedName: strin
   };
 }
 
-export function campaignCsvRow(values: string[], nameIndex: number, phoneIndex: number) {
+export function campaignCsvRow(
+  values: string[],
+  header: string[],
+  nameIndex: number,
+  phoneIndex: number,
+): CampaignCsvRow {
   const name = (values[nameIndex] ?? "").trim();
   const rawPhone = (values[phoneIndex] ?? "").trim();
-  return { name, phone: normalizePhoneToE164(rawPhone) ?? rawPhone };
+  const fields: CampaignCsvFields = {};
+  header.forEach((column, index) => {
+    const keyBase = normalizeCampaignFieldKey(column);
+    let key = keyBase;
+    let suffix = 2;
+    while (key in fields) {
+      key = `${keyBase}_${suffix}`;
+      suffix += 1;
+    }
+    const value = (values[index] ?? "").trim();
+    if (value) fields[key] = value;
+  });
+  return { name, phone: normalizePhoneToE164(rawPhone) ?? rawPhone, fields };
+}
+
+export function decodeCsvBytes(bytes: Uint8Array) {
+  if (bytes.length >= 2 && bytes[0] === 0xff && bytes[1] === 0xfe) {
+    return new TextDecoder("utf-16le").decode(bytes).replace(/^\uFEFF/, "");
+  }
+  if (bytes.length >= 2 && bytes[0] === 0xfe && bytes[1] === 0xff) {
+    return new TextDecoder("utf-16be").decode(bytes).replace(/^\uFEFF/, "");
+  }
+  try {
+    return new TextDecoder("utf-8", { fatal: true }).decode(bytes).replace(/^\uFEFF/, "");
+  } catch {
+    return new TextDecoder("windows-1252").decode(bytes).replace(/^\uFEFF/, "");
+  }
 }

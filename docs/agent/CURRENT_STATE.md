@@ -115,6 +115,22 @@
   frente como `20260806170711`. O push desta alteração usou uma cópia temporária
   alinhada; não foi feito `migration repair`.
 
+## Atualização de 06/08/2026 — remoção da revisão individual da onda
+
+- A migration `20260806180518_remove_campaign_wave_review_gate.sql` foi
+  aplicada no Supabase remoto. Ondas novas não criam revisões por contato e não
+  dependem da aprovação da onda anterior; revalidação de opt-out, supressão,
+  conexão ativa, pausa e limite de volume permanecem ativas.
+- Ondas existentes foram normalizadas para não manter uma revisão pendente; os
+  14 registros históricos de revisão foram preservados.
+- A interface e as actions de revisão individual foram removidas no commit
+  `a68701c`, publicado na branch `feat/remove-campaign-wave-review-gate`.
+- O deployment de produção `dpl_2C2rC72vcxhnoPbWQxQGTD9DZXmh` está `Ready`,
+  com alias `https://gril-lac.vercel.app`; `/login` respondeu HTTP 200.
+- A regra foi registrada em
+  `docs/decisions/campaign-wave-review-gate-disabled.md` e o detalhe da
+  mudança em `docs/agent/changes/2026-08-06-remocao-revisao-onda.md`.
+
 Este documento não substitui:
 
 - o banco para estado transacional;
@@ -122,3 +138,28 @@ Este documento não substitui:
 - Vercel para estado de deployment;
 - os sete documentos de produto para regras consolidadas;
 - os registros em `changes/` para histórico detalhado.
+
+## Atualização de 06/08/2026 — whitelist somente em production
+
+- A migration `20260806193000_allow_assisted_inbound_ai.sql` foi aplicada no
+  Supabase remoto e registrada como aplicada.
+- A elegibilidade do inbound agora ignora a whitelist nos modos `shadow` e
+  `assisted`; a revalidação antes do worker e o trigger final continuam
+  exigindo whitelist somente para `production`.
+- A conversa de homologação do João passou a retornar `ai_eligible = true`
+  em `assisted`, sem alterar registros nem disparar reprocessamento durante a
+  validação.
+- O `db push --linked` continua impedido pela divergência histórica já
+  existente entre `20260806165420_campaign_edit_archive` local e
+  `20260806170711` remoto; a migration corretiva foi aplicada por SQL
+  transacional e sua versão foi registrada explicitamente.
+
+## Atualização de 07/08/2026 — publicação da separação de campanhas arquivadas
+
+- A correção da listagem de campanhas foi publicada no deployment de produção
+  `dpl_5Cg5HadfzakZAT4WtRi82EVbhP8s`, com status `READY`, no projeto Vercel
+  `gril` do time `brio5`.
+- O alias público `https://gril-lac.vercel.app/login` respondeu HTTP 200 após
+  a publicação; o último deployment do projeto aponta para esse deployment.
+- Nenhuma migration ou alteração de dados foi aplicada nesta publicação.
+- A homologação manual das abas “Ativas” e “Arquivadas” permanece pendente.

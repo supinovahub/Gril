@@ -6,7 +6,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { requireActiveViewer } from "@/lib/auth/session";
-import { campaignCsvRow, parseCsvLine, resolveCampaignCsvColumns } from "@/lib/campaigns/csv";
+import { campaignCsvRow, decodeCsvBytes, normalizeCampaignFieldKey, parseCsvLine, resolveCampaignCsvColumns } from "@/lib/campaigns/csv";
+import { DEFAULT_CAMPAIGN_VARIANTS } from "@/lib/campaigns/message-variants";
 import { normalizePhoneToE164 } from "@/lib/crm/phone";
 import { createClient } from "@/lib/supabase/server";
 
@@ -18,7 +19,9 @@ export async function createCampaignAction(formData: FormData) {
   const parsed = z.object({
     connectionId: z.string().uuid(), name: z.string().trim().min(2).max(160),
     aiMode: z.enum(["off", "shadow", "assisted", "production"]),
-    openingTemplate: z.string().trim().min(10).max(2000),
+    openingVariant1: z.string().trim().min(10).max(2000),
+    openingVariant2: z.string().trim().min(10).max(2000),
+    openingVariant3: z.string().trim().min(10).max(2000),
     consentStatement: z.string().trim().min(20).max(4000),
     consentSource: z.string().trim().min(5).max(1000), consentConfirmed: z.literal("on"),
     messageTemplateId: z.string().uuid().optional().or(z.literal("")),
@@ -30,13 +33,54 @@ export async function createCampaignAction(formData: FormData) {
   const supabase = await createClient();
   const { error } = await supabase.from("campaign_creation_requests").insert({
     org_id: viewer.organization!.id, operation_id: operation.id, connection_id: parsed.data.connectionId,
-    name: parsed.data.name, ai_mode: parsed.data.aiMode, opening_template: parsed.data.openingTemplate,
+    name: parsed.data.name, ai_mode: parsed.data.aiMode, opening_template: parsed.data.openingVariant1,
+    opening_variants: [
+      { ...DEFAULT_CAMPAIGN_VARIANTS[0], template: parsed.data.openingVariant1 },
+      { ...DEFAULT_CAMPAIGN_VARIANTS[1], template: parsed.data.openingVariant2 },
+      { ...DEFAULT_CAMPAIGN_VARIANTS[2], template: parsed.data.openingVariant3 },
+    ],
     message_template_id: parsed.data.messageTemplateId || null,
     consent_statement: parsed.data.consentStatement, consent_source: parsed.data.consentSource, actor_user_id: viewer.userId,
   });
   if (error) campaignRedirect(error.message.includes("active_campaign_connection_required") ? "Escolha uma conexão ativa e habilitada para campanhas." : "Não foi possível criar a campanha.");
   revalidatePath("/app/campanhas");
   campaignRedirect("Campanha criada. Importe e revise a base.", "sucesso");
+}
+
+export async function editCampaignAction(formData: FormData) {
+  const parsed = z.object({
+    campaignId: z.string().uuid(),
+    expectedVersion: z.coerce.number().int().positive(),
+    connectionId: z.string().uuid(),
+    name: z.string().trim().min(2).max(160),
+    aiMode: z.enum(["off", "shadow", "assisted", "production"]),
+    openingTemplate: z.string().trim().min(10).max(2000),
+    messageTemplateId: z.string().uuid().optional().or(z.literal("")),
+  }).safeParse(Object.fromEntries(formData));
+  if (!parsed.success) campaignRedirect(parsed.error.issues[0]?.message ?? "Revise os dados da campanha.");
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { error } = await supabase.from("campaign_edit_requests").insert({
+    org_id: viewer.organization!.id,
+    campaign_id: parsed.data.campaignId,
+    connection_id: parsed.data.connectionId,
+    name: parsed.data.name,
+    ai_mode: parsed.data.aiMode,
+    opening_template: parsed.data.openingTemplate,
+    message_template_id: parsed.data.messageTemplateId || null,
+    message_template_provided: true,
+    expected_version: parsed.data.expectedVersion,
+    actor_user_id: viewer.userId,
+  });
+  if (error) {
+    if (error.message.includes("campaign_version_conflict")) campaignRedirect("A campanha mudou; atualize a página e tente novamente.");
+    if (error.message.includes("campaign_not_editable")) campaignRedirect("Campanhas aprovadas com ondas, em execução, concluídas ou arquivadas não podem ser editadas.");
+    if (error.message.includes("approved_meta_campaign_template_required")) campaignRedirect("Selecione um template Meta aprovado para esta conexão.");
+    if (error.message.includes("active_campaign_connection_required")) campaignRedirect("Escolha uma conexão ativa e habilitada para campanhas.");
+    campaignRedirect("Não foi possível editar a campanha. Revise os dados e tente novamente.");
+  }
+  revalidatePath("/app/campanhas");
+  campaignRedirect("Campanha atualizada. Se necessário, a aprovação foi solicitada novamente.", "sucesso");
 }
 
 export async function importCampaignAction(formData: FormData) {
@@ -48,7 +92,7 @@ export async function importCampaignAction(formData: FormData) {
   let filename = "base-colada.csv";
   if (file instanceof File && file.size > 0) {
     if (file.size > 1_000_000) campaignRedirect("O CSV do MVP deve ter até 1 MB.");
-    text = await file.text(); filename = file.name;
+    text = decodeCsvBytes(new Uint8Array(await file.arrayBuffer())); filename = file.name;
   }
   const lines = text.replace(/^\uFEFF/, "").split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
   if (lines.length < 2) campaignRedirect("Informe cabeçalho e ao menos um contato.");
@@ -60,7 +104,7 @@ export async function importCampaignAction(formData: FormData) {
     campaignRedirect(`Não encontramos as colunas informadas. Cabeçalhos disponíveis: ${rawHeader.join(", ")}.`);
   }
   const rows = lines.slice(1).map((line) => campaignCsvRow(
-    parseCsvLine(line), mapping.nameIndex, mapping.phoneIndex,
+    parseCsvLine(line), rawHeader, mapping.nameIndex, mapping.phoneIndex,
   ));
   if (rows.length > 500) campaignRedirect("O MVP aceita até 500 contatos por campanha.");
   const invalidNameLines = rows.flatMap((row, index) => row.name.length < 2 ? [index + 2] : []);
@@ -76,7 +120,11 @@ export async function importCampaignAction(formData: FormData) {
   const supabase = await createClient();
   const { data: result, error } = await supabase.from("campaign_import_requests").insert({
     org_id: viewer.organization!.id, campaign_id: campaignId.data, filename, rows,
-    mapping: { name: rawHeader[mapping.nameIndex], phone: rawHeader[mapping.phoneIndex] },
+    mapping: {
+      name: rawHeader[mapping.nameIndex],
+      phone: rawHeader[mapping.phoneIndex],
+      fields: rawHeader.map(normalizeCampaignFieldKey),
+    },
     file_sha256: createHash("sha256").update(text).digest("hex"), actor_user_id: viewer.userId,
   }).select("valid_rows,duplicate_rows,error_rows").single();
   if (error) {
@@ -98,12 +146,16 @@ export async function importCampaignAction(formData: FormData) {
 }
 
 export async function transitionCampaignAction(formData: FormData) {
-  const parsed = z.object({ campaignId: z.string().uuid(), action: z.enum(["approve","start","pause","resume","cancel","complete"]), expectedVersion: z.coerce.number().int().positive(), reason: z.string().trim().max(500).optional() }).safeParse({ campaignId: formData.get("campaignId"), action: formData.get("action"), expectedVersion: formData.get("expectedVersion"), reason: formData.get("reason") || undefined });
+  const parsed = z.object({ campaignId: z.string().uuid(), action: z.enum(["approve","start","pause","resume","cancel","complete","archive"]), expectedVersion: z.coerce.number().int().positive(), reason: z.string().trim().max(500).optional() }).safeParse({ campaignId: formData.get("campaignId"), action: formData.get("action"), expectedVersion: formData.get("expectedVersion"), reason: formData.get("reason") || undefined });
   if (!parsed.success) campaignRedirect("Ação de campanha inválida.");
   const viewer = await requireActiveViewer(); const supabase = await createClient();
   const { error } = await supabase.from("campaign_transition_requests").insert({ org_id: viewer.organization!.id, campaign_id: parsed.data.campaignId, requested_action: parsed.data.action, expected_version: parsed.data.expectedVersion, reason: parsed.data.reason ?? null, actor_user_id: viewer.userId });
-  if (error) campaignRedirect(error.message.includes("version") ? "A campanha mudou; atualize a página." : "Transição recusada pelas regras da campanha.");
-  revalidatePath("/app/campanhas"); campaignRedirect("Estado atualizado.", "sucesso");
+  if (error) {
+    if (error.message.includes("version")) campaignRedirect("A campanha mudou; atualize a página.");
+    if (error.message.includes("campaign_already_archived")) campaignRedirect("Esta campanha já está arquivada.");
+    campaignRedirect(parsed.data.action === "archive" ? "Não foi possível arquivar a campanha." : "Transição recusada pelas regras da campanha.");
+  }
+  revalidatePath("/app/campanhas"); campaignRedirect(parsed.data.action === "archive" ? "Campanha arquivada e jobs pendentes cancelados." : "Estado atualizado.", "sucesso");
 }
 
 export async function releaseWaveAction(formData: FormData) {
@@ -111,42 +163,6 @@ export async function releaseWaveAction(formData: FormData) {
   if (!parsed.success) campaignRedirect("Volume de onda inválido.");
   const viewer = await requireActiveViewer(); const supabase = await createClient();
   const { error } = await supabase.from("campaign_wave_release_requests").insert({ org_id: viewer.organization!.id, campaign_id: parsed.data.campaignId, requested_count: parsed.data.count, actor_user_id: viewer.userId });
-  if (error) campaignRedirect(error.message.includes("previous_campaign_wave_review_required")
-    ? "Conclua e aprove a revisão da onda anterior antes de liberar a próxima."
-    : "Onda recusada: revise aprovação, limite, conexão, pausa e capacidade.");
+  if (error) campaignRedirect("Onda recusada: revise aprovação, limite, conexão, pausa e capacidade.");
   revalidatePath("/app/campanhas"); campaignRedirect("Onda liberada e contatos revalidados.", "sucesso");
-}
-
-export async function reviewWaveItemAction(formData: FormData) {
-  const parsed = z.object({
-    waveId: z.string().uuid(), reviewId: z.string().uuid(),
-    outcome: z.enum(["approved", "needs_adjustment", "critical"]),
-    notes: z.string().trim().max(1000).optional(),
-  }).refine((data) => data.outcome === "approved" || Boolean(data.notes), {
-    path: ["notes"], message: "Explique o ajuste ou problema crítico.",
-  }).safeParse({
-    waveId: formData.get("waveId"), reviewId: formData.get("reviewId"),
-    outcome: formData.get("outcome"), notes: String(formData.get("notes") ?? "") || undefined,
-  });
-  if (!parsed.success) campaignRedirect(parsed.error.issues[0]?.message ?? "Revisão inválida.");
-  const viewer = await requireActiveViewer(); const supabase = await createClient();
-  const { error } = await supabase.from("campaign_wave_review_requests").insert({
-    org_id: viewer.organization!.id, wave_id: parsed.data.waveId, review_id: parsed.data.reviewId,
-    requested_action: "review_item", outcome: parsed.data.outcome, notes: parsed.data.notes ?? null,
-    actor_user_id: viewer.userId,
-  });
-  if (error) campaignRedirect("Não foi possível registrar esta revisão.");
-  revalidatePath("/app/campanhas"); campaignRedirect("Item de qualidade revisado.", "sucesso");
-}
-
-export async function approveWaveReviewAction(formData: FormData) {
-  const waveId = z.string().uuid().safeParse(formData.get("waveId"));
-  if (!waveId.success) campaignRedirect("Onda inválida.");
-  const viewer = await requireActiveViewer(); const supabase = await createClient();
-  const { error } = await supabase.from("campaign_wave_review_requests").insert({
-    org_id: viewer.organization!.id, wave_id: waveId.data, requested_action: "approve_wave",
-    actor_user_id: viewer.userId,
-  });
-  if (error) campaignRedirect("A revisão ainda tem itens pendentes, ajustes ou problemas críticos.");
-  revalidatePath("/app/campanhas"); campaignRedirect("Onda aprovada. A próxima liberação está habilitada.", "sucesso");
 }
