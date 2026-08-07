@@ -331,6 +331,9 @@ Confirme que:
 
 ### Agenda e distribuição
 
+- no cadastro de disponibilidade, selecione vários dias, aplique um período de uma vez e salve a semana padrão;
+- edite um período existente, remova-o, crie dois períodos no mesmo dia e confirme que períodos sobrepostos são bloqueados;
+- aplique um modelo rápido, confira o resumo de alterações não salvas e confirme que as exceções continuam separadas da semana padrão;
 - preferenciais recebem oferta simultânea;
 - fluxo comum segue 5/5/5 minutos e depois broadcast;
 - slots oferecidos devem ter no mínimo uma hora de antecedência em relação ao momento atual;

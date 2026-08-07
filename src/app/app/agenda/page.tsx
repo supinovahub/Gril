@@ -10,16 +10,17 @@ import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import {
   acceptOfferAction,
-  addAvailabilityAction,
   addAvailabilityExceptionAction,
   createCallAction,
   declineOfferAction,
   distributeCallAction,
   recordCallResultAction,
   returnCallAction,
+  saveAvailabilityAction,
   updateCallSettingsAction,
   updateCallVideoLinkAction,
 } from "./actions";
+import AvailabilityEditor from "./availability-editor";
 import styles from "./agenda.module.css";
 
 const weekdays = [
@@ -356,30 +357,19 @@ export default async function AgendaPage({
               </label>
               <button>Salvar</button>
             </form>
-            <div className={styles.ruleList}>
-              {rules?.map((rule) => (
-                <span key={rule.id}>
-                  <strong>{weekdays[rule.weekday]}</strong>
-                  {String(rule.start_time).slice(0, 5)}–
-                  {String(rule.end_time).slice(0, 5)}
-                </span>
-              ))}
-            </div>
-            <form
-              action={addAvailabilityAction}
-              className={styles.availabilityForm}
-            >
-              <select name="weekday">
-                {weekdays.map((day, index) => (
-                  <option key={day} value={index}>
-                    {day}
-                  </option>
-                ))}
-              </select>
-              <input name="startTime" type="time" defaultValue="09:00" />
-              <input name="endTime" type="time" defaultValue="18:00" />
-              <button>Adicionar período</button>
-            </form>
+            <AvailabilityEditor
+              action={saveAvailabilityAction}
+              rules={
+                rules?.map((rule) => ({
+                  id: rule.id,
+                  weekday: rule.weekday,
+                  start_time: String(rule.start_time),
+                  end_time: String(rule.end_time),
+                })) ?? []
+              }
+              timezone={operation?.timezone ?? "America/Sao_Paulo"}
+              weekdays={weekdays}
+            />
             <details className={styles.exception}>
               <summary>Adicionar exceção de agenda</summary>
               <form action={addAvailabilityExceptionAction}>

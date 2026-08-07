@@ -42,15 +42,155 @@ export async function updateCallSettingsAction(formData: FormData) {
   revalidatePath("/app/agenda"); agendaRedirect("Preferências de calls atualizadas.", "sucesso");
 }
 
-export async function addAvailabilityAction(formData: FormData) {
-  const parsed = z.object({ weekday: z.coerce.number().int().min(0).max(6), startTime: z.string().regex(/^\d{2}:\d{2}$/), endTime: z.string().regex(/^\d{2}:\d{2}$/) }).safeParse({ weekday: formData.get("weekday"), startTime: formData.get("startTime"), endTime: formData.get("endTime") });
-  if (!parsed.success || parsed.data.endTime <= parsed.data.startTime) agendaRedirect("Período de disponibilidade inválido.");
-  const viewer = await requireActiveViewer(); const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
+const availabilityTimeSchema = z.string().regex(/^\d{2}:\d{2}$/);
+
+const availabilityRuleInputSchema = z.object({
+  id: z.string().uuid().or(z.literal("")),
+  weekday: z.coerce.number().int().min(0).max(6),
+  startTime: availabilityTimeSchema,
+  endTime: availabilityTimeSchema,
+});
+
+function formStrings(formData: FormData, name: string): string[] {
+  return formData
+    .getAll(name)
+    .filter((value): value is string => typeof value === "string");
+}
+
+export async function saveAvailabilityAction(formData: FormData) {
+  const ruleIds = formStrings(formData, "ruleId");
+  const weekdays = formStrings(formData, "ruleWeekday");
+  const startTimes = formStrings(formData, "ruleStartTime");
+  const endTimes = formStrings(formData, "ruleEndTime");
+  const removedRuleIds = formStrings(formData, "removedRuleId");
+
+  if (
+    ruleIds.length !== weekdays.length ||
+    ruleIds.length !== startTimes.length ||
+    ruleIds.length !== endTimes.length ||
+    ruleIds.length > 50 ||
+    removedRuleIds.length > 50
+  ) {
+    agendaRedirect("Revise sua disponibilidade semanal.");
+  }
+
+  const parsed = z
+    .array(availabilityRuleInputSchema)
+    .safeParse(
+      ruleIds.map((id, index) => ({
+        id,
+        weekday: weekdays[index],
+        startTime: startTimes[index],
+        endTime: endTimes[index],
+      })),
+    );
+  const parsedRemovedIds = z
+    .array(z.string().uuid())
+    .safeParse(removedRuleIds);
+
+  if (!parsed.success || !parsedRemovedIds.success) {
+    agendaRedirect("Revise sua disponibilidade semanal.");
+  }
+
+  const rules = parsed.data.map((rule) => ({
+    id: rule.id || undefined,
+    weekday: rule.weekday,
+    startTime: rule.startTime,
+    endTime: rule.endTime,
+  }));
+  const removedIds = parsedRemovedIds.data;
+  const seenIds = new Set<string>();
+  const removedIdSet = new Set(removedIds);
+  const rulesByWeekday = new Map<number, Array<{ startTime: string; endTime: string }>>();
+
+  for (const rule of rules) {
+    if (rule.id && (seenIds.has(rule.id) || removedIdSet.has(rule.id))) {
+      agendaRedirect("A disponibilidade mudou. Atualize a página e tente novamente.");
+    }
+    if (rule.id) seenIds.add(rule.id);
+    if (rule.endTime <= rule.startTime) {
+      agendaRedirect("O fim de cada período deve ser posterior ao início.");
+    }
+
+    const sameDayRules = rulesByWeekday.get(rule.weekday) ?? [];
+    if (
+      sameDayRules.some(
+        (item) => rule.startTime < item.endTime && rule.endTime > item.startTime,
+      )
+    ) {
+      agendaRedirect("Os períodos do mesmo dia não podem se sobrepor.");
+    }
+    sameDayRules.push({ startTime: rule.startTime, endTime: rule.endTime });
+    rulesByWeekday.set(rule.weekday, sameDayRules);
+  }
+
+  if (new Set(removedIds).size !== removedIds.length) {
+    agendaRedirect("A disponibilidade mudou. Atualize a página e tente novamente.");
+  }
+
+  const viewer = await requireActiveViewer();
+  const operation =
+    viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
   if (!viewer.membership || !operation) agendaRedirect("Operação não encontrada.");
+
   const supabase = await createClient();
-  const { error } = await supabase.from("availability_rules").insert({ org_id: viewer.organization!.id, operation_id: operation.id, membership_id: viewer.membership.id, weekday: parsed.data.weekday, start_time: parsed.data.startTime, end_time: parsed.data.endTime, timezone: operation.timezone, valid_from: new Date().toISOString().slice(0,10) });
-  if (error) agendaRedirect("Não foi possível salvar o período.");
-  revalidatePath("/app/agenda"); agendaRedirect("Disponibilidade adicionada.", "sucesso");
+  const managedIds = [...new Set([...seenIds, ...removedIds])];
+  if (managedIds.length) {
+    const { data: currentRules, error: currentRulesError } = await supabase
+      .from("availability_rules")
+      .select("id")
+      .eq("org_id", viewer.organization!.id)
+      .eq("operation_id", operation.id)
+      .eq("membership_id", viewer.membership.id)
+      .eq("active", true)
+      .in("id", managedIds);
+    if (
+      currentRulesError ||
+      (currentRules?.length ?? 0) !== managedIds.length
+    ) {
+      agendaRedirect("A disponibilidade mudou. Atualize a página e tente novamente.");
+    }
+  }
+
+  for (const rule of rules) {
+    const values = {
+      weekday: rule.weekday,
+      start_time: rule.startTime,
+      end_time: rule.endTime,
+      timezone: operation.timezone,
+      active: true,
+    };
+    const result = rule.id
+      ? await supabase
+          .from("availability_rules")
+          .update(values)
+          .eq("id", rule.id)
+          .eq("org_id", viewer.organization!.id)
+          .eq("operation_id", operation.id)
+          .eq("membership_id", viewer.membership.id)
+      : await supabase.from("availability_rules").insert({
+          ...values,
+          org_id: viewer.organization!.id,
+          operation_id: operation.id,
+          membership_id: viewer.membership.id,
+          valid_from: new Date().toISOString().slice(0, 10),
+        });
+    if (result.error) agendaRedirect("Não foi possível salvar a disponibilidade.");
+  }
+
+  if (removedIds.length) {
+    const { error } = await supabase
+      .from("availability_rules")
+      .update({ active: false })
+      .eq("org_id", viewer.organization!.id)
+      .eq("operation_id", operation.id)
+      .eq("membership_id", viewer.membership.id)
+      .in("id", removedIds);
+    if (error) agendaRedirect("Não foi possível remover o período.");
+  }
+
+  revalidatePath("/app/agenda");
+  agendaRedirect("Disponibilidade semanal salva.", "sucesso");
 }
 
 export async function addAvailabilityExceptionAction(formData: FormData) {
