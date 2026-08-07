@@ -37,6 +37,12 @@ Esta decisão substitui a restrição introduzida em 04/08/2026 que removia
 `production` do atendimento inbound e o reservava exclusivamente para
 reativação.
 
+## Supersessao posterior
+
+Em 07/08/2026, o pedido atual do usuario voltou a restringir `production` as
+campanhas de reativacao. Consulte `docs/decisions/reactivation-production-only.md`;
+esta decisao permanece como historico da permissao anterior.
+
 ## Rollout
 
 A mudança de código e a migration devem ser publicadas juntas. Após a

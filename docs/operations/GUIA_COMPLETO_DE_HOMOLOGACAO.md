@@ -279,6 +279,17 @@ Uma conexão real saudável basta para o piloto. Teste ambos os provedores antes
 
 Critério comum: webhook inválido é rejeitado; organização arquivada retorna bloqueio definitivo; organização suspensa ainda registra inbound, mas não envia mensagens; retry não duplica lead, mensagem ou oportunidade.
 
+### Reativacao em production
+
+1. em `Pedro`, confirme que o atendimento normal oferece somente `off`, `shadow`
+   e `assisted`; `production` nao deve estar disponivel no inbound normal;
+2. configure reativacao como `production + teste controlado`, cadastre o telefone
+   E.164 do lead de teste e confirme que um contato fora da allowlist e bloqueado;
+3. libere a reativacao como `released`, execute uma onda e confirme que a
+   conversa recebe `journey = reactivation`;
+4. envie uma mensagem inbound normal e confirme que ela permanece inelegivel
+   para production, mesmo que exista uma configuracao antiga no banco.
+
 ## 9. Jornada vertical principal
 
 Execute com telefone autorizado:

@@ -136,9 +136,9 @@ export default async function PedroPage({
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Atendimento normal</p><h2>Modo inbound</h2></span></div>
             <form action={changeGlobalAiModeAction} className={styles.modeForm}>
-              {["off", "shadow", "assisted", "production"].map((mode) => <button className={inboundMode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{modeLabels[mode]}</button>)}
+              {["off", "shadow", "assisted"].map((mode) => <button className={inboundMode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{modeLabels[mode]}</button>)}
             </form>
-            <p className={styles.notice}>Escolha como Pedro deve participar do atendimento normal. O modo assistido é o mais seguro para começar: ele sugere, e a equipe aprova cada envio.</p>
+            <p className={styles.notice}>Escolha como Pedro deve participar do atendimento normal. O modo assistido é o mais seguro para começar: ele sugere, e a equipe aprova cada envio. Respostas automáticas ficam disponíveis somente em campanhas de reativação liberadas.</p>
           </section>
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Reativação de base</p><h2>Conversas antigas</h2></span></div>
@@ -152,9 +152,9 @@ export default async function PedroPage({
           </section>
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Teste controlado</p><h2>Números autorizados para teste</h2></span></div>
-            <p className={styles.notice}>No modo automático, apenas os números abaixo podem receber respostas de teste. Sem nenhum número cadastrado, Pedro continua sem enviar respostas automáticas.</p>
+            <p className={styles.notice}>A whitelist controla o teste de campanhas de reativação. Em <strong>Todos os contatos elegíveis</strong>, a campanha pode responder respeitando opt-out e supressão; o atendimento normal continua sem respostas automáticas.</p>
             <form action={addAiTestNumberAction} className={styles.keyForm}><label><span>Número liberado para teste</span><input name="phoneE164" placeholder="+5511999999999" required /></label><button type="submit">Adicionar</button></form>
-            <div className={styles.executionList}>{allowlist?.map((entry) => <article key={entry.id}><span><strong>{entry.phone_e164}</strong><small>Inbound production liberado</small></span><form action={removeAiTestNumberAction}><input name="allowlistId" type="hidden" value={entry.id} /><button type="submit">Remover</button></form></article>)}{!allowlist?.length ? <p className={styles.notice}>Nenhum número liberado. O inbound em production permanecerá sem respostas automáticas.</p> : null}</div>
+            <div className={styles.executionList}>{allowlist?.map((entry) => <article key={entry.id}><span><strong>{entry.phone_e164}</strong><small>Reativação em teste controlado</small></span><form action={removeAiTestNumberAction}><input name="allowlistId" type="hidden" value={entry.id} /><button type="submit">Remover</button></form></article>)}{!allowlist?.length ? <p className={styles.notice}>Nenhum número liberado para o teste controlado de reativação.</p> : null}</div>
           </section>
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Últimas execuções</p><h2>Rastreabilidade</h2></span></div>

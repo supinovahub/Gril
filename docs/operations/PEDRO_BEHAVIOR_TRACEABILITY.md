@@ -27,6 +27,13 @@ Fonte de verdade: `docs/product/Especificacao-do-Produto-v1.md`. O pacote v3 sep
 
 O sistema não inventa informação operacional. Antes da homologação real, o dono ou gestor deve publicar perfil institucional, empreendimentos, fontes, validade, FAQs, fatos, capa, até quatro fotos adicionais e book. Sem esses dados, a resposta correta do Pedro é perguntar, não recomendar ou escalar — não preencher a lacuna por conta própria.
 
+## Escopo de production
+
+Production automatica e exclusiva de campanhas de reativacao. Campanha, onda,
+conversa, worker e outbound recusam production fora de `reactivation`; o teste
+controlado usa `ai_test_allowlist`. O atendimento normal continua limitado a
+`off`, `shadow` e `assisted`.
+
 ## Modos
 
 - **Shadow:** registra a decisão sem enviar ou alterar CRM.
