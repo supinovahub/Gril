@@ -31,14 +31,35 @@ const responseSchema = z.object({
   error: z.object({ code: z.string().optional(), message: z.string().optional() }).nullable().optional(),
 });
 
-function parsePedroTurn(response: z.infer<typeof responseSchema>) {
+function summarizeValidationIssues(error: z.ZodError) {
+  return error.issues
+    .slice(0, 6)
+    .map((issue) => `${issue.path.length > 0 ? issue.path.join(".") : "$"}:${issue.code}`)
+    .join(", ");
+}
+
+function parsePedroTurn(response: z.infer<typeof responseSchema>, retryable = false) {
   for (const item of response.output ?? []) {
-    if (item.type === "function_call" && item.name === pedroTurnTool.name && item.arguments) {
+    if (item.type === "function_call" && item.name === pedroTurnTool.name && typeof item.arguments === "string") {
+      let rawArguments: unknown;
       try {
-        return pedroTurnSchema.parse(JSON.parse(item.arguments));
+        rawArguments = JSON.parse(item.arguments);
       } catch {
-        throw new OpenAiRuntimeError("openai_tool_arguments_invalid", "A decisão estruturada do Pedro foi rejeitada pelo backend.");
+        throw new OpenAiRuntimeError(
+          "openai_tool_arguments_invalid",
+          "A decisão estruturada do Pedro foi rejeitada pelo backend (JSON inválido).",
+          retryable,
+        );
       }
+      const parsed = pedroTurnSchema.safeParse(rawArguments);
+      if (!parsed.success) {
+        throw new OpenAiRuntimeError(
+          "openai_tool_arguments_invalid",
+          `A decisão estruturada do Pedro foi rejeitada pelo backend (${summarizeValidationIssues(parsed.error)}).`,
+          retryable,
+        );
+      }
+      return parsed.data;
     }
     for (const content of item.content ?? []) {
       if (content.refusal) throw new OpenAiRuntimeError("openai_refusal", "O modelo recusou esta resposta; a conversa foi encaminhada para revisão humana.");
@@ -47,7 +68,7 @@ function parsePedroTurn(response: z.infer<typeof responseSchema>) {
   throw new OpenAiRuntimeError("openai_tool_call_missing", "A OpenAI concluiu sem registrar uma decisão comercial válida.");
 }
 
-export async function createPedroResponse(input: {
+async function requestOpenAi(input: {
   apiKey: string;
   model: string;
   reasoningEffort?: string | null;
@@ -55,7 +76,7 @@ export async function createPedroResponse(input: {
   instructions: string;
   messages: Array<{ role: "user" | "assistant"; text: string }>;
   businessContext: Record<string, unknown>;
-}) {
+}, instructions: string) {
   let response: Response;
   try {
     response = await fetch("https://api.openai.com/v1/responses", {
@@ -70,7 +91,7 @@ export async function createPedroResponse(input: {
       body: JSON.stringify({
         model: input.model,
         store: false,
-        instructions: input.instructions,
+        instructions,
         input: [
           ...input.messages.map((message) => ({
             role: message.role,
@@ -114,13 +135,49 @@ export async function createPedroResponse(input: {
   if (!parsed.success || parsed.data.status !== "completed") {
     throw new OpenAiRuntimeError("openai_response_incomplete", "A OpenAI não concluiu a resposta.", true);
   }
-  const turn = parsePedroTurn(parsed.data);
-  return {
-    responseId: parsed.data.id,
-    model: parsed.data.model ?? input.model,
-    inputTokens: parsed.data.usage?.input_tokens ?? 0,
-    outputTokens: parsed.data.usage?.output_tokens ?? 0,
-    outputText: turn.reply ?? turn.escalation?.reason ?? "Escalada sem mensagem ao lead.",
-    structured: turn,
-  };
+  return parsed.data;
+}
+
+function shouldRepairStructuredResponse(error: unknown): error is OpenAiRuntimeError {
+  return error instanceof OpenAiRuntimeError
+    && (error.code === "openai_tool_arguments_invalid" || error.code === "openai_tool_call_missing");
+}
+
+export async function createPedroResponse(input: {
+  apiKey: string;
+  model: string;
+  reasoningEffort?: string | null;
+  textVerbosity?: string | null;
+  instructions: string;
+  messages: Array<{ role: "user" | "assistant"; text: string }>;
+  businessContext: Record<string, unknown>;
+}) {
+  let lastStructuredError: OpenAiRuntimeError | null = null;
+
+  for (let attempt = 0; attempt < 2; attempt += 1) {
+    const instructions = attempt === 0
+      ? input.instructions
+      : `${input.instructions}\n\nCONTROLE DE FORMATO: a tentativa anterior não respeitou o contrato de decisão. Gere novamente agora usando exclusivamente a ferramenta ${pedroTurnTool.name}, preenchendo todos os campos obrigatórios, sem propriedades extras e sem texto fora da chamada.`;
+
+    try {
+      const response = await requestOpenAi(input, instructions);
+      const turn = parsePedroTurn(response, attempt === 0);
+      return {
+        responseId: response.id,
+        model: response.model ?? input.model,
+        inputTokens: response.usage?.input_tokens ?? 0,
+        outputTokens: response.usage?.output_tokens ?? 0,
+        outputText: turn.reply ?? turn.escalation?.reason ?? "Escalada sem mensagem ao lead.",
+        structured: turn,
+      };
+    } catch (error) {
+      if (attempt === 0 && shouldRepairStructuredResponse(error)) {
+        lastStructuredError = error;
+        continue;
+      }
+      throw error;
+    }
+  }
+
+  throw lastStructuredError ?? new OpenAiRuntimeError("openai_tool_arguments_invalid", "A decisão estruturada do Pedro foi rejeitada pelo backend.");
 }
