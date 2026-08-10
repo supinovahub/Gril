@@ -1,0 +1,95 @@
+.page {
+  display: grid;
+  gap: 22px;
+  min-height: 360px;
+  padding: 34px clamp(18px, 3vw, 42px);
+}
+
+.heading,
+.grid,
+.panel {
+  display: grid;
+  gap: 10px;
+}
+
+.heading {
+  max-width: 520px;
+}
+
+.eyebrow,
+.title,
+.subtitle,
+.card,
+.panel {
+  display: block;
+  overflow: hidden;
+  position: relative;
+  border-radius: 10px;
+  background: var(--ledger);
+}
+
+.eyebrow {
+  width: 112px;
+  height: 11px;
+}
+
+.title {
+  width: min(360px, 80%);
+  height: 30px;
+}
+
+.subtitle {
+  width: min(480px, 100%);
+  height: 15px;
+}
+
+.grid {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.card {
+  height: 112px;
+}
+
+.panel {
+  min-height: 220px;
+}
+
+.eyebrow::after,
+.title::after,
+.subtitle::after,
+.card::after,
+.panel::after {
+  position: absolute;
+  inset: 0;
+  content: "";
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.42), transparent);
+  animation: shimmer 1.4s ease-in-out infinite;
+  transform: translateX(-100%);
+}
+
+@keyframes shimmer {
+  to {
+    transform: translateX(100%);
+  }
+}
+
+@media (max-width: 720px) {
+  .grid {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    height: 82px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .eyebrow::after,
+  .title::after,
+  .subtitle::after,
+  .card::after,
+  .panel::after {
+    animation: none;
+  }
+}

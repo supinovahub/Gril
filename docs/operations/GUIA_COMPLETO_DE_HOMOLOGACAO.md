@@ -395,6 +395,7 @@ Valide ainda Central, push, pausa emergencial, relatórios, custos, carga por co
 - [ ] kill switch testado;
 - [ ] UI, jurídico e restore seguro aprovados.
 - [ ] sidebar é utilizável a 100% de zoom em notebook com pouca altura;
+- [ ] navegação entre abas e ações mostra resposta visual imediata, sem refresh periódico interrompendo o clique;
 
 ## 13. Regras numéricas de referência
 
