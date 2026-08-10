@@ -7,6 +7,7 @@ import {
   describeInboxNotifications,
   loadInboxNotificationCounts,
 } from "@/lib/inbox/notifications";
+import { sortInboxConversations } from "@/lib/inbox/sorting";
 import { createClient } from "@/lib/supabase/server";
 import { formatOperationDateTime } from "@/lib/time/operation-format";
 import styles from "./inbox.module.css";
@@ -14,10 +15,11 @@ import styles from "./inbox.module.css";
 export default async function InboxPage() {
   const viewer = await requireActiveViewer();
   const supabase = await createClient();
+  const conversationSelect = "id,operation_id,status,ownership,ai_mode,last_inbound_at,last_message_preview,updated_at,contacts!inner(name),opportunities!conversations_opportunity_id_org_id_fkey(id,pipeline_stages!inner(name))";
   const [conversationsResult, notifications] = await Promise.all([
     supabase
       .from("conversations")
-      .select("id,operation_id,status,ownership,ai_mode,last_inbound_at,last_message_preview,updated_at,contacts!inner(name),opportunities!conversations_opportunity_id_org_id_fkey(id,pipeline_stages!inner(name))")
+      .select(conversationSelect)
       .eq("org_id", viewer.organization!.id)
       .order("updated_at", { ascending: false })
       .limit(100),
@@ -30,19 +32,44 @@ export default async function InboxPage() {
     throw new Error("Não foi possível carregar as conversas do Inbox.");
   }
 
+  const recentConversations = conversations ?? [];
+  const recentConversationIds = new Set(recentConversations.map((conversation) => conversation.id));
+  const attentionConversationIds = [...notifications.byConversation.keys()]
+    .filter((conversationId) => !recentConversationIds.has(conversationId));
+  let additionalAttentionConversations = recentConversations.slice(0, 0);
+
+  if (attentionConversationIds.length > 0) {
+    const additionalConversationsResult = await supabase
+      .from("conversations")
+      .select(conversationSelect)
+      .eq("org_id", viewer.organization!.id)
+      .in("id", attentionConversationIds);
+
+    if (additionalConversationsResult.error) {
+      console.error("Failed to load Inbox conversations with pending attention", additionalConversationsResult.error);
+      throw new Error("Não foi possível carregar as pendências do Inbox.");
+    }
+
+    additionalAttentionConversations = additionalConversationsResult.data ?? [];
+  }
+
+  const orderedConversations = sortInboxConversations(
+    [...recentConversations, ...additionalAttentionConversations],
+    notifications.byConversation,
+  ).slice(0, 100);
   const operationTimezones = new Map(viewer.operations.map((operation) => [operation.id, operation.timezone]));
 
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
-        <div><p className={styles.eyebrow}>WhatsApp unificado</p><h1>Inbox</h1><p>Conversas ordenadas pela atividade mais recente e limitadas ao seu acesso.</p></div>
+        <div><p className={styles.eyebrow}>WhatsApp unificado</p><h1>Inbox</h1><p>Pendências ficam no topo; dentro de cada grupo, a atividade mais recente aparece primeiro.</p></div>
         {viewer.membership?.role !== "broker" ? <Link className={styles.secondaryButton} href="/app/configuracoes/whatsapp">Configurar números</Link> : null}
       </header>
 
       <section className={styles.inboxPanel}>
-        <div className={styles.inboxHeader}><span>{conversations?.length ?? 0} conversas visíveis</span><span>RLS aplicado por operação e janela de acesso</span></div>
+        <div className={styles.inboxHeader}><span>{orderedConversations.length} conversas visíveis</span><span>Mensagens não lidas e sugestões da IA pendentes aparecem primeiro</span></div>
         <div className={styles.conversationList}>
-          {conversations?.map((conversation) => {
+          {orderedConversations.map((conversation) => {
             const contact = Array.isArray(conversation.contacts) ? conversation.contacts[0] : conversation.contacts;
             const opportunity = Array.isArray(conversation.opportunities) ? conversation.opportunities[0] : conversation.opportunities;
             const stage = Array.isArray(opportunity?.pipeline_stages) ? opportunity.pipeline_stages[0] : opportunity?.pipeline_stages;
@@ -65,7 +92,7 @@ export default async function InboxPage() {
               </Link>
             );
           })}
-          {!conversations?.length ? <div className={styles.empty}><Inbox size={30} /><strong>Nenhuma conversa visível</strong><span>Quando um webhook válido entrar, o contato e a oportunidade serão criados de forma idempotente.</span></div> : null}
+          {!orderedConversations.length ? <div className={styles.empty}><Inbox size={30} /><strong>Nenhuma conversa visível</strong><span>Quando um webhook válido entrar, o contato e a oportunidade serão criados de forma idempotente.</span></div> : null}
         </div>
       </section>
     </div>
