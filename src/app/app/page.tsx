@@ -6,6 +6,7 @@ import {
   UserRoundCheck,
   UsersRound,
 } from "lucide-react";
+import Link from "next/link";
 
 import { TypedConfirmationButton } from "@/components/typed-confirmation-button";
 import { canManageTeam, requireActiveViewer } from "@/lib/auth/session";
@@ -93,6 +94,21 @@ export default async function DashboardPage({
           <span><Link2 size={16} /> Pendentes / convites</span>
           <strong>{managesTeam ? pendingMembers + activeInvites : "—"}</strong>
         </article>
+      </section>
+
+      <section className={styles.startPanel} aria-labelledby="start-here-title">
+        <div className={styles.startIntro}>
+          <p className={styles.eyebrow}>Primeiros passos</p>
+          <h2 id="start-here-title">Comece por aqui</h2>
+          <p>Uma sequência curta para deixar a operação pronta e começar a atender com segurança.</p>
+        </div>
+        <ol className={styles.startSteps}>
+          <li><span>1</span><Link href="/app/configuracoes/whatsapp"><strong>Conecte o WhatsApp</strong><small>Receba e envie mensagens pela conta da operação.</small></Link></li>
+          <li><span>2</span><Link href="/app/conhecimento"><strong>Cadastre os empreendimentos</strong><small>Publique preços, fontes e materiais que Pedro pode usar.</small></Link></li>
+          <li><span>3</span><Link href="/app/pedro"><strong>Escolha o modo do Pedro</strong><small>Comece em assistido para revisar as sugestões antes do envio.</small></Link></li>
+          <li><span>4</span><Link href="/app/inbox"><strong>Revise a primeira conversa</strong><small>Veja a mensagem do lead e decida o próximo atendimento.</small></Link></li>
+          <li><span>5</span><Link href="/app/agenda"><strong>Prepare a agenda</strong><small>Defina disponibilidade e acompanhe as calls distribuídas.</small></Link></li>
+        </ol>
       </section>
 
       <div className={styles.grid}>

@@ -33,15 +33,14 @@ export default async function ConversationPage({
   const { id } = await params;
   const feedback = await searchParams;
   const supabase = await createClient();
-  const [conversationResult, messagesResult, summaryResult, suggestionsResult, executionsResult, settingsResult] = await Promise.all([
+  const [conversationResult, messagesResult, summaryResult, suggestionsResult, settingsResult] = await Promise.all([
     supabase.from("conversations").select("*,contacts!inner(id,name,contact_phones(e164,is_primary,status)),opportunities!conversations_opportunity_id_org_id_fkey(id,pipeline_stages!inner(name)),whatsapp_connections!inner(name,provider)").eq("id", id).maybeSingle(),
     supabase.from("messages").select("*").eq("conversation_id", id).order("created_at").limit(300),
     supabase.from("conversation_summaries").select("summary,facts,created_at").eq("conversation_id", id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("ai_suggestions").select("id,body,status,created_at").eq("conversation_id", id).eq("status", "pending").order("created_at", { ascending: false }),
-    supabase.from("ai_executions").select("id,request_message_id,status,error_code,created_at").eq("conversation_id", id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
     supabase.from("organization_settings").select("ai_global_mode").eq("org_id", viewer.organization!.id).maybeSingle(),
   ]);
-  const queryError = conversationResult.error ?? messagesResult.error ?? summaryResult.error ?? suggestionsResult.error ?? executionsResult.error ?? settingsResult.error;
+  const queryError = conversationResult.error ?? messagesResult.error ?? summaryResult.error ?? suggestionsResult.error ?? settingsResult.error;
   if (queryError) {
     console.error("Failed to load Inbox conversation", queryError);
     throw new Error("Não foi possível carregar a conversa do Inbox.");
@@ -51,14 +50,10 @@ export default async function ConversationPage({
   const messages = messagesResult.data;
   const summary = summaryResult.data;
   const suggestions = suggestionsResult.data;
-  const latestExecution = executionsResult.data;
   const globalAiMode = settingsResult.data?.ai_global_mode ?? "off";
   if (!conversation) notFound();
 
   const operationTimezone = viewer.operations.find((operation) => operation.id === conversation.operation_id)?.timezone;
-
-  const latestInbound = [...(messages ?? [])].reverse().find((message) => message.direction === "inbound");
-  const currentExecution = latestExecution?.request_message_id === latestInbound?.id ? latestExecution : null;
 
   const contact = Array.isArray(conversation.contacts) ? conversation.contacts[0] : conversation.contacts;
   const opportunity = Array.isArray(conversation.opportunities) ? conversation.opportunities[0] : conversation.opportunities;
@@ -91,12 +86,16 @@ export default async function ConversationPage({
 
       <div className={styles.chatLayout}>
         <section className={styles.chatPanel}>
+          {suggestions?.length ? <section className={styles.flowGuide} aria-label="Como revisar uma sugestão do Pedro">
+            <div><strong>Esta resposta ainda não foi enviada</strong><p>Leia a mensagem do lead, ajuste o texto se precisar e escolha uma ação abaixo.</p></div>
+            <ol><li><b>Enviar</b> aplica a resposta e as ações sugeridas.</li><li><b>Ensinar</b> pede outra resposta sem falar com o lead.</li><li><b>Descartar</b> remove a sugestão sem enviar nada.</li></ol>
+          </section> : null}
           {suggestions?.length ? <div className={styles.suggestionStack}>
             {suggestions.map((suggestion) => <form action={reviewAiSuggestionAction} className={styles.suggestionCard} key={suggestion.id}>
               <input name="suggestionId" type="hidden" value={suggestion.id} /><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} />
               <header><span><Bot size={15} /> Sugestão do Pedro</span><small>{formatOperationDateTime(suggestion.created_at, operationTimezone)}</small></header>
               <textarea defaultValue={suggestion.body} maxLength={4096} name="body" required rows={4} />
-              <footer><button name="action" type="submit" value="send"><Send size={14} /> Aprovar e enviar</button><button className={styles.teachButton} name="action" type="submit" value="teach_only"><Bot size={14} /> Ensinar e gerar outra</button><button className={styles.discardButton} formNoValidate name="action" type="submit" value="discard"><X size={14} /> Só descartar</button></footer>
+              <footer><button name="action" type="submit" value="send"><Send size={14} /> Enviar resposta</button><button className={styles.teachButton} name="action" type="submit" value="teach_only"><Bot size={14} /> Gerar outra resposta</button><button className={styles.discardButton} formNoValidate name="action" type="submit" value="discard"><X size={14} /> Descartar</button></footer>
             </form>)}
           </div> : null}
           <div className={styles.messages}>
@@ -112,19 +111,20 @@ export default async function ConversationPage({
             <input name="conversationId" type="hidden" value={conversation.id} />
             <input name="expectedVersion" type="hidden" value={conversation.version} />
             <textarea disabled={conversation.status !== "active"} maxLength={4096} name="body" placeholder={conversation.status === "active" ? "Escreva uma resposta humana…" : "Conversa pausada ou encerrada"} required rows={3} />
-            <button disabled={conversation.status !== "active"} type="submit"><Send size={16} /> Enfileirar</button>
+            <button disabled={conversation.status !== "active"} type="submit"><Send size={16} /> Enviar resposta humana</button>
+            <p className={styles.composerHelp}>A mensagem entra na fila da conta conectada e aparece no histórico depois do envio.</p>
           </form>
         </section>
 
         <aside className={styles.contextPanel}>
-          <section><h2>Controle</h2><p>Versão {conversation.version} · {conversation.status} · {conversation.ownership}{currentExecution ? ` · IA ${currentExecution.status}` : " · última mensagem ainda sem execução"}</p><div className={styles.controlGrid}>
-            <form action={conversationAction}><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} /><button name="action" type="submit" value="take_over"><UserRoundCheck size={14} /> Assumir</button></form>
+          <section><h2>Quem está atendendo?</h2><p>{conversation.ownership === "ai" ? "Pedro está conduzindo esta conversa." : "A equipe está conduzindo esta conversa."} {conversation.status === "active" ? "Ela está ativa." : "Ela está pausada ou encerrada."}</p><div className={styles.controlGrid}>
+            <form action={conversationAction}><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} /><button name="action" type="submit" value="take_over"><UserRoundCheck size={14} /> Assumir atendimento</button></form>
             <form action={conversationAction}><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} /><input name="reason" type="hidden" value="Reprocessamento manual solicitado no Inbox" /><button disabled={globalAiMode === "off" || conversation.status === "closed"} name="action" type="submit" value="return_to_ai"><Bot size={14} /> {globalAiMode === "off" ? "Pedro desativado" : conversation.ownership === "ai" ? "Reprocessar com Pedro" : "Devolver ao Pedro e processar"}</button></form>
-            <form action={conversationAction}><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} /><button name="action" type="submit" value="pause"><Pause size={14} /> Pausar</button></form>
-            <form action={conversationAction}><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} /><button name="action" type="submit" value="close"><X size={14} /> Encerrar</button></form>
+            <form action={conversationAction}><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} /><button name="action" type="submit" value="pause"><Pause size={14} /> Pausar atendimento</button></form>
+            <form action={conversationAction}><input name="conversationId" type="hidden" value={conversation.id} /><input name="expectedVersion" type="hidden" value={conversation.version} /><button name="action" type="submit" value="close"><X size={14} /> Encerrar conversa</button></form>
           </div></section>
-          <section><h2>Resumo</h2><p>{summary?.summary || "O resumo versionado será gerado pelo motor Pedro quando houver contexto suficiente."}</p></section>
-          <section><h2>Proteções</h2><p><CircleAlert size={14} /> Opt-out, supressão e versão da conversa são revalidados no banco antes de qualquer envio.</p></section>
+          <section><h2>Resumo para a equipe</h2><p>{summary?.summary || "Ainda não há contexto suficiente para gerar um resumo."}</p></section>
+          <section><h2>Proteção antes do envio</h2><p><CircleAlert size={14} /> O sistema verifica opt-out, bloqueios e a versão mais recente da conversa antes de enviar.</p></section>
           <Link className={styles.secondaryButton} href={`/app/leads/${opportunity?.id}`}>Abrir oportunidade</Link>
           {viewer.membership?.role === "broker" ? <form action={startBrokerConsultationAction}><input name="conversationId" type="hidden" value={conversation.id} /><button className={styles.secondaryButton} type="submit"><Bot size={14} /> Pedir ajuda ao Pedro</button></form> : null}
         </aside>

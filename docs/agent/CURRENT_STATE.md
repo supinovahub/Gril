@@ -1,5 +1,13 @@
 # Estado atual compartilhado do Gril
 
+## Atualizacao de 07/08/2026 - producao automatica exclusiva para reativacao
+
+- A migration `20260807180741_reactivation_production_only.sql` foi aplicada no Supabase remoto e registrada como aplicada na history.
+- O banco permite `production` somente em campanhas `reactivation`; o inbound normal fica limitado a `off`, `shadow` e `assisted`.
+- A abertura da campanha marca a conversa como `journey = reactivation` e os gates de onda, elegibilidade, worker e outbound revalidam a origem.
+- A consulta remota confirmou 11 campanhas de reativacao nao-production, nenhuma campanha production e nenhuma organizacao liberada; nenhum lead foi apagado ou alterado.
+- Nenhum deploy Vercel foi feito; a homologacao manual de uma campanha de teste permanece pendente.
+
 > Atualizado em 07/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
 
 ## Repositório

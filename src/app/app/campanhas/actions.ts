@@ -42,7 +42,7 @@ export async function createCampaignAction(formData: FormData) {
     message_template_id: parsed.data.messageTemplateId || null,
     consent_statement: parsed.data.consentStatement, consent_source: parsed.data.consentSource, actor_user_id: viewer.userId,
   });
-  if (error) campaignRedirect(error.message.includes("active_campaign_connection_required") ? "Escolha uma conexão ativa e habilitada para campanhas." : "Não foi possível criar a campanha.");
+  if (error) campaignRedirect(error.message.includes("active_campaign_connection_required") ? "Escolha uma conexão ativa e habilitada para campanhas." : error.message.includes("reactivation_production_not_released") ? "Libere a produção da reativação em Pedro antes de criar a campanha." : "Não foi possível criar a campanha.");
   revalidatePath("/app/campanhas");
   campaignRedirect("Campanha criada. Importe e revise a base.", "sucesso");
 }
@@ -77,6 +77,7 @@ export async function editCampaignAction(formData: FormData) {
     if (error.message.includes("campaign_not_editable")) campaignRedirect("Campanhas aprovadas com ondas, em execução, concluídas ou arquivadas não podem ser editadas.");
     if (error.message.includes("approved_meta_campaign_template_required")) campaignRedirect("Selecione um template Meta aprovado para esta conexão.");
     if (error.message.includes("active_campaign_connection_required")) campaignRedirect("Escolha uma conexão ativa e habilitada para campanhas.");
+    if (error.message.includes("reactivation_production_not_released")) campaignRedirect("Libere a produção da reativação em Pedro antes de editar a campanha.");
     campaignRedirect("Não foi possível editar a campanha. Revise os dados e tente novamente.");
   }
   revalidatePath("/app/campanhas");

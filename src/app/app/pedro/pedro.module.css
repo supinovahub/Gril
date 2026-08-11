@@ -13,6 +13,10 @@
 .statusStrip span { display: grid; gap: 4px; }
 .statusStrip small { color: var(--ink-muted); font-size: 9px; }
 .statusStrip strong { font-size: 13px; }
+.modeSummary { display:flex; align-items:center; justify-content:space-between; gap:20px; margin-bottom:20px; padding:18px 20px; border:1px solid var(--border); border-radius:var(--radius-panel); background:var(--surface); box-shadow:var(--shadow); }
+.modeSummary h2 { margin:0; font-size:18px; letter-spacing:-.03em; }
+.modeSummary > div > p:last-child { max-width:700px; margin:7px 0 0; color:var(--ink-muted); font-size:11px; line-height:1.5; }
+.modeSummary > span { max-width:220px; padding:10px 12px; border-radius:9px; background:var(--pine-soft); color:var(--positive); font-size:10px; line-height:1.45; }
 .grid { display: grid; grid-template-columns: minmax(0,1fr) 320px; gap: 20px; align-items: start; }
 .mainColumn,.sideColumn { display: grid; gap: 20px; }
 .panel { overflow: hidden; border: 1px solid var(--border); border-radius: var(--radius-panel); background: var(--surface); }
@@ -91,3 +95,4 @@
 .modeForm .selectedMode { border-color:var(--ink); background:var(--ink); color:var(--surface); }
 .executionList article { border-bottom-color:var(--border-soft); }
 @media(max-width:1050px){.grid{grid-template-columns:1fr}}
+@media(max-width:650px){.modeSummary{align-items:stretch; flex-direction:column}.modeSummary > span{max-width:none}}

@@ -33,6 +33,25 @@ const weekdays = [
   "Sábado",
 ];
 
+function callStatusLabel(status: string) {
+  const labels: Record<string, string> = {
+    awaiting_distribution: "Aguardando distribuição",
+    unassigned_alerted: "Precisa de responsável",
+    assigned: "Atribuída",
+    completed: "Concluída",
+    no_show: "Não compareceu",
+    cancelled: "Cancelada",
+    rescheduled: "Reagendada",
+  };
+  return labels[status] ?? "Em acompanhamento";
+}
+
+function callFormatLabel(format: string) {
+  if (format === "video") return "Vídeo";
+  if (format === "phone") return "Ligação";
+  return "Formato a combinar";
+}
+
 export default async function AgendaPage({
   searchParams,
 }: {
@@ -105,11 +124,10 @@ export default async function AgendaPage({
     <div className={styles.page}>
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>20 minutos + 10 de intervalo</p>
+          <p className={styles.eyebrow}>Agenda da operação</p>
           <h1>Agenda e calls</h1>
           <p>
-            Ofertas não bloqueiam horário. O primeiro aceite válido cria a única
-            atribuição ativa.
+            Organize sua disponibilidade, acompanhe os horários e registre o resultado de cada call.
           </p>
         </div>
         <span className={ready ? styles.ready : styles.notReady}>
@@ -121,6 +139,10 @@ export default async function AgendaPage({
       {feedback.sucesso ? (
         <p className={styles.success}>{feedback.sucesso}</p>
       ) : null}
+      <section className={styles.agendaGuide} aria-label="Como funciona a agenda">
+        <div><strong>Como usar esta página</strong><span>As três áreas representam momentos diferentes do atendimento.</span></div>
+        <ol><li><b>1</b><span><strong>Disponibilidade</strong> informe quando pode receber calls.</span></li><li><b>2</b><span><strong>Agendamento</strong> reserve um horário alinhado com o lead.</span></li><li><b>3</b><span><strong>Resultado</strong> registre o que aconteceu depois da call.</span></li></ol>
+      </section>
       {offers?.length ? (
         <section className={styles.offers}>
           <h2>Ofertas para você</h2>
@@ -212,7 +234,7 @@ export default async function AgendaPage({
                           dateStyle: "short",
                           timeStyle: "short",
                         })}{" "}
-                        · {call.format}
+                        · {callFormatLabel(call.format)}
                       </small>
                     </span>
                     {call.video_link ? (
@@ -222,7 +244,7 @@ export default async function AgendaPage({
                     ) : call.format === "video" ? (
                       <small>Link pendente</small>
                     ) : null}
-                    <b>{call.status}</b>
+                    <b>{callStatusLabel(call.status)}</b>
                     {call.status === "assigned" && call.assigned_membership_id === viewer.membership?.id && !past ? <form action={returnCallAction}><input name="callId" type="hidden" value={call.id} /><button>Devolver call</button></form> : null}
                     {canSetLink ? (
                       <details className={styles.result}>
@@ -257,7 +279,7 @@ export default async function AgendaPage({
                     ) : null}
                     {past && call.status === "assigned" ? (
                       <details className={styles.result}>
-                        <summary>Informar resultado</summary>
+                          <summary>Registrar resultado da call</summary>
                         <form action={recordCallResultAction}>
                           <input name="callId" type="hidden" value={call.id} />
                           <input
@@ -306,7 +328,7 @@ export default async function AgendaPage({
                               type="number"
                             />
                           </div>
-                          <button>Registrar</button>
+                          <button>Salvar resultado</button>
                         </form>
                       </details>
                     ) : null}
@@ -320,7 +342,7 @@ export default async function AgendaPage({
           </section>
           <section className={styles.panel}>
             <div className={styles.panelHeader}>
-              <h2>Sua disponibilidade</h2>
+                <h2>Quando você pode receber calls</h2>
               <span>
                 {viewer.profile?.whatsapp_e164 ?? "WhatsApp pendente"}
               </span>
@@ -355,7 +377,7 @@ export default async function AgendaPage({
                 />{" "}
                 Alertas urgentes
               </label>
-              <button>Salvar</button>
+              <button>Salvar preferências</button>
             </form>
             <AvailabilityEditor
               action={saveAvailabilityAction}
@@ -380,7 +402,7 @@ export default async function AgendaPage({
                 <input name="startsAt" type="datetime-local" required />
                 <input name="endsAt" type="datetime-local" required />
                 <input name="reason" placeholder="Motivo" />
-                <button>Salvar exceção</button>
+                <button>Salvar exceção de agenda</button>
               </form>
             </details>
             {exceptions?.length ? (
@@ -415,10 +437,10 @@ export default async function AgendaPage({
             <form action={createCallAction} className={styles.createForm}>
               <div>
                 <p className={styles.eyebrow}>Horário alinhado</p>
-                <h2>Separar call</h2>
+                <h2>Agendar uma call</h2>
               </div>
               <label>
-                <span>Oportunidade</span>
+                <span>Lead / oportunidade</span>
                 <select name="opportunityRef" required>
                   <option value="">Selecione</option>
                   {opportunities?.map((opportunity) => {
@@ -452,7 +474,7 @@ export default async function AgendaPage({
                 <input name="leadConfirmed" type="checkbox" /> O lead aceitou
                 claramente este horário
               </label>
-              <button>Separar horário</button>
+              <button>Agendar horário</button>
               <p className={styles.help}>
                 Abaixo de 1 hora, o lead não recebe confirmação automática e o
                 gestor é alertado.
