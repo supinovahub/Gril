@@ -238,3 +238,22 @@ Este documento não substitui:
   mas a coleta de páginas não pôde terminar porque este workspace não possui
   as variáveis públicas do Supabase. A homologação visual autenticada continua
   pendente.
+
+## Atualização de 11/08/2026 — clareza dos fluxos e publicação integrada
+
+- O PR #42 foi mergeado na branch padrão no commit
+  `ec800483e220d1645edfec802183cd2b197c4b66`.
+- O release acrescenta orientações e rótulos mais claros no Dashboard, Inbox,
+  Pedro, Leads e Agenda para usuários que não desenvolveram o sistema.
+- A regra posterior de produção do Pedro e o runtime autônomo de IA das
+  campanhas foram reintegrados antes da publicação; as features anteriores de
+  campanhas, CSV, ondas e Chat com Pedro já estavam na base e foram preservadas.
+- A lista local/remota de migrations está alinhada até `20260810140144`; nenhum
+  SQL foi aplicado durante este deploy.
+- O deployment de produção Vercel
+  `dpl_CsxDCbaVsw6hxLGpP1bpaCkj4WLW` está `READY`, com alias
+  `https://gril-lac.vercel.app`; `/login` respondeu HTTP 200 e não foram
+  encontrados logs de erro na última hora.
+- A homologação visual e operacional autenticada continua pendente. O build
+  local pré-empacotado encontrou uma limitação de symlink do Windows depois de
+  compilar; o build remoto da Vercel foi concluído com 46 rotas.
