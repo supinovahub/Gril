@@ -214,3 +214,19 @@ Este documento não substitui:
 - Nenhuma migration ou alteração de dados foi aplicada.
 - A homologação manual autenticada da seleção múltipla, presets, edição,
   remoção e períodos divididos permanece pendente.
+
+## Atualização de 10/08/2026 — prioridade de atenção no Inbox
+
+- A rota `/app/inbox` agora coloca no topo as conversas com mensagens inbound
+  não lidas ou sugestões pendentes da IA; dentro de cada grupo, ordena por
+  `updated_at` decrescente.
+- Para preservar o limite de 100 itens sem esconder pendências antigas, o
+  código busca os 100 itens recentes e recupera separadamente conversas com
+  notificações fora dessa janela antes da ordenação final.
+- Nenhuma migration, alteração de dados, consulta externa, deploy ou mudança
+  de RLS foi feita nesta tarefa. O registro detalhado está em
+  `docs/agent/changes/2026-08-10-ordenacao-atencao-inbox.md`.
+- `npm run lint` e `npm test` passaram; o build compilou e concluiu TypeScript,
+  mas a coleta de páginas não pôde terminar porque este workspace não possui
+  as variáveis públicas do Supabase. A homologação visual autenticada continua
+  pendente.

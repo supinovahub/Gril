@@ -219,6 +219,14 @@ No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confir
 6. depois do fim/revogação da janela, o corretor não deve mais acessar o tópico nem a conversa;
 7. confirme atualização automática, sem F5, e badges separados para Inbox, Chat com Pedro, Lionel e Assistente do corretor.
 
+No Inbox, valide a ordem da lista com uma conversa mais antiga que tenha uma
+mensagem inbound não lida, outra com sugestão `assisted` pendente e uma
+conversa mais recente sem pendência. As duas conversas com atenção devem ficar
+acima da conversa regular; dentro de cada grupo, a atividade mais recente deve
+vir primeiro. Abra a conversa antiga e marque-a como lida, depois resolva a
+sugestão, e confirme que cada item deixa o grupo de atenção somente quando a
+pendência correspondente for resolvida.
+
 Também valide:
 
 - uma nova mensagem só é liberada depois que o turno atual termina;
