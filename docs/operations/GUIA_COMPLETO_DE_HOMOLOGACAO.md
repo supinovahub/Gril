@@ -188,21 +188,23 @@ Com o Pedro em `assisted`, valide que palavras isoladas nunca pausam a conversa 
 5. devolva a mesma conversa ao Pedro mais de uma vez; a mesma execução não pode criar escaladas duplicadas;
 6. teste opt-out explícito e confirme supressão, cancelamento de jobs e ausência de novo envio automático.
 
+Na interface do Inbox, uma sugestão pendente aparece como **Enviar resposta**, **Gerar outra resposta** ou **Descartar**. A primeira envia a sugestão aprovada; a segunda pede uma nova sugestão sem falar com o lead; a terceira não envia nada. Para uma resposta escrita pela equipe, use **Enviar resposta humana** e confirme a fila de envio.
+
 ## 7. Simulador e regressão
 
 No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confirme que o Pedro lembra as mensagens anteriores, acumula a qualificação e mantém o resumo sem criar lead, Inbox, WhatsApp, call, follow-up real ou consumo de capacidade. Cubra saudação vaga, preço, disponibilidade, compra à vista/financiada/futura, falta de imóvel compatível, pergunta sem resposta, pedido humano, reclamação, opt-out, número errado, prompt injection, agendamento, cancelamento, reagendamento e recebimento de mídia.
 
 ### 6.1 Modos, aprendizado e curadoria
 
-1. em `Pedro`, confirme que o atendimento normal oferece `off`, `shadow`, `assisted` e `production`; `production` só pode ser salvo quando os portões técnicos de produção estiverem aprovados;
-2. na seção **Whitelist de produção**, cadastre o telefone E.164 do lead de teste, coloque o inbound em `production` e confirme que esse número pode receber a resposta automática;
+1. em `Pedro`, confirme que o atendimento normal oferece **Desligado**, **Só observa**, **Sugere para revisão** e **Responde automaticamente** (valores técnicos `off`, `shadow`, `assisted` e `production`); `production` só pode ser salvo quando os portões técnicos de produção estiverem aprovados;
+2. na seção **Números autorizados para teste**, cadastre o telefone E.164 do lead de teste, coloque o inbound em `production` e confirme que esse número pode receber a resposta automática;
 3. coloque o inbound em `assisted` e envie uma mensagem de um contato fora da whitelist; prove no banco/log que ele criou execução/sugestão, mas não enviou mensagem outbound automaticamente;
 4. coloque o inbound em `production` e envie uma mensagem de um contato fora da whitelist; prove que ele foi registrado no Inbox, mas não criou execução nem mensagem outbound automática;
 5. remova um número da whitelist com uma execução `production` pendente e confirme que o worker bloqueia a execução antes do envio;
 6. configure reativação como `production + teste controlado`, cadastre seu telefone E.164 na allowlist e prove que um contato fora dela é bloqueado no servidor;
 7. em uma sugestão assisted, edite e aprove: a mensagem deve ser enviada e a correção deve criar um candidato para Lionel;
-8. use `Ensinar e gerar outra`: nada deve ser enviado ao lead e uma nova sugestão deve aparecer usando a orientação;
-9. use `Só descartar`: nada deve ser enviado nem exibido como sucesso de envio;
+8. use **Gerar outra resposta**: nada deve ser enviado ao lead e uma nova sugestão deve aparecer usando a orientação;
+9. use **Descartar**: nada deve ser enviado nem exibido como sucesso de envio;
 10. abra `/app/lionel`, responda ao grill uma pergunta por vez e registre o consenso como candidato; confirme que ele aparece em `Aprendizados`, ainda sem ativação silenciosa;
 11. confirme que corretor não vê Lionel nem controles de aprendizado.
 12. com uma sugestão `assisted` pendente, abra `/app/chat-pedro`: o tópico do lead deve mostrar a mesma resposta proposta no Inbox, o contexto resumido da análise, a mensagem inbound exata e o link para a conversa;

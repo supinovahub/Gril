@@ -7,6 +7,13 @@ import { LeadForm } from "./lead-form";
 import { BulkCrmPanel } from "./bulk-crm-panel";
 import styles from "./leads.module.css";
 
+function sourceLabel(source: string) {
+  if (source === "whatsapp_inbound" || source === "whatsapp_device") return "WhatsApp";
+  if (source === "campaign") return "Campanha";
+  if (source === "meta_form") return "Formulário Meta";
+  return "Origem não informada";
+}
+
 export default async function LeadsPage({
   searchParams,
 }: {
@@ -44,9 +51,9 @@ export default async function LeadsPage({
     <div className={styles.page}>
       <header className={styles.pageHeader}>
         <div>
-          <p className={styles.eyebrow}>CRM operacional</p>
+          <p className={styles.eyebrow}>Gestão comercial</p>
           <h1>Leads e oportunidades</h1>
-          <p>Uma pessoa pode ter várias decisões de compra sem duplicar o contato.</p>
+          <p>Cada linha representa uma oportunidade de compra. A mesma pessoa pode ter mais de uma oportunidade sem duplicar o contato.</p>
         </div>
         <div className={styles.headerActions}>
           <Link className={styles.secondaryButton} href={showingArchived ? "/app/leads" : "/app/leads?arquivados=1"}>{showingArchived ? "Ver ativos" : "Ver arquivados"}</Link>
@@ -56,6 +63,10 @@ export default async function LeadsPage({
 
       {erro ? <p className={styles.errorBanner}>{erro}</p> : null}
       {sucesso ? <p className={styles.successBanner}>Operação concluída.</p> : null}
+      <section className={styles.crmGuide} aria-label="Como usar o CRM">
+        <div><strong>Como trabalhar um lead</strong><span>Abra uma oportunidade para completar a qualificação e escolher o próximo passo.</span></div>
+        <ol><li><b>1</b>Confira o contexto e o responsável.</li><li><b>2</b>Preencha os dados que ainda faltam.</li><li><b>3</b>Avance a etapa ou agende uma call.</li></ol>
+      </section>
       <BulkCrmPanel contacts={contacts} managers={(memberships ?? []).filter((item)=>item.role!=='broker').map((item)=>({ id:item.id,label:`${item.role} · ${item.id.slice(0,8)}` }))} campaigns={(campaigns ?? []).map((item)=>({id:item.id,label:item.name}))}/>
 
       <section className={styles.layout}>
@@ -86,7 +97,7 @@ export default async function LeadsPage({
                   <span className={styles.leadAvatar}>{contact?.name?.slice(0, 1).toUpperCase() ?? "?"}</span>
                   <span className={styles.leadIdentity}>
                     <strong>{contact?.name ?? "Contato"}</strong>
-                    <small>{phone ?? "Sem telefone visível"} · {opportunity.source}</small>
+                    <small>{phone ?? "Sem telefone visível"} · {sourceLabel(opportunity.source)}</small>
                   </span>
                   <span className={styles.stagePill}><CircleDot size={13} /> {stage?.name ?? opportunity.status}</span>
                   <time>{new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(opportunity.last_activity_at))}</time>

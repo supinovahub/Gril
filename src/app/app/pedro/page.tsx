@@ -6,6 +6,20 @@ import { createClient } from "@/lib/supabase/server";
 import { addAiTestNumberAction, addPersonaSampleAction, changeGlobalAiModeAction, clonePersonaAction, configureFallbackModelAction, configureModelAction, configureReactivationAiAction, connectOpenAiAction, createPersonaDraftAction, publishPersonaAction, removeAiTestNumberAction } from "./actions";
 import styles from "./pedro.module.css";
 
+const modeLabels: Record<string, string> = {
+  off: "Desligado",
+  shadow: "Só observa",
+  assisted: "Sugere para revisão",
+  production: "Responde automaticamente",
+};
+
+const modeDescriptions: Record<string, string> = {
+  off: "Pedro não analisa nem responde às conversas.",
+  shadow: "Pedro analisa as conversas, mas não cria sugestões nem envia mensagens.",
+  assisted: "Pedro prepara sugestões. A equipe revisa e decide o que será enviado.",
+  production: "Pedro pode aplicar ações e enviar automaticamente quando os gates estiverem liberados.",
+};
+
 export default async function PedroPage({
   searchParams,
 }: {
@@ -30,10 +44,11 @@ export default async function PedroPage({
   const drafts = versionsResult.data?.filter((item) => item.persona_id === defaultPersona?.id && item.status === "draft") ?? [];
   const openAiAccount = integrationsResult.data?.find((item) => item.status !== "revoked");
   const { data: allowlist } = await supabase.from("ai_test_allowlist").select("id,phone_e164,active").eq("org_id", viewer.organization!.id).eq("active", true).order("created_at");
+  const inboundMode = settings?.inbound_ai_mode ?? settings?.ai_global_mode ?? "off";
 
   return (
     <div className={styles.page}>
-      <header className={styles.pageHeader}><div><p className={styles.eyebrow}>Motor versionado</p><h1>Pedro</h1><p>Persona, regras, modelo e modos de execução com snapshots reproduzíveis.</p></div><span className={styles.modeBadge}><Bot size={15} /> {settings?.ai_global_mode ?? "off"}</span></header>
+      <header className={styles.pageHeader}><div><p className={styles.eyebrow}>Configuração de atendimento</p><h1>Pedro</h1><p>Defina como Pedro participa das conversas e revise o que pode ser enviado automaticamente.</p></div><span className={styles.modeBadge}><Bot size={15} /> Pedro: {modeLabels[inboundMode] ?? inboundMode}</span></header>
       {feedback.erro ? <p className={styles.errorBanner}>{feedback.erro}</p> : null}
       {feedback.sucesso ? <p className={styles.successBanner}>{feedback.sucesso}</p> : null}
 
@@ -43,14 +58,19 @@ export default async function PedroPage({
         <div><Sparkles size={18} /><span><small>Modelo ativo</small><strong>{modelsResult.data?.find((item) => item.status === "active" && item.is_default)?.model_identifier ?? "Pendente"}</strong></span></div>
       </section>
 
+      <section className={styles.modeSummary} aria-labelledby="pedro-current-mode-title">
+        <div><p className={styles.eyebrow}>Comportamento atual</p><h2 id="pedro-current-mode-title">{modeLabels[inboundMode] ?? inboundMode}</h2><p>{modeDescriptions[inboundMode] ?? "Confira o modo selecionado antes de liberar o atendimento."}</p></div>
+        <span>Para começar, recomendamos <strong>Sugere para revisão</strong>.</span>
+      </section>
+
       <div className={styles.grid}>
         <div className={styles.mainColumn}>
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Persona e estilo</p><h2>{defaultPersona?.name ?? "Pedro"}</h2></span><span className={styles.versionChip}>publicada · v{published?.version}</span></div>
             <form action={createPersonaDraftAction} className={styles.promptForm}>
               <input name="personaId" type="hidden" value={defaultPersona?.id} />
-              <label><span>Contrato compilado</span><textarea defaultValue={published?.compiled_prompt} name="compiledPrompt" rows={14} required /></label>
-              <p>Editar cria uma nova versão em rascunho. Conversas existentes mantêm o snapshot anterior.</p>
+              <label><span>Instruções atuais do Pedro (avançado)</span><textarea defaultValue={published?.compiled_prompt} name="compiledPrompt" rows={14} required /></label>
+              <p>Editar cria uma nova versão em rascunho. Conversas existentes continuam com a versão que já estava ativa.</p>
               <button type="submit">Criar nova versão</button>
             </form>
             {drafts.map((draft) => (
@@ -75,7 +95,7 @@ export default async function PedroPage({
           </section>
 
           <section className={styles.panel}>
-            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>BYOK</p><h2>Perfis de modelo</h2></span></div>
+            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Conexão com a IA</p><h2>Chave e modelos</h2></span></div>
             {viewer.membership?.role === "owner" ? <div className={styles.credentialPanel}>
               <div className={styles.credentialSummary}>
                 <span className={styles.modelState}>{openAiAccount?.status === "verified" ? <CheckCircle2 size={19} /> : <CircleDashed size={19} />}</span>
@@ -96,7 +116,7 @@ export default async function PedroPage({
                 <form action={configureModelAction} className={styles.modelRow} key={profile.id}>
                   <input name="profileId" type="hidden" value={profile.id} />
                   <span className={styles.modelState}>{profile.status === "active" ? <CheckCircle2 size={18} /> : <CircleDashed size={18} />}</span>
-                  <span className={styles.modelCopy}><strong>{profile.name}</strong><small>{profile.workload_role} · Responses API · {profile.status}</small></span>
+                  <span className={styles.modelCopy}><strong>{profile.name}</strong><small>{profile.workload_role} · {profile.status === "active" ? "em uso" : "rascunho"}</small></span>
                   <span className={styles.keyState}>{profile.secret_reference ? "chave vinculada" : "sem chave"}</span>
                   <select defaultValue={profile.reasoning_effort ?? "medium"} disabled={profile.status !== "draft"} name="reasoningEffort"><option value="none">none</option><option value="low">low</option><option value="medium">medium</option><option value="high">high</option><option value="xhigh">xhigh</option><option value="max">max</option></select>
                   <select defaultValue={profile.text_verbosity} disabled={profile.status !== "draft"} name="textVerbosity"><option value="low">low</option><option value="medium">medium</option><option value="high">high</option></select>
@@ -106,8 +126,8 @@ export default async function PedroPage({
               ))}
             </div>
             {viewer.membership?.role === "owner" ? <form action={configureFallbackModelAction} className={styles.keyForm}>
-              <label><span>Modelo secundário para falhas transitórias</span><select defaultValue={settings?.fallback_model_profile_id ?? ""} name="fallbackModelProfileId" required><option value="">Selecione</option>{modelsResult.data?.filter((profile) => profile.secret_reference && !profile.is_default).map((profile) => <option key={profile.id} value={profile.id}>{profile.name} · {profile.model_identifier}</option>)}</select></label>
-              <button type="submit">Salvar fallback</button>
+              <label><span>Modelo reserva se o principal falhar</span><select defaultValue={settings?.fallback_model_profile_id ?? ""} name="fallbackModelProfileId" required><option value="">Selecione</option>{modelsResult.data?.filter((profile) => profile.secret_reference && !profile.is_default).map((profile) => <option key={profile.id} value={profile.id}>{profile.name} · {profile.model_identifier}</option>)}</select></label>
+              <button type="submit">Salvar modelo reserva</button>
             </form> : null}
           </section>
         </div>
@@ -116,22 +136,23 @@ export default async function PedroPage({
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Atendimento normal</p><h2>Modo inbound</h2></span></div>
             <form action={changeGlobalAiModeAction} className={styles.modeForm}>
-              {["off", "shadow", "assisted", "production"].map((mode) => <button className={settings?.inbound_ai_mode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{mode}</button>)}
+              {["off", "shadow", "assisted", "production"].map((mode) => <button className={inboundMode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{modeLabels[mode]}</button>)}
             </form>
-            <p className={styles.notice}>Production envia automaticamente, mas exige os gates de identidade, conhecimento, modelo, canal saudável e regressão aprovada. Shadow observa; assisted sugere e aprende com correções aprovadas.</p>
+            <p className={styles.notice}>Escolha como Pedro deve participar do atendimento normal. O modo assistido é o mais seguro para começar: ele sugere, e a equipe aprova cada envio.</p>
           </section>
           <section className={styles.panel}>
-            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Reativação de base</p><h2>Configuração da reativação</h2></span></div>
+            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Reativação de base</p><h2>Conversas antigas</h2></span></div>
+            <p className={styles.notice}>Estas opções controlam campanhas para contatos antigos. Elas são separadas do atendimento normal acima.</p>
             <form action={configureReactivationAiAction} className={styles.promptForm}>
-              <label><span>Modo</span><select defaultValue={settings?.reactivation_ai_mode ?? "off"} name="reactivationMode"><option value="off">off</option><option value="shadow">shadow</option><option value="assisted">assisted</option><option value="production">production</option></select></label>
-              <label><span>Liberação</span><select defaultValue={settings?.reactivation_release_state ?? "blocked"} name="releaseState"><option value="blocked">Bloqueada</option><option value="test_controlled">Somente allowlist</option><option value="released">Liberada</option></select></label>
+              <label><span>Como Pedro deve agir</span><select defaultValue={settings?.reactivation_ai_mode ?? "off"} name="reactivationMode"><option value="off">Desligado</option><option value="shadow">Só observa</option><option value="assisted">Sugere para revisão</option><option value="production">Responde automaticamente</option></select></label>
+              <label><span>Quem pode receber</span><select defaultValue={settings?.reactivation_release_state ?? "blocked"} name="releaseState"><option value="blocked">Ninguém ainda</option><option value="test_controlled">Somente números de teste</option><option value="released">Todos os contatos elegíveis</option></select></label>
               <label><span>Autonomia</span><select defaultValue={settings?.reactivation_autonomy ?? "low"} name="reactivationAutonomy"><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option></select></label>
               <button type="submit">Salvar reativação</button>
             </form>
           </section>
           <section className={styles.panel}>
-            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Teste controlado</p><h2>Whitelist de produção</h2></span></div>
-            <p className={styles.notice}>No atendimento normal em <strong>production</strong>, somente estes números podem gerar execução e receber mensagens automáticas do Pedro. A regra é aplicada no banco e vale para todas as operações da imobiliária. Shadow e assisted continuam disponíveis para os demais contatos.</p>
+            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Teste controlado</p><h2>Números autorizados para teste</h2></span></div>
+            <p className={styles.notice}>No modo automático, apenas os números abaixo podem receber respostas de teste. Sem nenhum número cadastrado, Pedro continua sem enviar respostas automáticas.</p>
             <form action={addAiTestNumberAction} className={styles.keyForm}><label><span>Número liberado para teste</span><input name="phoneE164" placeholder="+5511999999999" required /></label><button type="submit">Adicionar</button></form>
             <div className={styles.executionList}>{allowlist?.map((entry) => <article key={entry.id}><span><strong>{entry.phone_e164}</strong><small>Inbound production liberado</small></span><form action={removeAiTestNumberAction}><input name="allowlistId" type="hidden" value={entry.id} /><button type="submit">Remover</button></form></article>)}{!allowlist?.length ? <p className={styles.notice}>Nenhum número liberado. O inbound em production permanecerá sem respostas automáticas.</p> : null}</div>
           </section>

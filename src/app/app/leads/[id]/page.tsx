@@ -29,6 +29,20 @@ import {
 } from "../actions";
 import styles from "../leads.module.css";
 
+function sourceLabel(source: string) {
+  if (source === "whatsapp_inbound" || source === "whatsapp_device") return "WhatsApp";
+  if (source === "campaign") return "Campanha";
+  if (source === "meta_form") return "Formulário Meta";
+  return "Origem não informada";
+}
+
+function qualificationStatusLabel(current: { human_confirmed?: boolean; state?: string } | undefined) {
+  if (!current) return "Ainda não preenchido";
+  if (current.human_confirmed) return "Confirmado pela equipe";
+  if (current.state === "refused") return "Lead não informou";
+  return "Recebido na conversa";
+}
+
 const allowedNext: Record<string, string[]> = {
   new: ["in_service", "lost"],
   in_service: ["call_scheduled", "lost"],
@@ -106,9 +120,9 @@ export default async function LeadDetailPage({
         <div className={styles.detailIdentity}>
           <span className={styles.largeAvatar}>{contact?.name?.slice(0, 1).toUpperCase()}</span>
           <div>
-            <p className={styles.eyebrow}>Oportunidade · v{opportunity.version}</p>
+            <p className={styles.eyebrow}>Oportunidade de compra</p>
             <div className={styles.contactNameRow}><h1>{contact?.name}</h1>{canEditContact && contact ? <details className={styles.contactNameEditor}><summary aria-label="Editar nome do contato" title="Editar nome do contato"><UserRound size={14} /></summary><form action={updateContactNameAction} className={styles.contactNameForm}><input name="contactId" type="hidden" value={contact.id} /><input name="context" type="hidden" value="lead" /><input name="contextId" type="hidden" value={opportunity.id} /><label><span>Nome do contato</span><input defaultValue={contact.name} maxLength={160} minLength={2} name="name" required /></label><button type="submit">Salvar nome</button></form></details> : null}</div>
-            <p>{opportunity.title} · {opportunity.source}</p>
+            <p>{opportunity.title} · {sourceLabel(opportunity.source)}</p>
           </div>
         </div>
         <span className={styles.currentStage}>{stage?.position}. {stage?.name}</span>
@@ -124,9 +138,9 @@ export default async function LeadDetailPage({
             <dl className={styles.factGrid}>
               <div><dt>WhatsApp</dt><dd><Phone size={14} /> {phones.find((item) => item.is_primary)?.e164 ?? "Não informado"}</dd></div>
               <div><dt>Responsável</dt><dd>{opportunity.assigned_membership_id ? opportunity.assigned_membership_id.slice(0, 8) : "Sem responsável"}</dd></div>
-              <div><dt>Faixa determinística</dt><dd>{latestScore ? `${bandLabel[scoreExplanation?.band ?? ""] ?? scoreExplanation?.band ?? "Em cálculo"} · ${latestScore.score}/100` : "Ainda sem sinais"}</dd></div>
+              <div><dt>Prioridade comercial</dt><dd>{latestScore ? `${bandLabel[scoreExplanation?.band ?? ""] ?? scoreExplanation?.band ?? "Em cálculo"} · ${latestScore.score}/100` : "Ainda sem sinais"}</dd></div>
               <div><dt>Estrutura da compra</dt><dd>{opportunity.unit_quantity} unidade(s) · valores {opportunity.amount_scope === "per_unit" ? "por unidade" : "totais"}</dd></div>
-              <div><dt>Dados ainda desconhecidos</dt><dd>{scoreExplanation?.missing?.length ? scoreExplanation.missing.join(", ") : "Nenhum mínimo pendente"}</dd></div>
+              <div><dt>Informações que faltam</dt><dd>{scoreExplanation?.missing?.length ? scoreExplanation.missing.join(", ") : "Nenhum dado mínimo pendente"}</dd></div>
               <div><dt>Contexto para Pedro</dt><dd>{opportunity.ai_context || "Não informado"}</dd></div>
               <div><dt>Nota interna</dt><dd>{opportunity.internal_note || "Não informada"}</dd></div>
             </dl>
@@ -146,6 +160,7 @@ export default async function LeadDetailPage({
 
           <section className={styles.detailCard}>
             <div className={styles.cardTitle}><CircleAlert size={18} /><h2>Qualificação</h2></div>
+            <p className={styles.sectionIntro}>Preencha o que o lead já informou. Os campos restantes podem ser coletados pelo Pedro ou pela equipe ao longo da conversa.</p>
             <div className={styles.qualificationGrid}>
               {definitionsResult.data?.map((definition) => {
                 const current = qualificationResult.data?.find((value) => value.definition_id === definition.id);
@@ -158,9 +173,9 @@ export default async function LeadDetailPage({
                     <input name="definitionId" type="hidden" value={definition.id} />
                     <input name="answerType" type="hidden" value={definition.answer_type} />
                     {current ? <input name="expectedVersion" type="hidden" value={current.version} /> : null}
-                    <span><strong>{definition.name}</strong><small>{current ? `${current.source} · ${current.state}${current.human_confirmed ? " · confirmado" : ""}` : "a coletar"}</small></span>
-                    <input defaultValue={display === "Pendente" ? "" : display} name="value" placeholder={display} required />
-                    <button type="submit">Salvar</button>
+                    <span><strong>{definition.name}</strong><small>{qualificationStatusLabel(current ?? undefined)}</small></span>
+                    <input defaultValue={display === "Pendente" ? "" : display} name="value" placeholder={display === "Pendente" ? "Informe um valor" : display} required />
+                    <button type="submit">Salvar informação</button>
                   </form>
                 );
               })}
@@ -168,18 +183,18 @@ export default async function LeadDetailPage({
           </section>
 
           <section className={styles.detailCard}>
-            <div className={styles.cardTitle}><CircleAlert size={18} /><h2>Curadoria determinística</h2></div>
+            <div className={styles.cardTitle}><CircleAlert size={18} /><h2>Encontrar imóveis compatíveis</h2></div>
             <form action={matchProjectsAction} className={styles.matchAction}>
               <input name="opportunityId" type="hidden" value={opportunity.id} />
-              <p>Preço total e entrada são filtros obrigatórios. Região, entrega e prioridade apenas ordenam.</p>
-              <button type="submit">Recalcular até 2 opções</button>
+              <p>Precisamos de preço total e entrada para filtrar. Região, entrega e prioridade ajudam a ordenar as opções.</p>
+              <button type="submit">Buscar opções compatíveis</button>
             </form>
             <div className={styles.matchList}>
               {matchesResult.data?.map((match) => {
                 const project = Array.isArray(match.projects) ? match.projects[0] : match.projects;
                 return <article key={match.id}><span><strong>{project?.name}</strong><small>{project?.neighborhood || project?.region} · entrada desde {project?.min_down_payment?.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</small></span><span className={styles.stagePill}>#{match.rank}</span></article>;
               })}
-              {!matchesResult.data?.length ? <p className={styles.mutedCopy}>Nenhuma curadoria executada ou critérios mínimos ainda ausentes.</p> : null}
+              {!matchesResult.data?.length ? <p className={styles.mutedCopy}>Ainda não há opções. Preencha preço e entrada e faça uma nova busca.</p> : null}
             </div>
           </section>
 
@@ -229,14 +244,14 @@ export default async function LeadDetailPage({
 
         <aside className={styles.detailAside}>
           <section className={styles.stageFormCard}>
-            <div className={styles.cardTitle}><CircleAlert size={18} /><h2>Avançar etapa</h2></div>
+            <div className={styles.cardTitle}><CircleAlert size={18} /><h2>Atualizar etapa</h2></div>
             {isTerminal ? (
               <p className={styles.terminalMessage}>Venda concluída é um estado imutável. Uma nova decisão de compra cria outra oportunidade.</p>
             ) : (
               <form action={changeStageAction} className={styles.stageForm}>
                 <input name="opportunityId" type="hidden" value={opportunity.id} />
                 <input name="expectedVersion" type="hidden" value={opportunity.version} />
-                <label><span>Nova etapa</span><select name="targetStageId" required>{availableStages.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
+                <label><span>Próxima etapa</span><select name="targetStageId" required>{availableStages.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
                 <label><span>Motivo / correção</span><textarea name="reason" rows={2} /></label>
                 <label><span>Motivo de perda</span><select name="lossReasonId"><option value="">Somente se perdido</option>{reasonsResult.data?.map((item) => <option key={item.id} value={item.id}>{item.name}</option>)}</select></label>
                 <div className={styles.inlineFields}>
