@@ -68,6 +68,10 @@ begin
   if v_campaign.status not in ('draft','importing','review','approved') then
     raise exception 'campaign_not_editable' using errcode = '22023';
   end if;
+  if v_campaign.status = 'approved'
+     and exists (select 1 from public.campaign_waves where campaign_id = v_campaign.id) then
+    raise exception 'campaign_not_editable' using errcode = '22023';
+  end if;
 
   v_name := coalesce(nullif(trim(new.name), ''), v_campaign.name);
   v_connection_id := coalesce(new.connection_id, v_campaign.connection_id);
