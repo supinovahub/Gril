@@ -8,16 +8,21 @@ export function NavLink({
   className,
   exact = false,
   href,
+  aliases = [],
   children,
 }: {
   activeClassName: string;
   className: string;
   exact?: boolean;
   href: string;
+  aliases?: string[];
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const active = exact ? pathname === href : pathname === href || pathname.startsWith(`${href}/`);
+  const matches = (candidate: string) => exact
+    ? pathname === candidate
+    : pathname === candidate || pathname.startsWith(`${candidate}/`);
+  const active = matches(href) || aliases.some(matches);
 
   return (
     <Link

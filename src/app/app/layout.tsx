@@ -1,7 +1,6 @@
 import { AppShell } from "@/components/app-shell/app-shell";
 import { requireActiveViewer } from "@/lib/auth/session";
 import { loadInboxNotificationCounts } from "@/lib/inbox/notifications";
-import { loadInternalChatNotifications } from "@/lib/internal-chat/notifications";
 import { createClient } from "@/lib/supabase/server";
 
 export default async function ApplicationLayout({
@@ -11,15 +10,11 @@ export default async function ApplicationLayout({
 }) {
   const viewer = await requireActiveViewer();
   const supabase = await createClient();
-  const [notifications, internalNotifications] = await Promise.all([
-    loadInboxNotificationCounts(supabase, viewer.organization!.id),
-    loadInternalChatNotifications(supabase, viewer.organization!.id, viewer.userId),
-  ]);
+  const notifications = await loadInboxNotificationCounts(supabase, viewer.organization!.id);
 
   return (
     <AppShell
       inboxNotificationCount={notifications.conversationsWithNotifications}
-      internalChatNotificationCounts={internalNotifications}
       viewer={viewer}
     >
       {children}

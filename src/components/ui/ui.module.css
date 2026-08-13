@@ -1,0 +1,117 @@
+.pageHeader {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+.pageHeader h1 {
+  margin: 0;
+  font-family: var(--font-display), Georgia, serif;
+  font-size: clamp(32px, 4vw, 44px);
+  font-weight: 560;
+  letter-spacing: -0.045em;
+  line-height: 1;
+}
+
+.eyebrow {
+  margin: 0 0 8px;
+  color: var(--accent-dark);
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.description {
+  max-width: 680px;
+  margin: 9px 0 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 1.55;
+}
+
+.headerActions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.metricCard {
+  position: relative;
+  display: grid;
+  min-height: 116px;
+  align-content: center;
+  gap: 8px;
+  padding: 18px 20px;
+  border: 1px solid var(--border-soft);
+  background: var(--surface);
+  color: inherit;
+  text-decoration: none;
+  transition: background-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), transform 160ms var(--ease-out);
+}
+
+.metricCard:hover {
+  background: var(--paper-raised);
+  box-shadow: var(--shadow);
+  transform: translateY(-1px);
+}
+
+.metricCardAccent::before {
+  position: absolute;
+  inset: 18px auto 18px 0;
+  width: 3px;
+  border-radius: 0 4px 4px 0;
+  background: var(--accent);
+  content: "";
+}
+
+.metricLabel {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-muted);
+  font-size: 10px;
+  font-weight: 720;
+}
+
+.metricLabel svg {
+  color: var(--accent-dark);
+}
+
+.metricValue {
+  font-size: 30px;
+  font-weight: 660;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.05em;
+}
+
+.metricHint {
+  color: var(--ink-muted);
+  font-size: 10px;
+}
+
+.statusBadge {
+  display: inline-flex;
+  width: fit-content;
+  min-height: 26px;
+  align-items: center;
+  padding: 0 9px;
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.statusBadgeNeutral { background: var(--control-bg); color: var(--ink-secondary); }
+.statusBadgePositive { border-color: rgba(40, 98, 79, 0.18); background: var(--pine-soft); color: var(--positive); }
+.statusBadgeWarning { border-color: rgba(154, 103, 29, 0.2); background: #f8efdc; color: #805816; }
+.statusBadgeDanger { border-color: rgba(163, 61, 54, 0.2); background: #faecea; color: var(--danger); }
+.statusBadgeAccent { border-color: rgba(189, 87, 44, 0.2); background: #f8e9df; color: var(--accent-dark); }
+
+@media (max-width: 700px) {
+  .pageHeader { align-items: flex-start; flex-direction: column; }
+  .headerActions { justify-content: flex-start; }
+}

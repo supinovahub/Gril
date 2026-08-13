@@ -352,6 +352,127 @@
   text-align: center;
 }
 
+.logPanel {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.logToolbar {
+  display: grid;
+  gap: 16px;
+  padding: 18px 20px 14px;
+  border-bottom: 1px solid var(--border-soft);
+}
+
+.logToolbar > div:first-child { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+.logToolbar h2 { margin: 0; font-size: 16px; letter-spacing: -0.025em; }
+.logToolbar > div:first-child span { color: var(--ink-muted); font-size: 10px; }
+
+.logFilters {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.logFilters::-webkit-scrollbar { display: none; }
+.logFilter,
+.logFilterActive { display: inline-flex; min-height: 32px; align-items: center; padding: 0 10px; border: 1px solid transparent; border-radius: 999px; color: var(--ink-muted); font-size: 10px; font-weight: 750; white-space: nowrap; }
+.logFilter:hover { border-color: var(--border); background: var(--control-bg); color: var(--ink); }
+.logFilterActive { border-color: rgba(189, 87, 44, 0.18); background: #f8e9df; color: var(--accent-dark); }
+
+.logList { display: grid; }
+.logRow { display: grid; grid-template-columns: auto 96px 110px minmax(160px, 1fr) auto auto; gap: 12px; align-items: center; min-height: 70px; padding: 10px 20px; border-bottom: 1px solid var(--border-soft); }
+.logRow:last-child { border-bottom: 0; }
+.logRow:hover { background: var(--paper); }
+.logIcon { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 10px; }
+.logIconAi { background: #f8e9df; color: var(--accent-dark); }
+.logIconCampaigns { background: #f3eeda; color: #805816; }
+.logIconIntegrations { background: var(--pine-soft); color: var(--positive); }
+.logIconSystem { background: var(--control-bg); color: var(--ink-secondary); }
+.logIconErrors { background: #faecea; color: var(--danger); }
+.logIconUser { background: #e8eef0; color: var(--blueprint); }
+.logRow time { color: var(--ink-muted); font-size: 9px; white-space: nowrap; }
+.logOrigin { display: grid; gap: 3px; }
+.logOrigin strong { font-size: 10px; }
+.logOrigin small { color: var(--ink-muted); font-size: 9px; }
+.logDescription { overflow: hidden; color: var(--ink-secondary); font-size: 10px; text-overflow: ellipsis; white-space: nowrap; }
+.logAction { display: flex; align-items: center; justify-content: flex-end; gap: 5px; }
+.logAction form { margin: 0; }
+.logAction button,
+.logAction a { display: inline-flex; min-height: 28px; align-items: center; justify-content: center; padding: 0 8px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface); color: var(--ink-secondary); font-size: 9px; font-weight: 750; }
+.logAction button:hover,
+.logAction a:hover { border-color: var(--accent); color: var(--accent-dark); }
+.logPagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 20px; border-top: 1px solid var(--border-soft); color: var(--ink-muted); font-size: 10px; }
+.logPagination > div { display: flex; align-items: center; gap: 9px; }
+.paginationButton,
+.paginationDisabled { display: inline-flex; min-height: 30px; align-items: center; padding: 0 9px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface); color: var(--ink-secondary); font-size: 9px; font-weight: 750; }
+.paginationButton:hover { border-color: var(--accent); color: var(--accent-dark); }
+.paginationDisabled { opacity: 0.45; pointer-events: none; }
+
+.auditPanel {
+  overflow: hidden;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+
+.auditFilters {
+  display: grid;
+  grid-template-columns: minmax(240px, 1fr) 160px 160px auto;
+  gap: 8px;
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--border-soft);
+  background: var(--paper);
+}
+
+.auditFilters label,
+.auditFilters input,
+.auditFilters button { min-height: 38px; }
+.auditFilters label { display: flex; align-items: center; gap: 8px; padding: 0 10px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--control-bg); color: var(--ink-muted); }
+.auditFilters label:focus-within { border-color: rgba(189, 87, 44, 0.48); box-shadow: 0 0 0 3px rgba(189, 87, 44, 0.08); }
+.auditFilters input { width: 100%; min-width: 0; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--control-bg); padding: 0 10px; color: var(--ink); font: inherit; font-size: 11px; }
+.auditFilters label input { min-height: 0; border: 0; padding: 0; outline: 0; background: transparent; }
+.auditFilters button { border: 1px solid var(--ink); border-radius: var(--radius-control); background: var(--ink); color: var(--surface); padding: 0 13px; font-size: 10px; font-weight: 750; }
+
+.auditTableWrap { overflow-x: auto; }
+.auditTable { width: 100%; min-width: 760px; border-collapse: collapse; font-size: 11px; }
+.auditTable th,
+.auditTable td { padding: 12px 14px; border-bottom: 1px solid var(--border-soft); text-align: left; vertical-align: top; }
+.auditTable th { color: var(--ink-muted); font-size: 9px; font-weight: 750; letter-spacing: 0.08em; text-transform: uppercase; }
+.auditTable td > strong,
+.auditTable td > small { display: block; }
+.auditTable td > small { margin-top: 4px; color: var(--ink-muted); font-family: "Cascadia Code", Consolas, monospace; font-size: 9px; }
+.metadata summary { color: var(--accent-dark); cursor: pointer; font-size: 10px; font-weight: 750; }
+.metadata code { display: block; max-width: 360px; max-height: 180px; margin-top: 8px; overflow: auto; border-radius: var(--radius-sm); background: var(--ink); color: var(--surface); padding: 10px; font-family: "Cascadia Code", Consolas, monospace; font-size: 9px; line-height: 1.45; white-space: pre-wrap; }
+
+@media (max-width: 1000px) {
+  .logRow { grid-template-columns: auto minmax(0, 1fr) auto; }
+  .logRow time { grid-column: 2; grid-row: 1; }
+  .logOrigin { grid-column: 2; }
+  .logDescription { grid-column: 2 / -1; }
+  .logRow > :nth-child(5) { grid-column: 3; grid-row: 2; }
+  .logAction { grid-column: 3; grid-row: 1 / span 2; }
+}
+
+@media (max-width: 620px) {
+  .logToolbar > div:first-child,
+  .logPagination { align-items: flex-start; flex-direction: column; }
+  .logRow { grid-template-columns: auto minmax(0, 1fr); }
+  .logRow time,
+  .logOrigin,
+  .logDescription,
+  .logRow > :nth-child(5),
+  .logAction { grid-column: 2; grid-row: auto; }
+  .logAction { justify-content: flex-start; }
+  .logPagination > div { width: 100%; justify-content: space-between; }
+  .auditFilters { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 1000px) {
   .layout { grid-template-columns: 1fr; }
   .metrics { grid-template-columns: 1fr 1fr; }

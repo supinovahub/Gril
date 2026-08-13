@@ -12,11 +12,11 @@ Concluir a Fase 1 solicitada: auditar a arquitetura, navegação, carregamento d
 ## Antes e depois
 
 - Antes: diagnóstico distribuído entre código, documentação e estado remoto, sem um plano único para a consolidação da interface.
-- Depois: auditoria completa em `AUDITORIA_UI_UX_ARQUITETURA.md` e plano incremental em `PLANO_DE_REFATORACAO.md`, sem alteração de código, schema ou comportamento.
+- Depois: auditoria completa em `AUDITORIA_UI_UX_ARQUITETURA.md`, plano incremental em `PLANO_DE_REFATORACAO.md` e primeira fatia de UI implementada em commits posteriores nesta branch.
 
 ## Escopo executado
 
-- Arquivos: `AUDITORIA_UI_UX_ARQUITETURA.md`, `PLANO_DE_REFATORACAO.md` e este registro.
+- Arquivos: `AUDITORIA_UI_UX_ARQUITETURA.md`, `PLANO_DE_REFATORACAO.md`, este registro e os arquivos de UI descritos nos commits posteriores.
 - Migrations: nenhuma criada ou aplicada.
 - Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma. Foram feitas somente consultas de leitura ao Supabase remoto.
 
@@ -31,14 +31,14 @@ Concluir a Fase 1 solicitada: auditar a arquitetura, navegação, carregamento d
   - `npm test`;
   - `npm run lint`;
   - `npm run build` com o ambiente local carregado apenas no processo.
-- Evidência observada: 22 arquivos e 110 testes aprovados; lint aprovado; build gerou 46 rotas; migrations remotas/locais alinhadas até `20260810140144` na base analisada; advisors retornaram 461 FKs sem índice e 67 índices sem uso como backlog informativo.
+- Evidência observada: 22 arquivos e 110 testes aprovados; lint aprovado; build gerou 46 rotas na auditoria e 47 rotas após a nova rota de Conversas; migrations remotas/locais alinhadas até `20260810140144` na base analisada; advisors retornaram 461 FKs sem índice e 67 índices sem uso como backlog informativo.
 - Validações não executadas e motivo: não houve smoke test autenticado no navegador nem homologação com fornecedores reais, pois esta fase é diagnóstico e não altera a interface ou integrações.
 
 ## Impacto operacional
 
 - Deploy necessário: não.
 - Migração aplicada: não.
-- Compatibilidade/rollback: não há mudança de runtime para reverter; os documentos podem ser revertidos isoladamente. O worktree original com alterações de outros agentes não foi tocado.
+- Compatibilidade/rollback: a primeira implementação preserva as actions, tabelas e APIs; `/app/inbox` continua disponível; o worktree original com alterações de outros agentes não foi tocado. Cada fatia está em commit próprio/reversível.
 
 ## Pendências e riscos
 
