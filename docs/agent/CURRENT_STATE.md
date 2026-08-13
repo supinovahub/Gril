@@ -327,3 +327,17 @@ Este documento não substitui:
 - `/login` respondeu HTTP 200. Nao houve promocao para producao, migration ou
   alteracao de dados. A homologacao autenticada e o smoke visual seguem
   pendentes.
+
+## Atualização de 13/08/2026 — redesign do detalhe do Inbox
+
+- A branch `fix/inbox-lead-context-tabs`, baseada no preview publicado da
+  Triage Desk, implementa a nova composição do detalhe de conversa no commit
+  `646790a`: sugestão do Pedro dentro da timeline como balão pendente, ações de
+  atendimento em menu compacto e abas para Mensagens, Visão geral,
+  Qualificação, Resumo, Próximas ações e Histórico.
+- A Preview Vercel associada ao commit está `READY`, com URL
+  `https://gril-8ki3s7zh9-brio5.vercel.app` e alias
+  `https://gril-git-fix-inbox-lead-context-tabs-brio5.vercel.app`.
+- `/login` respondeu HTTP 200 na verificação pública; a proteção SSO e a falta
+  de uma conta autenticada nesta sessão deixam a homologação funcional do
+  detalhe pendente. Produção, Supabase e dados não foram alterados.

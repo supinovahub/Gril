@@ -41,3 +41,11 @@ Substituir a composição visual antiga do detalhe do Inbox por uma experiência
 
 - Decisões atualizadas: nenhuma.
 - Guia de homologação atualizado: não alterado; o fluxo funcional não mudou, apenas a composição visual e a navegação contextual da tela.
+
+## Publicação da Preview
+
+- A branch `fix/inbox-lead-context-tabs` foi publicada no GitHub no commit `646790a`.
+- A Preview Vercel associada ao commit está `READY`: `https://gril-8ki3s7zh9-brio5.vercel.app`.
+- Alias da branch: `https://gril-git-fix-inbox-lead-context-tabs-brio5.vercel.app`.
+- O endpoint `/login` respondeu HTTP 200 na verificação pública, com proteção SSO da Vercel; a homologação autenticada do Inbox permanece pendente.
+- Produção, Supabase e dados não foram alterados.
