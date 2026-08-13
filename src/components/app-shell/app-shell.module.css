@@ -1,6 +1,6 @@
 .appFrame {
   min-height: 100vh;
-  padding-left: 248px;
+  padding-left: 264px;
 }
 
 .environmentBar {
@@ -8,18 +8,18 @@
   z-index: 45;
   top: 0;
   right: 0;
-  left: 248px;
+  left: 264px;
   display: flex;
-  height: 28px;
+  height: 26px;
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border-bottom: 1px solid rgba(154, 103, 29, 0.18);
-  background: #f4ead8;
+  border-bottom: 1px solid rgba(154, 103, 29, 0.2);
+  background: #f7ecd9;
   color: #73501a;
   font-size: 9px;
-  font-weight: 750;
-  letter-spacing: 0.11em;
+  font-weight: 800;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
 }
 
@@ -35,11 +35,12 @@
   z-index: 50;
   inset: 0 auto 0 0;
   display: flex;
-  width: 248px;
+  width: 264px;
   flex-direction: column;
-  padding: 18px 14px 14px;
-  border-right: 1px solid var(--border);
-  background: var(--canvas);
+  padding: 22px 16px 16px;
+  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  background: var(--sidebar);
+  color: var(--sidebar-ink);
   overflow: hidden;
 }
 
@@ -48,23 +49,23 @@
   align-items: center;
   gap: 11px;
   min-height: 42px;
-  padding: 2px 6px;
+  padding: 2px 7px;
 }
 
 .brandMark {
   display: grid;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   flex: 0 0 auto;
   place-items: center;
+  border: 1px solid rgba(255, 254, 250, 0.12);
   border-radius: 10px;
-  background: var(--ink);
-  color: var(--paper-raised);
+  background: var(--clay);
+  color: #fffefa;
   font-family: var(--font-display), Georgia, serif;
-  font-size: 22px;
+  font-size: 23px;
   font-weight: 600;
   line-height: 1;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.1), 0 5px 14px rgba(28, 33, 31, 0.12);
 }
 
 .brandCopy,
@@ -73,11 +74,11 @@
 .mobileBrand > span:last-child {
   display: grid;
   min-width: 0;
-  gap: 1px;
+  gap: 2px;
 }
 
 .brandCopy small {
-  color: var(--accent-dark);
+  color: #dca486;
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.13em;
@@ -85,9 +86,10 @@
 }
 
 .brandCopy strong {
+  color: var(--sidebar-ink);
   font-family: var(--font-display), Georgia, serif;
-  font-size: 20px;
-  font-weight: 570;
+  font-size: 21px;
+  font-weight: 600;
   letter-spacing: -0.035em;
   line-height: 1;
 }
@@ -97,13 +99,12 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 9px;
-  min-height: 54px;
-  padding: 8px;
-  margin: 20px 0 16px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
-  background: var(--surface);
-  box-shadow: 0 1px 2px rgba(28, 33, 31, 0.035);
+  min-height: 58px;
+  padding: 9px;
+  margin: 24px 0 18px;
+  border: 1px solid var(--sidebar-line);
+  border-radius: 10px;
+  background: rgba(255, 254, 250, 0.06);
 }
 
 .operationIcon {
@@ -111,20 +112,21 @@
   width: 34px;
   height: 34px;
   place-items: center;
-  border-radius: 9px;
-  background: var(--pine-soft);
-  color: var(--positive);
+  border-radius: 8px;
+  background: rgba(195, 93, 50, 0.18);
+  color: #e8a98d;
 }
 
 .operationPicker small,
 .userCopy small,
 .mobileBrand small {
-  color: var(--ink-muted);
+  color: var(--sidebar-muted);
   font-size: 9px;
 }
 
 .operationPicker strong {
   overflow: hidden;
+  color: var(--sidebar-ink);
   font-size: 11px;
   font-weight: 750;
   text-overflow: ellipsis;
@@ -132,7 +134,7 @@
 }
 
 .operationPicker > svg {
-  color: var(--ink-faint);
+  color: var(--sidebar-muted);
 }
 
 .nav {
@@ -153,17 +155,17 @@
   align-items: center;
   gap: 8px;
   min-height: 38px;
-  padding: 0 10px;
-  margin-bottom: 4px;
-  border: 1px solid var(--border);
-  border-radius: 9px;
-  background: var(--control-bg);
-  color: var(--ink-muted);
+  padding: 0 11px;
+  margin-bottom: 12px;
+  border: 1px solid var(--sidebar-line);
+  border-radius: 8px;
+  background: rgba(255, 254, 250, 0.08);
+  color: var(--sidebar-muted);
 }
 
 .globalSearch:focus-within {
-  border-color: rgba(189, 87, 44, 0.45);
-  box-shadow: 0 0 0 3px rgba(189, 87, 44, 0.08);
+  border-color: rgba(232, 169, 141, 0.72);
+  box-shadow: 0 0 0 3px rgba(195, 93, 50, 0.16);
 }
 
 .globalSearch input {
@@ -171,13 +173,17 @@
   border: 0;
   outline: 0;
   background: transparent;
-  color: var(--ink);
+  color: var(--sidebar-ink);
   font-size: 10px;
 }
 
+.globalSearch input::placeholder {
+  color: var(--sidebar-muted);
+}
+
 .navLabel {
-  margin: 17px 9px 5px;
-  color: var(--ink-faint);
+  margin: 15px 10px 6px;
+  color: #718078;
   font-size: 8px;
   font-weight: 800;
   letter-spacing: 0.14em;
@@ -187,50 +193,54 @@
 .navItem {
   position: relative;
   display: flex;
-  min-height: 38px;
+  min-height: 39px;
   align-items: center;
   gap: 10px;
-  padding: 0 10px;
-  border-radius: 9px;
-  color: var(--ink-secondary);
+  padding: 0 11px;
+  border-radius: 8px;
+  color: var(--sidebar-muted);
   font-size: 11px;
-  font-weight: 620;
+  font-weight: 650;
   transition: background-color 150ms var(--ease-out), color 150ms var(--ease-out), transform 150ms var(--ease-out);
 }
 
 .navItem > svg {
-  color: var(--ink-muted);
+  color: #7e8e85;
   transition: color 150ms var(--ease-out);
 }
 
 .navItem:hover {
-  background: rgba(255, 255, 255, 0.62);
-  color: var(--ink);
+  background: rgba(255, 254, 250, 0.08);
+  color: var(--sidebar-ink);
 }
 
 .navItemActive {
-  background: var(--ink);
-  color: var(--surface);
-  box-shadow: 0 5px 14px rgba(28, 33, 31, 0.11);
+  background: #f4f1e8;
+  color: var(--sidebar);
+  box-shadow: 0 5px 16px rgba(0, 0, 0, 0.18);
 }
 
 .navItemActive::before {
   position: absolute;
   left: 0;
   width: 3px;
-  height: 17px;
-  border-radius: 0 4px 4px 0;
-  background: var(--accent);
+  height: 18px;
+  border-radius: 0 3px 3px 0;
+  background: var(--clay);
   content: "";
 }
 
 .navItemActive > svg,
 .navItemActive:hover {
-  color: var(--surface);
+  color: var(--sidebar);
+}
+
+.navItemActive > svg {
+  color: var(--clay-dark);
 }
 
 .navItemActive:hover {
-  background: var(--ink);
+  background: #f4f1e8;
 }
 
 .navNotificationBadge {
@@ -242,9 +252,9 @@
   grid-template-columns: auto minmax(0, 1fr) auto;
   align-items: center;
   gap: 9px;
-  padding: 12px 6px 0;
-  margin-top: 12px;
-  border-top: 1px solid var(--border);
+  padding: 14px 7px 0;
+  margin-top: 14px;
+  border-top: 1px solid var(--sidebar-line);
   flex: 0 0 auto;
 }
 
@@ -254,15 +264,17 @@
   width: 34px;
   height: 34px;
   place-items: center;
+  border: 1px solid rgba(255, 254, 250, 0.14);
   border-radius: 50%;
-  background: #d9d2c5;
-  color: var(--ink-secondary);
+  background: #314039;
+  color: #f2dbcf;
   font-size: 10px;
-  font-weight: 780;
+  font-weight: 800;
 }
 
 .userCopy strong {
   overflow: hidden;
+  color: var(--sidebar-ink);
   font-size: 10px;
   font-weight: 750;
   text-overflow: ellipsis;
@@ -275,19 +287,19 @@
   height: 34px;
   place-items: center;
   border: 0;
-  border-radius: 9px;
+  border-radius: 8px;
   background: transparent;
-  color: var(--ink-muted);
+  color: var(--sidebar-muted);
 }
 
 .iconButton:hover {
-  background: var(--surface);
-  color: var(--danger);
+  background: rgba(255, 254, 250, 0.08);
+  color: #f0b299;
 }
 
 .content {
   min-height: 100vh;
-  padding: 42px clamp(24px, 4vw, 58px) 60px;
+  padding: 48px clamp(28px, 4vw, 68px) 64px;
 }
 
 .hasEnvironment .content {
@@ -310,6 +322,7 @@
 
   .environmentBar {
     position: static;
+    left: 0;
     height: 24px;
     padding: 0 12px;
     font-size: 7px;
@@ -322,8 +335,7 @@
     justify-content: space-between;
     padding: 10px 16px;
     border-bottom: 1px solid var(--border);
-    background: rgba(243, 241, 235, 0.94);
-    backdrop-filter: blur(12px);
+    background: var(--paper-raised);
   }
 
   .mobileBrand {
@@ -335,20 +347,28 @@
   .mobileBrand .brandMark {
     width: 31px;
     height: 31px;
-    border-radius: 9px;
+    border-radius: 8px;
     font-size: 19px;
   }
 
   .mobileBrand strong {
+    color: var(--ink);
     font-family: var(--font-display), Georgia, serif;
     font-size: 17px;
     font-weight: 600;
     line-height: 1;
   }
 
+  .mobileBrand small {
+    color: var(--ink-muted);
+  }
+
   .mobileAvatar {
     width: 32px;
     height: 32px;
+    border: 0;
+    background: var(--ledger);
+    color: var(--ink-secondary);
   }
 
   .content,
@@ -367,11 +387,10 @@
     min-height: 66px;
     align-items: stretch;
     padding: 5px;
-    border: 1px solid rgba(28, 33, 31, 0.13);
-    border-radius: 18px;
-    background: rgba(255, 254, 250, 0.95);
-    box-shadow: 0 16px 44px rgba(28, 33, 31, 0.15);
-    backdrop-filter: blur(16px);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    background: rgba(255, 254, 250, 0.97);
+    box-shadow: var(--shadow-raised);
   }
 
   .mobileNavItem,
@@ -382,11 +401,11 @@
     place-items: center;
     align-content: center;
     gap: 4px;
-    border-radius: 13px;
+    border-radius: 9px;
     color: var(--ink-muted);
     cursor: pointer;
     font-size: 8px;
-    font-weight: 700;
+    font-weight: 750;
     list-style: none;
   }
 
@@ -395,7 +414,7 @@
   }
 
   .mobileNavActive {
-    background: var(--ink);
+    background: var(--sidebar);
     color: var(--surface);
   }
 
@@ -436,7 +455,7 @@
     padding: 14px;
     overflow-y: auto;
     border: 1px solid var(--border);
-    border-radius: 18px;
+    border-radius: 14px;
     background: var(--surface);
     box-shadow: var(--shadow-raised);
     transform-origin: bottom right;
@@ -459,7 +478,7 @@
     align-items: center;
     gap: 9px;
     padding: 0 11px;
-    border-radius: 10px;
+    border-radius: 8px;
     color: var(--ink-secondary);
     font-size: 10px;
     font-weight: 700;

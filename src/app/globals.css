@@ -1,15 +1,15 @@
 :root {
-  --parchment: #f3f1eb;
-  --paper: #fbfaf7;
+  --parchment: #f0eee8;
+  --paper: #f8f7f3;
   --paper-raised: #fffefa;
   --ledger: #e9e5dc;
   --ledger-strong: #d8d2c7;
-  --charcoal: #1c211f;
+  --charcoal: #18201d;
   --charcoal-soft: #4d5551;
   --charcoal-muted: #747b76;
   --charcoal-faint: #a2a7a3;
-  --clay: #bd572c;
-  --clay-dark: #913e1d;
+  --clay: #c35d32;
+  --clay-dark: #963f22;
   --pine: #28624f;
   --pine-soft: #e5f0eb;
   --blueprint: #506873;
@@ -22,9 +22,9 @@
   --ink-secondary: var(--charcoal-soft);
   --ink-muted: var(--charcoal-muted);
   --ink-faint: var(--charcoal-faint);
-  --border: rgba(28, 33, 31, 0.12);
-  --border-soft: rgba(28, 33, 31, 0.075);
-  --border-strong: rgba(28, 33, 31, 0.2);
+  --border: rgba(24, 32, 29, 0.13);
+  --border-soft: rgba(24, 32, 29, 0.075);
+  --border-strong: rgba(24, 32, 29, 0.22);
   --accent: var(--clay);
   --accent-dark: var(--clay-dark);
   --positive: var(--pine);
@@ -33,15 +33,19 @@
   --control-bg: #efede7;
   --control-bg-hover: #e9e6df;
   --control-bg-pressed: #ded9cf;
-  --focus-ring: 0 0 0 3px rgba(189, 87, 44, 0.16);
-  --focus-outline: 3px solid rgba(189, 87, 44, 0.28);
-  --shadow: 0 0 0 1px rgba(28, 33, 31, 0.045), 0 1px 2px rgba(28, 33, 31, 0.04), 0 12px 32px rgba(28, 33, 31, 0.055);
-  --shadow-raised: 0 0 0 1px rgba(28, 33, 31, 0.055), 0 8px 30px rgba(28, 33, 31, 0.09);
+  --focus-ring: 0 0 0 3px rgba(195, 93, 50, 0.18);
+  --focus-outline: 3px solid rgba(195, 93, 50, 0.3);
+  --shadow: 0 1px 2px rgba(24, 32, 29, 0.04), 0 10px 28px rgba(24, 32, 29, 0.045);
+  --shadow-raised: 0 1px 2px rgba(24, 32, 29, 0.06), 0 18px 42px rgba(24, 32, 29, 0.13);
+  --sidebar: #18201d;
+  --sidebar-ink: #f4f2eb;
+  --sidebar-muted: #9ba59e;
+  --sidebar-line: rgba(255, 254, 250, 0.12);
   --radius-control: 8px;
   --radius-sm: 6px;
   --radius-pill: 999px;
-  --radius-panel: 16px;
-  --radius-large: 22px;
+  --radius-panel: 14px;
+  --radius-large: 18px;
   --space-1: 4px;
   --space-2: 8px;
   --space-3: 12px;
@@ -111,7 +115,7 @@ button:disabled {
 }
 
 button:active:not(:disabled) {
-  transform: scale(0.98);
+  transform: translateY(1px);
 }
 
 input,
@@ -126,7 +130,7 @@ textarea::placeholder {
 }
 
 ::selection {
-  background: #e9bba4;
+  background: #e8bda8;
   color: var(--ink);
 }
 
