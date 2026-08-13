@@ -139,12 +139,6 @@ export function AppShell({
               <FlaskConical size={17} aria-hidden="true" /><span>Simulador</span>
             </NavLink>
           ) : null}
-          {canViewReports ? (
-            <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/relatorios">
-              <BarChart3 size={17} aria-hidden="true" /><span>Relatórios</span>
-            </NavLink>
-          ) : null}
-
           {canConfigure ? <p className={styles.navLabel}>Administração</p> : null}
           {canConfigure ? (
             <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/configuracoes/organizacao">

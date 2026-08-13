@@ -257,3 +257,25 @@ Este documento não substitui:
 - A homologação visual e operacional autenticada continua pendente. O build
   local pré-empacotado encontrou uma limitação de symlink do Windows depois de
   compilar; o build remoto da Vercel foi concluído com 46 rotas.
+
+## Atualização de 13/08/2026 — primeira fatia da refatoração UI/UX
+
+- Na branch `agent/ui-architecture-audit`, a navegação principal passou a
+  apresentar Conversas como entrada canônica; `/app/inbox` permanece como
+  alias compatível e o detalhe existente da conversa foi preservado.
+- O Dashboard foi reorganizado em atenção imediata, operação do dia,
+  indicadores resumidos e atividade recente. A Central de operações unifica
+  os eventos existentes, com filtros e paginação de dez itens por página; a
+  Auditoria recebeu limite visual de 30 itens por página, filtros e leitura de
+  metadados.
+- Campanhas agora apresentam um wizard de cinco etapas e Pedro/IA expõe os
+  contextos independentes Atendimento e Reativação. Nenhuma migration, deploy,
+  alteração de dados ou mudança de API foi feita.
+- Relatórios deixou de ocupar a navegação primária e continua acessível no
+  menu secundário; Equipe passou a comunicar explicitamente os modelos
+  Corretor e Imobiliária antes dos controles de acesso existentes.
+- A validação local desta fatia passou com lint, 110 testes e build de 47
+  rotas usando as variáveis locais; `/login` respondeu HTTP 200. A
+  homologação autenticada e o smoke visual seguem pendentes.
+- O registro detalhado está em
+  `docs/agent/changes/2026-08-13-refatoracao-ui-ux-fatia-inicial.md`.

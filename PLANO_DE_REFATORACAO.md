@@ -1,6 +1,8 @@
 ﻿# Plano de refatoração UI/UX e arquitetura do Gril
 
-**Status:** pronto para aprovação da Fase 1; implementação ainda não iniciada.
+**Status:** auditoria concluída e implementação incremental iniciada na branch
+`agent/ui-architecture-audit`; as decisões bloqueadoras que alteram backend,
+papéis ou remoção física continuam aguardando aprovação específica.
 **Princípio:** commits pequenos, cada um compilável, testável e reversível.
 **Base:** diagnóstico em [`AUDITORIA_UI_UX_ARQUITETURA.md`](./AUDITORIA_UI_UX_ARQUITETURA.md).
 
@@ -261,7 +263,9 @@ O plano prioriza a leitura e a navegação. Mutations existentes só serão alte
 
 ## Wireframes textuais de baixa fidelidade
 
-Estes wireframes são o brief da próxima fase; não são implementação nem substituem a aprovação do contrato de produto.
+Estes wireframes são a referência de baixa fidelidade do redesenho. As
+primeiras superfícies já foram implementadas parcialmente; eles não substituem
+a aprovação do contrato de produto nem a homologação visual autenticada.
 
 ### Dashboard
 
@@ -376,7 +380,22 @@ Estes wireframes são o brief da próxima fase; não são implementação nem su
 11. `feat(audit): paginar logs em 30 itens e melhorar filtros`
 12. `chore(verification): executar homologação e registrar riscos`
 
-O primeiro commit de documentação deve conter este plano, a auditoria e o registro em `docs/agent/changes/`. Commits posteriores só devem ser criados após a aprovação das decisões bloqueadoras da Fase 0.
+O commit de documentação contém este plano, a auditoria e o primeiro registro
+em `docs/agent/changes/`. A implementação desta branch limita-se a mudanças de
+leitura, navegação e apresentação compatíveis; qualquer migration, alteração de
+RLS, mudança de papel ou remoção física continua condicionada às decisões da
+Fase 0.
+
+### Estado desta branch
+
+- Concluído: primitives mínimas, shell com Conversas, Dashboard orientado à
+  operação, Central/Log Center, Auditoria visual, wizard de Campanhas, IA por
+  Atendimento/Reativação, alias paginado do Inbox e apresentação inicial dos
+  modelos de Equipe.
+- Pendente: read model/paginação de banco do Inbox e Log Center, aliases
+  contextuais para Leads/Agenda/Kanban, onboarding completo, integração
+  profunda de Relatórios, remoção controlada de módulos e homologação visual
+  autenticada.
 
 ## Critério de pronto da refatoração
 

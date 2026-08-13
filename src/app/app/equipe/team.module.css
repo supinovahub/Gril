@@ -37,6 +37,47 @@
   white-space: nowrap;
 }
 
+.modelGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+  margin-bottom: 24px;
+}
+
+.modelCard {
+  display: flex;
+  align-items: flex-start;
+  gap: 13px;
+  min-height: 108px;
+  padding: 18px;
+  border: 1px solid var(--border);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+}
+
+.modelIcon {
+  display: grid;
+  flex: 0 0 34px;
+  width: 34px;
+  height: 34px;
+  place-items: center;
+  border-radius: 10px;
+  background: var(--accent-soft);
+  color: var(--accent-dark);
+}
+
+.modelCard strong {
+  display: block;
+  font-size: 14px;
+}
+
+.modelCard p {
+  margin: 6px 0 0;
+  color: var(--ink-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
 .panel {
   margin-bottom: 24px;
   border: 1px solid var(--border);
@@ -480,6 +521,10 @@
 }
 
 @media (max-width: 620px) {
+  .modelGrid {
+    grid-template-columns: 1fr;
+  }
+
   .header {
     align-items: flex-start;
     flex-direction: column;

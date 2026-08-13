@@ -1,4 +1,4 @@
-import { Link2, ShieldCheck, UserRoundPlus, UsersRound } from "lucide-react";
+import { Building2, Link2, ShieldCheck, UserRoundPlus, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import type { Tables } from "@/lib/database.types";
@@ -142,6 +142,23 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
 
       {feedback.erro ? <p className={styles.feedback}>{errorMessage}</p> : null}
       {feedback.sucesso ? <p className={`${styles.feedback} ${styles.success}`}>Ação concluída e registrada.</p> : null}
+
+      <section className={styles.modelGrid} aria-label="Modelos de operação">
+        <article className={styles.modelCard}>
+          <span className={styles.modelIcon}><UserRoundPlus size={18} /></span>
+          <div>
+            <strong>Corretor</strong>
+            <p>Atendimento individual, conversas e agenda sob sua responsabilidade.</p>
+          </div>
+        </article>
+        <article className={styles.modelCard}>
+          <span className={styles.modelIcon}><Building2 size={18} /></span>
+          <div>
+            <strong>Imobiliária</strong>
+            <p>Operação compartilhada com acessos, campanhas e acompanhamento da equipe.</p>
+          </div>
+        </article>
+      </section>
 
       {joinCode ? <section className={styles.panel}>
         <header className={styles.panelHeader}><div><Link2 size={18} /><h2>Código da imobiliária</h2></div><span>Localizador, não autorização</span></header>
