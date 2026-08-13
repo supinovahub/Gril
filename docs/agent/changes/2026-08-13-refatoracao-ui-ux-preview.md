@@ -71,3 +71,8 @@ consultas, actions, APIs, regras de autorização e integrações existentes.
 - `https://gril-mxc84z541-brio5.vercel.app/login` respondeu HTTP 200.
 - Nenhuma migration, dado, configuração de produção ou alias de produção foi
   alterado. A homologação autenticada e o smoke visual continuam pendentes.
+- Na retomada, `npm run lint` passou e `npm test` passou com 22 arquivos e 110
+  testes. O `npm run build` local compilou e passou TypeScript, mas a coleta
+  de páginas parou sem as variáveis públicas do Supabase; `vercel build` local
+  também encontrou a limitação de symlink do Windows. O build remoto acionado
+  pelo Git Integration concluiu com `Ready`.
