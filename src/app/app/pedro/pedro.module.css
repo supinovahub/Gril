@@ -2,6 +2,17 @@
 .pageHeader { display: flex; align-items: flex-end; justify-content: space-between; gap: 24px; margin-bottom: 24px; }
 .pageHeader h1 { margin: 0; font-size: clamp(32px,4vw,46px); letter-spacing: -.05em; }
 .pageHeader > div > p:last-child { margin: 8px 0 0; color: var(--ink-muted); font-size: 13px; }
+.contextTabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; margin-bottom: 24px; }
+.contextTab,
+.contextTabActive { display: flex; align-items: center; gap: 10px; min-height: 58px; padding: 10px 13px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface); color: var(--ink-muted); }
+.contextTab:hover { border-color: var(--accent); color: var(--ink); }
+.contextTabActive { border-color: rgba(189, 87, 44, .32); background: #f8e9df; color: var(--accent-dark); box-shadow: 0 0 0 3px rgba(189, 87, 44, .06); }
+.contextTab span,
+.contextTabActive span { display: grid; gap: 3px; }
+.contextTab strong,
+.contextTabActive strong { font-size: 11px; }
+.contextTab small,
+.contextTabActive small { font-size: 9px; }
 .eyebrow { margin: 0 0 7px; color: var(--accent-dark); font-size: 9px; font-weight: 780; letter-spacing: .12em; text-transform: uppercase; }
 .modeBadge,.versionChip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 9px; border: 1px solid #cfbfaf; border-radius: 999px; background: #f3ebe2; color: #71452b; font-size: 9px; font-weight: 720; }
 .errorBanner,.successBanner { padding: 11px 14px; margin: -6px 0 18px; border-radius: 10px; font-size: 11px; }
@@ -58,6 +69,13 @@
 .activeLabel { color: var(--positive); font-size: 9px; font-weight: 720; }
 .modeForm { display: grid; grid-template-columns: 1fr 1fr; gap: 7px; padding: 16px; }
 .modeForm button { min-height: 38px; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-muted); color: var(--ink-muted); font-size: 10px; }
+.contextPanel { border-color: rgba(189, 87, 44, .22); }
+.contextExplanation { display: grid; gap: 4px; margin-top: 14px; padding: 11px; border-radius: 10px; background: var(--control-bg); }
+.contextExplanation strong { font-size: 10px; }
+.contextExplanation span { color: var(--ink-muted); font-size: 10px; line-height: 1.45; }
+.advancedDetails { border-top: 1px solid var(--border-soft); padding-top: 10px; }
+.advancedDetails summary { color: var(--ink-muted); cursor: pointer; font-size: 10px; font-weight: 750; }
+.advancedFields { display: grid; gap: 10px; margin-top: 10px; }
 .modeForm .selectedMode { border-color: var(--accent); background: #f7e5da; color: var(--accent-dark); font-weight: 740; }
 .sideColumn .notice { padding: 0 16px 16px; }
 .executionList { display: grid; }

@@ -1,4 +1,6 @@
 import { Bot, BrainCircuit, CheckCircle2, CircleDashed, KeyRound, RefreshCw, ShieldCheck, Sparkles, Trash2 } from "lucide-react";
+import { Megaphone } from "lucide-react";
+import Link from "next/link";
 
 import { retestIntegrationAction, revokeIntegrationAction } from "@/app/app/integration-actions";
 import { requireActiveViewer } from "@/lib/auth/session";
@@ -23,10 +25,11 @@ const modeDescriptions: Record<string, string> = {
 export default async function PedroPage({
   searchParams,
 }: {
-  searchParams: Promise<{ erro?: string; sucesso?: string }>;
+  searchParams: Promise<{ erro?: string; sucesso?: string; context?: string }>;
 }) {
   const viewer = await requireActiveViewer();
   const feedback = await searchParams;
+  const context = feedback.context === "reativacao" ? "reativacao" : "atendimento";
   const supabase = await createClient();
   const [settingsResult, personasResult, versionsResult, modelsResult, rulesResult, executionsResult, integrationsResult, samplesResult] = await Promise.all([
     supabase.from("organization_settings").select("*").eq("org_id", viewer.organization!.id).single(),
@@ -51,6 +54,11 @@ export default async function PedroPage({
       <header className={styles.pageHeader}><div><p className={styles.eyebrow}>Configuração de atendimento</p><h1>Pedro</h1><p>Defina como Pedro participa das conversas e revise o que pode ser enviado automaticamente.</p></div><span className={styles.modeBadge}><Bot size={15} /> Pedro: {modeLabels[inboundMode] ?? inboundMode}</span></header>
       {feedback.erro ? <p className={styles.errorBanner}>{feedback.erro}</p> : null}
       {feedback.sucesso ? <p className={styles.successBanner}>{feedback.sucesso}</p> : null}
+
+      <nav className={styles.contextTabs} aria-label="Contexto da IA">
+        <Link className={context === "atendimento" ? styles.contextTabActive : styles.contextTab} href="/app/pedro?context=atendimento"><Bot size={15} /><span><strong>Atendimento</strong><small>Leads recebidos no WhatsApp</small></span></Link>
+        <Link className={context === "reativacao" ? styles.contextTabActive : styles.contextTab} href="/app/pedro?context=reativacao"><Megaphone size={15} /><span><strong>Reativação</strong><small>Campanhas sobre a base existente</small></span></Link>
+      </nav>
 
       <section className={styles.statusStrip}>
         <div><BrainCircuit size={18} /><span><small>Persona publicada</small><strong>v{published?.version ?? "—"}</strong></span></div>
@@ -133,29 +141,32 @@ export default async function PedroPage({
         </div>
 
         <aside className={styles.sideColumn}>
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Atendimento normal</p><h2>Modo inbound</h2></span></div>
+          {context === "atendimento" ? <section className={`${styles.panel} ${styles.contextPanel}`}>
+            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Atendimento</p><h2>Como Pedro participa</h2></span><Bot size={17} /></div>
+            <p className={styles.notice}>Esta configuração vale somente para leads que chegam pelo WhatsApp. Produção automática continua bloqueada neste contexto.</p>
             <form action={changeGlobalAiModeAction} className={styles.modeForm}>
-              {["off", "shadow", "assisted"].map((mode) => <button className={inboundMode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{modeLabels[mode]}</button>)}
+              {["off", "shadow", "assisted"].map((mode) => <button className={inboundMode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{mode === "off" ? "Desligado" : mode === "shadow" ? "Observação" : "Revisão"}</button>)}
             </form>
-            <p className={styles.notice}>Escolha como Pedro deve participar do atendimento normal. O modo assistido é o mais seguro para começar: ele sugere, e a equipe aprova cada envio. Respostas automáticas ficam disponíveis somente em campanhas de reativação liberadas.</p>
-          </section>
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Reativação de base</p><h2>Conversas antigas</h2></span></div>
-            <p className={styles.notice}>Estas opções controlam campanhas para contatos antigos. Elas são separadas do atendimento normal acima.</p>
-            <form action={configureReactivationAiAction} className={styles.promptForm}>
-              <label><span>Como Pedro deve agir</span><select defaultValue={settings?.reactivation_ai_mode ?? "off"} name="reactivationMode"><option value="off">Desligado</option><option value="shadow">Só observa</option><option value="assisted">Sugere para revisão</option><option value="production">Responde automaticamente</option></select></label>
-              <label><span>Quem pode receber</span><select defaultValue={settings?.reactivation_release_state ?? "blocked"} name="releaseState"><option value="blocked">Ninguém ainda</option><option value="test_controlled">Somente números de teste</option><option value="released">Todos os contatos elegíveis</option></select></label>
-              <label><span>Autonomia</span><select defaultValue={settings?.reactivation_autonomy ?? "low"} name="reactivationAutonomy"><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option></select></label>
-              <button type="submit">Salvar reativação</button>
-            </form>
-          </section>
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Teste controlado</p><h2>Números autorizados para teste</h2></span></div>
-            <p className={styles.notice}>A whitelist controla o teste de campanhas de reativação. Em <strong>Todos os contatos elegíveis</strong>, a campanha pode responder respeitando opt-out e supressão; o atendimento normal continua sem respostas automáticas.</p>
-            <form action={addAiTestNumberAction} className={styles.keyForm}><label><span>Número liberado para teste</span><input name="phoneE164" placeholder="+5511999999999" required /></label><button type="submit">Adicionar</button></form>
-            <div className={styles.executionList}>{allowlist?.map((entry) => <article key={entry.id}><span><strong>{entry.phone_e164}</strong><small>Reativação em teste controlado</small></span><form action={removeAiTestNumberAction}><input name="allowlistId" type="hidden" value={entry.id} /><button type="submit">Remover</button></form></article>)}{!allowlist?.length ? <p className={styles.notice}>Nenhum número liberado para o teste controlado de reativação.</p> : null}</div>
-          </section>
+            <div className={styles.contextExplanation}><strong>{inboundMode === "assisted" ? "Revisão ativa" : inboundMode === "shadow" ? "Observação ativa" : "Atendimento desligado"}</strong><span>{inboundMode === "assisted" ? "Pedro sugere respostas; uma pessoa aprova cada envio." : inboundMode === "shadow" ? "Pedro analisa, mas não sugere nem envia." : "Pedro não analisa nem responde novas conversas."}</span></div>
+          </section> : null}
+
+          {context === "reativacao" ? <>
+            <section className={`${styles.panel} ${styles.contextPanel}`}>
+              <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Reativação</p><h2>Produção e revisão</h2></span><Megaphone size={17} /></div>
+              <p className={styles.notice}>Estas opções controlam campanhas para contatos antigos. São independentes do atendimento normal.</p>
+              <form action={configureReactivationAiAction} className={styles.promptForm}>
+                <label><span>Modo da campanha</span><select defaultValue={settings?.reactivation_ai_mode ?? "off"} name="reactivationMode"><option value="off">Desligado</option><option value="assisted">Revisão — Pedro sugere</option><option value="production">Produção — Pedro pode agir</option><option value="shadow">Observação — sem sugestão</option></select></label>
+                <details className={styles.advancedDetails}><summary>Controles de liberação</summary><div className={styles.advancedFields}><label><span>Quem pode receber</span><select defaultValue={settings?.reactivation_release_state ?? "blocked"} name="releaseState"><option value="blocked">Ninguém ainda</option><option value="test_controlled">Somente números de teste</option><option value="released">Contatos elegíveis</option></select></label><label><span>Autonomia</span><select defaultValue={settings?.reactivation_autonomy ?? "low"} name="reactivationAutonomy"><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option></select></label></div></details>
+                <button type="submit">Salvar reativação</button>
+              </form>
+            </section>
+            <section className={styles.panel}>
+              <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Teste controlado</p><h2>Números autorizados</h2></span></div>
+              <p className={styles.notice}>Use uma allowlist antes de liberar a produção para todos os contatos elegíveis.</p>
+              <form action={addAiTestNumberAction} className={styles.keyForm}><label><span>Número de teste</span><input name="phoneE164" placeholder="+5511999999999" required /></label><button type="submit">Adicionar</button></form>
+              <div className={styles.executionList}>{allowlist?.map((entry) => <article key={entry.id}><span><strong>{entry.phone_e164}</strong><small>Teste controlado</small></span><form action={removeAiTestNumberAction}><input name="allowlistId" type="hidden" value={entry.id} /><button type="submit">Remover</button></form></article>)}{!allowlist?.length ? <p className={styles.notice}>Nenhum número autorizado.</p> : null}</div>
+            </section>
+          </> : null}
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Últimas execuções</p><h2>Rastreabilidade</h2></span></div>
             <div className={styles.executionList}>{executionsResult.data?.map((execution) => <article key={execution.id}><span><strong>{execution.mode}</strong><small>{new Date(execution.created_at).toLocaleString("pt-BR")}</small></span><span className={styles.versionChip}>{execution.status}</span></article>)}{!executionsResult.data?.length ? <p className={styles.notice}>Nenhuma execução solicitada.</p> : null}</div>
