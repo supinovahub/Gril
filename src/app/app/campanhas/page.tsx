@@ -3,9 +3,9 @@ import { Archive, CircleAlert, FileSpreadsheet, Megaphone, Pause, Pencil, Play, 
 
 import { requireActiveViewer } from "@/lib/auth/session";
 import { belongsToCampaignView } from "@/lib/campaigns/view";
-import { DEFAULT_CAMPAIGN_VARIANTS } from "@/lib/campaigns/message-variants";
 import { createClient } from "@/lib/supabase/server";
-import { createCampaignAction, editCampaignAction, importCampaignAction, releaseWaveAction, transitionCampaignAction } from "./actions";
+import { editCampaignAction, importCampaignAction, releaseWaveAction, transitionCampaignAction } from "./actions";
+import { CampaignWizard } from "./campaign-wizard";
 import styles from "./campaigns.module.css";
 
 function importIssueText(errorCode: string | null) {
@@ -54,6 +54,10 @@ export default async function CampaignsPage({ searchParams }: { searchParams: Pr
         </div>
       </article>; })}
       {!(campaigns??[]).some((campaign)=>belongsToCampaignView(campaign,showingArchived)) ? <section className={styles.empty}><Megaphone size={25}/><h2>Nenhuma campanha</h2><p>{showingArchived ? "Nenhuma campanha arquivada." : "Conecte um número, declare a origem da base e crie um rascunho."}</p></section> : null}
-    </main><aside><form action={createCampaignAction} className={styles.createForm}><div><p className={styles.eyebrow}>Nova campanha</p><h2>Preparar reativação</h2><small>As três variações perseguem o mesmo objetivo, mas usam aberturas diferentes e os dados da planilha. Production só é liberado para esta campanha depois da configuração em Pedro &gt; Reativação de base.</small></div><label><span>Nome</span><input name="name" required/></label><label><span>Conexão ativa</span><select name="connectionId" required><option value="">Selecione</option>{connections?.map((connection)=><option key={connection.id} value={connection.id}>{connection.name} · {connection.phone_e164??connection.provider}</option>)}</select></label><label><span>Template Meta aprovado</span><select name="messageTemplateId"><option value="">Não se aplica (Uazapi)</option>{templates?.map((template)=><option key={template.id} value={template.id}>{template.external_name} · {template.language}</option>)}</select></label><label><span>Modo do Pedro</span><select name="aiMode"><option value="off">Desligado</option><option value="shadow">Sombra</option><option value="assisted">Assistido</option><option value="production">Produção nesta campanha</option></select></label>{DEFAULT_CAMPAIGN_VARIANTS.map((variant,index)=><label key={variant.id}><span>Variação {index+1} — {variant.label}</span><textarea name={`openingVariant${index+1}`} defaultValue={variant.template} rows={4}/><small>Use {"{{first_name}}"}, {"{{objetivo}}"}, {"{{entrada}}"}, {"{{parcela}}"}, {"{{orcamento}}"} e {"{{historico}}"}. Os valores vêm da planilha.</small></label>)}<label><span>Declaração de consentimento</span><textarea name="consentStatement" defaultValue="Confirmo que esta base possui autorização válida para contato comercial via WhatsApp." rows={3}/></label><label><span>Origem da base</span><input name="consentSource" placeholder="CRM próprio, evento, formulário..."/></label><label className={styles.check}><input name="consentConfirmed" type="checkbox"/> Confirmo a declaração acima</label><button disabled={!connections?.length}>Criar rascunho</button></form></aside></div>
+    </main><aside><CampaignWizard connections={connections ?? []} templates={templates ?? []} variants={[
+      { id: "objective", label: "Objetivo", template: "Oi, {{first_name}}! Vi que você buscou informações sobre {{objetivo}}. Posso te ajudar a encontrar uma opção que faça sentido?" },
+      { id: "context", label: "Contexto", template: "Oi, {{first_name}}! Retomando seu interesse em {{objetivo}}, você ainda está considerando opções com entrada de {{entrada}}?" },
+      { id: "history", label: "Histórico", template: "Oi, {{first_name}}! Separei uma atualização sobre {{objetivo}} pensando no que conversamos antes. Quer que eu te mostre?" },
+    ]} /></aside></div>
   </div>;
 }
