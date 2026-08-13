@@ -2,8 +2,8 @@
 
 - Data: 13/08/2026
 - Responsável: Codex
-- Branch/PR: `agent/ui-architecture-audit`
-- Commit: o commit que contém este arquivo
+- Branch/PR: `preview/ui-ux-20260813`
+- Commit: `756f8e2` (`chore(ux): preparar preview da nova interface`)
 
 ## Objetivo
 
@@ -59,3 +59,15 @@ consultas, actions, APIs, regras de autorização e integrações existentes.
 - Decisões atualizadas: nenhuma; não houve nova regra de produto.
 - Guia de homologação atualizado: não; o fluxo funcional existente continua
   acessível e o preview será avaliado antes de ampliar a migração.
+
+## Atualização de publicação — 13/08/2026
+
+- A branch `preview/ui-ux-20260813` foi publicada em `origin` no commit
+  `756f8e266bceaf98dc01ec6dd76cc18e1ac31bda`.
+- A Vercel concluiu o preview no deployment
+  `dpl_2kQwUJpwJSatecHkDwX1gej34L8r`, com status `Ready`.
+- URL: `https://gril-mxc84z541-brio5.vercel.app`.
+- Alias da branch: `https://gril-git-preview-ui-ux-20260813-brio5.vercel.app`.
+- `https://gril-mxc84z541-brio5.vercel.app/login` respondeu HTTP 200.
+- Nenhuma migration, dado, configuração de produção ou alias de produção foi
+  alterado. A homologação autenticada e o smoke visual continuam pendentes.

@@ -293,3 +293,16 @@ Este documento não substitui:
   do preflight de concorrência ter encontrado worktrees com caminhos
   sobrepostos. Nenhuma outra worktree ou branch foi alterada, integrada, limpa
   ou publicada.
+
+## Atualizacao de 13/08/2026 - preview UI/UX publicado
+
+- A branch `preview/ui-ux-20260813` foi criada a partir de
+  `origin/phase/01-foundation`, recebeu o corte visual no commit
+  `756f8e266bceaf98dc01ec6dd76cc18e1ac31bda` e foi publicada no GitHub.
+- A Vercel concluiu o deployment de preview
+  `dpl_2kQwUJpwJSatecHkDwX1gej34L8r` com status `Ready`.
+- URL publica: `https://gril-mxc84z541-brio5.vercel.app`; alias da branch:
+  `https://gril-git-preview-ui-ux-20260813-brio5.vercel.app`.
+- `/login` respondeu HTTP 200. Nao houve promocao para producao, migration ou
+  alteracao de dados. A homologacao autenticada e o smoke visual seguem
+  pendentes.
