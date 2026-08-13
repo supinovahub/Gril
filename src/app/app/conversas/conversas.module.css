@@ -4,7 +4,6 @@
   gap: 24px;
   margin: 0 auto;
 }
-
 .secondaryButton {
   display: inline-flex;
   min-height: 40px;
@@ -171,6 +170,8 @@
 .empty strong { color: var(--ink); font-size: 13px; }
 .empty span { max-width: 420px; font-size: 10px; line-height: 1.5; }
 .empty a { color: var(--accent-dark); font-size: 11px; font-weight: 750; }
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 13px 18px; border-top: 1px solid var(--border-soft); color: var(--ink-muted); font-size: 10px; }
+.pagination a { display: inline-flex; align-items: center; gap: 6px; color: var(--accent-dark); font-size: 10px; font-weight: 780; }
 
 @media (max-width: 1080px) {
   .summaryGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
@@ -186,4 +187,3 @@
   .conversationMeta { grid-column: 2; min-width: 0; justify-content: flex-start; }
   .rowContext { grid-column: 2; }
 }
-

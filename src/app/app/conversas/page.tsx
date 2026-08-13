@@ -1,4 +1,4 @@
-import { Archive, Bot, CalendarClock, CheckCircle2, Inbox, MessageCircle, Pause, Search, UserRound } from "lucide-react";
+import { Archive, ArrowRight, Bot, CalendarClock, CheckCircle2, Inbox, MessageCircle, Pause, Search, UserRound } from "lucide-react";
 import Link from "next/link";
 
 import { MetricCard } from "@/components/ui/metric-card";
@@ -77,21 +77,25 @@ function filterConversation(
 export default async function ConversationsPage({
   searchParams,
 }: {
-  searchParams: Promise<{ view?: string; q?: string }>;
+  searchParams: Promise<{ view?: string; q?: string; cursor?: string }>;
 }) {
   const viewer = await requireActiveViewer();
   const params = await searchParams;
   const view = getView(params.view);
   const query = params.q?.trim().toLocaleLowerCase("pt-BR") ?? "";
+  const cursor = params.cursor ? decodeURIComponent(params.cursor) : "";
   const supabase = await createClient();
   const conversationSelect = "id,operation_id,status,ownership,ai_mode,last_message_preview,updated_at,contacts!inner(name),opportunities!conversations_opportunity_id_org_id_fkey(id,status,pipeline_stages!inner(name))";
-  const [conversationsResult, notifications] = await Promise.all([
-    supabase
+  const conversationsQuery = supabase
       .from("conversations")
       .select(conversationSelect)
       .eq("org_id", viewer.organization!.id)
       .order("updated_at", { ascending: false })
-      .limit(100),
+      .order("id", { ascending: false })
+      .limit(101);
+  if (cursor) conversationsQuery.lt("updated_at", cursor);
+  const [conversationsResult, notifications] = await Promise.all([
+    conversationsQuery,
     loadInboxNotificationCounts(supabase, viewer.organization!.id),
   ]);
 
@@ -100,7 +104,9 @@ export default async function ConversationsPage({
     throw new Error("Não foi possível carregar as conversas.");
   }
 
-  const recentConversations = (conversationsResult.data ?? []) as unknown as ConversationView[];
+  const loadedConversations = (conversationsResult.data ?? []) as unknown as ConversationView[];
+  const hasMore = loadedConversations.length > 100;
+  const recentConversations = loadedConversations.slice(0, 100);
   const recentConversationIds = new Set(recentConversations.map((conversation) => conversation.id));
   const attentionConversationIds = [...notifications.byConversation.keys()].filter((id) => !recentConversationIds.has(id));
   let additionalAttentionConversations: ConversationView[] = [];
@@ -129,11 +135,14 @@ export default async function ConversationsPage({
   const orderedConversations = sortInboxConversations(filteredConversations, notifications.byConversation).slice(0, 100);
   const operationTimezones = new Map(viewer.operations.map((operation) => [operation.id, operation.timezone]));
   const selectedView = views.find((item) => item.id === view)!;
-  const buildHref = (nextView: ViewId) => {
+  const buildHref = (nextView: ViewId, nextCursor?: string) => {
     const search = new URLSearchParams({ view: nextView });
     if (params.q) search.set("q", params.q);
+    if (nextCursor) search.set("cursor", encodeURIComponent(nextCursor));
     return `/app/conversas?${search.toString()}`;
   };
+  const lastConversation = recentConversations.at(-1);
+  const nextCursor = hasMore ? lastConversation?.updated_at : undefined;
 
   return (
     <div className={styles.page}>
@@ -209,6 +218,7 @@ export default async function ConversationsPage({
             </div>
           ) : null}
         </div>
+        {hasMore ? <footer className={styles.pagination}><span>Mostrando até 100 conversas nesta view.</span><Link href={buildHref(view, nextCursor)}>Carregar mais <ArrowRight size={14} /></Link></footer> : null}
       </section>
     </div>
   );

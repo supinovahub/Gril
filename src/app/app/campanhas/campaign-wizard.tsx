@@ -23,7 +23,6 @@ function SubmitButton({ disabled }: { disabled: boolean }) {
   const { pending } = useFormStatus();
   return <button className={styles.wizardSubmit} disabled={disabled || pending} type="submit">{pending ? "Criando rascunho…" : "Criar rascunho"}<ArrowRight size={15} /></button>;
 }
-
 export function CampaignWizard({
   connections,
   templates,
@@ -104,4 +103,3 @@ export function CampaignWizard({
     </form>
   );
 }
-
