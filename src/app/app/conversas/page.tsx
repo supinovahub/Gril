@@ -1,4 +1,4 @@
-import { Archive, ArrowRight, Bot, CalendarClock, CheckCircle2, Inbox, MessageCircle, Pause, Search, UserRound } from "lucide-react";
+import { Archive, ArrowRight, Bot, CalendarClock, CheckCircle2, Inbox, MessageCircle, Pause, Search, Sparkles, UserRound } from "lucide-react";
 import Link from "next/link";
 
 import { ButtonLink } from "@/components/ui/button";
@@ -152,7 +152,7 @@ export default async function ConversationsPage({
       <PageHeader
         eyebrow="Atendimento"
         title="Conversas"
-        description="Uma única mesa para acompanhar leads, mensagens, IA, agenda e próximos passos."
+        description="Triagem de leads e acompanhamento de Pedro IA em uma única mesa de trabalho."
       >
         {viewer.membership?.role !== "broker" ? <ButtonLink href="/app/configuracoes/whatsapp" variant="secondary">Configurar números</ButtonLink> : null}
       </PageHeader>
@@ -166,7 +166,7 @@ export default async function ConversationsPage({
 
       <section className={styles.workspace} aria-label="Lista de conversas">
         <div className={styles.toolbar}>
-          <Tabs activeId={view} ariaLabel="Views de conversas" items={views.map((item) => ({ ...item, href: buildHref(item.id) }))} />
+          <Tabs className={styles.compactTabs} activeId={view} ariaLabel="Views de conversas" items={views.map((item) => ({ ...item, href: buildHref(item.id) }))} />
           <form className={styles.searchForm} action="/app/conversas">
             <input name="view" type="hidden" value={view} />
             <Search aria-hidden="true" size={16} />
@@ -179,6 +179,14 @@ export default async function ConversationsPage({
           <span>{orderedConversations.length} visíveis</span>
         </div>
 
+        <div className={styles.columnHeader} aria-hidden="true">
+          <span />
+          <span>Lead e última mensagem</span>
+          <span>Status</span>
+          <span>Responsável</span>
+          <span>Última</span>
+        </div>
+
         <div className={styles.conversationList}>
           {orderedConversations.map((conversation) => {
             const contact = one(conversation.contacts);
@@ -187,16 +195,48 @@ export default async function ConversationsPage({
             const notification = notifications.byConversation.get(conversation.id);
             const ownerLabel = conversation.status === "paused" ? "Pausada" : conversation.ownership === "ai" ? "Pedro" : "Humano";
             const ownerTone = conversation.status === "paused" ? "warning" : conversation.ownership === "ai" ? "accent" : "positive";
+            const signal = notification?.pendingSuggestionCount
+              ? "suggestion"
+              : notification?.unreadInboundCount
+                ? "unread"
+                : "none";
+            const statusLabel = isArchived(conversation)
+              ? "Arquivada"
+              : conversation.status === "paused"
+                ? "Pausada"
+                : opportunity?.status === "call_scheduled"
+                  ? "Agendado"
+                  : notification
+                    ? "Aguardando"
+                    : conversation.status === "human_owned"
+                      ? "Em atendimento"
+                      : "Em aberto";
+            const statusTone = isArchived(conversation)
+              ? "neutral"
+              : conversation.status === "paused"
+                ? "warning"
+                : opportunity?.status === "call_scheduled"
+                  ? "positive"
+                  : notification
+                    ? "accent"
+                    : "neutral";
             return (
               <Link className={styles.conversationRow} href={`/app/inbox/${conversation.id}`} key={conversation.id}>
-                <span className={styles.avatar}>{contact?.name?.slice(0, 1).toUpperCase() ?? "?"}</span>
+                <span className={`${styles.signal} ${styles[`signal${signal[0].toUpperCase()}${signal.slice(1)}`]}`} aria-label={signal === "suggestion" ? "Sugestão de Pedro pendente" : signal === "unread" ? "Mensagem nova" : undefined}>
+                  {signal === "suggestion" ? <Sparkles aria-hidden="true" size={13} /> : signal === "unread" ? <span aria-hidden="true" /> : null}
+                </span>
                 <span className={styles.conversationCopy}>
-                  <strong>{contact?.name ?? "Contato"}</strong>
+                  <span className={styles.personLine}>
+                    <strong>{contact?.name ?? "Contato"}</strong>
+                    <StatusBadge tone={stage ? "positive" : "neutral"}>{stage?.name ?? "Sem etapa"}</StatusBadge>
+                  </span>
                   <small>{conversation.last_message_preview || "Conversa criada sem mensagem"}</small>
                 </span>
-                <span className={styles.rowContext}>
-                  <StatusBadge>{stage?.name ?? "Sem etapa"}</StatusBadge>
-                  <StatusBadge tone={ownerTone}>{conversation.status === "closed" ? <Archive size={12} /> : conversation.ownership === "ai" ? <Bot size={12} /> : conversation.status === "paused" ? <Pause size={12} /> : <UserRound size={12} />}{ownerLabel}</StatusBadge>
+                <span className={styles.rowStatus}>
+                  <StatusBadge tone={statusTone}>{conversation.status === "closed" ? <Archive aria-hidden="true" size={12} /> : null}{statusLabel}</StatusBadge>
+                </span>
+                <span className={styles.rowOwner}>
+                  <StatusBadge tone={ownerTone}>{conversation.ownership === "ai" ? <Bot aria-hidden="true" size={12} /> : conversation.status === "paused" ? <Pause aria-hidden="true" size={12} /> : <UserRound aria-hidden="true" size={12} />}{ownerLabel}</StatusBadge>
                 </span>
                 <span className={styles.conversationMeta}>
                   {notification ? <NotificationBadge count={notification.totalCount} label={describeInboxNotifications(notification)} /> : null}

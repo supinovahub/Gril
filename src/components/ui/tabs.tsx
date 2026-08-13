@@ -5,14 +5,16 @@ import styles from "./ui.module.css";
 export function Tabs({
   activeId,
   ariaLabel,
+  className,
   items,
 }: {
   activeId: string;
   ariaLabel: string;
+  className?: string;
   items: { id: string; label: string; description?: string; href: string }[];
 }) {
   return (
-    <nav aria-label={ariaLabel} className={styles.tabs}>
+    <nav aria-label={ariaLabel} className={`${styles.tabs}${className ? ` ${className}` : ""}`}>
       {items.map((item) => (
         <Link aria-current={item.id === activeId ? "page" : undefined} className={item.id === activeId ? styles.tabActive : styles.tab} href={item.href} key={item.id}>
           <span>{item.label}</span>
