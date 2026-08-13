@@ -4,6 +4,105 @@
   justify-content: space-between;
   gap: 24px;
 }
+
+.button {
+  display: inline-flex;
+  min-width: max-content;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  font-size: 11px;
+  font-weight: 780;
+  line-height: 1;
+  text-decoration: none;
+  transition: background-color 160ms var(--ease-out), border-color 160ms var(--ease-out), box-shadow 160ms var(--ease-out), color 160ms var(--ease-out), transform 120ms var(--ease-out);
+}
+
+.buttonSm { min-height: 32px; padding: 0 10px; }
+.buttonMd { min-height: 40px; padding: 0 14px; }
+.buttonLg { min-height: 46px; padding: 0 17px; }
+.buttonPrimary { background: var(--ink); color: var(--surface); }
+.buttonPrimary:hover { background: #303633; box-shadow: var(--shadow); }
+.buttonSecondary { border-color: var(--border); background: var(--surface); color: var(--ink); }
+.buttonSecondary:hover { border-color: var(--border-strong); background: var(--paper); box-shadow: var(--shadow); }
+.buttonQuiet { background: transparent; color: var(--ink-secondary); }
+.buttonQuiet:hover { background: var(--control-bg); color: var(--ink); }
+.buttonDanger { background: var(--danger); color: var(--surface); }
+.buttonDanger:hover { background: #8d382d; }
+.button:disabled { opacity: 0.48; }
+
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  background: transparent;
+  color: var(--ink-muted);
+}
+.iconButtonSm { width: 32px; height: 32px; }
+.iconButtonMd { width: 38px; height: 38px; }
+.iconButton:hover { border-color: var(--border); background: var(--surface); color: var(--ink); box-shadow: var(--shadow); }
+
+.card {
+  overflow: hidden;
+  border: 1px solid var(--border-soft);
+  border-radius: var(--radius-panel);
+  background: var(--surface);
+  box-shadow: var(--shadow);
+}
+.cardSoft { background: var(--paper); }
+.cardDark { border-color: transparent; background: var(--ink); color: var(--surface); }
+
+.tabs {
+  display: flex;
+  gap: 5px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+.tabs::-webkit-scrollbar { display: none; }
+.tab,
+.tabActive {
+  display: grid;
+  min-width: 132px;
+  gap: 3px;
+  padding: 10px 12px;
+  border: 1px solid transparent;
+  border-radius: var(--radius-control);
+  color: var(--ink-muted);
+  text-decoration: none;
+}
+.tab:hover { border-color: var(--border); background: var(--surface); color: var(--ink); }
+.tabActive { border-color: rgba(189, 87, 44, 0.18); background: #f8e9df; color: var(--accent-dark); }
+.tab span,
+.tabActive span { font-size: 11px; font-weight: 800; }
+.tab small,
+.tabActive small { font-size: 9px; }
+
+.emptyState {
+  display: grid;
+  justify-items: center;
+  gap: 8px;
+  padding: 56px 24px;
+  color: var(--ink-muted);
+  text-align: center;
+}
+.emptyStateIcon { display: grid; width: 44px; height: 44px; place-items: center; border-radius: 14px; background: var(--control-bg); color: var(--accent-dark); }
+.emptyState strong { color: var(--ink); font-size: 13px; }
+.emptyState > span:not(.emptyStateIcon) { max-width: 420px; font-size: 10px; line-height: 1.5; }
+.emptyStateAction { margin-top: 5px; }
+
+.formField { display: grid; gap: 7px; color: var(--ink-secondary); font-size: 11px; font-weight: 700; }
+.formField input,
+.formField select,
+.formField textarea { width: 100%; min-height: 40px; padding: 0 11px; border: 1px solid var(--border); border-radius: var(--radius-control); background: var(--surface); color: var(--ink); outline: none; }
+.formField textarea { padding-top: 10px; }
+.formField input:focus,
+.formField select:focus,
+.formField textarea:focus { border-color: var(--accent); box-shadow: var(--focus-ring); }
+.formField small { color: var(--ink-muted); font-size: 10px; font-weight: 500; line-height: 1.4; }
+.formFieldError { color: var(--danger) !important; }
 .pageHeader h1 {
   margin: 0;
   font-family: var(--font-display), Georgia, serif;
@@ -99,7 +198,7 @@
   align-items: center;
   padding: 0 9px;
   border: 1px solid var(--border);
-  border-radius: 999px;
+  border-radius: var(--radius-pill);
   font-size: 10px;
   font-weight: 750;
   white-space: nowrap;

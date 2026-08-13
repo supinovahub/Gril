@@ -1,9 +1,12 @@
 import { Archive, ArrowRight, Bot, CalendarClock, CheckCircle2, Inbox, MessageCircle, Pause, Search, UserRound } from "lucide-react";
 import Link from "next/link";
 
+import { ButtonLink } from "@/components/ui/button";
+import { EmptyState } from "@/components/ui/empty-state";
 import { MetricCard } from "@/components/ui/metric-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
+import { Tabs } from "@/components/ui/tabs";
 import { NotificationBadge } from "@/components/notification-badge/notification-badge";
 import { requireActiveViewer } from "@/lib/auth/session";
 import {
@@ -151,7 +154,7 @@ export default async function ConversationsPage({
         title="Conversas"
         description="Uma única mesa para acompanhar leads, mensagens, IA, agenda e próximos passos."
       >
-        {viewer.membership?.role !== "broker" ? <Link className={styles.secondaryButton} href="/app/configuracoes/whatsapp">Configurar números</Link> : null}
+        {viewer.membership?.role !== "broker" ? <ButtonLink href="/app/configuracoes/whatsapp" variant="secondary">Configurar números</ButtonLink> : null}
       </PageHeader>
 
       <section className={styles.summaryGrid} aria-label="Resumo das conversas">
@@ -163,14 +166,7 @@ export default async function ConversationsPage({
 
       <section className={styles.workspace} aria-label="Lista de conversas">
         <div className={styles.toolbar}>
-          <nav className={styles.viewTabs} aria-label="Views de conversas">
-            {views.map((item) => (
-              <Link className={item.id === view ? styles.viewTabActive : styles.viewTab} href={buildHref(item.id)} key={item.id}>
-                <span>{item.label}</span>
-                <small>{item.description}</small>
-              </Link>
-            ))}
-          </nav>
+          <Tabs activeId={view} ariaLabel="Views de conversas" items={views.map((item) => ({ ...item, href: buildHref(item.id) }))} />
           <form className={styles.searchForm} action="/app/conversas">
             <input name="view" type="hidden" value={view} />
             <Search aria-hidden="true" size={16} />
@@ -209,14 +205,7 @@ export default async function ConversationsPage({
               </Link>
             );
           })}
-          {!orderedConversations.length ? (
-            <div className={styles.empty}>
-              <Inbox size={30} />
-              <strong>Nenhuma conversa nesta view</strong>
-              <span>{query ? "Tente buscar por outro nome ou mensagem." : "Quando uma conversa entrar, ela aparecerá aqui com o próximo passo."}</span>
-              {view !== "all" ? <Link href={buildHref("all")}>Ver todas as conversas</Link> : null}
-            </div>
-          ) : null}
+          {!orderedConversations.length ? <EmptyState action={view !== "all" ? <ButtonLink href={buildHref("all")} size="sm" variant="secondary">Ver todas as conversas</ButtonLink> : null} description={query ? "Tente buscar por outro nome ou mensagem." : "Quando uma conversa entrar, ela aparecerá aqui com o próximo passo."} icon={<Inbox size={22} />} title="Nenhuma conversa nesta view" /> : null}
         </div>
         {hasMore ? <footer className={styles.pagination}><span>Mostrando até 100 conversas nesta view.</span><Link href={buildHref(view, nextCursor)}>Carregar mais <ArrowRight size={14} /></Link></footer> : null}
       </section>

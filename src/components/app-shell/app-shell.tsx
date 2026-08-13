@@ -76,8 +76,8 @@ export function AppShell({
         <Link className={styles.brand} href="/app">
           <span className={styles.brandMark}>P</span>
           <span className={styles.brandCopy}>
-            <small>Gril operations</small>
-            <strong>Pedro</strong>
+            <small>Gril · operação imobiliária</small>
+            <strong>Gril</strong>
           </span>
         </Link>
 
@@ -189,7 +189,7 @@ export function AppShell({
       <header className={styles.mobileHeader}>
         <Link className={styles.mobileBrand} href="/app">
           <span className={styles.brandMark}>P</span>
-          <span><strong>Pedro</strong><small>{operation?.name ?? "Sem operação"}</small></span>
+          <span><strong>Gril</strong><small>{operation?.name ?? "Sem operação"}</small></span>
         </Link>
         <div className={styles.mobileAvatar}>{initials(name, viewer.email)}</div>
       </header>

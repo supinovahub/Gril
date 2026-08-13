@@ -9,6 +9,7 @@ import {
 } from "lucide-react";
 import Link from "next/link";
 
+import { ButtonLink } from "@/components/ui/button";
 import { MetricCard } from "@/components/ui/metric-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
@@ -114,7 +115,7 @@ export default async function DashboardPage({
           <h2 id="attention-title">{notifications.conversationsWithNotifications} {notifications.conversationsWithNotifications === 1 ? "conversa pede" : "conversas pedem"} uma ação</h2>
           <p>Mensagens novas e sugestões da IA ficam reunidas em Conversas, na ordem do próximo passo.</p>
         </div>
-        <Link className={styles.attentionAction} href="/app/conversas?view=unanswered">Abrir atenção <ArrowUpRight size={15} /></Link>
+        <ButtonLink className={styles.attentionAction} href="/app/conversas?view=unanswered">Abrir atenção <ArrowUpRight size={15} /></ButtonLink>
       </section>
 
       <section className={styles.metricGrid} aria-label="Indicadores da operação">

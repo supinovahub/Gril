@@ -14,7 +14,7 @@ export function PageHeader({
   children?: ReactNode;
 }) {
   return (
-    <header className={styles.pageHeader}>
+    <header className={styles.pageHeader} data-ui="page-header">
       <div>
         {eyebrow ? <p className={styles.eyebrow}>{eyebrow}</p> : null}
         <h1>{title}</h1>

@@ -32,10 +32,14 @@
   --warning: var(--amber);
   --control-bg: #efede7;
   --control-bg-hover: #e9e6df;
+  --control-bg-pressed: #ded9cf;
+  --focus-ring: 0 0 0 3px rgba(189, 87, 44, 0.16);
+  --focus-outline: 3px solid rgba(189, 87, 44, 0.28);
   --shadow: 0 0 0 1px rgba(28, 33, 31, 0.045), 0 1px 2px rgba(28, 33, 31, 0.04), 0 12px 32px rgba(28, 33, 31, 0.055);
   --shadow-raised: 0 0 0 1px rgba(28, 33, 31, 0.055), 0 8px 30px rgba(28, 33, 31, 0.09);
   --radius-control: 8px;
   --radius-sm: 6px;
+  --radius-pill: 999px;
   --radius-panel: 16px;
   --radius-large: 22px;
   --space-1: 4px;
@@ -44,6 +48,9 @@
   --space-4: 16px;
   --space-5: 20px;
   --space-6: 24px;
+  --space-7: 32px;
+  --space-8: 40px;
+  --content-max: 1380px;
   --ease-out: cubic-bezier(0.23, 1, 0.32, 1);
 }
 
@@ -124,8 +131,17 @@ textarea::placeholder {
 }
 
 :focus-visible {
-  outline: 3px solid rgba(189, 87, 44, 0.24);
+  outline: var(--focus-outline);
   outline-offset: 2px;
+}
+
+::placeholder {
+  opacity: 1;
+}
+
+hr {
+  border: 0;
+  border-top: 1px solid var(--border-soft);
 }
 
 @media (prefers-reduced-motion: reduce) {

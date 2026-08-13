@@ -279,3 +279,17 @@ Este documento não substitui:
   homologação autenticada e o smoke visual seguem pendentes.
 - O registro detalhado está em
   `docs/agent/changes/2026-08-13-refatoracao-ui-ux-fatia-inicial.md`.
+
+## Atualização de 13/08/2026 — corte visual para preview
+
+- A fatia seguinte consolidou tokens de foco, espaçamento e interação, além de
+  primitives compartilhadas para ações, cartões, abas, campos e estados vazios.
+- O shell passa a apresentar Gril como produto principal; Pedro continua
+  identificado como capacidade de IA. Dashboard e Conversas adotam as
+  primitives sem alterar actions, consultas, RLS, APIs, workers ou migrations.
+- Lint, 110 testes e build de 47 rotas passaram. O build usou as variáveis
+  públicas locais somente no processo; nenhum segredo foi versionado.
+- A continuação desta tarefa foi autorizada explicitamente pelo usuário apesar
+  do preflight de concorrência ter encontrado worktrees com caminhos
+  sobrepostos. Nenhuma outra worktree ou branch foi alterada, integrada, limpa
+  ou publicada.
