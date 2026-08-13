@@ -18,23 +18,23 @@ Substituir a primeira camada visual da preview, considerada fraca pelo usuário,
 
 - Arquivos: tokens globais, shell autenticado, primitives compartilhadas, dashboard e Conversas; contexto do Superdesign em `.superdesign/`.
 - Migrations: nenhuma.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma nesta etapa de código; variáveis de Preview foram apenas lidas localmente para validação.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: branch publicada no GitHub; preview Vercel criada como `dpl_8hj52PyqbpgtXF7P9XineSKuFz6Y`, status `READY`, URL `https://gril-p8o9s3kul-brio5.vercel.app` e alias `https://gril-git-preview-ui-ux-taste-20260813-brio5.vercel.app`. Variáveis de Preview foram apenas lidas localmente para validação.
 
 ## Validação
 
 - Comandos/testes executados: `git diff --check`, `npm run lint`, `npm test`, `npm run build`; smoke visual com `agent-browser` em `/login` em desktop e viewport mobile.
-- Evidência observada: lint aprovado; 22 arquivos e 110 testes aprovados; build Next.js compilado, TypeScript concluído e 47 rotas geradas; browser sem overlay de erro e sem erros de console após carregar as variáveis locais canônicas.
+- Evidência observada: lint aprovado; 22 arquivos e 110 testes aprovados; build Next.js compilado, TypeScript concluído e 47 rotas geradas; browser sem overlay de erro e sem erros de console após carregar as variáveis locais canônicas; deployment Vercel `READY` e `/login` público respondendo HTTP 200.
 - Validações não executadas e motivo: fluxo autenticado não foi exercitado localmente porque não houve credencial de usuário fornecida nesta etapa; a homologação autenticada continua necessária na preview pública.
 
 ## Impacto operacional
 
-- Deploy necessário: sim, somente na preview da branch `preview/ui-ux-taste-20260813`; produção não foi alterada.
+- Deploy necessário: concluído somente na preview da branch `preview/ui-ux-taste-20260813`; produção não foi alterada.
 - Migração aplicada: não.
 - Compatibilidade/rollback: rotas, aliases, labels, queries, server actions, permissões e contratos de dados foram preservados; rollback é retornar ao commit anterior da preview.
 
 ## Pendências e riscos
 
-- Revisar o shell e as telas autenticadas com uma conta de homologação na URL pública.
+- Revisar o shell e as telas autenticadas com uma conta de homologação na URL pública; o acesso comum pode redirecionar para a proteção SSO da Vercel até a sessão ser autorizada.
 - Validar visualmente as superfícies que ainda usam CSS próprio, especialmente Inbox detalhe, Agenda, Campanhas, Equipe e Pedro.
 - A dependência local do repositório reportou duas vulnerabilidades altas no `npm ci`; não foram alteradas incidentalmente nesta tarefa.
 

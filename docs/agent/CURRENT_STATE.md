@@ -5,7 +5,7 @@
 - A branch de preview `preview/ui-ux-taste-20260813` recebeu uma nova direção visual aprovada pelo usuário, baseada nos princípios anti-slop da Taste Skill e adaptada ao produto B2B: `Ink, Paper, Signal`.
 - O shell autenticado, as primitives compartilhadas, o Dashboard e Conversas foram reorganizados visualmente para priorizar atenção, triagem, legibilidade e responsividade, sem alterar rotas, aliases, labels, permissões, queries, server actions ou banco.
 - A validação local passou com lint, 110 testes, build das 47 rotas e smoke visual desktop/mobile em `/login`. O fluxo autenticado na preview pública ainda precisa de homologação manual.
-- Nenhum deploy de produção, migration ou alteração de dados foi feito nesta frente. O registro detalhado está em `docs/agent/changes/2026-08-13-reformulacao-ui-taste-triage-desk.md`.
+- Nenhum deploy de produção, migration ou alteração de dados foi feito nesta frente. A preview foi publicada como deployment Vercel `dpl_8hj52PyqbpgtXF7P9XineSKuFz6Y`, status `READY`, URL `https://gril-p8o9s3kul-brio5.vercel.app` e alias `https://gril-git-preview-ui-ux-taste-20260813-brio5.vercel.app`; `/login` respondeu HTTP 200. O registro detalhado está em `docs/agent/changes/2026-08-13-reformulacao-ui-taste-triage-desk.md`.
 
 ## Atualizacao de 07/08/2026 - producao automatica exclusiva para reativacao
 
