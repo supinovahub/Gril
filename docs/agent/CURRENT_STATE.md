@@ -1,5 +1,19 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 13/08/2026 — implementação real da Triage Desk
+
+- A branch `fix/implement-triage-desk`, derivada da Preview Taste, implementou
+  a mesa de triagem de Conversas com views compactas, cabeçalho de colunas,
+  sinais de mensagem nova/sugestão do Pedro e hierarquia responsiva de lead,
+  etapa, mensagem, status, responsável e horário.
+- O commit `8b2a2f6` foi publicado no GitHub. Lint, 110 testes e build das 47
+  rotas passaram localmente.
+- A Preview Vercel `dpl_4qge8HGMkZUPf4zUEBwTPZJ4xALQ` ficou `READY`, com URL
+  `https://gril-h9b620ieb-brio5.vercel.app` e alias
+  `https://gril-git-fix-implement-triage-desk-brio5.vercel.app`.
+  Produção e Supabase não foram alterados; homologação autenticada permanece
+  pendente.
+
 ## Atualização de 13/08/2026 — repaginação visual Taste / Triage Desk
 
 - A branch de preview `preview/ui-ux-taste-20260813` recebeu uma nova direção visual aprovada pelo usuário, baseada nos princípios anti-slop da Taste Skill e adaptada ao produto B2B: `Ink, Paper, Signal`.

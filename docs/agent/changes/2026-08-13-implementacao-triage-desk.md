@@ -27,7 +27,12 @@ tratamento visual insuficiente para triagem operacional.
   `src/app/app/conversas/conversas.module.css` e
   `src/components/ui/tabs.tsx`.
 - Migrations: nenhuma.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma.
+- Mudanças externas: branch `fix/implement-triage-desk` publicada no GitHub;
+  Preview Vercel criada no projeto `gril` do time `brio5` como deployment
+  `dpl_4qge8HGMkZUPf4zUEBwTPZJ4xALQ`, status `READY`, URL
+  `https://gril-h9b620ieb-brio5.vercel.app` e alias
+  `https://gril-git-fix-implement-triage-desk-brio5.vercel.app`.
+  Supabase e produção não foram alterados.
 
 ## Validação
 
@@ -43,12 +48,12 @@ tratamento visual insuficiente para triagem operacional.
 
 ## Impacto operacional
 
-- Deploy necessário: não nesta etapa; a mudança está em branch isolada e não
-  foi publicada.
+- Deploy necessário: sim, concluído somente na Preview da branch; a proteção
+  de deployment redireciona acessos não autenticados para o SSO da Vercel.
 - Migração aplicada: não.
 - Compatibilidade/rollback: queries, filtros URL-backed, permissões, links,
   server actions e contratos de dados foram preservados; rollback é retornar
-  ao commit anterior da branch.
+  ao commit anterior da branch ou remover a Preview.
 
 ## Pendências e riscos
 
@@ -60,4 +65,3 @@ tratamento visual insuficiente para triagem operacional.
 
 - Decisões atualizadas: nenhuma.
 - Guia de homologação atualizado: não; a jornada funcional não mudou.
-
