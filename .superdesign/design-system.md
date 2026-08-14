@@ -2,7 +2,7 @@
 
 ## Leitura do produto
 
-Dashboard B2B de operação imobiliária para dono e gestor. A tela inicial deve responder em poucos segundos: “o que precisa de mim agora?”, “o que mudou hoje?” e “onde a operação está travando?”. Termos de infraestrutura, homologação, RLS e hardening não podem dominar a primeira dobra.
+Dashboard B2B de operação imobiliária para dono e gestor. A tela inicial deve responder em poucos segundos “como está a operação?”, “em que etapa estão os leads?” e “qual é o próximo compromisso?”. Termos de infraestrutura, homologação, RLS e hardening não podem dominar a primeira dobra.
 
 ## Modo e dials
 
@@ -24,20 +24,21 @@ Dashboard B2B de operação imobiliária para dono e gestor. A tela inicial deve
 
 ## Arquitetura da tela proposta
 
-1. Cabeçalho curto com saudação, operação atual e uma ação contextual.
-2. Área dominante “Precisa de atenção” como fila de trabalho, não como KPI abstrato. Cada linha deve mostrar pessoa, motivo, tempo de espera, responsável e ação.
-3. Coluna “Hoje” com agenda e próximos compromissos em sequência temporal compacta.
-4. “Pulso comercial” integrado abaixo como faixa analítica: entradas, respostas, reuniões, avanço e conversão com rótulos humanos e links de investigação.
-5. Estado do Pedro e capacidade da equipe em uma linha operacional discreta, visível quando houver risco ou decisão.
-6. Configuração inicial aparece apenas se realmente incompleta. Limpeza HML permanece fora da hierarquia principal, recolhida numa área administrativa.
+1. Cabeçalho mínimo com “Visão geral” e seletor de período. Não usar saudação, eyebrow ou o rótulo “Hoje na operação”.
+2. Primeira faixa com quatro métricas essenciais: novos leads, taxa de resposta, agendamentos e conversão. Cada valor deve ser real, explicar seu denominador e assumir “N/D” quando não houver base suficiente.
+3. Área dominante com snapshot do Kanban comercial real, seguindo a ordem das etapas ativas. Cada coluna mostra a contagem total e no máximo dois leads; a visão completa continua na rota de Kanban.
+4. Kanban rola horizontalmente dentro do próprio painel. A página não pode ganhar overflow lateral, inclusive no mobile.
+5. “Precisa de atenção” e “Agenda” são contextos secundários e exibem no máximo três itens acionáveis cada.
+6. Estado do Pedro e quantidade de pessoas ativas aparecem numa linha operacional discreta.
+7. Limpeza HML permanece fora da hierarquia principal, recolhida numa área administrativa visível apenas para quem já possui a permissão correspondente.
 
 ## Gramática visual
 
 - Usar espaço, alinhamento e divisores para hierarquia; cartões apenas quando houver agrupamento real.
-- Uma composição assimétrica no desktop, com fila principal mais larga e contexto diário mais estreito.
+- Uma composição métrica e horizontal no desktop, com o Kanban ocupando toda a largura e os contextos operacionais abaixo.
 - Linhas interativas com alvo confortável, foco visível e ação explícita; não depender só de cor.
 - Números tabulares. Badges apenas para estado real. Ícones Lucide já instalados.
-- Mobile vira uma sequência priorizada: atenção, hoje, pulso, contexto; sem tabela comprimida.
+- Mobile preserva as quatro métricas em grade compacta, o Kanban com rolagem interna e os contextos em sequência; sem tabela comprimida nem overflow da página.
 - Estados vazios, erro parcial e carregamento devem preservar a hierarquia e orientar recuperação.
 
 ## Restrições de produto

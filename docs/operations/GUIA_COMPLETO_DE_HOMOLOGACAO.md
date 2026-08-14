@@ -369,13 +369,34 @@ Inbox, CRM e agenda devem exibir datas e horários no fuso configurado da opera�
 
 ## 11. CRM, privacidade e encerramento
 
+### Visão geral
+
+Com uma conta de imobiliária autenticada, abra `/app` e valide:
+
+1. o título, o favicon e a paleta continuam iguais aos de produção; a tela não
+   mostra “Bom dia, Pedro” nem “Hoje na operação”;
+2. os seletores Hoje, 7 dias e 30 dias atualizam novos leads, taxa de resposta,
+   agendamentos e conversão usando somente dados do período;
+3. uma taxa sem denominador ou uma consulta indisponível aparece como `N/D`, e
+   não como zero inventado;
+4. o Kanban segue a ordem das etapas ativas, informa a contagem total e exibe no
+   máximo dois cards por coluna; o link abre o Kanban completo;
+5. em celular, somente o Kanban rola horizontalmente e a página permanece sem
+   overflow lateral;
+6. “Precisa de atenção” e “Agenda” mostram no máximo três itens reais e seus
+   links abrem a conversa ou o lead correto;
+7. o modo atual do Pedro e a quantidade de pessoas ativas correspondem às
+   configurações e vínculos da imobiliária.
+
+### CRM, privacidade e encerramento
+
 Teste criação, deduplicação e merge de leads; co-comprador; origem; Kanban; checklists; proposta; perda; venda; ações em massa com prévia; exportação CSV; arquivamento e restauração manual, com Pedro ou com Pedro e follow-up.
 
 O dono/gestor pode arquivar e restaurar um lead, devolvê-lo ao Pedro e reativar follow-up conforme permissões.
 
 ### Limpeza do contexto de homologação
 
-No dashboard, dono ou gestor com `team.manage` pode usar **Limpar contexto de homologação** para remover o contexto de teste da própria imobiliária. O preview considera somente contatos cujo nome começa por `HML-` e limita a operação a 20 contatos.
+No dashboard, dono ou gestor com `team.manage` pode expandir **Área administrativa** e usar **Limpar contexto de homologação** para remover o contexto de teste da própria imobiliária. O preview considera somente contatos cujo nome começa por `HML-` e limita a operação a 20 contatos.
 
 1. Crie os registros de teste com o prefixo `HML-` e use somente contatos autorizados.
 2. Confira no preview contatos, oportunidades, conversas, mensagens, chamadas e jobs pendentes.
@@ -403,6 +424,7 @@ Valide ainda Central, push, pausa emergencial, relatórios, custos, carga por co
 - [ ] campanha respeita 20/50/restante, janela, ritmo e opt-out;
 - [ ] calls percorrem preferenciais, 5/5/5, broadcast, aceite e resultado;
 - [ ] CRM, privacidade, relatórios e auditoria refletem dados reais.
+- [ ] a Visão geral mostra métricas reais, Kanban na ordem correta e no máximo três itens em atenção e agenda;
 
 ### Qualidade e operação
 

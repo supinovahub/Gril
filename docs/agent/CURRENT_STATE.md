@@ -257,3 +257,18 @@ Este documento não substitui:
 - A homologação visual e operacional autenticada continua pendente. O build
   local pré-empacotado encontrou uma limitação de symlink do Windows depois de
   compilar; o build remoto da Vercel foi concluído com 46 rotas.
+
+## Atualização de 14/08/2026 — Visão geral com métricas e Kanban
+
+- A branch `agent/dashboard-redesign-real`, ainda não publicada, substitui a
+  composição técnica do Dashboard por quatro métricas comerciais, seletor de
+  período e um snapshot somente leitura do Kanban real.
+- A decisão aprovada remove “Bom dia, Pedro” e “Hoje na operação”, limita
+  atenção e agenda a três itens e recolhe a limpeza HML em “Área
+  administrativa”.
+- Paleta, favicon, título do navegador, rotas, permissões, RLS e contratos de
+  banco permanecem iguais à produção. Nenhuma migration, alteração de dados ou
+  deploy foi executado.
+- A validação automatizada desta branch está registrada em
+  `docs/agent/changes/2026-08-14-dashboard-metricas-kanban.md`; a homologação
+  autenticada em desktop e mobile com dados reais permanece pendente.
