@@ -10,9 +10,9 @@ A aplicação passa a organizar o trabalho pela tarefa do usuário, sem repetir 
 
 - `Conversas` é a entrada única para Inbox e Leads. A própria tela oferece as visualizações `Conversas` e `Leads`; as rotas existentes continuam preservadas para compatibilidade e links profundos.
 - Kanban não aparece na navegação principal. A Visão geral mostra o resumo comercial e o botão `Abrir Kanban completo` é o único acesso de navegação geral à rota completa.
-- `Central` reúne em ordem cronológica os registros de Pedro, Lionel, alertas, notificações, calls, campanhas e integrações, com dez registros por página.
+- `Central` reúne registros de Pedro, Lionel, alertas, notificações, calls, campanhas e integrações, com dez registros por página. A entrada padrão é `Precisa agir`; `Histórico` preserva a ordem cronológica completa e ocorrências técnicas repetidas do mesmo evento são consolidadas na interface.
 - Auditoria permanece acessível conforme as permissões existentes e mostra trinta eventos por página.
-- Campanhas mantém configuração de modo e os gates operacionais do Pedro, mas não apresenta edição de personalidade ou persona.
+- Campanhas mantém configuração de modo e os gates operacionais do Pedro, mas não apresenta edição de personalidade ou persona. A lista mostra uma próxima ação principal por campanha, enquanto criação e configuração avançada usam divulgação progressiva.
 - Aprendizados, Experimentos A/B, formulário pré-lead Meta, Checklists comerciais, Privacidade e Relatórios deixam de ser destinos da navegação. Suas rotas não são removidas neste ciclo.
 
 ## Identidade visual

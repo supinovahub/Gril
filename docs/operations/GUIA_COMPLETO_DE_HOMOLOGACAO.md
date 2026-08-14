@@ -381,12 +381,12 @@ Com dono ou gestor autenticado, valide a arquitetura de navegação antes dos fl
 2. `Gestão`, `Inteligência` e `Administração` ficam recolhidas por padrão, abrem por interação e permanecem abertas quando uma rota interna está ativa;
 3. em `Conversas`, alterne entre as visualizações `Conversas` e `Leads` e confirme que filtros, links profundos e ações continuam preservados;
 4. na Visão geral, use `Abrir Kanban completo` e confirme que esta é a entrada geral para a visão completa;
-5. em `Central`, alterne os filtros, confirme a ordem cronológica e verifique que cada página mostra no máximo dez registros reais;
+5. em `Central`, confirme que a entrada `Precisa agir` mostra apenas registros acionáveis; alterne para `Histórico`, valide a ordem cronológica e verifique que cada página mostra no máximo dez registros reais, sem duplicações técnicas do mesmo evento;
 6. confirme que ações de alertas, notificações e escaladas continuam disponíveis no registro correspondente;
 7. em Auditoria, avance e volte entre páginas, sempre com no máximo trinta eventos;
 8. no Kanban completo, confirme métricas reais, filtros e todas as etapas em uma mesa horizontal; os cards devem abrir o registro completo e a navegação deve voltar somente à Visão geral;
 9. em Agenda, Campanhas, Equipe, Base e Simulador, confirme que o resumo inicial corresponde aos registros reais e que formulários e ações existentes continuam disponíveis;
-10. em Campanhas, confirme que criação e edição não mostram personalidade ou persona do Pedro, mas preservam modo, consentimento, importação, ondas, pausa, retomada e arquivamento;
+10. em Campanhas, confirme que cada registro apresenta uma ação principal coerente com seu estado e que a criação avança pelas etapas Campanha, Automação, Mensagens e Consentimento; criação e edição não devem mostrar personalidade ou persona do Pedro, mas devem preservar modo, consentimento, importação, ondas, pausa, retomada e arquivamento;
 11. em Pedro, use as âncoras de comportamento, persona, modelos e testes; confirme que editores avançados ficam recolhidos e abrem sem perder rascunhos ou ações;
 12. em Organização, alterne pelas seções de identidade, operação e segurança e confira se o resumo reflete os valores salvos;
 13. em WhatsApp, confira contagens de conexões, credenciais e templates; abra separadamente cada forma de adicionar canal e confirme que nenhuma credencial é exibida para papel sem permissão;

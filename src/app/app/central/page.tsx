@@ -1,5 +1,4 @@
 import {
-  Activity,
   AlertTriangle,
   Bell,
   Bot,
@@ -7,8 +6,10 @@ import {
   CheckCircle2,
   ChevronLeft,
   ChevronRight,
+  History,
   Megaphone,
   RadioTower,
+  Sparkles,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -17,11 +18,12 @@ import { createClient } from "@/lib/supabase/server";
 import { formatOperationDateTime } from "@/lib/time/operation-format";
 import { claimEscalationAction, markNotificationReadAction, updateAlertAction } from "./actions";
 import { PushSubscription } from "./push-subscription";
-import styles from "../operations.module.css";
+import styles from "./central.module.css";
 
 const PAGE_SIZE = 10;
 
 type RecordGroup = "attention" | "ai" | "calls" | "campaigns" | "integrations";
+type RecordView = "action" | "history" | RecordGroup;
 type RecordSource = "alert" | "notification" | "escalation" | "thread" | "call" | "campaign" | "integration";
 
 type CentralRecord = {
@@ -33,18 +35,52 @@ type CentralRecord = {
   status: string;
   meta: string;
   timestamp: string;
+  requiresAction: boolean;
   priority?: string;
   href?: string;
 };
 
-const filterLabels: Array<{ value: "all" | RecordGroup; label: string }> = [
-  { value: "all", label: "Todos" },
-  { value: "attention", label: "Atenção" },
+const filters: Array<{ value: RecordView; label: string }> = [
+  { value: "action", label: "Precisa agir" },
+  { value: "history", label: "Histórico" },
   { value: "ai", label: "Pedro e Lionel" },
-  { value: "calls", label: "Calls" },
+  { value: "calls", label: "Agenda" },
   { value: "campaigns", label: "Campanhas" },
   { value: "integrations", label: "Integrações" },
 ];
+
+const statusLabels: Record<string, string> = {
+  acknowledged: "Em andamento",
+  approved: "Pronta",
+  assigned: "Atribuída",
+  awaiting_distribution: "Aguardando distribuição",
+  awaiting_manager: "Aguardando gestor",
+  awaiting_response: "Aguardando resposta",
+  cancelled: "Cancelado",
+  degraded: "Com atenção",
+  error: "Com atenção",
+  failed: "Com atenção",
+  healthy: "Saudável",
+  ok: "Saudável",
+  open: "Aberto",
+  paused: "Pausada",
+  pending: "Pendente",
+  read: "Lida",
+  resolved: "Resolvido",
+  review: "Em revisão",
+  running: "Em andamento",
+  unassigned_alerted: "Sem responsável",
+};
+
+const sourceRank: Record<RecordSource, number> = {
+  alert: 7,
+  escalation: 6,
+  thread: 5,
+  call: 4,
+  campaign: 3,
+  integration: 2,
+  notification: 1,
+};
 
 function positivePage(value: string | undefined) {
   const parsed = Number(value);
@@ -52,12 +88,62 @@ function positivePage(value: string | undefined) {
 }
 
 function recordIcon(source: RecordSource) {
-  if (source === "alert" || source === "escalation") return <AlertTriangle aria-hidden="true" size={16} />;
-  if (source === "notification") return <Bell aria-hidden="true" size={16} />;
-  if (source === "thread") return <Bot aria-hidden="true" size={16} />;
-  if (source === "call") return <CalendarClock aria-hidden="true" size={16} />;
-  if (source === "campaign") return <Megaphone aria-hidden="true" size={16} />;
-  return <RadioTower aria-hidden="true" size={16} />;
+  if (source === "alert" || source === "escalation") return <AlertTriangle aria-hidden="true" size={18} />;
+  if (source === "notification") return <Bell aria-hidden="true" size={18} />;
+  if (source === "thread") return <Bot aria-hidden="true" size={18} />;
+  if (source === "call") return <CalendarClock aria-hidden="true" size={18} />;
+  if (source === "campaign") return <Megaphone aria-hidden="true" size={18} />;
+  return <RadioTower aria-hidden="true" size={18} />;
+}
+
+function humanizeLabel(value: string) {
+  if (statusLabels[value]) return statusLabels[value];
+  const normalized = value.replaceAll("_", " ").trim();
+  return normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : "Sem estado";
+}
+
+function humanizeTitle(value: string) {
+  if (value === "Job esgotou tentativas") return "Automação precisa de revisão";
+  return value;
+}
+
+function humanizeDescription(value: string) {
+  if (value.includes("call.result.escalate")) {
+    return "A rotina de resultado de chamada falhou após novas tentativas e precisa de revisão manual.";
+  }
+  return value;
+}
+
+function recordFingerprint(record: CentralRecord) {
+  const minute = record.timestamp.slice(0, 16);
+  const text = `${record.title}|${record.description}`.toLocaleLowerCase("pt-BR").replace(/\s+/g, " ").trim();
+  return `${minute}|${text}`;
+}
+
+function recordScore(record: CentralRecord) {
+  const action = record.requiresAction ? 100 : 0;
+  const priority = record.priority === "critical" ? 30 : record.priority === "high" ? 20 : record.priority === "warning" ? 10 : 0;
+  return action + priority + sourceRank[record.source];
+}
+
+function deduplicateRecords(records: CentralRecord[]) {
+  const byEvent = new Map<string, CentralRecord>();
+  for (const record of records) {
+    const key = recordFingerprint(record);
+    const current = byEvent.get(key);
+    if (!current || recordScore(record) > recordScore(current)) byEvent.set(key, record);
+  }
+  return Array.from(byEvent.values()).sort(
+    (left, right) => new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime(),
+  );
+}
+
+function actionLabel(record: CentralRecord) {
+  if (record.group === "ai") return "Abrir tópico";
+  if (record.group === "calls") return "Abrir agenda";
+  if (record.group === "campaigns") return "Abrir campanha";
+  if (record.group === "integrations") return "Ver integração";
+  return "Abrir";
 }
 
 export default async function CentralPage({
@@ -69,7 +155,7 @@ export default async function CentralPage({
   const query = await searchParams;
   const supabase = await createClient();
   const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
-  const requestedFilter = filterLabels.some((item) => item.value === query.tipo) ? query.tipo! : "all";
+  const requestedFilter = filters.some((item) => item.value === query.tipo) ? query.tipo as RecordView : "action";
   const requestedPage = positivePage(query.pagina);
 
   let threadsQuery = supabase
@@ -104,7 +190,7 @@ export default async function CentralPage({
     return acc;
   }, {}));
 
-  const records: CentralRecord[] = [
+  const records = deduplicateRecords([
     ...(alertsResult.data ?? []).map((item) => ({
       id: String(item.id),
       source: "alert" as const,
@@ -114,6 +200,7 @@ export default async function CentralPage({
       status: item.status,
       meta: item.category,
       timestamp: item.created_at,
+      requiresAction: item.status === "open",
       priority: item.severity,
     })),
     ...(notificationsResult.data ?? []).map((item) => ({
@@ -125,6 +212,7 @@ export default async function CentralPage({
       status: item.status,
       meta: "Notificação",
       timestamp: item.created_at,
+      requiresAction: !["read", "cancelled"].includes(item.status),
       priority: item.status === "read" ? "normal" : "high",
     })),
     ...(escalationsResult.data ?? []).map((item) => ({
@@ -136,6 +224,7 @@ export default async function CentralPage({
       status: item.status,
       meta: "Escalada do Pedro",
       timestamp: item.created_at,
+      requiresAction: item.status === "open",
       priority: item.severity,
     })),
     ...(threadsResult.data ?? []).map((item) => ({
@@ -147,6 +236,7 @@ export default async function CentralPage({
       status: item.status,
       meta: item.assistant_role === "lionel" ? "Lionel" : "Pedro",
       timestamp: item.updated_at,
+      requiresAction: item.requires_action,
       priority: item.priority,
       href: `${item.assistant_role === "lionel" ? "/app/lionel" : "/app/chat-pedro"}?topico=${item.id}`,
     })),
@@ -154,11 +244,13 @@ export default async function CentralPage({
       id: item.id,
       source: "call" as const,
       group: "calls" as const,
-      title: "Call em acompanhamento",
+      title: "Chamada em acompanhamento",
       description: item.format === "video" ? "Videochamada" : item.format === "phone" ? "Ligação" : "Formato a combinar",
       status: item.status,
       meta: "Agenda",
       timestamp: item.starts_at,
+      requiresAction: ["awaiting_manager", "awaiting_distribution", "unassigned_alerted"].includes(item.status),
+      priority: item.status === "unassigned_alerted" ? "critical" : "high",
       href: "/app/agenda",
     })),
     ...(campaignsResult.data ?? []).map((item) => ({
@@ -166,10 +258,12 @@ export default async function CentralPage({
       source: "campaign" as const,
       group: "campaigns" as const,
       title: item.name,
-      description: "Campanha de reativação em acompanhamento.",
+      description: item.status === "review" ? "A campanha aguarda revisão antes do próximo passo." : "Campanha de reativação em acompanhamento.",
       status: item.status,
       meta: "Campanha",
       timestamp: item.updated_at,
+      requiresAction: ["review", "approved", "paused"].includes(item.status),
+      priority: item.status === "review" ? "high" : "normal",
       href: "/app/campanhas",
     })),
     ...latestHealth.map((item) => ({
@@ -181,21 +275,27 @@ export default async function CentralPage({
       status: item.status,
       meta: "Integração",
       timestamp: item.checked_at,
+      requiresAction: item.status !== "healthy" && item.status !== "ok",
       priority: item.status === "healthy" || item.status === "ok" ? "normal" : "high",
       href: "/app/configuracoes/whatsapp",
     })),
-  ].sort((left, right) => new Date(right.timestamp).getTime() - new Date(left.timestamp).getTime());
+  ]);
 
-  const filteredRecords = requestedFilter === "all" ? records : records.filter((item) => item.group === requestedFilter);
+  const actionableRecords = records.filter((record) => record.requiresAction);
+  const filteredRecords = requestedFilter === "action"
+    ? actionableRecords
+    : requestedFilter === "history"
+      ? records
+      : records.filter((record) => record.group === requestedFilter);
   const pageCount = Math.max(1, Math.ceil(filteredRecords.length / PAGE_SIZE));
   const currentPage = Math.min(requestedPage, pageCount);
   const visibleRecords = filteredRecords.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
-  const unresolvedAi = (threadsResult.data ?? []).filter((item) => item.requires_action).length + (escalationsResult.data ?? []).filter((item) => item.status === "open").length;
+  const unresolvedAi = (threadsResult.data ?? []).filter((item) => item.requires_action).length;
   const unhealthyIntegrations = latestHealth.filter((item) => item.status !== "healthy" && item.status !== "ok").length;
 
   function centralHref(page: number, filter = requestedFilter) {
     const params = new URLSearchParams();
-    if (filter !== "all") params.set("tipo", filter);
+    if (filter !== "action") params.set("tipo", filter);
     if (page > 1) params.set("pagina", String(page));
     const suffix = params.toString();
     return suffix ? `/app/central?${suffix}` : "/app/central";
@@ -205,68 +305,116 @@ export default async function CentralPage({
     <div className={styles.page}>
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Registro unificado</p>
+          <p className={styles.eyebrow}>Fila operacional</p>
           <h1>Central de operações</h1>
-          <p>Pedro, Lionel e os eventos importantes da operação em uma única ordem cronológica.</p>
+          <p>Veja primeiro o que exige decisão. O restante permanece disponível no histórico da operação.</p>
+        </div>
+        <div className={styles.headerActions}>
+          <span className={styles.operationBadge}>{operation?.name ?? "Sem operação"}</span>
           <PushSubscription publicKey={process.env.NEXT_PUBLIC_WEB_PUSH_PUBLIC_KEY ?? ""} />
         </div>
-        <span className={styles.badge}>{operation?.name ?? "Sem operação"}</span>
       </header>
 
-      {query.erro ? <p className={styles.error}>A ação não pôde ser concluída.</p> : null}
+      {query.erro ? <p className={styles.error} role="alert">A ação não pôde ser concluída. Tente novamente.</p> : null}
 
-      <section className={styles.centralSummary} aria-label="Resumo da Central">
-        <span><Activity aria-hidden="true" size={16} /><strong>{records.length}</strong> registros recentes</span>
-        <span><Bot aria-hidden="true" size={16} /><strong>{unresolvedAi}</strong> pendências de IA</span>
-        <span><RadioTower aria-hidden="true" size={16} /><strong>{unhealthyIntegrations}</strong> integrações com atenção</span>
+      <section className={styles.summary} aria-label="Resumo da Central">
+        <span><Sparkles aria-hidden="true" size={18} /><small>Precisam de ação</small><strong>{actionableRecords.length}</strong></span>
+        <span><Bot aria-hidden="true" size={18} /><small>Pedro e Lionel</small><strong>{unresolvedAi}</strong></span>
+        <span><RadioTower aria-hidden="true" size={18} /><small>Integrações com atenção</small><strong>{unhealthyIntegrations}</strong></span>
       </section>
 
-      <section className={styles.centralPanel}>
-        <div className={styles.centralToolbar}>
-          <nav aria-label="Filtrar registros da Central" className={styles.centralFilters}>
-            {filterLabels.map((filter) => (
+      <section className={styles.panel}>
+        <div className={styles.toolbar}>
+          <nav aria-label="Filtrar registros da Central" className={styles.filters}>
+            {filters.map((filter) => (
               <Link
                 aria-current={requestedFilter === filter.value ? "page" : undefined}
-                className={requestedFilter === filter.value ? styles.centralFilterActive : styles.centralFilter}
+                className={requestedFilter === filter.value ? styles.filterActive : styles.filter}
                 href={centralHref(1, filter.value)}
                 key={filter.value}
               >
+                {filter.value === "history" ? <History aria-hidden="true" size={14} /> : null}
                 {filter.label}
               </Link>
             ))}
           </nav>
-          <span>{PAGE_SIZE} por página</span>
+          <span>{filteredRecords.length} registros - {PAGE_SIZE} por página</span>
         </div>
 
-        <div className={styles.centralList}>
+        <div className={styles.list}>
           {visibleRecords.map((record) => (
-            <article className={styles.centralRecord} data-priority={record.priority ?? "normal"} key={`${record.source}-${record.id}`}>
-              <span className={styles.centralRecordIcon}>{recordIcon(record.source)}</span>
-              <span className={styles.centralRecordCopy}>
-                <span><small>{record.meta}</small><b>{record.status}</b></span>
-                <strong>{record.title}</strong>
-                <p>{record.description}</p>
-              </span>
-              <time>{formatOperationDateTime(record.timestamp, operation?.timezone)}</time>
-              <div className={styles.centralRecordActions}>
-                {record.source === "alert" ? <>
-                  {(alertsResult.data ?? []).find((item) => item.id === record.id)?.status === "open" ? <form action={updateAlertAction}><input name="alertId" type="hidden" value={record.id} /><input name="status" type="hidden" value="acknowledged" /><button>Assumir</button></form> : null}
-                  <form action={updateAlertAction}><input name="alertId" type="hidden" value={record.id} /><input name="status" type="hidden" value="resolved" /><button className={styles.secondary}>Resolver</button></form>
-                </> : null}
-                {record.source === "notification" && (notificationsResult.data ?? []).find((item) => item.id === record.id)?.status !== "read" ? <form action={markNotificationReadAction}><input name="notificationId" type="hidden" value={record.id} /><button className={styles.secondary}>Marcar como lida</button></form> : null}
-                {record.source === "escalation" && (escalationsResult.data ?? []).find((item) => item.id === record.id)?.status === "open" ? <form action={claimEscalationAction}><input name="escalationId" type="hidden" value={record.id} /><button>Assumir</button></form> : null}
-                {record.href ? <Link href={record.href}>Abrir</Link> : null}
+            <article
+              className={styles.record}
+              data-priority={record.priority ?? "normal"}
+              data-requires-action={record.requiresAction ? "true" : "false"}
+              key={`${record.source}-${record.id}`}
+            >
+              <span className={styles.recordIcon}>{recordIcon(record.source)}</span>
+              <div className={styles.recordCopy}>
+                <div className={styles.recordMeta}>
+                  <span>{humanizeLabel(record.meta)}</span>
+                  <b>{humanizeLabel(record.status)}</b>
+                </div>
+                <strong>{humanizeTitle(record.title)}</strong>
+                <p>{humanizeDescription(record.description)}</p>
+              </div>
+              <time dateTime={record.timestamp}>{formatOperationDateTime(record.timestamp, operation?.timezone)}</time>
+              <div className={styles.recordActions}>
+                {record.source === "alert" ? (
+                  <>
+                    {(alertsResult.data ?? []).find((item) => item.id === record.id)?.status === "open" ? (
+                      <form action={updateAlertAction}>
+                        <input name="alertId" type="hidden" value={record.id} />
+                        <input name="status" type="hidden" value="acknowledged" />
+                        <button>Assumir</button>
+                      </form>
+                    ) : null}
+                    <form action={updateAlertAction}>
+                      <input name="alertId" type="hidden" value={record.id} />
+                      <input name="status" type="hidden" value="resolved" />
+                      <button className={styles.secondary}>Resolver</button>
+                    </form>
+                  </>
+                ) : null}
+                {record.source === "notification" && !["read", "cancelled"].includes(record.status) ? (
+                  <form action={markNotificationReadAction}>
+                    <input name="notificationId" type="hidden" value={record.id} />
+                    <button className={styles.secondary}>Marcar como lida</button>
+                  </form>
+                ) : null}
+                {record.source === "escalation" && (escalationsResult.data ?? []).find((item) => item.id === record.id)?.status === "open" ? (
+                  <form action={claimEscalationAction}>
+                    <input name="escalationId" type="hidden" value={record.id} />
+                    <button>Assumir</button>
+                  </form>
+                ) : null}
+                {record.href ? <Link href={record.href}>{actionLabel(record)}</Link> : null}
               </div>
             </article>
           ))}
-          {!visibleRecords.length ? <div className={styles.centralEmpty}><CheckCircle2 aria-hidden="true" size={24} /><strong>Nenhum registro neste filtro</strong><span>A Central será atualizada quando houver nova atividade.</span></div> : null}
+
+          {!visibleRecords.length ? (
+            <div className={styles.empty}>
+              <CheckCircle2 aria-hidden="true" size={28} />
+              <strong>{requestedFilter === "action" ? "Nada precisa de ação agora" : "Nenhum registro neste filtro"}</strong>
+              <span>{requestedFilter === "action" ? "A operação está em dia. Novas pendências aparecerão aqui." : "Escolha outro filtro para continuar."}</span>
+            </div>
+          ) : null}
         </div>
 
-        <footer className={styles.centralPagination}>
+        <footer className={styles.pagination}>
           <span>Página {currentPage} de {pageCount}</span>
           <div>
-            {currentPage > 1 ? <Link href={centralHref(currentPage - 1)}><ChevronLeft aria-hidden="true" size={15} /> Anterior</Link> : <span aria-disabled="true"><ChevronLeft aria-hidden="true" size={15} /> Anterior</span>}
-            {currentPage < pageCount ? <Link href={centralHref(currentPage + 1)}>Próxima <ChevronRight aria-hidden="true" size={15} /></Link> : <span aria-disabled="true">Próxima <ChevronRight aria-hidden="true" size={15} /></span>}
+            {currentPage > 1 ? (
+              <Link href={centralHref(currentPage - 1)}><ChevronLeft aria-hidden="true" size={15} /> Anterior</Link>
+            ) : (
+              <span aria-disabled="true"><ChevronLeft aria-hidden="true" size={15} /> Anterior</span>
+            )}
+            {currentPage < pageCount ? (
+              <Link href={centralHref(currentPage + 1)}>Próxima <ChevronRight aria-hidden="true" size={15} /></Link>
+            ) : (
+              <span aria-disabled="true">Próxima <ChevronRight aria-hidden="true" size={15} /></span>
+            )}
           </div>
         </footer>
       </section>
