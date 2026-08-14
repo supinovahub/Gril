@@ -220,7 +220,7 @@ export default async function ConversationPage({
       {feedback.sucesso ? <p className={styles.successBanner}>{successText}</p> : null}
 
       <nav aria-label="Contexto do lead" className={styles.detailTabs}>
-        {tabs.map((tab) => <Link aria-current={activeTab === tab.id ? "page" : undefined} className={activeTab === tab.id ? styles.detailTabActive : styles.detailTab} href={tabHref(tab.id)} key={tab.id}>{tab.label}</Link>)}
+        {tabs.map((tab) => <Link aria-current={activeTab === tab.id ? "page" : undefined} className={activeTab === tab.id ? styles.detailTabActive : styles.detailTab} href={tabHref(tab.id)} key={tab.id} prefetch={false}>{tab.label}</Link>)}
       </nav>
 
       {activeTab === "messages" ? (
@@ -270,7 +270,7 @@ export default async function ConversationPage({
               <div><dt>Contexto para Pedro</dt><dd>{opportunity?.ai_context || "Não informado"}</dd></div>
               <div><dt>Nota interna</dt><dd>{opportunity?.internal_note || "Não informada"}</dd></div>
             </dl>
-            <div className={styles.tabActions}><Link className={styles.secondaryButton} href={`/app/leads/${opportunity?.id}`}>Abrir oportunidade completa</Link></div>
+            <div className={styles.tabActions}><Link className={styles.secondaryButton} href={`/app/leads/${opportunity?.id}`} prefetch={false}>Abrir oportunidade completa</Link></div>
           </> : null}
 
           {activeTab === "qualification" ? <>

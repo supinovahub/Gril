@@ -57,7 +57,7 @@ export default async function LeadsPage({
           <p>Visualize o contexto comercial das pessoas que estão em atendimento.</p>
         </div>
         <div className={styles.headerActions}>
-          <Link className={styles.secondaryButton} href={showingArchived ? "/app/leads" : "/app/leads?arquivados=1"}>{showingArchived ? "Ver ativos" : "Ver arquivados"}</Link>
+          <Link className={styles.secondaryButton} href={showingArchived ? "/app/leads" : "/app/leads?arquivados=1"} prefetch={false}>{showingArchived ? "Ver ativos" : "Ver arquivados"}</Link>
         </div>
       </header>
 
@@ -91,7 +91,7 @@ export default async function LeadsPage({
               }>;
               const phone = phones.find((item) => item.is_primary && item.status === "active")?.e164;
               return (
-                <Link className={styles.leadRow} href={`/app/leads/${opportunity.id}`} key={opportunity.id}>
+                <Link className={styles.leadRow} href={`/app/leads/${opportunity.id}`} key={opportunity.id} prefetch={false}>
                   <span className={styles.leadAvatar}>{contact?.name?.slice(0, 1).toUpperCase() ?? "?"}</span>
                   <span className={styles.leadIdentity}>
                     <strong>{contact?.name ?? "Contato"}</strong>

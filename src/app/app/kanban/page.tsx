@@ -39,8 +39,8 @@ export default async function KanbanPage({
           <p>Acompanhe o avanço das oportunidades e abra o registro completo sem perder o contexto da etapa.</p>
         </div>
         <nav aria-label="Filtrar pipeline" className={styles.pipelineFilters}>
-          <Link aria-current={!showingUnassigned ? "page" : undefined} className={!showingUnassigned ? styles.pipelineFilterActive : undefined} href="/app/kanban">Todos</Link>
-          <Link aria-current={showingUnassigned ? "page" : undefined} className={showingUnassigned ? styles.pipelineFilterActive : undefined} href="/app/kanban?responsavel=pendente">Sem responsável</Link>
+          <Link aria-current={!showingUnassigned ? "page" : undefined} className={!showingUnassigned ? styles.pipelineFilterActive : undefined} href="/app/kanban" prefetch={false}>Todos</Link>
+          <Link aria-current={showingUnassigned ? "page" : undefined} className={showingUnassigned ? styles.pipelineFilterActive : undefined} href="/app/kanban?responsavel=pendente" prefetch={false}>Sem responsável</Link>
         </nav>
       </header>
 
@@ -73,7 +73,7 @@ export default async function KanbanPage({
                     const score = [...(card.opportunity_scores ?? [])].sort((left, right) => right.created_at.localeCompare(left.created_at))[0];
                     const band = (score?.explanation as { band?: string } | null)?.band;
                     return (
-                      <Link className={styles.kanbanCard} href={`/app/leads/${card.id}`} key={card.id}>
+                      <Link className={styles.kanbanCard} href={`/app/leads/${card.id}`} key={card.id} prefetch={false}>
                         <span className={styles.kanbanCardTop}><small>{card.source}</small>{score ? <b>{score.score}/100</b> : null}</span>
                         <strong>{contact?.name ?? "Contato"}</strong>
                         <span>{phone ?? "Telefone não informado"}</span>

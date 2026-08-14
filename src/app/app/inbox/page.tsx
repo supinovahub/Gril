@@ -78,7 +78,7 @@ export default async function InboxPage() {
             const stage = Array.isArray(opportunity?.pipeline_stages) ? opportunity.pipeline_stages[0] : opportunity?.pipeline_stages;
             const notification = notifications.byConversation.get(conversation.id);
             return (
-              <Link className={styles.conversationRow} href={`/app/inbox/${conversation.id}`} key={conversation.id}>
+              <Link className={styles.conversationRow} href={`/app/inbox/${conversation.id}`} key={conversation.id} prefetch={false}>
                 <span className={styles.avatar}>{contact?.name?.slice(0, 1).toUpperCase() ?? "?"}</span>
                 <span className={styles.conversationCopy}><strong>{contact?.name ?? "Contato"}</strong><small>{conversation.last_message_preview || "Conversa criada sem mensagem"}</small></span>
                 <span className={styles.contextBadge}>{stage?.name ?? "Sem etapa"}</span>

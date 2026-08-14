@@ -184,8 +184,8 @@ export default async function SimulatorPage({
           </Link>
         </div>
         <nav className={simulatorStyles.sessionFilters} aria-label="Filtrar conversas simuladas">
-          <Link className={!archivedView ? simulatorStyles.activeFilter : undefined} href="/app/simulador">Ativas</Link>
-          <Link className={archivedView ? simulatorStyles.activeFilter : undefined} href="/app/simulador?arquivadas=1">Arquivadas</Link>
+          <Link className={!archivedView ? simulatorStyles.activeFilter : undefined} href="/app/simulador" prefetch={false}>Ativas</Link>
+          <Link className={archivedView ? simulatorStyles.activeFilter : undefined} href="/app/simulador?arquivadas=1" prefetch={false}>Arquivadas</Link>
         </nav>
         <div className={simulatorStyles.sessionList}>
           {(sessions ?? []).map((session) => {
@@ -195,6 +195,7 @@ export default async function SimulatorPage({
               className={`${simulatorStyles.sessionItem} ${selectedSession?.id === session.id ? simulatorStyles.selectedSession : ""}`}
               href={href}
               key={session.id}
+              prefetch={false}
             >
               <strong>{session.title}</strong>
               <span>{session.turn_count} {session.turn_count === 1 ? "turno" : "turnos"}</span>

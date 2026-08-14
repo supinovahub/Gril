@@ -136,8 +136,8 @@ export default async function CampaignsPage({
         <div className={styles.headerTools}>
           <span className={styles.limit}><ShieldCheck aria-hidden="true" size={16} /> até 500 contatos</span>
           <nav className={styles.viewTabs} aria-label="Visualização de campanhas">
-            <Link className={!showingArchived ? styles.activeTab : undefined} href="/app/campanhas">Ativas</Link>
-            <Link className={showingArchived ? styles.activeTab : undefined} href="/app/campanhas?arquivadas=1">
+            <Link className={!showingArchived ? styles.activeTab : undefined} href="/app/campanhas" prefetch={false}>Ativas</Link>
+            <Link className={showingArchived ? styles.activeTab : undefined} href="/app/campanhas?arquivadas=1" prefetch={false}>
               <Archive aria-hidden="true" size={14} /> Arquivadas
             </Link>
           </nav>

@@ -208,6 +208,7 @@ export function InternalChatWorkspace({
                 className={`${styles.topicItem}${activeThread?.id === thread.id ? ` ${styles.topicItemActive}` : ""}`}
                 href={threadHref(basePath, thread.id, filters)}
                 key={thread.id}
+                prefetch={false}
               >
                 <span className={styles.topicPulse} data-priority={thread.priority} />
                 <span className={styles.topicCopy}>
@@ -268,7 +269,7 @@ export function InternalChatWorkspace({
                             </div>
                             <textarea defaultValue={proposal.body} disabled={proposal.status !== "pending"} maxLength={4096} name="body" readOnly={proposal.status !== "pending"} rows={4} form={`review-${message.id}`} />
                             <div className={styles.suggestionProposalActions}>
-                              <Link href={`/app/inbox/${proposal.conversationId}`}><ExternalLink size={13} /> Ver conversa</Link>
+                              <Link href={`/app/inbox/${proposal.conversationId}`} prefetch={false}><ExternalLink size={13} /> Ver conversa</Link>
                               {proposal.status === "pending" ? <form action={reviewAiSuggestionFromChatAction} id={`review-${message.id}`}>
                                 <input name="threadId" type="hidden" value={activeThread.id} />
                                 <input name="suggestionId" type="hidden" value={proposal.suggestionId} />
@@ -281,7 +282,7 @@ export function InternalChatWorkspace({
                           </div>
                         </div>
                       ) : <p>{message.body}</p>}
-                      <footer><time>{dateLabel(message.created_at)}</time><Link href={`${basePath}?topico=${activeThread.id}&responder=${message.id}`}><CornerUpLeft size={12} /> Responder</Link></footer>
+                      <footer><time>{dateLabel(message.created_at)}</time><Link href={`${basePath}?topico=${activeThread.id}&responder=${message.id}`} prefetch={false}><CornerUpLeft size={12} /> Responder</Link></footer>
                     </article>
                   );
                 })}

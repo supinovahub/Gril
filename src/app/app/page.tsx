@@ -463,6 +463,7 @@ export default async function DashboardPage({
                 className={period === option.key ? styles.periodActive : undefined}
                 href={option.key === "7d" ? "/app" : `/app?period=${option.key}`}
                 key={option.key}
+                prefetch={false}
               >
                 {option.label}
               </Link>
@@ -535,7 +536,7 @@ export default async function DashboardPage({
                   </header>
                   <div className={styles.kanbanCards}>
                     {column.cards.map((card) => (
-                      <Link className={styles.kanbanCard} href={`/app/leads/${card.id}`} key={card.id}>
+                      <Link className={styles.kanbanCard} href={`/app/leads/${card.id}`} key={card.id} prefetch={false}>
                         <strong>{card.name}</strong>
                         <span>
                           {card.assignedMembershipId
@@ -570,7 +571,7 @@ export default async function DashboardPage({
           </header>
           <div className={styles.attentionList}>
             {attentionItems.map((item) => (
-              <Link className={styles.attentionRow} href={item.href} key={item.id}>
+              <Link className={styles.attentionRow} href={item.href} key={item.id} prefetch={false}>
                 <span className={styles.attentionPerson}>
                   <strong>{item.name}</strong>
                   <small>{item.reason}</small>
@@ -596,7 +597,7 @@ export default async function DashboardPage({
           </header>
           <div className={styles.agendaList}>
             {agendaItems.map((item) => (
-              <Link className={styles.agendaRow} href={item.href} key={item.id}>
+              <Link className={styles.agendaRow} href={item.href} key={item.id} prefetch={false}>
                 <time dateTime={item.startsAt}>
                   {formatOperationDateTime(item.startsAt, timeZone, {
                     day: "2-digit",

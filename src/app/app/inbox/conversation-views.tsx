@@ -10,6 +10,7 @@ export function ConversationViews({ active }: { active: "conversations" | "leads
         aria-current={active === "conversations" ? "page" : undefined}
         className={active === "conversations" ? styles.workspaceViewActive : styles.workspaceView}
         href="/app/inbox"
+        prefetch={false}
       >
         <MessagesSquare aria-hidden="true" size={15} /> Conversas
       </Link>
@@ -17,6 +18,7 @@ export function ConversationViews({ active }: { active: "conversations" | "leads
         aria-current={active === "leads" ? "page" : undefined}
         className={active === "leads" ? styles.workspaceViewActive : styles.workspaceView}
         href="/app/leads"
+        prefetch={false}
       >
         <ContactRound aria-hidden="true" size={15} /> Leads
       </Link>

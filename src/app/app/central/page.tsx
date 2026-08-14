@@ -342,6 +342,7 @@ export default async function CentralPage({
                 className={requestedFilter === filter.value ? styles.filterActive : styles.filter}
                 href={centralHref(1, filter.value)}
                 key={filter.value}
+                prefetch={false}
               >
                 {filter.value === "history" ? <History aria-hidden="true" size={14} /> : null}
                 {filter.label}
@@ -398,7 +399,7 @@ export default async function CentralPage({
                     <button>Assumir</button>
                   </form>
                 ) : null}
-                {record.href ? <Link href={record.href}>{actionLabel(record)}</Link> : null}
+                {record.href ? <Link href={record.href} prefetch={false}>{actionLabel(record)}</Link> : null}
               </div>
             </article>
           ))}
