@@ -1,4 +1,4 @@
-import { Link2, ShieldCheck, UserRoundPlus, UsersRound } from "lucide-react";
+import { Building2, Link2, ShieldCheck, UserRoundCheck, UserRoundPlus, UsersRound } from "lucide-react";
 import { redirect } from "next/navigation";
 
 import type { Tables } from "@/lib/database.types";
@@ -121,6 +121,9 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
   const isOwner = viewer.membership?.role === "owner";
   const activeCount = memberRows.filter((member) => member.status === "active").length;
   const pendingCount = memberRows.filter((member) => member.status === "pending").length;
+  const brokerCount = memberRows.filter((member) => member.status === "active" && member.role === "broker").length;
+  const organizationCount = memberRows.filter((member) => member.status === "active" && member.role !== "broker").length;
+  const requestCount = (accessRequests ?? []).filter((request) => request.status === "pending").length;
   const joinCode = joinCodes?.[0];
   const errorMessage = feedback.erro === "whatsapp-em-uso"
     ? "Este número já está em uso. Informe outro WhatsApp ou fale com o suporte."
@@ -142,7 +145,21 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       {feedback.erro ? <p className={styles.feedback}>{errorMessage}</p> : null}
       {feedback.sucesso ? <p className={`${styles.feedback} ${styles.success}`}>Ação concluída e registrada.</p> : null}
 
-      {joinCode ? <section className={styles.panel}>
+      <section className={styles.teamSummary} aria-label="Resumo da equipe">
+        <span><UsersRound aria-hidden="true" size={17}/><small>Pessoas ativas</small><strong>{activeCount}</strong></span>
+        <span><UserRoundCheck aria-hidden="true" size={17}/><small>Corretores</small><strong>{brokerCount}</strong></span>
+        <span><Building2 aria-hidden="true" size={17}/><small>Imobiliária</small><strong>{organizationCount}</strong></span>
+        <span><UserRoundPlus aria-hidden="true" size={17}/><small>Solicitações</small><strong>{requestCount + pendingCount}</strong></span>
+      </section>
+
+      <nav aria-label="Áreas de Equipe e acessos" className={styles.teamTabs}>
+        <a href="#pessoas">Pessoas</a>
+        <a href="#novo-acesso">Novo acesso</a>
+        <a href="#solicitacoes">Solicitações</a>
+        <a href="#historico-convites">Histórico</a>
+      </nav>
+
+      {joinCode ? <section className={styles.panel} id="solicitacoes">
         <header className={styles.panelHeader}><div><Link2 size={18} /><h2>Código da imobiliária</h2></div><span>Compartilhe para solicitar acesso</span></header>
         <div className={styles.generatedLink}><code>{joinCode.code}</code>{joinCode.enabled ? <CopyButton value={joinCode.code} /> : <strong>Desativado</strong>}</div>
         <p className={styles.formHint}>Somente pessoas da imobiliária administram este código. Corretores podem usá-lo para pedir entrada.</p>
@@ -169,7 +186,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         </li>)}</ul>
       </section> : null}
 
-      <section className={styles.panel}>
+      <section className={styles.panel} id="novo-acesso">
         <header className={styles.panelHeader}>
           <div><UserRoundPlus size={18} /><h2>Novo acesso</h2></div>
           <span>Convite individual ou link compartilhável</span>
@@ -183,7 +200,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       {isOwner ? <section className={styles.panel}><header className={styles.panelHeader}><div><ShieldCheck size={18}/><h2>Transferir propriedade</h2></div><span>Define quem administra a imobiliária</span></header><form action={requestOwnershipTransferAction} className={styles.permissionForm}><label>Novo responsável<select name="targetMembershipId" required><option value="">Selecione</option>{memberRows.filter((member)=>member.status==='active'&&member.role!=='owner').map((member)=><option key={member.id} value={member.id}>{profilesByUser.get(member.user_id)?.full_name ?? member.id.slice(0,8)}</option>)}</select></label><label>Senha atual<input autoComplete="current-password" name="password" required type="password"/></label><button className={styles.savePermissions}>Solicitar aceite</button></form></section> : null}
       {ownershipTransfers?.filter((item)=>item.target_membership_id===viewer.membership?.id).map((item)=><section className={styles.panel} key={item.id}><header className={styles.panelHeader}><div><ShieldCheck size={18}/><h2>Aceitar propriedade</h2></div></header><form action={acceptOwnershipTransferAction} className={styles.permissionForm}><input name="transferId" type="hidden" value={item.id}/><p>Ao aceitar, você se torna o novo dono e o dono anterior vira gestor.</p><button className={styles.savePermissions}>Aceitar transferência</button></form></section>)}
 
-      <section className={styles.panel}>
+      <section className={styles.panel} id="pessoas">
         <header className={styles.panelHeader}>
           <div><UsersRound size={18} /><h2>Pessoas vinculadas</h2></div>
           <span>Papéis e estado de acesso</span>
@@ -321,7 +338,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         )}
       </section>
 
-      <section className={styles.panel}>
+      <section className={styles.panel} id="historico-convites">
         <header className={styles.panelHeader}>
           <div><Link2 size={18} /><h2>Convites recentes</h2></div>
           <span>Links não exibem o token armazenado</span>

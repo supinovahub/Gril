@@ -2,11 +2,11 @@
 
 ## Atualização de 14/08/2026 — redesign do workspace em homologação
 
-- A branch `agent/workspace-redesign-real` aplica a arquitetura operacional aprovada sobre a nova Visão geral e preserva os fluxos de Chat com Pedro e Lionel.
+- A branch `agent/workspace-redesign-real` aplica a arquitetura operacional aprovada sobre a nova Visão geral e preserva os fluxos de Chat com Pedro e Lionel. Uma auditoria autenticada posterior identificou rotas com alteração ainda superficial; Kanban, Agenda, Campanhas, Equipe, Base, Simulador, Organização, Pedro e WhatsApp foram então reestruturados antes da nova homologação.
 - Leads e Kanban deixam a navegação principal. Leads passa a ser uma visualização dentro de Conversas; o Kanban completo é aberto pelo resumo da Visão geral.
 - Central reúne Pedro, Lionel e eventos operacionais em ordem cronológica, com dez registros por página. Auditoria mostra trinta registros por página.
 - Campanhas não ganhou edição de personalidade do Pedro. Paleta, favicon e título da aba continuam iguais aos de produção.
-- Lint, 110 testes e build das 46 rotas passaram. O PR rascunho `#47` e a preview protegida `https://gril-git-agent-workspace-redesign-real-brio5.vercel.app` estão prontos; produção e Supabase não foram alterados e a homologação autenticada ainda está pendente.
+- Lint, 110 testes e build Webpack das 46 rotas passaram após a correção estrutural. O PR rascunho `#47` usa a preview protegida `https://gril-git-agent-workspace-redesign-real-brio5.vercel.app`; produção e Supabase não foram alterados e a segunda rodada de homologação autenticada ainda está pendente.
 - Detalhes: `docs/agent/changes/2026-08-14-workspace-operacional-unificado.md` e `docs/decisions/2026-08-14-workspace-operacional-unificado.md`.
 
 ## Atualizacao de 07/08/2026 - producao automatica exclusiva para reativacao

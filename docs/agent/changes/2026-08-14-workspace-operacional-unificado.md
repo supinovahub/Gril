@@ -12,20 +12,20 @@ Aplicar a direção visual aprovada às telas operacionais, reduzir a exposiçã
 ## Antes e depois
 
 - Antes: Leads e Kanban apareciam como módulos independentes; Inbox, Pedro e Lionel disputavam entradas paralelas; a Central separava os eventos em vários painéis técnicos; Auditoria mostrava até 250 eventos de uma vez; várias telas começavam por explicações extensas.
-- Depois: Conversas contém as visualizações de conversas e leads; o Kanban completo é aberto pelo resumo da Visão geral; Central apresenta um registro cronológico único com dez itens por página; Auditoria usa trinta itens por página; Agenda, Campanhas, Equipe, Pedro, Base de conhecimento e Simulador seguem a mesma hierarquia compacta.
+- Depois: Conversas contém as visualizações de conversas e leads; o Kanban completo é aberto pelo resumo da Visão geral; Central apresenta um registro cronológico único com dez itens por página; Auditoria usa trinta itens por página; as demais rotas operacionais começam por métricas ou estado real, usam navegação interna e recolhem formulários avançados quando apropriado.
 
 ## Escopo executado
 
-- Arquivos: shell e navegação; Inbox e contexto do lead; lista e detalhe de Leads; Central; Pedro; Campanhas; Agenda; Equipe; Base de conhecimento; Simulador; Auditoria; estilos modulares; documentos de decisão e homologação.
+- Arquivos: shell e navegação; Inbox e contexto do lead; lista e detalhe de Leads; Kanban completo; Central; Pedro; Campanhas; Agenda; Equipe; Base de conhecimento; Simulador; Organização; WhatsApp; Auditoria; estilos modulares; documentos de decisão e homologação.
 - Migrations: nenhuma.
 - Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: branch publicada e PR rascunho `#47` criado no GitHub; preview automática `https://gril-git-agent-workspace-redesign-real-brio5.vercel.app` concluída como `Ready`. Produção e Supabase não foram alterados.
 - Integração de trabalho: a branch foi criada sobre a mudança aprovada da Visão geral, integrou a frente funcional de Chat com Pedro e Lionel e reaproveitou a implementação anterior das abas de contexto do Inbox para preservar trabalho válido já existente.
 
 ## Validação
 
-- Comandos/testes executados: `npm run lint`; `npm test`; `npm run build -- --webpack` com as variáveis locais carregadas apenas no processo.
+- Comandos/testes executados: `npm run lint`; `npm test`; `npx next build --webpack` com as variáveis locais carregadas apenas no processo.
 - Evidência observada: lint aprovado; 22 arquivos e 110 testes aprovados; build Next.js 16.2.12 aprovado com TypeScript e 46 rotas; tela pública local renderizada sem overlay de erro.
-- Validações não executadas e motivo: telas autenticadas não foram inspecionadas com dados reais porque o navegador disponível não possuía sessão para `localhost` e nenhuma credencial foi solicitada ou reutilizada. A homologação autenticada fica para a preview.
+- Validações não executadas e motivo: a primeira inspeção autenticada da preview comprovou quais rotas ainda estavam superficiais e originou a correção registrada em `2026-08-14-correcao-redesign-rotas-operacionais.md`. A segunda rodada autenticada fica para a preview reconstruída com o novo commit.
 
 ## Impacto operacional
 

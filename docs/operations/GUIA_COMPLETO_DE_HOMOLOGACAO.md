@@ -383,8 +383,13 @@ Com dono ou gestor autenticado, valide a arquitetura de navegação antes dos fl
 4. em `Central`, alterne os filtros, confirme a ordem cronológica e verifique que cada página mostra no máximo dez registros reais;
 5. confirme que ações de alertas, notificações e escaladas continuam disponíveis no registro correspondente;
 6. em Auditoria, avance e volte entre páginas, sempre com no máximo trinta eventos;
-7. em Campanhas, confirme que criação e edição não mostram personalidade ou persona do Pedro, mas preservam modo, consentimento, importação, ondas, pausa, retomada e arquivamento;
-8. em celular, confirme as entradas `Início`, `Conversas`, `Agenda`, `Central` e `Mais`, sem overflow lateral da página.
+7. no Kanban completo, confirme métricas reais, filtros e todas as etapas em uma mesa horizontal; os cards devem abrir o registro completo e a navegação deve voltar somente à Visão geral;
+8. em Agenda, Campanhas, Equipe, Base e Simulador, confirme que o resumo inicial corresponde aos registros reais e que formulários e ações existentes continuam disponíveis;
+9. em Campanhas, confirme que criação e edição não mostram personalidade ou persona do Pedro, mas preservam modo, consentimento, importação, ondas, pausa, retomada e arquivamento;
+10. em Pedro, use as âncoras de comportamento, persona, modelos e testes; confirme que editores avançados ficam recolhidos e abrem sem perder rascunhos ou ações;
+11. em Organização, alterne pelas seções de identidade, operação e segurança e confira se o resumo reflete os valores salvos;
+12. em WhatsApp, confira contagens de conexões, credenciais e templates; abra separadamente cada forma de adicionar canal e confirme que nenhuma credencial é exibida para papel sem permissão;
+13. em celular, confirme as entradas `Início`, `Conversas`, `Agenda`, `Central` e `Mais`, sem overflow lateral da página.
 
 ### Visão geral
 

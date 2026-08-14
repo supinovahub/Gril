@@ -91,3 +91,24 @@
 .reviewItem button,.approveReview button,.importForm button,.createForm button,.actions button { min-height:38px; border-radius:8px; background:var(--ink); }
 .actions .secondary { background:var(--control-bg); }
 @media(max-width:1000px){.layout{grid-template-columns:1fr}}
+
+/* Mesa de campanhas */
+.campaignSummary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); overflow:hidden; border:1px solid var(--border); border-radius:var(--radius-panel); background:var(--border-soft); }
+.campaignSummary > span { display:grid; grid-template-columns:auto 1fr; min-height:72px; align-content:center; gap:3px 9px; padding:13px 16px; background:var(--surface); }
+.campaignSummary svg { grid-row:1/3; align-self:center; color:var(--accent); }
+.campaignSummary small { color:var(--ink-muted); font-size:8px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.campaignSummary strong { font-size:19px; font-variant-numeric:tabular-nums; letter-spacing:-.04em; }
+.layout { grid-template-columns:minmax(0,1fr); }
+.layout > aside { order:-1; }
+.list { grid-template-columns:repeat(2,minmax(0,1fr)); align-items:start; }
+.card { display:grid; align-content:start; }
+.cardHeader { padding-bottom:14px; border-bottom:1px solid var(--border-soft); }
+.cardHeader > span:nth-child(2) { min-width:0; }
+.cardHeader > span:nth-child(2) strong,.cardHeader > span:nth-child(2) small { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.createCampaign { box-shadow:none; border:1px solid var(--border); }
+.createCampaign > summary { min-height:54px; }
+.createCampaign[open] { box-shadow:var(--shadow); }
+.createCampaign[open] .createForm { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); }
+.createCampaign[open] .createForm > div,.createCampaign[open] .createForm > label:has(textarea),.createCampaign[open] .createForm > .check,.createCampaign[open] .createForm > button { grid-column:1/-1; }
+@media(max-width:900px){.campaignSummary{grid-template-columns:1fr 1fr}.list{grid-template-columns:1fr}.createCampaign[open] .createForm{grid-template-columns:1fr}.createCampaign[open] .createForm > *{grid-column:auto}}
+@media(max-width:560px){.campaignSummary{grid-template-columns:1fr}}

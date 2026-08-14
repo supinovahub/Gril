@@ -548,3 +548,21 @@
 .accessRequest { position:relative; overflow:hidden; border-radius:12px; background:var(--paper); box-shadow:inset 0 0 0 1px var(--border-soft); }
 .accessRequest::before { position:absolute; inset:12px auto 12px 0; width:3px; border-radius:0 4px 4px 0; background:var(--accent); content:""; }
 @media(max-width:850px){.accessRequest{grid-template-columns:1fr}}
+
+/* Diretório operacional da equipe */
+.teamSummary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); overflow:hidden; margin-bottom:18px; border:1px solid var(--border); border-radius:var(--radius-panel); background:var(--border-soft); }
+.teamSummary > span { display:grid; grid-template-columns:auto 1fr; min-height:72px; align-content:center; gap:3px 9px; padding:13px 16px; background:var(--surface); }
+.teamSummary svg { grid-row:1/3; align-self:center; color:var(--accent); }
+.teamSummary small { color:var(--ink-muted); font-size:8px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.teamSummary strong { font-size:19px; font-variant-numeric:tabular-nums; letter-spacing:-.04em; }
+.teamTabs { position:sticky; z-index:3; top:0; display:flex; width:fit-content; gap:3px; padding:3px; margin-bottom:18px; border:1px solid var(--border); border-radius:9px; background:var(--ledger); }
+.teamTabs a { display:inline-flex; min-height:34px; align-items:center; padding:0 11px; border-radius:6px; color:var(--ink-muted); font-size:9px; font-weight:780; }
+.teamTabs a:first-child,.teamTabs a:hover { background:var(--surface); color:var(--ink); box-shadow:0 1px 2px rgba(28,33,31,.07); }
+.panel { scroll-margin-top:60px; }
+.memberList { display:grid; }
+.memberMain { position:relative; }
+.memberMain::before { position:absolute; inset:17px auto 17px 0; width:3px; border-radius:0 4px 4px 0; background:transparent; content:""; }
+.member:has(.pending) .memberMain::before { background:var(--warning); }
+.member:has(.inactive) .memberMain::before { background:var(--ink-faint); }
+@media(max-width:850px){.teamSummary{grid-template-columns:1fr 1fr}.teamTabs{width:100%;overflow-x:auto}.teamTabs a{flex:1;justify-content:center;white-space:nowrap}}
+@media(max-width:560px){.teamSummary{grid-template-columns:1fr}.teamTabs a{flex:0 0 auto}}

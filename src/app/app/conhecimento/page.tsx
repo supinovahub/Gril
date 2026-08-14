@@ -1,4 +1,4 @@
-import { BookOpenCheck, Building2, CircleAlert, FileQuestion, Trash2 } from "lucide-react";
+import { BookOpenCheck, Building2, CircleAlert, Database, FileImage, FileQuestion, MessageCircleQuestion, Trash2 } from "lucide-react";
 
 import { TypedConfirmationButton } from "@/components/typed-confirmation-button";
 import { requireActiveViewer } from "@/lib/auth/session";
@@ -95,10 +95,23 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
           {conflicts?.length ? <section className={styles.panel}><div className={styles.panelHeader}><h2>Conflitos de fatos</h2><span>O valor atual continua no Pedro até decisão</span></div><div className={styles.faqList}>{conflicts.map((conflict)=><article key={conflict.id}><strong>{(conflict.projects as {name:string}|null)?.name} · {conflict.code}</strong><p>Atual: {JSON.stringify(conflict.current_snapshot)}<br/>Proposto: {conflict.proposed_value_text ?? conflict.proposed_value_number} · fonte {conflict.proposed_source_name}</p><form action={resolveProjectFactConflictAction}><input name="conflictId" type="hidden" value={conflict.id}/><textarea name="reason" placeholder="Justificativa" required/><div className={styles.two}><button name="decision" value="accept_new">Aceitar novo</button><button name="decision" value="keep_current">Manter atual</button><button name="decision" value="quarantine_current">Quarentenar atual</button></div></form></article>)}</div></section> : null}
         </div>
         <aside className={styles.forms}>
-          <ProjectCreateForm />
-          <form action={createFaqAction} className={styles.formCard}><div><p className={styles.eyebrow}>Conhecimento global</p><h2>Nova FAQ</h2></div><label><span>Pergunta canônica</span><input name="question" required /></label><label><span>Resposta base</span><textarea name="answer" required rows={4} /></label><label><span>Modo</span><select name="responseMode"><option value="direct">Resposta direta</option><option value="brief_then_call">Breve + call</option><option value="silent_escalation">Escalada silenciosa</option></select></label><label><span>Fonte</span><input name="sourceName" required /></label><button type="submit">Publicar FAQ v1</button></form>
-          <form action={createProjectFactAction} className={styles.formCard}><div><p className={styles.eyebrow}>Fonte e validade</p><h2>Novo fato aprovado</h2></div><label><span>Empreendimento</span><select name="projectId" required><option value="">Selecione</option>{projects?.map((project)=><option key={project.id} value={project.id}>{project.name}</option>)}</select></label><label><span>Código</span><input name="code" placeholder="area_privativa" required /></label><label><span>Valor</span><textarea name="valueText" required rows={2} /></label><label><span>Unidade</span><input name="unit" placeholder="m², vagas, torres..." /></label><label><span>Fonte</span><input name="sourceName" required /></label><div className={styles.two}><label><span>Referência</span><input defaultValue={new Date().toISOString().slice(0,10)} name="referenceDate" type="date" required /></label><label><span>Válido até (opcional)</span><input name="validUntil" type="date" /></label></div><button>Salvar fato</button></form>
-          <ProjectMediaManager projects={(projects ?? []).map(({ id, name })=>({ id, name }))} media={media} />
+          <div className={styles.creationRail}><span><strong>Adicionar à base</strong><small>Abra somente o cadastro que precisa fazer agora.</small></span></div>
+          <details className={styles.knowledgeCreator} open={!projects?.length}>
+            <summary><Building2 aria-hidden="true" size={16}/><span><strong>Novo empreendimento</strong><small>Dados comerciais e recomendação</small></span></summary>
+            <div className={styles.creatorBody}><ProjectCreateForm /></div>
+          </details>
+          <details className={styles.knowledgeCreator}>
+            <summary><MessageCircleQuestion aria-hidden="true" size={16}/><span><strong>Nova FAQ</strong><small>Resposta aprovada para o Pedro</small></span></summary>
+            <form action={createFaqAction} className={styles.formCard}><div><p className={styles.eyebrow}>Conhecimento global</p><h2>Nova FAQ</h2></div><label><span>Pergunta canônica</span><input name="question" required /></label><label><span>Resposta base</span><textarea name="answer" required rows={4} /></label><label><span>Modo</span><select name="responseMode"><option value="direct">Resposta direta</option><option value="brief_then_call">Breve + call</option><option value="silent_escalation">Escalada silenciosa</option></select></label><label><span>Fonte</span><input name="sourceName" required /></label><button type="submit">Publicar FAQ v1</button></form>
+          </details>
+          <details className={styles.knowledgeCreator}>
+            <summary><Database aria-hidden="true" size={16}/><span><strong>Novo fato</strong><small>Valor, fonte e validade</small></span></summary>
+            <form action={createProjectFactAction} className={styles.formCard}><div><p className={styles.eyebrow}>Fonte e validade</p><h2>Novo fato aprovado</h2></div><label><span>Empreendimento</span><select name="projectId" required><option value="">Selecione</option>{projects?.map((project)=><option key={project.id} value={project.id}>{project.name}</option>)}</select></label><label><span>Código</span><input name="code" placeholder="area_privativa" required /></label><label><span>Valor</span><textarea name="valueText" required rows={2} /></label><label><span>Unidade</span><input name="unit" placeholder="m², vagas, torres..." /></label><label><span>Fonte</span><input name="sourceName" required /></label><div className={styles.two}><label><span>Referência</span><input defaultValue={new Date().toISOString().slice(0,10)} name="referenceDate" type="date" required /></label><label><span>Válido até (opcional)</span><input name="validUntil" type="date" /></label></div><button>Salvar fato</button></form>
+          </details>
+          <details className={styles.knowledgeCreator}>
+            <summary><FileImage aria-hidden="true" size={16}/><span><strong>Mídias</strong><small>Fotos, book e materiais</small></span></summary>
+            <div className={styles.creatorBody}><ProjectMediaManager projects={(projects ?? []).map(({ id, name })=>({ id, name }))} media={media} /></div>
+          </details>
           {(activeProjects < 5 || publishedFaqs < 10) ? <p className={styles.warning}><CircleAlert size={15} /> A base recomendada ainda está incompleta. É advertência de prontidão, não bloqueio técnico.</p> : null}
         </aside>
       </div>

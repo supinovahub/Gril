@@ -92,3 +92,20 @@
 .definitionList li { background:var(--paper); }
 .mediaList > div { background:var(--paper); }
 @media(max-width:1050px){.layout{grid-template-columns:1fr}}
+
+/* Cadastros por intenção */
+.creationRail { padding:2px 2px 4px; }
+.creationRail > span { display:grid; gap:3px; }
+.creationRail strong { font-size:11px; }
+.creationRail small { color:var(--ink-muted); font-size:9px; line-height:1.45; }
+.knowledgeCreator { overflow:hidden; border:1px solid var(--border); border-radius:10px; background:var(--surface); }
+.knowledgeCreator > summary { display:flex; min-height:56px; align-items:center; gap:10px; padding:0 13px; cursor:pointer; list-style:none; }
+.knowledgeCreator > summary::-webkit-details-marker { display:none; }
+.knowledgeCreator > summary > svg { color:var(--accent); }
+.knowledgeCreator > summary > span { display:grid; gap:2px; }
+.knowledgeCreator > summary strong { font-size:10px; }
+.knowledgeCreator > summary small { color:var(--ink-muted); font-size:8px; }
+.knowledgeCreator[open] { box-shadow:var(--shadow); }
+.knowledgeCreator[open] > summary { border-bottom:1px solid var(--border-soft); background:var(--paper); }
+.knowledgeCreator .formCard,.knowledgeCreator .creatorBody > * { border:0; border-radius:0; box-shadow:none; }
+.creatorBody { display:grid; }

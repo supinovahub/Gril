@@ -1,8 +1,11 @@
 import {
+  CalendarCheck2,
+  CalendarDays,
   CheckCircle2,
   Clock3,
   PhoneCall,
   ShieldAlert,
+  UserRoundSearch,
   Video,
 } from "lucide-react";
 
@@ -120,6 +123,18 @@ export default async function AgendaPage({
     rules?.length &&
     settings?.can_receive_calls,
   );
+  const now = new Date();
+  const timeZone = operation?.timezone ?? "America/Sao_Paulo";
+  const dayFormatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const todayKey = dayFormatter.format(now);
+  const upcomingCalls = (calls ?? []).filter((call) => new Date(call.starts_at) > now && !["completed", "no_show", "cancelled"].includes(call.status));
+  const todayCalls = (calls ?? []).filter((call) => dayFormatter.format(new Date(call.starts_at)) === todayKey);
+  const availableDays = new Set((rules ?? []).map((rule) => rule.weekday)).size;
   return (
     <div className={styles.page}>
       <header className={styles.header}>
@@ -143,6 +158,12 @@ export default async function AgendaPage({
         <a href="#proximas-calls">Compromissos</a>
         <a href="#disponibilidade">Disponibilidade</a>
       </nav>
+      <section className={styles.agendaSummary} aria-label="Resumo da agenda">
+        <span><CalendarDays aria-hidden="true" size={17} /><small>Hoje</small><strong>{todayCalls.length}</strong><b>compromissos</b></span>
+        <span><CalendarCheck2 aria-hidden="true" size={17} /><small>Próximas</small><strong>{upcomingCalls.length}</strong><b>calls abertas</b></span>
+        <span><UserRoundSearch aria-hidden="true" size={17} /><small>Ofertas</small><strong>{offers?.length ?? 0}</strong><b>aguardando resposta</b></span>
+        <span><Clock3 aria-hidden="true" size={17} /><small>Disponibilidade</small><strong>{availableDays}</strong><b>dias configurados</b></span>
+      </section>
       {offers?.length ? (
         <section className={styles.offers}>
           <h2>Ofertas para você</h2>

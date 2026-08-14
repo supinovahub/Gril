@@ -1,4 +1,4 @@
-import { Archive, ArchiveRestore, LockKeyhole, MessageSquarePlus } from "lucide-react";
+import { Archive, ArchiveRestore, FlaskConical, LockKeyhole, MessageSquarePlus, MessagesSquare, ShieldCheck } from "lucide-react";
 import Link from "next/link";
 
 import { requireActiveViewer } from "@/lib/auth/session";
@@ -147,6 +147,11 @@ export default async function SimulatorPage({
     return !terminalStatuses.has(execution?.status ?? run.status);
   });
   const regressionPending = (regressions ?? []).some((run) => ["queued", "running"].includes(run.status));
+  const totalTurns = (sessions ?? []).reduce((total, session) => total + session.turn_count, 0);
+  const latestRegression = regressions?.[0];
+  const latestPassRate = latestRegression?.total_cases
+    ? Math.round((latestRegression.passed_cases / latestRegression.total_cases) * 100)
+    : null;
   const errorMessage = feedback.erro ? errorMessages[feedback.erro] ?? errorMessages["nao-foi-possivel-executar"] : null;
   const successMessage = feedback.sucesso ? successMessages[feedback.sucesso] : null;
 
@@ -163,6 +168,12 @@ export default async function SimulatorPage({
 
     {errorMessage ? <p className={styles.notice}>{errorMessage}</p> : null}
     {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
+
+    <section className={simulatorStyles.simulatorSummary} aria-label="Resumo do laboratório">
+      <span><MessagesSquare aria-hidden="true" size={17}/><small>{archivedView ? "Arquivadas" : "Conversas ativas"}</small><strong>{sessions?.length ?? 0}</strong></span>
+      <span><FlaskConical aria-hidden="true" size={17}/><small>Turnos registrados</small><strong>{totalTurns}</strong></span>
+      <span><ShieldCheck aria-hidden="true" size={17}/><small>Última regressão</small><strong>{latestPassRate === null ? "Não executada" : `${latestPassRate}%`}</strong></span>
+    </section>
 
     <section className={simulatorStyles.workspace}>
       <aside className={simulatorStyles.sessionsPanel}>

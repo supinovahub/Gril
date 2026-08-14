@@ -241,3 +241,26 @@
   .timeline li { grid-template-columns: 13px minmax(0, 1fr); }
   .timeline li time { grid-column: 2; }
 }
+
+/* Canais como workspace de operação */
+.channelSummary { display:grid; grid-template-columns:repeat(4,minmax(0,1fr)); gap:1px; overflow:hidden; margin-bottom:18px; border:1px solid var(--border); border-radius:var(--radius-panel); background:var(--border-soft); }
+.channelSummary > span { display:grid; grid-template-columns:auto 1fr; align-items:center; gap:3px 10px; min-height:78px; padding:15px 17px; background:var(--surface); }
+.channelSummary svg { grid-row:1 / 3; color:var(--accent-dark); }
+.channelSummary small { color:var(--ink-muted); font-size:9px; }
+.channelSummary strong { font-size:18px; letter-spacing:-.03em; }
+.channelTabs { display:flex; gap:4px; overflow-x:auto; margin-bottom:20px; border-bottom:1px solid var(--border); }
+.channelTabs a { flex:0 0 auto; padding:10px 12px 11px; border-bottom:2px solid transparent; color:var(--ink-muted); font-size:10px; font-weight:720; text-decoration:none; }
+.channelTabs a:first-child { border-bottom-color:var(--accent); color:var(--ink); }
+.settingsLayout { grid-template-columns:minmax(0,1fr); }
+.formStack { grid-template-columns:repeat(2,minmax(0,1fr)); }
+.connectionCreator { overflow:hidden; border:1px solid var(--border); border-radius:var(--radius-panel); background:var(--surface); }
+.connectionCreator > summary { display:flex; min-height:72px; align-items:center; justify-content:space-between; gap:16px; padding:15px 17px; cursor:pointer; list-style:none; }
+.connectionCreator > summary::-webkit-details-marker { display:none; }
+.connectionCreator > summary > span:first-child { display:grid; gap:4px; }
+.connectionCreator > summary small { color:var(--ink-muted); font-size:9px; }
+.connectionCreator > summary strong { font-size:12px; }
+.connectionCreator > summary > span:last-child { color:var(--accent-dark); font-size:9px; font-weight:760; }
+.connectionCreator[open] > summary { border-bottom:1px solid var(--border-soft); background:var(--control-bg); }
+.connectionCreator .connectionForm { box-shadow:none; }
+.connectionList > .connectionList { margin:18px -20px -20px; border-top:1px solid var(--border); border-radius:0; box-shadow:none; }
+@media(max-width:760px){.channelSummary{grid-template-columns:repeat(2,minmax(0,1fr))}.formStack{grid-template-columns:1fr}}

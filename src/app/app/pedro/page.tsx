@@ -64,7 +64,14 @@ export default async function PedroPage({
         <span>Para começar, recomendamos <strong>Sugere para revisão</strong>.</span>
       </section>
 
-      <section className={styles.behaviorGrid} aria-label="Comportamentos do Pedro">
+      <nav aria-label="Seções de configuração do Pedro" className={styles.pedroTabs}>
+        <a href="#comportamentos">Comportamentos</a>
+        <a href="#persona">Persona</a>
+        <a href="#modelos">Modelos</a>
+        <a href="#testes">Testes e histórico</a>
+      </nav>
+
+      <section className={styles.behaviorGrid} id="comportamentos" aria-label="Comportamentos do Pedro">
         <article className={styles.behaviorPanel}>
           <header><span><p className={styles.eyebrow}>Atendimento via WhatsApp</p><h2>Conversas recebidas</h2></span><span className={styles.behaviorState}>{modeLabels[inboundMode] ?? inboundMode}</span></header>
           <p>Controle como Pedro participa das conversas iniciadas pelo lead. O modo assistido prepara a resposta e espera a revisão da equipe.</p>
@@ -86,14 +93,18 @@ export default async function PedroPage({
 
       <div className={styles.grid}>
         <div className={styles.mainColumn}>
-          <section className={styles.panel}>
+          <section className={styles.panel} id="persona">
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Persona e estilo</p><h2>{defaultPersona?.name ?? "Pedro"}</h2></span><span className={styles.versionChip}>publicada · v{published?.version}</span></div>
-            <form action={createPersonaDraftAction} className={styles.promptForm}>
-              <input name="personaId" type="hidden" value={defaultPersona?.id} />
-              <label><span>Instruções atuais do Pedro (avançado)</span><textarea defaultValue={published?.compiled_prompt} name="compiledPrompt" rows={14} required /></label>
-              <p>Editar cria uma nova versão em rascunho. Conversas existentes continuam com a versão que já estava ativa.</p>
-              <button type="submit">Criar nova versão</button>
-            </form>
+            <p className={styles.panelIntro}>A versão publicada continua atendendo enquanto você prepara e revisa uma nova configuração.</p>
+            <details className={styles.advancedEditor} open={!published}>
+              <summary>Editar instruções avançadas</summary>
+              <form action={createPersonaDraftAction} className={styles.promptForm}>
+                <input name="personaId" type="hidden" value={defaultPersona?.id} />
+                <label><span>Instruções atuais do Pedro</span><textarea defaultValue={published?.compiled_prompt} name="compiledPrompt" rows={14} required /></label>
+                <p>Editar cria uma nova versão em rascunho. Conversas existentes continuam com a versão que já estava ativa.</p>
+                <button type="submit">Criar nova versão</button>
+              </form>
+            </details>
             {drafts.map((draft) => (
               <article className={styles.draftRow} key={draft.id}><span><strong>Rascunho v{draft.version}</strong><small>{draft.checksum.slice(0, 12)}…</small></span>{viewer.membership?.role === "owner" ? <form action={publishPersonaAction}><input name="personaVersionId" type="hidden" value={draft.id} /><button type="submit">Publicar</button></form> : null}</article>
             ))}
@@ -101,21 +112,29 @@ export default async function PedroPage({
 
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Construtor guiado</p><h2>Amostras e clones</h2></span><span className={styles.versionChip}>{samplesResult.data?.filter((item)=>item.persona_id===defaultPersona?.id && item.status==='confirmed').length ?? 0} de 10 a 30</span></div>
-            <form action={addPersonaSampleAction} className={styles.promptForm}>
-              <label><span>Persona</span><select name="personaId" required>{personasResult.data?.map((persona)=><option key={persona.id} value={persona.id}>{persona.name}</option>)}</select></label>
-              <label><span>Conversa de exemplo</span><textarea name="sample" placeholder="Cole uma conversa. Telefones, e-mails, documentos e valores serão mascarados antes da análise." required rows={8}/></label>
-              <p>O original fica protegido somente durante o rascunho e por no máximo 30 dias. Na publicação, permanecem apenas padrões e exemplos anonimizados confirmados.</p>
-              <button type="submit">Mascarar e analisar amostra</button>
-            </form>
-            <form action={clonePersonaAction} className={styles.promptForm}>
-              <input name="sourcePersonaId" type="hidden" value={defaultPersona?.id}/>
-              <label><span>Nome da nova persona</span><input name="name" required/></label>
-              <label><span>Código interno</span><input name="code" pattern="[a-z0-9_]+" placeholder="pedro_investidor" required/></label>
-              <button type="submit">Clonar para novo rascunho</button>
-            </form>
+            <div className={styles.editorChoices}>
+              <details className={styles.advancedEditor}>
+                <summary>Adicionar conversa de exemplo</summary>
+                <form action={addPersonaSampleAction} className={styles.promptForm}>
+                  <label><span>Persona</span><select name="personaId" required>{personasResult.data?.map((persona)=><option key={persona.id} value={persona.id}>{persona.name}</option>)}</select></label>
+                  <label><span>Conversa de exemplo</span><textarea name="sample" placeholder="Cole uma conversa. Telefones, e-mails, documentos e valores serão mascarados antes da análise." required rows={8}/></label>
+                  <p>O original fica protegido somente durante o rascunho e por no máximo 30 dias. Na publicação, permanecem apenas padrões e exemplos anonimizados confirmados.</p>
+                  <button type="submit">Mascarar e analisar amostra</button>
+                </form>
+              </details>
+              <details className={styles.advancedEditor}>
+                <summary>Clonar persona</summary>
+                <form action={clonePersonaAction} className={styles.promptForm}>
+                  <input name="sourcePersonaId" type="hidden" value={defaultPersona?.id}/>
+                  <label><span>Nome da nova persona</span><input name="name" required/></label>
+                  <label><span>Código interno</span><input name="code" pattern="[a-z0-9_]+" placeholder="pedro_investidor" required/></label>
+                  <button type="submit">Clonar para novo rascunho</button>
+                </form>
+              </details>
+            </div>
           </section>
 
-          <section className={styles.panel}>
+          <section className={styles.panel} id="modelos">
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Conexão com a IA</p><h2>Chave e modelos</h2></span></div>
             {viewer.membership?.role === "owner" ? <div className={styles.credentialPanel}>
               <div className={styles.credentialSummary}>
@@ -154,7 +173,7 @@ export default async function PedroPage({
         </div>
 
         <aside className={styles.sideColumn}>
-          <section className={styles.panel}>
+          <section className={styles.panel} id="testes">
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Teste controlado</p><h2>Números autorizados para teste</h2></span></div>
             <p className={styles.notice}>A whitelist controla o teste de campanhas de reativação. Em <strong>Todos os contatos elegíveis</strong>, a campanha pode responder respeitando opt-out e supressão; o atendimento normal continua sem respostas automáticas.</p>
             <form action={addAiTestNumberAction} className={styles.keyForm}><label><span>Número liberado para teste</span><input name="phoneE164" placeholder="+5511999999999" required /></label><button type="submit">Adicionar</button></form>
