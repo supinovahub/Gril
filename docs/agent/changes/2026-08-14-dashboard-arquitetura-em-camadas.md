@@ -18,19 +18,19 @@ Transformar a repaginação do dashboard em uma mudança real de arquitetura da 
 
 - Arquivos: `src/app/app/page.tsx`, `src/app/app/dashboard.module.css`, `src/components/app-shell/app-shell.tsx`, `src/components/app-shell/app-shell.module.css`, `src/components/app-shell/nav-group.tsx`, documentação de decisão, estado e homologação.
 - Migrations: nenhuma.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma durante a implementação. A continuação ocorre na branch e no PR já existentes.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: commit publicado na branch e descrição do PR rascunho #47 atualizada; o push gerou automaticamente uma nova preview Vercel. Produção e Supabase não foram alterados.
 - Coordenação: o preflight encontrou worktrees históricos com sobreposição de caminhos; a branch atual é a continuação explicitamente solicitada do PR #47, e nenhuma branch rejeitada ou trabalho externo foi integrado.
 
 ## Validação
 
 - Comandos/testes executados: `npm run lint`, `npm test`, `npx next build --webpack` e `git diff --check`.
-- Evidência observada: lint aprovado; 22 arquivos e 110 testes aprovados; build Webpack do Next.js 16.2.12 compilou, validou TypeScript e gerou 46 rotas; diff sem erro de whitespace.
+- Evidência observada: lint aprovado; 22 arquivos e 110 testes aprovados; build Webpack do Next.js 16.2.12 compilou, validou TypeScript e gerou 46 rotas; diff sem erro de whitespace; dois checks `quality`, Vercel e Vercel Preview Comments concluídos com sucesso no PR.
 - Observação de ambiente: a primeira coleta de páginas do build parou porque este worktree não contém `.env.local`; a repetição carregou em memória o arquivo local já existente no workspace original, sem exibir, copiar ou versionar segredos, e foi concluída.
 - Validações não executadas e motivo: QA visual autenticado desta rodada permanece para homologação da preview; nenhuma ação foi executada em produção ou no banco único.
 
 ## Impacto operacional
 
-- Deploy necessário: atualização da preview do PR #47; produção não autorizada.
+- Deploy necessário: preview do PR #47 atualizada automaticamente em `https://gril-git-agent-workspace-redesign-real-brio5.vercel.app`; produção não autorizada e não alterada.
 - Migração aplicada: não.
 - Compatibilidade/rollback: rotas, permissões, server actions, consultas e links profundos foram preservados; rollback é o revert do commit de interface e documentação.
 
