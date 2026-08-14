@@ -210,6 +210,8 @@ No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confir
 12. com uma sugestão `assisted` pendente, abra `/app/chat-pedro`: o tópico do lead deve mostrar a mesma resposta proposta no Inbox, o contexto resumido da análise, a mensagem inbound exata e o link para a conversa;
 13. edite a resposta no tópico e aprove: somente o texto editado deve ser enviado, o Inbox deve refletir o resultado e o tópico deve deixar de exigir ação;
 14. gere duas sugestões para a mesma conversa: elas devem permanecer no mesmo tópico do lead, sem duplicar tópicos, e a fila só pode ser resolvida depois da última pendência.
+15. na fila do Chat com Pedro, use busca, status, prioridade e **Só pendências**; confirme que os filtros alteram a lista sem expor tópicos de outra operação.
+16. abra um tópico com pendência e confirme que o painel **Próximo passo** explica que a aprovação é humana e que o lead só é afetado depois da ação explícita.
 
 ### 6.2 Chat geral, intervenção humana e corretor
 
@@ -220,6 +222,8 @@ No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confir
 5. durante uma janela ativa do corretor, use `Pedir ajuda ao Pedro`: `/app/assistente-corretor` deve mostrar somente aquele lead e responder de forma consultiva, sem enviar ao WhatsApp;
 6. depois do fim/revogação da janela, o corretor não deve mais acessar o tópico nem a conversa;
 7. confirme atualização automática, sem F5, e badges separados para Inbox, Chat com Pedro, Lionel e Assistente do corretor.
+8. no Lionel, confirme que a fila se identifica como **Fila de curadoria**, o painel **Próximo passo** orienta a responder uma pergunta por vez e o botão de candidato deixa claro que o resultado vai para revisão.
+9. com um gestor, confirme que Lionel e a action de registro de candidato seguem a mesma permissão; corretor continua sem acesso.
 
 No Inbox, valide a ordem da lista com uma conversa mais antiga que tenha uma
 mensagem inbound não lida, outra com sugestão `assisted` pendente e uma
