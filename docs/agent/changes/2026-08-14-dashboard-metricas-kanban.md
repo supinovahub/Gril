@@ -2,7 +2,8 @@
 
 - Data: 14/08/2026
 - Responsável: Codex
-- Branch/PR: `agent/dashboard-redesign-real`; PR não aberto
+- Branch/PR: `agent/dashboard-redesign-real`; PR rascunho
+  [#46](https://github.com/supinovahub/Gril/pull/46)
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
@@ -26,7 +27,11 @@ do Kanban, preservando a identidade já usada em produção.
   `.superdesign/design-system.md`, decisão de produto, este registro e guia de
   homologação.
 - Migrations: nenhuma.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: a branch foi
+  publicada no GitHub, o PR rascunho #46 foi aberto e a integração Git da
+  Vercel criou a preview
+  `https://gril-git-agent-dashboard-redesign-real-brio5.vercel.app`. Nenhuma
+  alteração foi feita no Supabase ou em produção.
 
 ## Validação
 
@@ -36,15 +41,16 @@ do Kanban, preservando a identidade já usada em produção.
 - Evidência observada: lint sem erros; 22 arquivos e 110 testes passaram; o
   build compilou, concluiu TypeScript e gerou 46 páginas. A rota protegida
   redireciona para `/login?next=%2Fapp`; o navegador mantém o título
-  `Entrar | Pedro` e o favicon `/icon.svg`. A implementação autenticada ainda
+  `Entrar | Pedro` e o favicon `/icon.svg`. Na preview, os dois checks `quality`
+  do GitHub passaram, o deployment ficou `Ready`, `/login` respondeu HTTP 200 e
+  `/app` respondeu HTTP 307 para o login. A implementação autenticada ainda
   depende de homologação humana com dados reais.
 - Validações não executadas e motivo: a homologação visual autenticada não usa
   credenciais criadas ou reaproveitadas automaticamente por um agente.
 
 ## Impacto operacional
 
-- Deploy necessário: sim para disponibilizar a nova Visão geral; nenhum deploy
-  foi executado.
+- Deploy necessário: a preview foi publicada; produção não foi alterada.
 - Migração aplicada: não.
 - Compatibilidade/rollback: a mudança reutiliza tabelas, permissões, rotas e
   ações existentes. Reverter o commit restaura apenas a apresentação anterior.
@@ -55,6 +61,8 @@ do Kanban, preservando a identidade já usada em produção.
   nove etapas e nomes dos responsáveis.
 - Confirmar com dados representativos se as definições de taxa de resposta e
   conversão atendem à leitura comercial esperada.
+- A preview possui proteção da Vercel; o homologador precisa entrar na Vercel
+  antes de usar a autenticação normal do Gril.
 - O build usou webpack porque o Turbopack 16.2.12 rejeita o junction local de
   `node_modules` apontando para fora do worktree; o bundle de produção foi
   concluído normalmente por esse caminho.

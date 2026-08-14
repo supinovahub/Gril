@@ -260,15 +260,16 @@ Este documento não substitui:
 
 ## Atualização de 14/08/2026 — Visão geral com métricas e Kanban
 
-- A branch `agent/dashboard-redesign-real`, ainda não publicada, substitui a
-  composição técnica do Dashboard por quatro métricas comerciais, seletor de
-  período e um snapshot somente leitura do Kanban real.
+- A branch `agent/dashboard-redesign-real`, publicada no PR rascunho #46,
+  substitui a composição técnica do Dashboard por quatro métricas comerciais,
+  seletor de período e um snapshot somente leitura do Kanban real. A preview é
+  `https://gril-git-agent-dashboard-redesign-real-brio5.vercel.app`.
 - A decisão aprovada remove “Bom dia, Pedro” e “Hoje na operação”, limita
   atenção e agenda a três itens e recolhe a limpeza HML em “Área
   administrativa”.
 - Paleta, favicon, título do navegador, rotas, permissões, RLS e contratos de
   banco permanecem iguais à produção. Nenhuma migration, alteração de dados ou
-  deploy foi executado.
+  deploy de produção foi executado; a preview automática ficou `Ready`.
 - A validação automatizada desta branch está registrada em
   `docs/agent/changes/2026-08-14-dashboard-metricas-kanban.md`; a homologação
   autenticada em desktop e mobile com dados reais permanece pendente.
