@@ -1,7 +1,46 @@
-import { Link2, Webhook } from "lucide-react";
+import { Cloud, MessageSquareMore } from "lucide-react";
+
+import { ButtonLink } from "@/components/ui/button";
+import { PageHeader } from "@/components/ui/page-header";
+import { StatusBadge } from "@/components/ui/status-badge";
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
-import { createMetaFormAction } from "./actions";
 import styles from "../../operations.module.css";
 
-export default async function MetaSettingsPage({searchParams}:{searchParams:Promise<{erro?:string;sucesso?:string}>}){const viewer=await requireActiveViewer();const feedback=await searchParams;const supabase=await createClient();const[{data:connections},{data:forms},{data:preleads}]=await Promise.all([supabase.from("whatsapp_connections").select("id,name,phone_e164,status").eq("provider","meta_cloud").eq("status","active").eq("inbound_enabled",true),supabase.from("meta_lead_forms").select("*").eq("org_id",viewer.organization!.id).order("created_at",{ascending:false}),supabase.from("preleads").select("status").eq("org_id",viewer.organization!.id)]);return <div className={styles.page}><header className={styles.header}><div><p className={styles.eyebrow}>Meta Lead Ads</p><h1>Formulários e pré-leads</h1><p>Formulário tardio só preenche lacunas; WhatsApp inbound não espera o Meta.</p></div><span className={styles.badge}>{preleads?.length??0} recebidos</span></header>{feedback.erro?<p className={styles.error}>É necessária uma conexão Meta ativa, inbound habilitado e mapeamento válido.</p>:null}{feedback.sucesso?<p className={styles.success}>Formulário versionado e publicado.</p>:null}<div className={styles.layout}><main><section className={styles.panel}><div className={styles.panelHeader}><h2>Formulários</h2><Webhook size={17}/></div><div className={styles.list}>{forms?.map((form)=><article className={styles.item} key={form.id}><span><strong>{form.name}</strong><small>{form.external_form_id} · consentimento v{form.consent_version}</small></span><b>{form.status}</b></article>)}{!forms?.length?<p className={styles.empty}>Nenhum formulário mapeado.</p>:null}</div></section></main><aside><form action={createMetaFormAction} className={styles.formCard}><div><p className={styles.eyebrow}>Mapeamento v1</p><h2>Conectar formulário</h2></div><label><span>Conexão Meta ativa</span><select name="connectionId"><option value="">Selecione</option>{connections?.map((item)=><option key={item.id} value={item.id}>{item.name} · {item.phone_e164}</option>)}</select></label><label><span>ID externo do formulário</span><input name="externalFormId"/></label><label><span>Nome interno</span><input name="name"/></label><label><span>Campo de nome</span><input name="nameField" defaultValue="full_name"/></label><label><span>Campo de telefone</span><input name="phoneField" defaultValue="phone_number"/></label><label><span>Texto de consentimento exibido</span><textarea name="consentText" rows={4}/></label><button><Link2 size={14}/> Publicar mapeamento</button></form></aside></div></div>}
+export default async function MetaSettingsPage() {
+  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const { data: connections, error } = await supabase
+    .from("whatsapp_connections")
+    .select("id,name,phone_e164,status,inbound_enabled")
+    .eq("org_id", viewer.organization!.id)
+    .eq("provider", "meta_cloud")
+    .order("created_at", { ascending: false });
+
+  return (
+    <div className={styles.page}>
+      <PageHeader
+        eyebrow="Integrações"
+        title="Meta Cloud"
+        description="Acompanhe os números oficiais conectados. O cadastro de formulários e pré-leads não faz mais parte da interface operacional."
+      >
+        <ButtonLink href="/app/configuracoes/whatsapp" variant="secondary">Gerenciar números</ButtonLink>
+      </PageHeader>
+      {error ? <p className={styles.error}>Não foi possível carregar as conexões Meta.</p> : null}
+      <section className={styles.panel}>
+        <div className={styles.panelHeader}><h2>Números conectados</h2><Cloud size={17} /></div>
+        <div className={styles.list}>
+          {connections?.map((connection) => (
+            <article className={styles.item} key={connection.id}>
+              <span><strong>{connection.name}</strong><small>{connection.phone_e164 ?? "Número protegido"}</small></span>
+              <StatusBadge tone={connection.status === "active" && connection.inbound_enabled ? "positive" : "warning"}>
+                {connection.status === "active" && connection.inbound_enabled ? "Recebendo mensagens" : "Requer atenção"}
+              </StatusBadge>
+            </article>
+          ))}
+          {!connections?.length ? <p className={styles.empty}><MessageSquareMore size={18} /> Nenhum número Meta Cloud conectado.</p> : null}
+        </div>
+      </section>
+    </div>
+  );
+}

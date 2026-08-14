@@ -1,5 +1,13 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 13/08/2026 — redesign integral Signal Workspace
+
+- A branch `agent/full-ui-redesign-v2`, derivada de `origin/fix/inbox-lead-context-tabs`, substitui a direção visual quente anterior por `Signal Workspace`: Geist, canvas azul-neblina, superfícies brancas, navegação clara de 232 px e cobalto como acento principal.
+- Visão Geral incorpora indicadores comerciais por contagens exatas sem baixar tabelas completas; Conversas concentra lista, atenção e acesso ao Kanban; a Central incorpora tópicos acionáveis de Pedro e Lionel e mantém 10 registros por página; Auditoria permanece com 30 eventos por página.
+- Aprendizados, Experimentos A/B, Checklists, Privacidade, Relatórios isolados e cadastro de formulário/pré-lead Meta foram retirados da interface sem apagar schema, actions ou histórico.
+- Lint, 110 testes e build das 47 rotas passaram localmente. QA visual descartável passou em desktop e no breakpoint de 390 px, sem overflow horizontal. Produção, Supabase e Vercel não foram alterados; a preview autenticada ainda precisa de homologação.
+- A decisão canônica está em `docs/decisions/2026-08-12-ui-operacional-unificada.md` e o registro detalhado em `docs/agent/changes/2026-08-13-redesign-signal-workspace.md`.
+
 ## Atualização de 13/08/2026 — implementação real da Triage Desk
 
 - A branch `fix/implement-triage-desk`, derivada da Preview Taste, implementou

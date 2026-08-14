@@ -14,7 +14,7 @@
 .eyebrow {
   margin: 0 0 8px;
   color: var(--accent-dark);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 780;
   letter-spacing: 0.12em;
   text-transform: uppercase;
@@ -263,7 +263,7 @@
 .generatedLink code {
   overflow: hidden;
   color: #315b48;
-  font-size: 10px;
+  font-size: 11px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -333,7 +333,7 @@
 
 .person small {
   color: var(--ink-muted);
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .person .whatsappMissing {
@@ -356,7 +356,7 @@
   border-radius: 999px;
   background: #edf5f0;
   color: var(--positive);
-  font-size: 9px;
+  font-size: 11px;
   font-weight: 750;
   text-transform: uppercase;
 }
@@ -385,7 +385,7 @@
   border: 1px solid var(--border);
   border-radius: 8px;
   background: #fff;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .actionButton {
@@ -410,7 +410,7 @@
   width: fit-content;
   color: var(--ink-muted);
   cursor: pointer;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 680;
 }
 
@@ -430,7 +430,7 @@
   align-items: center;
   gap: 7px;
   color: #514c46;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .savePermissions {
@@ -457,7 +457,7 @@
   display: grid;
   gap: 6px;
   color: var(--ink-muted);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 700;
 }
 
@@ -485,7 +485,7 @@
   padding: 13px 22px;
   border-bottom: 1px solid #ebe5dc;
   text-align: left;
-  font-size: 10px;
+  font-size: 11px;
 }
 
 .inviteList th {
@@ -571,15 +571,15 @@
 .page { width:min(100%,1280px); max-width:none; }
 .header h1 { font-family:var(--font-display),Georgia,serif; font-size:clamp(34px,4vw,42px); font-weight:560; letter-spacing:-.045em; line-height:1; }
 .header p:last-child { max-width:680px; font-size:11px; line-height:1.55; }
-.eyebrow { color:var(--accent-dark); font-size:9px; letter-spacing:.14em; }
-.summary { font-size:10px; }
+.eyebrow { color:var(--accent-dark); font-size:11px; letter-spacing:.14em; }
+.summary { font-size:11px; }
 .panel { border:0; border-radius:var(--radius-panel); background:var(--surface); box-shadow:var(--shadow); }
 .panelHeader { border-bottom-color:var(--border-soft); }
 .segmented { border:0; background:var(--ledger); }
 .segmented label:has(input:checked) { background:var(--surface); box-shadow:0 1px 2px rgba(28,33,31,.08); }
 .field input,.field select,.fieldWide input,.approveForm select,.whatsappForm input,.codeActions input,.requestActions input,.requestActions select { min-height:42px; border-color:var(--border); border-radius:8px; background:var(--control-bg); }
 .primaryButton { min-height:42px; border-color:var(--ink); background:var(--ink); }
-.feedback { position:relative; overflow:hidden; border:0; background:#f9ebe9; }
+.feedback { position:relative; overflow:hidden; border:0; background:#fef3f2; }
 .feedback::before { position:absolute; inset:0 auto 0 0; width:3px; background:currentColor; content:""; }
 .success { background:var(--pine-soft); }
 .generatedLink { border:0; background:var(--pine-soft); box-shadow:inset 3px 0 0 var(--positive); }
@@ -593,3 +593,33 @@
 .accessRequest { position:relative; overflow:hidden; border-radius:12px; background:var(--paper); box-shadow:inset 0 0 0 1px var(--border-soft); }
 .accessRequest::before { position:absolute; inset:12px auto 12px 0; width:3px; border-radius:0 4px 4px 0; background:var(--accent); content:""; }
 @media(max-width:850px){.accessRequest{grid-template-columns:1fr}}
+
+/* Signal workspace overrides */
+.page { width:min(100%,1320px); }
+.header h1 { font-family:var(--font-interface),sans-serif; font-size:clamp(30px,3.5vw,40px); font-weight:680; }
+.header p:last-child { font-size:13px; }
+.eyebrow { color:var(--accent-dark); font-size:11px; letter-spacing:.08em; }
+.summary { border:1px solid var(--border); border-radius:var(--radius-pill); background:white; padding:8px 11px; font-size:11px; }
+.modelGrid { gap:10px; }
+.modelCard { border:1px solid var(--border); border-radius:var(--radius-panel); background:white; box-shadow:none; }
+.modelIcon { border-radius:8px; background:#eaf0ff; color:var(--accent-dark); }
+.modelCard strong { font-size:13px; }
+.modelCard p { font-size:12px; }
+.panel { border:1px solid var(--border); border-radius:var(--radius-panel); box-shadow:none; }
+.panelHeader h2 { font-size:16px; }
+.panelHeader span,.formHint { font-size:11px; }
+.segmented { background:var(--control-bg); }
+.segmented label:has(input:checked) { background:#eaf0ff; color:var(--accent-dark); box-shadow:none; }
+.field input,.field select,.fieldWide input,.approveForm select,.whatsappForm input,.codeActions input,.requestActions input,.requestActions select { background:white; font-size:12px; }
+.field input:focus,.field select:focus,.fieldWide input:focus,.approveForm select:focus,.whatsappForm input:focus,.codeActions input:focus,.requestActions input:focus,.requestActions select:focus { border-color:var(--accent); box-shadow:var(--focus-ring); outline:0; }
+.primaryButton,.savePermissions { border-color:var(--accent); background:var(--accent); color:white; font-size:12px; }
+.generatedLink { border:1px solid #abefc6; background:#ecfdf3; box-shadow:none; }
+.member { border-bottom-color:var(--border-soft); }
+.avatar { border-radius:8px; background:#eaf0ff; color:var(--accent-dark); }
+.status { background:#ecfdf3; }.pending { background:#fffaeb; }.inactive { background:var(--control-bg); }
+.actionButton,.dangerButton { border:1px solid var(--border); background:white; color:var(--ink-secondary); font-size:11px; }
+.dangerButton { border-color:#fecdca; color:var(--danger); }
+.permissionForm,.whatsappForm,.accessRequest { border:1px solid var(--border); background:var(--control-bg); box-shadow:none; }
+.accessRequest { border-radius:var(--radius-panel); }
+.accessRequest::before { background:var(--accent); }
+.requestActions label,.requestActions legend { font-size:12px; }

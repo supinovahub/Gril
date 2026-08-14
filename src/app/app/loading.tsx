@@ -4,7 +4,7 @@ export default function ApplicationLoading() {
   return (
     <div aria-busy="true" aria-live="polite" className={styles.page}>
       <div className={styles.heading}>
-        <span className={styles.eyebrow}>Gril operations</span>
+        <span aria-label="Carregando o Gril" className={styles.eyebrow} />
         <span className={styles.title} />
         <span className={styles.subtitle} />
       </div>

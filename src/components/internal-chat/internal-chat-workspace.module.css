@@ -83,3 +83,24 @@
 .decisionBar .dangerDecision { color:var(--danger); }
 @media (max-width: 1180px) { .workspace { grid-template-columns: 230px minmax(0, 1fr); } .contextRail { display: none; } }
 @media (max-width: 760px) { .pageHeader { align-items: flex-start; flex-direction: column; } .workspace { display: block; min-height: 0; } .topicRail { border-bottom: 1px solid var(--border); border-right: 0; } .topicList { display: flex; max-height: none; overflow-x: auto; } .topicItem { flex: 0 0 220px; } .messages { max-height: 52vh; padding: 16px; } .message { max-width: 92%; } .chatHeaderActions { align-items: flex-start; justify-items: start; } .suggestionProposalActions { align-items: flex-start; flex-direction: column; } .suggestionProposalActions form { justify-content: flex-start; } }
+
+/* Signal workspace overrides */
+.page { width:min(100%,1440px); margin:0 auto; gap:20px; }
+.pageHeader h1 { font-family:var(--font-interface),sans-serif; font-size:clamp(30px,3.5vw,42px); font-weight:680; }
+.pageHeader p { font-size:13px; }
+.eyebrow,.contextLabel { color:var(--accent-dark); letter-spacing:.08em; }
+.modeBadge { border-color:#c7d7fe; background:#eef4ff; color:var(--accent-dark); }
+.workspace { border-radius:var(--radius-panel); background:white; box-shadow:none; }
+.topicRail,.contextRail { background:var(--control-bg); }
+.topicItemActive { background:#eef4ff; border-color:#c7d7fe; box-shadow:none; }
+.topicPulse[data-priority="high"],.topicPulse[data-priority="critical"] { background:var(--accent); box-shadow:0 0 0 4px #eaf0ff; }
+.messages { background:#f4f7fb; }
+.message { border-radius:10px; background:white; }
+.suggestionContext,.suggestionProposalCard { border-color:#c7d7fe; border-radius:8px; background:#f6f8ff; }
+.analyzedLeadMessage { border-left-color:var(--accent); }
+.suggestionProposalCard textarea,.composer textarea { background:white; border-color:var(--border); border-radius:var(--radius-control); }
+.suggestionProposalCard textarea:focus,.composer textarea:focus { border-color:var(--accent); box-shadow:var(--focus-ring); }
+.suggestionProposalActions button,.composer button { background:var(--accent); }
+.assistantMessage { background:white; }
+.userMessage { border-color:var(--accent); background:var(--accent); color:white; }
+.decisionBar { background:#f6f8ff; }

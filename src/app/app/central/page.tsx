@@ -37,7 +37,7 @@ type LogEntry = {
 
 const filters: { id: LogFilter; label: string }[] = [
   { id: "all", label: "Todos" },
-  { id: "ai", label: "IA" },
+  { id: "ai", label: "Pedro & Lionel" },
   { id: "campaigns", label: "Campanhas" },
   { id: "integrations", label: "Integrações" },
   { id: "system", label: "Sistema" },
@@ -100,7 +100,7 @@ export default async function CentralPage({
   const requestedPage = Number.parseInt(params.page ?? "1", 10);
   const supabase = await createClient();
   const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
-  const [{ data: alerts }, { data: escalations }, { data: calls }, { data: campaigns }, { data: health }, { data: notifications }, { data: suggestions }] = await Promise.all([
+  const [{ data: alerts }, { data: escalations }, { data: calls }, { data: campaigns }, { data: health }, { data: notifications }, { data: suggestions }, { data: internalThreads }] = await Promise.all([
     supabase.from("alerts").select("id,title,body,status,severity,category,created_at").eq("org_id", viewer.organization!.id).neq("status", "resolved").order("created_at", { ascending: false }).limit(30),
     supabase.from("escalations").select("id,category,reason,status,severity,created_at,conversation_id").eq("org_id", viewer.organization!.id).neq("status", "resolved").order("created_at", { ascending: false }).limit(30),
     supabase.from("calls").select("id,status,starts_at,format").eq("org_id", viewer.organization!.id).in("status", ["awaiting_distribution", "unassigned_alerted", "assigned"]).order("starts_at").limit(30),
@@ -108,6 +108,7 @@ export default async function CentralPage({
     supabase.from("integration_health_checks").select("component,status,checked_at,error_redacted").eq("org_id", viewer.organization!.id).order("checked_at", { ascending: false }).limit(30),
     supabase.from("notifications").select("id,title,body,status,created_at").eq("recipient_membership_id", viewer.membership!.id).order("created_at", { ascending: false }).limit(30),
     supabase.from("ai_suggestions").select("id,status,created_at,conversation_id").eq("org_id", viewer.organization!.id).order("created_at", { ascending: false }).limit(30),
+    supabase.from("internal_threads").select("id,title,status,requires_action,assistant_role,updated_at").eq("org_id", viewer.organization!.id).neq("status", "archived").order("updated_at", { ascending: false }).limit(30),
   ]);
 
   const entries: LogEntry[] = [
@@ -141,6 +142,16 @@ export default async function CentralPage({
       status: item.status,
       tone: statusTone(item.status),
       href: item.conversation_id ? `/app/inbox/${item.conversation_id}` : "/app/conversas?view=unanswered",
+    })),
+    ...(internalThreads ?? []).map((item) => ({
+      id: `thread-${item.id}`,
+      occurredAt: item.updated_at,
+      source: "ai" as const,
+      type: item.assistant_role === "lionel" ? "Curadoria do Lionel" : "Decisão com Pedro",
+      description: item.title || "Tópico operacional atualizado.",
+      status: item.requires_action ? "pending" : item.status,
+      tone: statusTone(item.requires_action ? "pending" : item.status),
+      href: item.assistant_role === "lionel" ? `/app/lionel?topico=${item.id}` : `/app/chat-pedro?topico=${item.id}`,
     })),
     ...(campaigns ?? []).map((item) => ({
       id: `campaign-${item.id}`,
@@ -199,9 +210,9 @@ export default async function CentralPage({
   return (
     <div className={styles.page}>
       <PageHeader
-        eyebrow="Operação"
-        title="Log Center"
-        description="Um fluxo único para acompanhar IA, campanhas, integrações, sistema, erros e ações da equipe."
+        eyebrow="Fila operacional"
+        title="Central"
+        description="Decisões, alertas e registros de Pedro, Lionel, campanhas, integrações e equipe em uma única linha do tempo."
       >
         <StatusBadge tone="positive"><CheckCircle2 size={14} /> Atualizado agora</StatusBadge>
       </PageHeader>
@@ -209,7 +220,7 @@ export default async function CentralPage({
 
       <section className={styles.logPanel} aria-labelledby="log-center-title">
         <div className={styles.logToolbar}>
-          <div><h2 id="log-center-title">Atividade operacional</h2><span>10 registros por página · mais recentes primeiro</span></div>
+          <div><h2 id="log-center-title">Atividade e decisões</h2><span>10 registros por página · mais recentes primeiro</span></div>
           <nav className={styles.logFilters} aria-label="Filtrar logs">
             {filters.map((item) => <Link className={item.id === filter ? styles.logFilterActive : styles.logFilter} href={`/app/central${item.id === "all" ? "" : `?source=${item.id}`}`} key={item.id}>{item.label}</Link>)}
           </nav>

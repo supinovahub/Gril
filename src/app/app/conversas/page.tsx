@@ -1,9 +1,8 @@
-import { Archive, ArrowRight, Bot, CalendarClock, CheckCircle2, Inbox, MessageCircle, Pause, Search, Sparkles, UserRound } from "lucide-react";
+import { Archive, ArrowRight, Bot, Inbox, Pause, Search, Sparkles, UserRound } from "lucide-react";
 import Link from "next/link";
 
 import { ButtonLink } from "@/components/ui/button";
 import { EmptyState } from "@/components/ui/empty-state";
-import { MetricCard } from "@/components/ui/metric-card";
 import { PageHeader } from "@/components/ui/page-header";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { Tabs } from "@/components/ui/tabs";
@@ -154,14 +153,15 @@ export default async function ConversationsPage({
         title="Conversas"
         description="Triagem de leads e acompanhamento de Pedro IA em uma única mesa de trabalho."
       >
+        <ButtonLink href="/app/kanban" variant="secondary">Ver Kanban</ButtonLink>
         {viewer.membership?.role !== "broker" ? <ButtonLink href="/app/configuracoes/whatsapp" variant="secondary">Configurar números</ButtonLink> : null}
       </PageHeader>
 
-      <section className={styles.summaryGrid} aria-label="Resumo das conversas">
-        <MetricCard accent href={buildHref("unanswered")} icon={<MessageCircle size={15} />} label="Exigem atenção" value={notifications.conversationsWithNotifications} hint="mensagens ou sugestões pendentes" />
-        <MetricCard href={buildHref("working")} icon={<Inbox size={15} />} label="Em atendimento" value={allConversations.filter((conversation) => filterConversation(conversation, "working", notifications.byConversation)).length} hint="conversas em andamento" />
-        <MetricCard href={buildHref("scheduled")} icon={<CalendarClock size={15} />} label="Agendados" value={allConversations.filter((conversation) => filterConversation(conversation, "scheduled", notifications.byConversation)).length} hint="próximos atendimentos" />
-        <MetricCard href={buildHref("converted")} icon={<CheckCircle2 size={15} />} label="Convertidos" value={allConversations.filter((conversation) => filterConversation(conversation, "converted", notifications.byConversation)).length} hint="oportunidades ganhas" />
+      <section className={styles.queueSummary} aria-label="Resumo das conversas">
+        <Link className={styles.queuePrimary} href={buildHref("unanswered")}><span>Atenção agora</span><strong>{notifications.conversationsWithNotifications}</strong></Link>
+        <Link href={buildHref("working")}><span>Em atendimento</span><strong>{allConversations.filter((conversation) => filterConversation(conversation, "working", notifications.byConversation)).length}</strong></Link>
+        <Link href={buildHref("scheduled")}><span>Agendados</span><strong>{allConversations.filter((conversation) => filterConversation(conversation, "scheduled", notifications.byConversation)).length}</strong></Link>
+        <Link href={buildHref("converted")}><span>Convertidos</span><strong>{allConversations.filter((conversation) => filterConversation(conversation, "converted", notifications.byConversation)).length}</strong></Link>
       </section>
 
       <section className={styles.workspace} aria-label="Lista de conversas">

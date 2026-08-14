@@ -25,6 +25,22 @@ O código e o banco estão prontos para homologação. OpenAI, WhatsApp, correto
 
 Interrompa o piloto se houver destinatário errado, duplicidade, opt-out ignorado, vazamento entre imobiliárias, segredo exposto ou fato comercial inventado.
 
+### Interface operacional unificada
+
+Antes dos fluxos funcionais, valide a arquitetura da interface aprovada em 12/08/2026:
+
+1. em desktop, confirme sidebar clara com Visão Geral, Conversas, Agenda, Central, Campanhas, Empreendimentos, Equipe, Pedro e Simulador conforme o papel;
+2. em 390 px, confirme sidebar oculta, navegação inferior com cinco destinos e ausência de scroll horizontal;
+3. na Visão Geral, confirme atenção imediata, atividade recente e Pulso comercial na mesma página;
+4. em Conversas, confirme a fila resumida, filtros, busca, ordenação por atenção e acesso ao Kanban;
+5. no detalhe, confirme Mensagens, Visão geral, Qualificação, Resumo, Próximas ações e Histórico sem perder o contexto da conversa;
+6. na Central, confirme tópicos acionáveis de Pedro e Lionel junto a campanhas, integrações, sistema e equipe, com 10 registros por página;
+7. na Auditoria, confirme filtros e 30 eventos por página;
+8. confirme que Aprendizados, Experimentos A/B, Checklists, Privacidade e Relatórios isolados redirecionam para suas superfícies canônicas;
+9. confirme que Meta Cloud mostra somente os números oficiais conectados e não oferece cadastro de formulário ou pré-lead.
+
+Repita os itens 1 a 7 com dono, gestor e corretor. Um papel não pode ganhar um destino ou ação apenas porque a navegação foi simplificada.
+
 ## 3. Acesso do administrador geral
 
 O administrador da plataforma usa o mesmo `/login`, mas possui uma conta separada das contas de imobiliárias. Depois do login, é direcionado a `/platform`; não cria imobiliária e não entra no onboarding comum.
@@ -271,11 +287,11 @@ Uma conexão real saudável basta para o piloto. Teste ambos os provedores antes
 - confirme bloqueio de texto livre fora da janela;
 - revogue e restaure o token.
 
-### Formulários Meta
+### Formulários Meta fora da interface
 
-- mapeie nome, telefone, e-mail, campanha e empreendimento;
-- envie um lead, repita o evento e envie enriquecimento tardio;
-- confirme deduplicação por telefone e rejeição de payload inválido.
+O cadastro de formulários e pré-leads foi retirado da interface operacional. Em `/app/configuracoes/meta`, confirme apenas a saúde dos números Meta Cloud e o acesso ao gerenciamento de integrações. Não deve existir formulário para criar novo mapeamento.
+
+Webhooks e registros históricos existentes não são apagados por esta mudança. Se um contrato legado ainda estiver ativo, a validação técnica de deduplicação e rejeição de payload continua sendo feita pela API e pela auditoria, não por uma tela de cadastro.
 
 Critério comum: webhook inválido é rejeitado; organização arquivada retorna bloqueio definitivo; organização suspensa ainda registra inbound, mas não envia mensagens; retry não duplica lead, mensagem ou oportunidade.
 
@@ -369,7 +385,7 @@ Inbox, CRM e agenda devem exibir datas e horários no fuso configurado da opera�
 
 ## 11. CRM, privacidade e encerramento
 
-Teste criação, deduplicação e merge de leads; co-comprador; origem; Kanban; checklists; proposta; perda; venda; ações em massa com prévia; exportação CSV; arquivamento e restauração manual, com Pedro ou com Pedro e follow-up.
+Teste criação, deduplicação e merge de leads; co-comprador; origem; lista de Conversas; Kanban; proposta; perda; venda; ações em massa com prévia; exportação CSV; arquivamento e restauração manual, com Pedro ou com Pedro e follow-up.
 
 O dono/gestor pode arquivar e restaurar um lead, devolvê-lo ao Pedro e reativar follow-up conforme permissões.
 
@@ -386,9 +402,9 @@ No dashboard, dono ou gestor com `team.manage` pode usar **Limpar contexto de ho
 
 O suporte externo não executa esta ação. A limpeza é transacional no banco; remoção de arquivos usa a rotina de storage e qualquer pendência deve ser registrada antes de repetir o piloto.
 
-Em privacidade, teste acesso, exportação, correção e anonimização; legal hold; documento sensível com e sem liberação; e trilha de auditoria. A decisão jurídica e o atendimento de LGPD pertencem à imobiliária; o sistema oferece os controles, mas não substitui sua decisão.
+Privacidade e checklists não possuem mais telas operacionais. Confirme que as rotas antigas redirecionam, que nenhuma navegação as expõe e que eventos históricos continuam consultáveis na Auditoria. Qualquer operação jurídica ou de retenção fora da UI exige procedimento administrativo explícito; esta mudança não autoriza apagar políticas ou dados.
 
-Valide ainda Central, push, pausa emergencial, relatórios, custos, carga por corretor, alertas de orçamento em 50/80/100% e auditoria. Em um notebook com altura reduzida e zoom de 100%, confirme que a sidebar rola verticalmente, mantém o rodapé acessível e permite alcançar todos os botões. A revisão visual em desktop/celular e o teste de restore seguro são etapas humanas finais.
+Valide ainda Central, push, pausa emergencial, indicadores integrados na Visão Geral, custos, carga por corretor, alertas de orçamento em 50/80/100% e Auditoria. Em um notebook com altura reduzida e zoom de 100%, confirme que a sidebar rola verticalmente, mantém o rodapé acessível e permite alcançar todos os botões. A revisão visual em desktop/celular e o teste de restore seguro são etapas humanas finais.
 
 ## 12. Critério de aprovação
 
