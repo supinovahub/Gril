@@ -19,6 +19,23 @@ A aplicação passa a organizar o trabalho pela tarefa do usuário, sem repetir 
 
 A estrutura e a hierarquia podem mudar, mas paleta, favicon, título da aba, marca e tipografia de produção permanecem. O redesign usa dados reais e não introduz métricas, pessoas, alertas ou estados fictícios.
 
+## Hierarquia em camadas
+
+A navegação diferencia trabalho frequente de configuração:
+
+- `Visão geral`, `Conversas`, `Agenda`, `Central` e `Campanhas` são destinos primários. Destinos específicos do papel de corretor permanecem nessa primeira camada quando aplicáveis.
+- `Gestão` reúne equipe e acessos.
+- `Inteligência` reúne Pedro IA, Empreendimentos e Simulador.
+- `Administração` reúne Organização, WhatsApp e Auditoria, respeitando as permissões existentes.
+- os três grupos secundários ficam recolhidos por padrão e se abrem automaticamente quando uma de suas rotas está ativa. No celular, a mesma separação aparece dentro de `Mais`.
+
+A Visão geral segue a sequência `resultado → diagnóstico → exceção → ação`:
+
+- o período padrão é de sete dias e afeta apenas as métricas de fluxo;
+- Leads, Taxa de resposta, Agendamentos e Vendas formam uma faixa única de resultados; conversão aparece como contexto de Vendas;
+- o Kanban é identificado como estoque atual, independente do período, e mostra a contagem de todas as etapas sem exigir rolagem horizontal; cada etapa pode exibir apenas um registro representativo antes do acesso à visão completa;
+- pendências de conversa e agenda aparecem depois do resultado e do diagnóstico; estado do Pedro e quantidade de pessoas não ocupam essa camada.
+
 ## Compatibilidade
 
 Nenhum contrato de banco, RLS, server action, webhook, URL profunda ou gate de papel é alterado por esta decisão. A consolidação é de arquitetura de informação e interface.

@@ -377,19 +377,20 @@ Inbox, CRM e agenda devem exibir datas e horários no fuso configurado da opera�
 
 Com dono ou gestor autenticado, valide a arquitetura de navegação antes dos fluxos detalhados:
 
-1. a navegação principal não exibe entradas independentes para Leads ou Kanban;
-2. em `Conversas`, alterne entre as visualizações `Conversas` e `Leads` e confirme que filtros, links profundos e ações continuam preservados;
-3. na Visão geral, use `Abrir Kanban completo` e confirme que esta é a entrada geral para a visão completa;
-4. em `Central`, alterne os filtros, confirme a ordem cronológica e verifique que cada página mostra no máximo dez registros reais;
-5. confirme que ações de alertas, notificações e escaladas continuam disponíveis no registro correspondente;
-6. em Auditoria, avance e volte entre páginas, sempre com no máximo trinta eventos;
-7. no Kanban completo, confirme métricas reais, filtros e todas as etapas em uma mesa horizontal; os cards devem abrir o registro completo e a navegação deve voltar somente à Visão geral;
-8. em Agenda, Campanhas, Equipe, Base e Simulador, confirme que o resumo inicial corresponde aos registros reais e que formulários e ações existentes continuam disponíveis;
-9. em Campanhas, confirme que criação e edição não mostram personalidade ou persona do Pedro, mas preservam modo, consentimento, importação, ondas, pausa, retomada e arquivamento;
-10. em Pedro, use as âncoras de comportamento, persona, modelos e testes; confirme que editores avançados ficam recolhidos e abrem sem perder rascunhos ou ações;
-11. em Organização, alterne pelas seções de identidade, operação e segurança e confira se o resumo reflete os valores salvos;
-12. em WhatsApp, confira contagens de conexões, credenciais e templates; abra separadamente cada forma de adicionar canal e confirme que nenhuma credencial é exibida para papel sem permissão;
-13. em celular, confirme as entradas `Início`, `Conversas`, `Agenda`, `Central` e `Mais`, sem overflow lateral da página.
+1. a primeira camada da navegação mostra `Visão geral`, `Conversas`, `Agenda`, `Central` e `Campanhas`, conforme as permissões, sem entradas independentes para Leads ou Kanban;
+2. `Gestão`, `Inteligência` e `Administração` ficam recolhidas por padrão, abrem por interação e permanecem abertas quando uma rota interna está ativa;
+3. em `Conversas`, alterne entre as visualizações `Conversas` e `Leads` e confirme que filtros, links profundos e ações continuam preservados;
+4. na Visão geral, use `Abrir Kanban completo` e confirme que esta é a entrada geral para a visão completa;
+5. em `Central`, alterne os filtros, confirme a ordem cronológica e verifique que cada página mostra no máximo dez registros reais;
+6. confirme que ações de alertas, notificações e escaladas continuam disponíveis no registro correspondente;
+7. em Auditoria, avance e volte entre páginas, sempre com no máximo trinta eventos;
+8. no Kanban completo, confirme métricas reais, filtros e todas as etapas em uma mesa horizontal; os cards devem abrir o registro completo e a navegação deve voltar somente à Visão geral;
+9. em Agenda, Campanhas, Equipe, Base e Simulador, confirme que o resumo inicial corresponde aos registros reais e que formulários e ações existentes continuam disponíveis;
+10. em Campanhas, confirme que criação e edição não mostram personalidade ou persona do Pedro, mas preservam modo, consentimento, importação, ondas, pausa, retomada e arquivamento;
+11. em Pedro, use as âncoras de comportamento, persona, modelos e testes; confirme que editores avançados ficam recolhidos e abrem sem perder rascunhos ou ações;
+12. em Organização, alterne pelas seções de identidade, operação e segurança e confira se o resumo reflete os valores salvos;
+13. em WhatsApp, confira contagens de conexões, credenciais e templates; abra separadamente cada forma de adicionar canal e confirme que nenhuma credencial é exibida para papel sem permissão;
+14. em celular, confirme as entradas `Início`, `Conversas`, `Agenda`, `Central` e `Mais`; dentro de `Mais`, confirme os grupos Trabalho, Gestão, Inteligência, Administração e Conta, sem overflow lateral da página.
 
 ### Visão geral
 
@@ -397,18 +398,19 @@ Com uma conta de imobiliária autenticada, abra `/app` e valide:
 
 1. o título, o favicon e a paleta continuam iguais aos de produção; a tela não
    mostra “Bom dia, Pedro” nem “Hoje na operação”;
-2. os seletores Hoje, 7 dias e 30 dias atualizam novos leads, taxa de resposta,
-   agendamentos e conversão usando somente dados do período;
+2. a abertura sem parâmetro seleciona 7 dias; os seletores Hoje, 7 dias e 30 dias
+   atualizam Leads, Taxa de resposta, Agendamentos e Vendas usando somente dados
+   do período, e a conversão aparece como contexto de Vendas;
 3. uma taxa sem denominador ou uma consulta indisponível aparece como `N/D`, e
    não como zero inventado;
-4. o Kanban segue a ordem das etapas ativas, informa a contagem total e exibe no
-   máximo dois cards por coluna; o link abre o Kanban completo;
-5. em celular, somente o Kanban rola horizontalmente e a página permanece sem
-   overflow lateral;
+4. o Kanban se identifica como estoque atual independente do período, segue a
+   ordem das etapas ativas, informa a contagem de todas elas e exibe no máximo
+   um card por etapa; o link abre o Kanban completo;
+5. todas as etapas do resumo se reorganizam sem rolagem horizontal cega e, em
+   celular, a página permanece sem overflow lateral;
 6. “Precisa de atenção” e “Agenda” mostram no máximo três itens reais e seus
    links abrem a conversa ou o lead correto;
-7. o modo atual do Pedro e a quantidade de pessoas ativas correspondem às
-   configurações e vínculos da imobiliária.
+7. modo do Pedro e quantidade de pessoas ativas não aparecem na Visão geral.
 
 ### CRM, privacidade e encerramento
 

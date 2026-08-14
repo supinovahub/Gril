@@ -2,6 +2,7 @@
 
 ## Atualização de 14/08/2026 — redesign do workspace em homologação
 
+- A Visão geral e o shell desta branch agora implementam arquitetura em camadas: métricas de sete dias como abertura, Kanban identificado como estoque atual sem rolagem horizontal e próximas ações abaixo; a navegação mantém o trabalho frequente visível e recolhe Gestão, Inteligência e Administração. A validação automatizada desta rodada está registrada em `docs/agent/changes/2026-08-14-dashboard-arquitetura-em-camadas.md`.
 - A branch `agent/workspace-redesign-real` aplica a arquitetura operacional aprovada sobre a nova Visão geral e preserva os fluxos de Chat com Pedro e Lionel. Uma auditoria autenticada posterior identificou rotas com alteração ainda superficial; Kanban, Agenda, Campanhas, Equipe, Base, Simulador, Organização, Pedro e WhatsApp foram então reestruturados antes da nova homologação.
 - Leads e Kanban deixam a navegação principal. Leads passa a ser uma visualização dentro de Conversas; o Kanban completo é aberto pelo resumo da Visão geral.
 - Central reúne Pedro, Lionel e eventos operacionais em ordem cronológica, com dez registros por página. Auditoria mostra trinta registros por página.

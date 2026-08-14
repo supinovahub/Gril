@@ -13,13 +13,20 @@
   border-bottom: 1px solid var(--border-soft);
 }
 
-.pageHeader h1 {
+.pageHeading h1 {
   margin: 0;
   font-family: var(--font-display), Georgia, serif;
   font-size: clamp(28px, 3vw, 34px);
   font-weight: 560;
   letter-spacing: -0.04em;
   line-height: 1;
+}
+
+.pageHeading p {
+  margin: 8px 0 0;
+  color: var(--ink-muted);
+  font-size: 11px;
+  line-height: 1.45;
 }
 
 .headerTools {
@@ -70,7 +77,7 @@
 .attentionRow:focus-visible,
 .agendaRow:focus-visible,
 .adminDisclosure summary:focus-visible,
-.kanbanViewport:focus-visible {
+.remainingCount:focus-visible {
   outline: 2px solid var(--accent);
   outline-offset: 2px;
 }
@@ -122,25 +129,27 @@
 .metrics {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 12px;
-  margin-bottom: 20px;
+  gap: 1px;
+  overflow: hidden;
+  margin-bottom: 24px;
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  background: var(--border);
+  box-shadow: 0 1px 2px rgba(28, 33, 31, 0.035);
 }
 
 .metric {
   min-width: 0;
-  min-height: 118px;
+  min-height: 116px;
   padding: 18px;
-  border: 1px solid var(--border);
-  border-radius: 12px;
   background: var(--surface);
-  box-shadow: 0 1px 2px rgba(28, 33, 31, 0.035);
 }
 
 .metric > span {
   display: block;
   overflow: hidden;
   color: var(--ink-muted);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 800;
   letter-spacing: 0.08em;
   text-overflow: ellipsis;
@@ -163,7 +172,7 @@
   overflow: hidden;
   margin-top: 9px;
   color: var(--ink-muted);
-  font-size: 9px;
+  font-size: 10px;
   line-height: 1.35;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -187,8 +196,8 @@
 }
 
 .sectionHeader {
-  min-height: 54px;
-  padding: 0 18px;
+  min-height: 66px;
+  padding: 11px 18px;
   border-bottom: 1px solid var(--border-soft);
   background: var(--surface);
 }
@@ -199,6 +208,17 @@
   font-size: 13px;
   font-weight: 760;
   letter-spacing: -0.025em;
+}
+
+.sectionHeading {
+  min-width: 0;
+}
+
+.sectionHeading p {
+  margin: 5px 0 0;
+  color: var(--ink-muted);
+  font-size: 10px;
+  line-height: 1.4;
 }
 
 .sectionHeader a,
@@ -220,32 +240,18 @@
   text-underline-offset: 3px;
 }
 
-.kanbanViewport {
-  max-width: 100%;
-  overflow-x: auto;
-  overscroll-behavior-inline: contain;
-  scrollbar-color: var(--ledger-strong) transparent;
-  scrollbar-width: thin;
-  scroll-snap-type: x proximity;
-}
-
-.kanbanTrack {
-  display: flex;
-  width: max-content;
-  min-width: 100%;
+.kanbanGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 1px;
+  background: var(--border-soft);
 }
 
 .kanbanColumn {
-  width: 220px;
-  min-height: 176px;
-  flex: 0 0 220px;
-  padding: 13px;
-  border-right: 1px solid var(--border-soft);
-  scroll-snap-align: start;
-}
-
-.kanbanColumn:last-child {
-  border-right: 0;
+  min-width: 0;
+  min-height: 154px;
+  padding: 12px;
+  background: var(--paper);
 }
 
 .kanbanColumn > header {
@@ -260,7 +266,7 @@
 
 .kanbanColumn > header span {
   overflow: hidden;
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 750;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -268,7 +274,7 @@
 
 .kanbanColumn > header strong {
   color: var(--ink-faint);
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 780;
   font-variant-numeric: tabular-nums;
 }
@@ -321,7 +327,7 @@
   justify-content: space-between;
   gap: 8px;
   color: var(--ink-muted);
-  font-size: 9px;
+  font-size: 10px;
 }
 
 .kanbanCard > span:not(time) {
@@ -341,7 +347,24 @@
   place-items: center;
   margin: 0;
   color: var(--ink-faint);
-  font-size: 9px;
+  font-size: 10px;
+}
+
+.remainingCount {
+  display: inline-flex;
+  width: fit-content;
+  align-items: center;
+  min-height: 24px;
+  color: var(--accent-dark);
+  font-size: 10px;
+  font-weight: 740;
+  text-decoration: none;
+}
+
+.remainingCount:hover {
+  color: var(--accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
 }
 
 .sectionEmpty,
@@ -354,6 +377,27 @@
 
 .sectionError {
   color: var(--danger);
+}
+
+.actionsHeader {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+  margin: 0 2px 12px;
+}
+
+.actionsHeader span {
+  color: var(--ink);
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.actionsHeader p {
+  margin: 0;
+  color: var(--ink-muted);
+  font-size: 10px;
 }
 
 .operationalGrid {
@@ -447,24 +491,6 @@
   color: var(--ink);
   font-weight: 800;
   text-align: right;
-}
-
-.statusLine {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 11px 3px 0;
-  color: var(--ink-muted);
-  font-size: 9px;
-  font-weight: 650;
-}
-
-.statusLine span:first-child {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  color: var(--positive);
 }
 
 .agendaList {
@@ -717,11 +743,6 @@
     flex: 1;
   }
 
-  .kanbanColumn {
-    width: min(76vw, 240px);
-    flex-basis: min(76vw, 240px);
-  }
-
   .attentionRow {
     align-items: flex-start;
   }
@@ -750,12 +771,6 @@
     border-bottom: 1px solid var(--border-soft);
   }
 
-  .statusLine {
-    align-items: flex-start;
-    flex-direction: column;
-    gap: 5px;
-  }
-
   .cleanupCounts {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
@@ -768,7 +783,7 @@
 
 @media (max-width: 430px) {
   .metrics {
-    gap: 8px;
+    grid-template-columns: 1fr;
   }
 
   .metric {
@@ -786,6 +801,12 @@
     gap: 7px;
     padding-top: 13px;
     padding-bottom: 13px;
+  }
+
+  .actionsHeader {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
   }
 }
 

@@ -1,6 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
-  Bot,
   CalendarDays,
   ChevronDown,
   ExternalLink,
@@ -77,9 +76,7 @@ type AgendaItem = {
   startsAt: string;
 };
 
-type TeamState = {
-  activeCount: number | null;
-  inboundMode: string | null;
+type TeamDirectory = {
   namesByMembership: Record<string, string>;
 };
 
@@ -95,15 +92,8 @@ const periodDays: Record<DashboardPeriod, number> = {
   "30d": 30,
 };
 
-const inboundModeLabels: Record<string, string> = {
-  assisted: "Sugere para revisão",
-  off: "Desligado",
-  production: "Responde automaticamente",
-  shadow: "Só observa",
-};
-
 function resolvePeriod(value: string | undefined): DashboardPeriod {
-  return value === "7d" || value === "30d" ? value : "today";
+  return value === "today" || value === "30d" ? value : "7d";
 }
 
 function localDateAt(date: Date, timeZone: string) {
@@ -130,7 +120,7 @@ function buildPeriodRange(period: DashboardPeriod, timeZone: string, now: Date):
   const startDate = shiftLocalDate(localToday, -(days - 1));
   return {
     end: now.toISOString(),
-    label: periodOptions.find((option) => option.key === period)?.label ?? "Hoje",
+    label: periodOptions.find((option) => option.key === period)?.label ?? "7 dias",
     start: zonedLocalDateTimeToIso(`${startDate}T00:00`, timeZone),
   };
 }
@@ -254,7 +244,7 @@ async function loadKanbanSnapshot(
       .eq("pipeline_stage_id", stage.id)
       .eq("contacts.status", "active")
       .order("last_activity_at", { ascending: false })
-      .limit(2);
+      .limit(1);
 
     if (cardsResult.error) {
       console.error(`Failed to load Dashboard stage ${stage.code}`, cardsResult.error);
@@ -386,25 +376,17 @@ async function loadAgendaItems(
   });
 }
 
-async function loadTeamState(
+async function loadTeamDirectory(
   supabase: SupabaseClient<Database>,
   orgId: string,
-): Promise<TeamState> {
-  const [membershipsResult, settingsResult] = await Promise.all([
-    supabase
-      .from("memberships")
-      .select("id,user_id")
-      .eq("org_id", orgId)
-      .eq("status", "active"),
-    supabase
-      .from("organization_settings")
-      .select("ai_global_mode,inbound_ai_mode")
-      .eq("org_id", orgId)
-      .maybeSingle(),
-  ]);
+): Promise<TeamDirectory> {
+  const membershipsResult = await supabase
+    .from("memberships")
+    .select("id,user_id")
+    .eq("org_id", orgId)
+    .eq("status", "active");
 
   if (membershipsResult.error) console.error("Failed to load Dashboard team", membershipsResult.error);
-  if (settingsResult.error) console.error("Failed to load Dashboard Pedro state", settingsResult.error);
 
   const memberships = membershipsResult.data ?? [];
   const profilesResult = memberships.length
@@ -418,10 +400,6 @@ async function loadTeamState(
 
   const namesByUser = new Map((profilesResult.data ?? []).map((profile) => [profile.user_id, profile.full_name]));
   return {
-    activeCount: membershipsResult.error ? null : memberships.length,
-    inboundMode: settingsResult.error
-      ? null
-      : (settingsResult.data?.inbound_ai_mode ?? settingsResult.data?.ai_global_mode ?? "off"),
     namesByMembership: Object.fromEntries(memberships.map((membership) => [
       membership.id,
       namesByUser.get(membership.user_id) ?? "Equipe",
@@ -449,12 +427,12 @@ export default async function DashboardPage({
     ? supabase.rpc("preview_homologation_context", { p_org_id: orgId })
     : Promise.resolve({ data: null, error: null });
 
-  const [metrics, kanban, attentionItems, agendaItems, teamState, previewResult] = await Promise.all([
+  const [metrics, kanban, attentionItems, agendaItems, teamDirectory, previewResult] = await Promise.all([
     loadMetrics(supabase, orgId, range),
     loadKanbanSnapshot(supabase, orgId),
     loadAttentionItems(supabase, orgId),
     loadAgendaItems(supabase, orgId, now),
-    loadTeamState(supabase, orgId),
+    loadTeamDirectory(supabase, orgId),
     previewPromise,
   ]);
 
@@ -465,18 +443,25 @@ export default async function DashboardPage({
     hour: "2-digit",
     minute: "2-digit",
   });
+  const pipelineTotal = kanban.failed || kanban.columns.some((column) => column.count === null)
+    ? null
+    : kanban.columns.reduce((total, column) => total + (column.count ?? 0), 0);
+  const activeStageCount = kanban.columns.filter((column) => (column.count ?? 0) > 0).length;
 
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
-        <h1>Visão geral</h1>
+        <div className={styles.pageHeading}>
+          <h1>Visão geral</h1>
+          <p>Resultado do período e estoque atual do pipeline.</p>
+        </div>
         <div className={styles.headerTools}>
           <nav aria-label="Período das métricas" className={styles.periodSwitch}>
             {periodOptions.map((option) => (
               <Link
                 aria-current={period === option.key ? "page" : undefined}
                 className={period === option.key ? styles.periodActive : undefined}
-                href={option.key === "today" ? "/app" : `/app?period=${option.key}`}
+                href={option.key === "7d" ? "/app" : `/app?period=${option.key}`}
                 key={option.key}
               >
                 {option.label}
@@ -500,30 +485,38 @@ export default async function DashboardPage({
 
       <section aria-label={`Métricas de ${range.label.toLocaleLowerCase("pt-BR")}`} className={styles.metrics}>
         <article className={styles.metric} title="Oportunidades criadas no período selecionado.">
-          <span>Novos leads</span>
+          <span>Leads</span>
           <strong>{metrics.newLeads ?? "N/D"}</strong>
-          <small>oportunidades criadas</small>
+          <small>Entradas em {range.label.toLocaleLowerCase("pt-BR")}</small>
         </article>
         <article className={styles.metric} title="Conversas cuja mensagem mais recente do lead já recebeu resposta.">
           <span>Taxa de resposta</span>
           <strong>{formatPercentage(metrics.responseRate)}</strong>
-          <small>{metrics.inboundConversations === null ? "dados indisponíveis" : `${metrics.inboundConversations} conversas com entrada`}</small>
+          <small>{metrics.inboundConversations === null ? "Dados indisponíveis" : `${metrics.inboundConversations} conversas com entrada`}</small>
         </article>
         <article className={styles.metric} title="Calls criadas no período selecionado.">
           <span>Agendamentos</span>
           <strong>{metrics.appointments ?? "N/D"}</strong>
-          <small>calls criadas</small>
+          <small>Criados em {range.label.toLocaleLowerCase("pt-BR")}</small>
         </article>
-        <article className={styles.metric} title="Vendas confirmadas no período divididas pelos leads criados no mesmo período.">
-          <span>Conversão</span>
-          <strong>{formatPercentage(metrics.conversionRate)}</strong>
-          <small>{metrics.sales === null ? "dados indisponíveis" : `${metrics.sales} ${metrics.sales === 1 ? "venda confirmada" : "vendas confirmadas"}`}</small>
+        <article className={styles.metric} title="Vendas confirmadas e conversão sobre os leads criados no mesmo período.">
+          <span>Vendas</span>
+          <strong>{metrics.sales ?? "N/D"}</strong>
+          <small>Conversão de {formatPercentage(metrics.conversionRate)}</small>
         </article>
       </section>
 
       <section className={styles.kanbanPanel} aria-labelledby="kanban-snapshot-title">
         <header className={styles.sectionHeader}>
-          <h2 id="kanban-snapshot-title">Kanban comercial</h2>
+          <div className={styles.sectionHeading}>
+            <h2 id="kanban-snapshot-title">Kanban comercial</h2>
+            <p>
+              Estoque atual · independente do período
+              {pipelineTotal === null
+                ? ""
+                : ` · ${pipelineTotal} ${pipelineTotal === 1 ? "oportunidade" : "oportunidades"} em ${activeStageCount} ${activeStageCount === 1 ? "etapa" : "etapas"}`}
+            </p>
+          </div>
           <Link href="/app/kanban">
             Abrir Kanban completo <ExternalLink aria-hidden="true" size={13} />
           </Link>
@@ -531,9 +524,10 @@ export default async function DashboardPage({
         {kanban.failed ? (
           <p className={styles.sectionError}>Não foi possível carregar o Kanban agora.</p>
         ) : kanban.columns.length ? (
-          <div className={styles.kanbanViewport} tabIndex={0}>
-            <div className={styles.kanbanTrack}>
-              {kanban.columns.map((column) => (
+          <div className={styles.kanbanGrid}>
+            {kanban.columns.map((column) => {
+              const hiddenCount = column.count === null ? null : Math.max(0, column.count - column.cards.length);
+              return (
                 <section className={styles.kanbanColumn} key={column.id}>
                   <header className={column.code === "won" ? styles.wonStage : column.code === "lost" ? styles.lostStage : undefined}>
                     <span>{column.name}</span>
@@ -545,22 +539,28 @@ export default async function DashboardPage({
                         <strong>{card.name}</strong>
                         <span>
                           {card.assignedMembershipId
-                            ? teamState.namesByMembership[card.assignedMembershipId] ?? "Atribuído"
+                            ? teamDirectory.namesByMembership[card.assignedMembershipId] ?? "Atribuído"
                             : "Sem responsável"}
                           <time dateTime={card.stageEnteredAt}>{formatWaitingTime(card.stageEnteredAt, now)}</time>
                         </span>
                       </Link>
                     ))}
                     {!column.cards.length ? <p className={styles.emptyColumn}>Nenhum lead</p> : null}
+                    {hiddenCount ? <Link className={styles.remainingCount} href="/app/kanban">+{hiddenCount} no Kanban</Link> : null}
                   </div>
                 </section>
-              ))}
-            </div>
+              );
+            })}
           </div>
         ) : (
           <p className={styles.sectionEmpty}>O pipeline ainda não possui etapas ativas.</p>
         )}
       </section>
+
+      <header className={styles.actionsHeader}>
+        <span>Próximas ações</span>
+        <p>Exceções e compromissos que pedem continuidade.</p>
+      </header>
 
       <div className={styles.operationalGrid}>
         <section className={styles.attentionSection} aria-labelledby="attention-title">
@@ -586,13 +586,6 @@ export default async function DashboardPage({
                 <MessageSquareText aria-hidden="true" size={17} /> Nenhuma conversa pendente agora.
               </p>
             ) : null}
-          </div>
-          <div className={styles.statusLine}>
-            <span>
-              <Bot aria-hidden="true" size={14} />
-              Pedro: {teamState.inboundMode ? inboundModeLabels[teamState.inboundMode] ?? teamState.inboundMode : "Estado indisponível"}
-            </span>
-            <span>{teamState.activeCount === null ? "Equipe indisponível" : `${teamState.activeCount} ${teamState.activeCount === 1 ? "pessoa ativa" : "pessoas ativas"}`}</span>
           </div>
         </section>
 
