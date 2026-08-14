@@ -2,7 +2,7 @@
 
 - Data: 14/08/2026
 - Responsável: Codex
-- Branch/PR: `agent/workspace-redesign-real` / PR a criar
+- Branch/PR: `agent/workspace-redesign-real` / PR `#47`
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
