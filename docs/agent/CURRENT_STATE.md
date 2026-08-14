@@ -6,7 +6,7 @@
 - Leads e Kanban deixam a navegação principal. Leads passa a ser uma visualização dentro de Conversas; o Kanban completo é aberto pelo resumo da Visão geral.
 - Central reúne Pedro, Lionel e eventos operacionais em ordem cronológica, com dez registros por página. Auditoria mostra trinta registros por página.
 - Campanhas não ganhou edição de personalidade do Pedro. Paleta, favicon e título da aba continuam iguais aos de produção.
-- Lint, 110 testes e build das 46 rotas passaram. Produção e Supabase não foram alterados; preview e homologação autenticada ainda estão pendentes.
+- Lint, 110 testes e build das 46 rotas passaram. O PR rascunho `#47` e a preview protegida `https://gril-git-agent-workspace-redesign-real-brio5.vercel.app` estão prontos; produção e Supabase não foram alterados e a homologação autenticada ainda está pendente.
 - Detalhes: `docs/agent/changes/2026-08-14-workspace-operacional-unificado.md` e `docs/decisions/2026-08-14-workspace-operacional-unificado.md`.
 
 ## Atualizacao de 07/08/2026 - producao automatica exclusiva para reativacao

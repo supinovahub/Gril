@@ -18,7 +18,7 @@ Aplicar a direção visual aprovada às telas operacionais, reduzir a exposiçã
 
 - Arquivos: shell e navegação; Inbox e contexto do lead; lista e detalhe de Leads; Central; Pedro; Campanhas; Agenda; Equipe; Base de conhecimento; Simulador; Auditoria; estilos modulares; documentos de decisão e homologação.
 - Migrations: nenhuma.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma até o registro deste arquivo. Produção e Supabase não foram alterados.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: branch publicada e PR rascunho `#47` criado no GitHub; preview automática `https://gril-git-agent-workspace-redesign-real-brio5.vercel.app` concluída como `Ready`. Produção e Supabase não foram alterados.
 - Integração de trabalho: a branch foi criada sobre a mudança aprovada da Visão geral, integrou a frente funcional de Chat com Pedro e Lionel e reaproveitou a implementação anterior das abas de contexto do Inbox para preservar trabalho válido já existente.
 
 ## Validação
@@ -29,13 +29,13 @@ Aplicar a direção visual aprovada às telas operacionais, reduzir a exposiçã
 
 ## Impacto operacional
 
-- Deploy necessário: preview da branch para homologação; produção somente após aprovação e merge explícito.
+- Deploy necessário: preview da branch pronta para homologação; produção somente após aprovação e merge explícito.
 - Migração aplicada: não.
 - Compatibilidade/rollback: rotas e actions foram mantidas. O rollback é o revert do commit/PR de interface.
 
 ## Pendências e riscos
 
-- Homologar na preview, com dono/gestor e corretor, a navegação responsiva e as ações com dados reais.
+- Homologar na preview protegida, com dono/gestor e corretor, a navegação responsiva e as ações com dados reais.
 - Confirmar visualmente que a Central respeita o recorte de operação e que a paginação de dez registros atende o volume real.
 - As rotas retiradas da navegação continuam acessíveis por URL neste ciclo; remoção funcional exige decisão e auditoria separadas.
 
