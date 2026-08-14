@@ -2,7 +2,7 @@
 
 - Data: 13/08/2026
 - Responsável: Codex
-- Branch/PR: `agent/full-ui-redesign-v2`, derivada de `origin/fix/inbox-lead-context-tabs`
+- Branch/PR: `agent/full-ui-redesign-v2`, derivada de `origin/fix/inbox-lead-context-tabs`; PR rascunho `#45`
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
@@ -19,18 +19,19 @@ Repaginar toda a interface do Gril com uma direção visual claramente diferente
 - Arquivos: tokens globais, metadata/PWA, shell desktop/mobile, primitives compartilhadas, autenticação, Visão Geral, Conversas, detalhe do lead, Central, Campanhas, Agenda, Equipe, Pedro, Empreendimentos, Simulador, CRM/Kanban, Perfil, fluxos auxiliares e administração de plataforma.
 - Arquitetura: relatórios integrados ao Dashboard por contagens exatas sem transferência de tabelas completas; Conversas com acesso à visualização Kanban; Central com tópicos de Pedro e Lionel; Meta Cloud sem cadastro de formulário/pré-lead; redirecionamentos para Aprendizados, Experimentos A/B, Checklists, Privacidade e Relatórios.
 - Migrations: nenhuma.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma nesta etapa. A Taste Skill foi instalada apenas no runtime local do Codex; não virou dependência do repositório.
+- Mudanças externas: branch `agent/full-ui-redesign-v2` publicada e PR rascunho `#45` aberto no GitHub; preview Vercel automática `dpl_DQUS8SNWhDp7iUke9TKfKV9wMZeg`, status `READY`, com alias `https://gril-git-agent-full-ui-redesign-v2-brio5.vercel.app`. Supabase e produção não foram alterados. A Taste Skill foi instalada apenas no runtime local do Codex; não virou dependência do repositório.
 
 ## Validação
 
 - Comandos/testes executados: `git diff --check`, `npm run lint`, `npm test` e `npm run build` com o `.env.local` canônico não versionado.
 - Evidência observada: lint aprovado; 22 arquivos e 110 testes aprovados; build Next.js 16.2.12 compilado, TypeScript concluído e 47 rotas geradas.
 - QA visual: login, Dashboard, Conversas e Central renderizados com componentes reais em fixture local descartável; desktop com 1536 px sem overflow; breakpoint de 390 px com sidebar oculta, navegação mobile visível e conteúdo limitado ao viewport. As fixtures e a exceção pública foram removidas antes do commit.
+- Preview: ambos os checks de qualidade e o deployment Vercel passaram; `/login` respondeu HTTP 200 no alias da branch. A identidade isolada foi confirmada como `suporteinovahub-7501` antes da inspeção.
 - Validações não executadas e motivo: o fluxo autenticado com dados reais não pôde ser automatizado porque o Chrome estava bloqueado por uma UI de outra extensão; requer homologação na preview da branch.
 
 ## Impacto operacional
 
-- Deploy necessário: sim, somente após revisão/homologação da preview; produção não foi alterada.
+- Deploy necessário: a preview está disponível; promoção para produção somente após revisão/homologação. Produção não foi alterada.
 - Migração aplicada: não.
 - Compatibilidade/rollback: backend, schema, RLS, actions e rotas profundas permanecem; rollback é reverter o commit da UI. Rotas de superfícies retiradas preservam compatibilidade por redirecionamento.
 
