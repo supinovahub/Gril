@@ -373,6 +373,19 @@ Inbox, CRM e agenda devem exibir datas e horários no fuso configurado da opera�
 
 ## 11. CRM, privacidade e encerramento
 
+### Workspace operacional unificado
+
+Com dono ou gestor autenticado, valide a arquitetura de navegação antes dos fluxos detalhados:
+
+1. a navegação principal não exibe entradas independentes para Leads ou Kanban;
+2. em `Conversas`, alterne entre as visualizações `Conversas` e `Leads` e confirme que filtros, links profundos e ações continuam preservados;
+3. na Visão geral, use `Abrir Kanban completo` e confirme que esta é a entrada geral para a visão completa;
+4. em `Central`, alterne os filtros, confirme a ordem cronológica e verifique que cada página mostra no máximo dez registros reais;
+5. confirme que ações de alertas, notificações e escaladas continuam disponíveis no registro correspondente;
+6. em Auditoria, avance e volte entre páginas, sempre com no máximo trinta eventos;
+7. em Campanhas, confirme que criação e edição não mostram personalidade ou persona do Pedro, mas preservam modo, consentimento, importação, ondas, pausa, retomada e arquivamento;
+8. em celular, confirme as entradas `Início`, `Conversas`, `Agenda`, `Central` e `Mais`, sem overflow lateral da página.
+
 ### Visão geral
 
 Com uma conta de imobiliária autenticada, abra `/app` e valide:

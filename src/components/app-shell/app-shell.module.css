@@ -1,6 +1,6 @@
 .appFrame {
   min-height: 100vh;
-  padding-left: 248px;
+  padding-left: 224px;
 }
 
 .environmentBar {
@@ -8,7 +8,7 @@
   z-index: 45;
   top: 0;
   right: 0;
-  left: 248px;
+  left: 224px;
   display: flex;
   height: 28px;
   align-items: center;
@@ -35,9 +35,9 @@
   z-index: 50;
   inset: 0 auto 0 0;
   display: flex;
-  width: 248px;
+  width: 224px;
   flex-direction: column;
-  padding: 18px 14px 14px;
+  padding: 16px 12px 12px;
   border-right: 1px solid var(--border);
   background: var(--canvas);
   overflow: hidden;
@@ -99,7 +99,7 @@
   gap: 9px;
   min-height: 54px;
   padding: 8px;
-  margin: 20px 0 16px;
+  margin: 16px 0 10px;
   border: 1px solid var(--border);
   border-radius: 12px;
   background: var(--surface);
@@ -176,7 +176,7 @@
 }
 
 .navLabel {
-  margin: 17px 9px 5px;
+  margin: 14px 9px 4px;
   color: var(--ink-faint);
   font-size: 8px;
   font-weight: 800;
@@ -187,7 +187,7 @@
 .navItem {
   position: relative;
   display: flex;
-  min-height: 38px;
+  min-height: 36px;
   align-items: center;
   gap: 10px;
   padding: 0 10px;
@@ -287,7 +287,7 @@
 
 .content {
   min-height: 100vh;
-  padding: 42px clamp(24px, 4vw, 58px) 60px;
+  padding: 36px clamp(22px, 3.5vw, 52px) 60px;
 }
 
 .hasEnvironment .content {
@@ -322,8 +322,7 @@
     justify-content: space-between;
     padding: 10px 16px;
     border-bottom: 1px solid var(--border);
-    background: rgba(243, 241, 235, 0.94);
-    backdrop-filter: blur(12px);
+    background: var(--paper);
   }
 
   .mobileBrand {
@@ -369,9 +368,8 @@
     padding: 5px;
     border: 1px solid rgba(28, 33, 31, 0.13);
     border-radius: 18px;
-    background: rgba(255, 254, 250, 0.95);
+    background: var(--surface);
     box-shadow: 0 16px 44px rgba(28, 33, 31, 0.15);
-    backdrop-filter: blur(16px);
   }
 
   .mobileNavItem,

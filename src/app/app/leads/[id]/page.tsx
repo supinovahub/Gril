@@ -13,6 +13,7 @@ import { notFound } from "next/navigation";
 import { canManageCrm, canManageTeam, requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { formatOperationDateTime } from "@/lib/time/operation-format";
+import { ConversationViews } from "../../inbox/conversation-views";
 import { updateContactNameAction } from "../../contact-actions";
 import {
   addContactPhoneAction,
@@ -114,6 +115,7 @@ export default async function LeadDetailPage({
 
   return (
     <div className={styles.page}>
+      <ConversationViews active="leads" />
       <Link className={styles.backLink} href="/app/leads"><ArrowLeft size={15} /> Voltar para leads</Link>
 
       <header className={styles.detailHeader}>

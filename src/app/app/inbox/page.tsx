@@ -10,6 +10,7 @@ import {
 import { sortInboxConversations } from "@/lib/inbox/sorting";
 import { createClient } from "@/lib/supabase/server";
 import { formatOperationDateTime } from "@/lib/time/operation-format";
+import { ConversationViews } from "./conversation-views";
 import styles from "./inbox.module.css";
 
 export default async function InboxPage() {
@@ -62,12 +63,14 @@ export default async function InboxPage() {
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
-        <div><p className={styles.eyebrow}>WhatsApp unificado</p><h1>Inbox</h1><p>Pendências ficam no topo; dentro de cada grupo, a atividade mais recente aparece primeiro.</p></div>
+        <div><p className={styles.eyebrow}>Atendimento</p><h1>Conversas</h1><p>Mensagens, sugestões e contexto comercial reunidos no mesmo workspace.</p></div>
         {viewer.membership?.role !== "broker" ? <Link className={styles.secondaryButton} href="/app/configuracoes/whatsapp">Configurar números</Link> : null}
       </header>
 
+      <ConversationViews active="conversations" />
+
       <section className={styles.inboxPanel}>
-        <div className={styles.inboxHeader}><span>{orderedConversations.length} conversas visíveis</span><span>Mensagens não lidas e sugestões da IA pendentes aparecem primeiro</span></div>
+        <div className={styles.inboxHeader}><span>{orderedConversations.length} conversas</span><span>Pendências primeiro</span></div>
         <div className={styles.conversationList}>
           {orderedConversations.map((conversation) => {
             const contact = Array.isArray(conversation.contacts) ? conversation.contacts[0] : conversation.contacts;

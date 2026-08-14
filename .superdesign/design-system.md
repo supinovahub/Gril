@@ -47,5 +47,8 @@ Dashboard B2B de operação imobiliária para dono e gestor. A tela inicial deve
 - Não alterar rotas, contratos, nomes de campos, server actions, RLS ou gates de papel.
 - Manter Server Components para leitura e paralelizar consultas independentes.
 - Relatórios entram como resumo acionável na visão geral, não como um novo mosaico de gráficos.
-- A consolidação Inbox, Chat, Leads e Agenda é uma direção de arquitetura posterior; este desenho pode antecipar a fonte única por links e linguagem, sem remover rotas neste ciclo.
+- Conversas é a entrada única para Inbox e Leads, com duas visualizações internas. As rotas continuam preservadas para compatibilidade e links profundos.
+- Kanban não aparece na navegação principal; a visão completa é aberta apenas pelo resumo da Visão geral.
+- Central reúne Pedro, Lionel e eventos operacionais em uma lista cronológica de dez itens por página. Auditoria usa trinta itens por página.
+- Campanhas preserva o modo operacional e os gates do Pedro, mas não apresenta edição de personalidade ou persona.
 - Aprendizados, Experimentos A/B, pré-lead Meta, Checklists comerciais e Privacidade não devem orientar a nova navegação.

@@ -6,7 +6,6 @@ import { TypedConfirmationButton } from "@/components/typed-confirmation-button"
 import {
   canManageTeam,
   requireActiveViewer,
-  roleLabels,
 } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import {
@@ -133,9 +132,9 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
     <div className={styles.page}>
       <header className={styles.header}>
         <div>
-          <p className={styles.eyebrow}>Pessoas e segurança</p>
+          <p className={styles.eyebrow}>Imobiliária e corretores</p>
           <h1>Equipe e acessos</h1>
-          <p>Convide, aprove e limite o que cada pessoa pode operar.</p>
+          <p>Gerencie a imobiliária e os corretores sem expor a estrutura técnica de permissões.</p>
         </div>
         <span className={styles.summary}>{activeCount} ativos · {pendingCount} pendentes</span>
       </header>
@@ -144,9 +143,9 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       {feedback.sucesso ? <p className={`${styles.feedback} ${styles.success}`}>Ação concluída e registrada.</p> : null}
 
       {joinCode ? <section className={styles.panel}>
-        <header className={styles.panelHeader}><div><Link2 size={18} /><h2>Código da imobiliária</h2></div><span>Localizador, não autorização</span></header>
+        <header className={styles.panelHeader}><div><Link2 size={18} /><h2>Código da imobiliária</h2></div><span>Compartilhe para solicitar acesso</span></header>
         <div className={styles.generatedLink}><code>{joinCode.code}</code>{joinCode.enabled ? <CopyButton value={joinCode.code} /> : <strong>Desativado</strong>}</div>
-        <p className={styles.formHint}>Visível somente para dono e gestores autorizados. Corretores não recebem este código.</p>
+        <p className={styles.formHint}>Somente pessoas da imobiliária administram este código. Corretores podem usá-lo para pedir entrada.</p>
         {isOwner ? <div className={styles.codeActions}>
           <form action={rotateOrganizationCodeAction}><input name="action" type="hidden" value="rotate" /><input name="reason" placeholder="Motivo da troca" required /><TypedConfirmationButton className={styles.actionButton}>Gerar novo código</TypedConfirmationButton></form>
           {joinCode.enabled ? <form action={rotateOrganizationCodeAction}><input name="action" type="hidden" value="disable" /><input name="reason" placeholder="Motivo da desativação" required /><TypedConfirmationButton className={styles.dangerButton}>Desativar código</TypedConfirmationButton></form> : null}
@@ -156,11 +155,11 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       {accessRequests?.length ? <section className={styles.panel}>
         <header className={styles.panelHeader}><div><UserRoundPlus size={18} /><h2>Solicitações pelo código</h2></div><span>{accessRequests.length} aguardando</span></header>
         <ul className={styles.requestList}>{accessRequests.map((request) => <li className={styles.accessRequest} key={request.id}>
-          <div className={styles.requestIdentity}><strong>{request.full_name}</strong><span>{request.email} · {request.whatsapp_e164}</span><small>{request.requested_role === "manager" ? "Solicitou perfil de gestor" : "Solicitou perfil de corretor"} · v{request.version}</small>{request.introduction ? <p>{request.introduction}</p> : null}{request.public_reason ? <p className={styles.requestReason}>{request.public_reason}</p> : null}</div>
+          <div className={styles.requestIdentity}><strong>{request.full_name}</strong><span>{request.email} · {request.whatsapp_e164}</span><small>{request.requested_role === "manager" ? "Solicitou acesso da imobiliária" : "Solicitou acesso de corretor"}</small>{request.introduction ? <p>{request.introduction}</p> : null}{request.public_reason ? <p className={styles.requestReason}>{request.public_reason}</p> : null}</div>
           {request.status === "pending" ? <div className={styles.requestActions}>
             <form action={decideTeamAccessRequestAction}>
               <input name="requestId" type="hidden" value={request.id} /><input name="decision" type="hidden" value="approve" />
-              <label>Papel ao aprovar<select defaultValue={request.requested_role ?? "broker"} name="approvedRole"><option value="broker">Corretor</option>{isOwner ? <option value="manager">Gestor padrão</option> : null}</select></label>
+              <label>Tipo de acesso<select defaultValue={request.requested_role ?? "broker"} name="approvedRole"><option value="broker">Corretor</option>{isOwner ? <option value="manager">Imobiliária</option> : null}</select></label>
               <fieldset><legend>Operações do corretor</legend>{viewer.operations.map((operation) => <label key={operation.id}><input defaultChecked={operation.is_default} name="operationId" type="checkbox" value={operation.id} /> {operation.name}</label>)}</fieldset>
               <TypedConfirmationButton className={styles.actionButton}>Aprovar acesso</TypedConfirmationButton>
             </form>
@@ -173,7 +172,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
       <section className={styles.panel}>
         <header className={styles.panelHeader}>
           <div><UserRoundPlus size={18} /><h2>Novo acesso</h2></div>
-          <span>O token puro aparece uma única vez</span>
+          <span>Convite individual ou link compartilhável</span>
         </header>
         <InviteForm
           canInviteManager={isOwner}
@@ -181,13 +180,13 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
         />
       </section>
 
-      {isOwner ? <section className={styles.panel}><header className={styles.panelHeader}><div><ShieldCheck size={18}/><h2>Transferir propriedade</h2></div><span>O dono atual vira gestor após o aceite</span></header><form action={requestOwnershipTransferAction} className={styles.permissionForm}><label>Novo dono<select name="targetMembershipId" required><option value="">Selecione</option>{memberRows.filter((member)=>member.status==='active'&&member.role!=='owner').map((member)=><option key={member.id} value={member.id}>{profilesByUser.get(member.user_id)?.full_name ?? member.id.slice(0,8)}</option>)}</select></label><label>Senha atual<input autoComplete="current-password" name="password" required type="password"/></label><button className={styles.savePermissions}>Solicitar aceite</button></form></section> : null}
+      {isOwner ? <section className={styles.panel}><header className={styles.panelHeader}><div><ShieldCheck size={18}/><h2>Transferir propriedade</h2></div><span>Define quem administra a imobiliária</span></header><form action={requestOwnershipTransferAction} className={styles.permissionForm}><label>Novo responsável<select name="targetMembershipId" required><option value="">Selecione</option>{memberRows.filter((member)=>member.status==='active'&&member.role!=='owner').map((member)=><option key={member.id} value={member.id}>{profilesByUser.get(member.user_id)?.full_name ?? member.id.slice(0,8)}</option>)}</select></label><label>Senha atual<input autoComplete="current-password" name="password" required type="password"/></label><button className={styles.savePermissions}>Solicitar aceite</button></form></section> : null}
       {ownershipTransfers?.filter((item)=>item.target_membership_id===viewer.membership?.id).map((item)=><section className={styles.panel} key={item.id}><header className={styles.panelHeader}><div><ShieldCheck size={18}/><h2>Aceitar propriedade</h2></div></header><form action={acceptOwnershipTransferAction} className={styles.permissionForm}><input name="transferId" type="hidden" value={item.id}/><p>Ao aceitar, você se torna o novo dono e o dono anterior vira gestor.</p><button className={styles.savePermissions}>Aceitar transferência</button></form></section>)}
 
       <section className={styles.panel}>
         <header className={styles.panelHeader}>
           <div><UsersRound size={18} /><h2>Pessoas vinculadas</h2></div>
-          <span>Fonte: memberships + RLS</span>
+          <span>Papéis e estado de acesso</span>
         </header>
 
         {memberRows.length ? (
@@ -216,7 +215,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
                       </span>
                     </div>
 
-                    <span className={styles.role}>{roleLabels[member.role] ?? member.role}</span>
+                    <span className={styles.role}>{member.role === "broker" ? "Corretor" : "Imobiliária"}</span>
                     <span className={statusClass(member.status)}>{statusLabels[member.status]}</span>
 
                     {member.status === "pending" && canAct ? (
@@ -226,7 +225,7 @@ export default async function TeamPage({ searchParams }: { searchParams: Promise
                         {isOwner ? (
                           <select name="requestedRole" defaultValue="broker" aria-label="Papel ao aprovar">
                             <option value="broker">Corretor</option>
-                            <option value="manager">Gestor</option>
+                            <option value="manager">Imobiliária</option>
                           </select>
                         ) : (
                           <input name="requestedRole" type="hidden" value="broker" />

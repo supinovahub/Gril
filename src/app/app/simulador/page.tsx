@@ -154,11 +154,11 @@ export default async function SimulatorPage({
     <SimulationAutoRefresh active={hasPending || regressionPending} />
     <header className={styles.header}>
       <div>
-        <p className={styles.eyebrow}>Ambiente isolado</p>
+        <p className={styles.eyebrow}>Bancada de teste</p>
         <h1>Simulador</h1>
         <p>Converse continuamente com o Pedro sem criar lead, enviar WhatsApp, agendar ou alterar o pipeline.</p>
       </div>
-      <span className={styles.badge}><LockKeyhole size={13} /> sem efeitos externos</span>
+      <span className={styles.badge}><LockKeyhole size={13} /> simulação sem envio ao lead</span>
     </header>
 
     {errorMessage ? <p className={styles.notice}>{errorMessage}</p> : null}
@@ -249,8 +249,8 @@ export default async function SimulatorPage({
                   <div className={simulatorStyles.traceGrid}>
                     <span><small>Próxima ação</small><strong>{trace.action ?? "responder"}</strong></span>
                     <span><small>Follow-up</small><strong>{trace.followup_strategy ?? "nenhum"}</strong></span>
-                    <span><small>Latência</small><strong>{execution?.latency_ms == null ? "—" : `${execution.latency_ms} ms`}</strong></span>
-                    <span><small>Custo estimado</small><strong>{execution?.estimated_cost == null ? "—" : Number(execution.estimated_cost).toFixed(6)}</strong></span>
+                    <span><small>Latência</small><strong>{execution?.latency_ms == null ? "Não disponível" : `${execution.latency_ms} ms`}</strong></span>
+                    <span><small>Custo estimado</small><strong>{execution?.estimated_cost == null ? "Não disponível" : Number(execution.estimated_cost).toFixed(6)}</strong></span>
                   </div>
                   {trace.conversation_summary?.summary ? <p><strong>Resumo acumulado:</strong> {trace.conversation_summary.summary}</p> : null}
                   {updates.length ? <div><strong>Qualificação extraída</strong><ul>{updates.map((update) => <li key={update.code}>{update.code}: {valueFromUpdate(update)} ({Math.round(update.confidence * 100)}%)</li>)}</ul></div> : <p>Nenhuma qualificação nova foi extraída neste turno.</p>}

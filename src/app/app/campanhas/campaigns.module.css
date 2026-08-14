@@ -49,6 +49,16 @@
 .check { display: flex !important; align-items: flex-start; gap: 8px; }
 .check input { width: auto; }
 .createForm button:disabled { cursor: not-allowed; opacity: .45; }
+.createCampaign { overflow:hidden; border-radius:var(--radius-panel); background:var(--surface); box-shadow:var(--shadow); }
+.createCampaign > summary { display:flex; min-height:62px; align-items:center; gap:10px; padding:0 17px; color:var(--ink); cursor:pointer; list-style:none; }
+.createCampaign > summary::-webkit-details-marker { display:none; }
+.createCampaign > summary > svg { color:var(--accent); }
+.createCampaign > summary > span { display:grid; gap:2px; }
+.createCampaign > summary strong { font-size:11px; }
+.createCampaign > summary small { color:var(--ink-muted); font-size:9px; }
+.createCampaign[open] > summary { border-bottom:1px solid var(--border-soft); }
+.createCampaign .createForm { border-radius:0; box-shadow:none; }
+.archivedLayout { grid-template-columns:minmax(0,1fr); }
 .empty { text-align: center; }
 .empty svg { color: var(--accent); }
 .headerTools { display: grid; justify-items: end; gap: 10px; }

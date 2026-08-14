@@ -30,6 +30,7 @@ import {
 } from "../actions";
 import styles from "../inbox.module.css";
 import { startBrokerConsultationAction } from "../../chat-interno/actions";
+import { ConversationViews } from "../conversation-views";
 import { ConversationReadMarker } from "./conversation-read-marker";
 
 type ConversationTab = "messages" | "overview" | "qualification" | "summary" | "next-actions" | "history";
@@ -177,7 +178,8 @@ export default async function ConversationPage({
   return (
     <div className={styles.page}>
       <ConversationReadMarker conversationId={conversation.id} />
-      <Link className={styles.backLink} href="/app/inbox"><ArrowLeft size={15} /> Voltar para Inbox</Link>
+      <ConversationViews active="conversations" />
+      <Link className={styles.backLink} href="/app/inbox"><ArrowLeft size={15} /> Voltar para conversas</Link>
 
       <header className={styles.chatHeader}>
         <div className={styles.chatHeaderIdentity}>

@@ -3,6 +3,7 @@ import Link from "next/link";
 
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
+import { ConversationViews } from "../inbox/conversation-views";
 import { LeadForm } from "./lead-form";
 import { BulkCrmPanel } from "./bulk-crm-panel";
 import styles from "./leads.module.css";
@@ -51,22 +52,19 @@ export default async function LeadsPage({
     <div className={styles.page}>
       <header className={styles.pageHeader}>
         <div>
-          <p className={styles.eyebrow}>Gestão comercial</p>
-          <h1>Leads e oportunidades</h1>
-          <p>Cada linha representa uma oportunidade de compra. A mesma pessoa pode ter mais de uma oportunidade sem duplicar o contato.</p>
+          <p className={styles.eyebrow}>Conversas</p>
+          <h1>Leads</h1>
+          <p>Visualize o contexto comercial das pessoas que estão em atendimento.</p>
         </div>
         <div className={styles.headerActions}>
           <Link className={styles.secondaryButton} href={showingArchived ? "/app/leads" : "/app/leads?arquivados=1"}>{showingArchived ? "Ver ativos" : "Ver arquivados"}</Link>
-          <Link className={styles.secondaryButton} href="/app/kanban">Abrir Kanban</Link>
         </div>
       </header>
 
+      <ConversationViews active="leads" />
+
       {erro ? <p className={styles.errorBanner}>{erro}</p> : null}
       {sucesso ? <p className={styles.successBanner}>Operação concluída.</p> : null}
-      <section className={styles.crmGuide} aria-label="Como usar o CRM">
-        <div><strong>Como trabalhar um lead</strong><span>Abra uma oportunidade para completar a qualificação e escolher o próximo passo.</span></div>
-        <ol><li><b>1</b>Confira o contexto e o responsável.</li><li><b>2</b>Preencha os dados que ainda faltam.</li><li><b>3</b>Avance a etapa ou agende uma call.</li></ol>
-      </section>
       <BulkCrmPanel contacts={contacts} managers={(memberships ?? []).filter((item)=>item.role!=='broker').map((item)=>({ id:item.id,label:`${item.role} · ${item.id.slice(0,8)}` }))} campaigns={(campaigns ?? []).map((item)=>({id:item.id,label:item.name}))}/>
 
       <section className={styles.layout}>

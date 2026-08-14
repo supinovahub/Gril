@@ -41,6 +41,7 @@ export default async function PedroPage({
   const settings = settingsResult.data;
   const defaultPersona = personasResult.data?.[0];
   const published = versionsResult.data?.find((item) => item.persona_id === defaultPersona?.id && item.status === "published");
+  const publishedRules = rulesResult.data?.find((item) => item.status === "published");
   const drafts = versionsResult.data?.filter((item) => item.persona_id === defaultPersona?.id && item.status === "draft") ?? [];
   const openAiAccount = integrationsResult.data?.find((item) => item.status !== "revoked");
   const { data: allowlist } = await supabase.from("ai_test_allowlist").select("id,phone_e164,active").eq("org_id", viewer.organization!.id).eq("active", true).order("created_at");
@@ -53,14 +54,34 @@ export default async function PedroPage({
       {feedback.sucesso ? <p className={styles.successBanner}>{feedback.sucesso}</p> : null}
 
       <section className={styles.statusStrip}>
-        <div><BrainCircuit size={18} /><span><small>Persona publicada</small><strong>v{published?.version ?? "—"}</strong></span></div>
-        <div><ShieldCheck size={18} /><span><small>Regras publicadas</small><strong>v{rulesResult.data?.find((item) => item.status === "published")?.version ?? "—"}</strong></span></div>
+        <div><BrainCircuit size={18} /><span><small>Persona publicada</small><strong>{published?.version ? `v${published.version}` : "Não publicada"}</strong></span></div>
+        <div><ShieldCheck size={18} /><span><small>Regras publicadas</small><strong>{publishedRules?.version ? `v${publishedRules.version}` : "Não publicadas"}</strong></span></div>
         <div><Sparkles size={18} /><span><small>Modelo ativo</small><strong>{modelsResult.data?.find((item) => item.status === "active" && item.is_default)?.model_identifier ?? "Pendente"}</strong></span></div>
       </section>
 
       <section className={styles.modeSummary} aria-labelledby="pedro-current-mode-title">
         <div><p className={styles.eyebrow}>Comportamento atual</p><h2 id="pedro-current-mode-title">{modeLabels[inboundMode] ?? inboundMode}</h2><p>{modeDescriptions[inboundMode] ?? "Confira o modo selecionado antes de liberar o atendimento."}</p></div>
         <span>Para começar, recomendamos <strong>Sugere para revisão</strong>.</span>
+      </section>
+
+      <section className={styles.behaviorGrid} aria-label="Comportamentos do Pedro">
+        <article className={styles.behaviorPanel}>
+          <header><span><p className={styles.eyebrow}>Atendimento via WhatsApp</p><h2>Conversas recebidas</h2></span><span className={styles.behaviorState}>{modeLabels[inboundMode] ?? inboundMode}</span></header>
+          <p>Controle como Pedro participa das conversas iniciadas pelo lead. O modo assistido prepara a resposta e espera a revisão da equipe.</p>
+          <form action={changeGlobalAiModeAction} className={styles.modeForm}>
+            {["off", "shadow", "assisted"].map((mode) => <button className={inboundMode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{modeLabels[mode]}</button>)}
+          </form>
+        </article>
+        <article className={styles.behaviorPanel}>
+          <header><span><p className={styles.eyebrow}>Campanhas de reativação</p><h2>Conversas antigas</h2></span><span className={styles.behaviorState}>{modeLabels[settings?.reactivation_ai_mode ?? "off"]}</span></header>
+          <p>Esta configuração é independente do atendimento via WhatsApp e permite produção somente dentro dos gates de campanha.</p>
+          <form action={configureReactivationAiAction} className={styles.reactivationForm}>
+            <label><span>Como Pedro deve agir</span><select defaultValue={settings?.reactivation_ai_mode ?? "off"} name="reactivationMode"><option value="off">Desligado</option><option value="shadow">Só observa</option><option value="assisted">Sugere para revisão</option><option value="production">Responde automaticamente</option></select></label>
+            <label><span>Quem pode receber</span><select defaultValue={settings?.reactivation_release_state ?? "blocked"} name="releaseState"><option value="blocked">Ninguém ainda</option><option value="test_controlled">Somente números de teste</option><option value="released">Todos os contatos elegíveis</option></select></label>
+            <label><span>Autonomia</span><select defaultValue={settings?.reactivation_autonomy ?? "low"} name="reactivationAutonomy"><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option></select></label>
+            <button type="submit">Salvar reativação</button>
+          </form>
+        </article>
       </section>
 
       <div className={styles.grid}>
@@ -79,7 +100,7 @@ export default async function PedroPage({
           </section>
 
           <section className={styles.panel}>
-            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Construtor guiado</p><h2>Amostras e clones</h2></span><span className={styles.versionChip}>{samplesResult.data?.filter((item)=>item.persona_id===defaultPersona?.id && item.status==='confirmed').length ?? 0} / 10–30</span></div>
+            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Construtor guiado</p><h2>Amostras e clones</h2></span><span className={styles.versionChip}>{samplesResult.data?.filter((item)=>item.persona_id===defaultPersona?.id && item.status==='confirmed').length ?? 0} de 10 a 30</span></div>
             <form action={addPersonaSampleAction} className={styles.promptForm}>
               <label><span>Persona</span><select name="personaId" required>{personasResult.data?.map((persona)=><option key={persona.id} value={persona.id}>{persona.name}</option>)}</select></label>
               <label><span>Conversa de exemplo</span><textarea name="sample" placeholder="Cole uma conversa. Telefones, e-mails, documentos e valores serão mascarados antes da análise." required rows={8}/></label>
@@ -133,23 +154,6 @@ export default async function PedroPage({
         </div>
 
         <aside className={styles.sideColumn}>
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Atendimento normal</p><h2>Modo inbound</h2></span></div>
-            <form action={changeGlobalAiModeAction} className={styles.modeForm}>
-              {["off", "shadow", "assisted"].map((mode) => <button className={inboundMode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{modeLabels[mode]}</button>)}
-            </form>
-            <p className={styles.notice}>Escolha como Pedro deve participar do atendimento normal. O modo assistido é o mais seguro para começar: ele sugere, e a equipe aprova cada envio. Respostas automáticas ficam disponíveis somente em campanhas de reativação liberadas.</p>
-          </section>
-          <section className={styles.panel}>
-            <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Reativação de base</p><h2>Conversas antigas</h2></span></div>
-            <p className={styles.notice}>Estas opções controlam campanhas para contatos antigos. Elas são separadas do atendimento normal acima.</p>
-            <form action={configureReactivationAiAction} className={styles.promptForm}>
-              <label><span>Como Pedro deve agir</span><select defaultValue={settings?.reactivation_ai_mode ?? "off"} name="reactivationMode"><option value="off">Desligado</option><option value="shadow">Só observa</option><option value="assisted">Sugere para revisão</option><option value="production">Responde automaticamente</option></select></label>
-              <label><span>Quem pode receber</span><select defaultValue={settings?.reactivation_release_state ?? "blocked"} name="releaseState"><option value="blocked">Ninguém ainda</option><option value="test_controlled">Somente números de teste</option><option value="released">Todos os contatos elegíveis</option></select></label>
-              <label><span>Autonomia</span><select defaultValue={settings?.reactivation_autonomy ?? "low"} name="reactivationAutonomy"><option value="low">Baixa</option><option value="medium">Média</option><option value="high">Alta</option></select></label>
-              <button type="submit">Salvar reativação</button>
-            </form>
-          </section>
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Teste controlado</p><h2>Números autorizados para teste</h2></span></div>
             <p className={styles.notice}>A whitelist controla o teste de campanhas de reativação. Em <strong>Todos os contatos elegíveis</strong>, a campanha pode responder respeitando opt-out e supressão; o atendimento normal continua sem respostas automáticas.</p>

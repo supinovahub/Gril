@@ -1,5 +1,14 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 14/08/2026 — redesign do workspace em homologação
+
+- A branch `agent/workspace-redesign-real` aplica a arquitetura operacional aprovada sobre a nova Visão geral e preserva os fluxos de Chat com Pedro e Lionel.
+- Leads e Kanban deixam a navegação principal. Leads passa a ser uma visualização dentro de Conversas; o Kanban completo é aberto pelo resumo da Visão geral.
+- Central reúne Pedro, Lionel e eventos operacionais em ordem cronológica, com dez registros por página. Auditoria mostra trinta registros por página.
+- Campanhas não ganhou edição de personalidade do Pedro. Paleta, favicon e título da aba continuam iguais aos de produção.
+- Lint, 110 testes e build das 46 rotas passaram. Produção e Supabase não foram alterados; preview e homologação autenticada ainda estão pendentes.
+- Detalhes: `docs/agent/changes/2026-08-14-workspace-operacional-unificado.md` e `docs/decisions/2026-08-14-workspace-operacional-unificado.md`.
+
 ## Atualizacao de 07/08/2026 - producao automatica exclusiva para reativacao
 
 - A migration `20260807180741_reactivation_production_only.sql` foi aplicada no Supabase remoto e registrada como aplicada na history.

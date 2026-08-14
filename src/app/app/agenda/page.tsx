@@ -125,7 +125,7 @@ export default async function AgendaPage({
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>Agenda da operação</p>
-          <h1>Agenda e calls</h1>
+          <h1>Agenda</h1>
           <p>
             Organize sua disponibilidade, acompanhe os horários e registre o resultado de cada call.
           </p>
@@ -139,10 +139,10 @@ export default async function AgendaPage({
       {feedback.sucesso ? (
         <p className={styles.success}>{feedback.sucesso}</p>
       ) : null}
-      <section className={styles.agendaGuide} aria-label="Como funciona a agenda">
-        <div><strong>Como usar esta página</strong><span>As três áreas representam momentos diferentes do atendimento.</span></div>
-        <ol><li><b>1</b><span><strong>Disponibilidade</strong> informe quando pode receber calls.</span></li><li><b>2</b><span><strong>Agendamento</strong> reserve um horário alinhado com o lead.</span></li><li><b>3</b><span><strong>Resultado</strong> registre o que aconteceu depois da call.</span></li></ol>
-      </section>
+      <nav aria-label="Áreas da Agenda" className={styles.sectionTabs}>
+        <a href="#proximas-calls">Compromissos</a>
+        <a href="#disponibilidade">Disponibilidade</a>
+      </nav>
       {offers?.length ? (
         <section className={styles.offers}>
           <h2>Ofertas para você</h2>
@@ -196,7 +196,7 @@ export default async function AgendaPage({
       ) : null}
       <div className={styles.layout}>
         <main className={styles.main}>
-          <section className={styles.panel}>
+          <section className={styles.panel} id="proximas-calls">
             <div className={styles.panelHeader}>
               <h2>Próximas calls</h2>
               <span>{calls?.length ?? 0} visíveis</span>
@@ -340,7 +340,7 @@ export default async function AgendaPage({
               ) : null}
             </div>
           </section>
-          <section className={styles.panel}>
+          <section className={styles.panel} id="disponibilidade">
             <div className={styles.panelHeader}>
                 <h2>Quando você pode receber calls</h2>
               <span>
@@ -419,7 +419,7 @@ export default async function AgendaPage({
                       dateStyle: "short",
                       timeStyle: "short",
                     })}
-                    –
+                    até
                     {new Date(item.ends_at).toLocaleString("pt-BR", {
                       timeZone: operation?.timezone,
                       dateStyle: "short",
