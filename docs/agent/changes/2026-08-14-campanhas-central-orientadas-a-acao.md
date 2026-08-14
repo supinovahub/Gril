@@ -52,9 +52,10 @@ Completar a repaginação real de Campanhas e Central, substituindo a exposiçã
 - `npx next build --webpack`: aprovado, incluindo TypeScript e geração das 46 rotas.
 - `git diff --check`: aprovado antes da publicação.
 - `npx tsc --noEmit`: a alteração introduzida foi corrigida; o comando isolado ainda reporta três erros preexistentes em testes de `pedro-turn` e `openai-runtime`, enquanto a checagem de tipos do build passa.
-- QA visual autenticado da preview: pendente de publicação desta rodada.
+- QA visual autenticado da preview: aprovado em Chrome, com comparação lado a lado registrada em `design-qa.md`; a criação progressiva e os filtros `Precisa agir` e `Histórico` foram exercitados sem ações de escrita.
+- Console do Chrome em Campanhas e Central: zero avisos e zero erros.
+- Checks do PR `#47`: CI e Vercel aprovados após a publicação final.
 
 ## Riscos e pendências
 
-- Homologar Campanhas e Central na preview com dados reais, sem executar ações de escrita.
-- Confirmar responsividade e estados de interação após a atualização do deploy.
+- Homologação de produto pelo responsável permanece como próxima etapa; a inspeção técnica autenticada com dados reais foi concluída sem executar ações de escrita.
