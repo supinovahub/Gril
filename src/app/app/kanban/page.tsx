@@ -1,4 +1,4 @@
-import { CircleDot, ListFilter } from "lucide-react";
+import { CircleDot, ListFilter, MessagesSquare } from "lucide-react";
 import Link from "next/link";
 
 import { requireActiveViewer } from "@/lib/auth/session";
@@ -17,7 +17,10 @@ export default async function KanbanPage() {
     <div className={styles.kanbanPage}>
       <header className={styles.pageHeader}>
         <div><p className={styles.eyebrow}>Pipeline fixo do MVP</p><h1>Kanban comercial</h1><p>Pedro atua nas três primeiras etapas; o corretor recebe o fluxo humano.</p></div>
-        <Link className={styles.secondaryButton} href="/app/leads"><ListFilter size={15} /> Ver lista</Link>
+        <div className={styles.headerActions}>
+          <Link className={styles.secondaryButton} href="/app/conversas"><MessagesSquare size={15} /> Conversas</Link>
+          <Link className={styles.secondaryButton} href="/app/leads"><ListFilter size={15} /> Tabela CRM</Link>
+        </div>
       </header>
 
       <div className={styles.kanbanBoard}>

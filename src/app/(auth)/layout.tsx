@@ -7,35 +7,34 @@ export default function AuthLayout({ children }: { children: React.ReactNode }) 
     <main className={styles.shell}>
       <section className={styles.context} aria-label="Contexto do produto">
         <div className={styles.brand}>
-          <span className={styles.brandMark}>P</span>
-          <span>Pedro</span>
+          <span className={styles.brandMark}>G</span>
+          <span>Gril</span>
         </div>
 
         <div className={styles.contextCopy}>
-          <p className={styles.eyebrow}>Operação imobiliária</p>
-          <h1>Conversas, equipe e decisões no mesmo ritmo.</h1>
+          <p className={styles.eyebrow}>Workspace comercial</p>
+          <h1>A operação começa pela próxima conversa.</h1>
           <p>
-            A base começa pelo essencial: identidade confirmada, acesso aprovado e
-            dados isolados por operação.
+            Atendimento, agenda e decisões reunidos em uma única rotina para a imobiliária.
           </p>
         </div>
 
         <ul className={styles.trustList}>
           <li>
             <ShieldCheck size={18} aria-hidden="true" />
-            Acesso por organização e operação
+            Dados isolados por imobiliária
           </li>
           <li>
             <LockKeyhole size={18} aria-hidden="true" />
-            Papéis validados no banco
+            Acessos validados no banco
           </li>
           <li>
             <MessageCircleMore size={18} aria-hidden="true" />
-            WhatsApp não é usado para login
+            WhatsApp conectado ao atendimento
           </li>
         </ul>
 
-        <p className={styles.environment}>MVP interno · ambiente de desenvolvimento</p>
+        <p className={styles.environment}>Acesso seguro · operação rastreável</p>
       </section>
 
       <section className={styles.formSide}>{children}</section>

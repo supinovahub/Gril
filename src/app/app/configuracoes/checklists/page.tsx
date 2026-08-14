@@ -1,13 +1,5 @@
-import { ListChecks } from "lucide-react";
-import { requireActiveViewer } from "@/lib/auth/session";
-import { createClient } from "@/lib/supabase/server";
-import styles from "../../operations.module.css";
-import { publishChecklistTemplateAction } from "./actions";
+import { redirect } from "next/navigation";
 
-export default async function ChecklistSettingsPage({searchParams}:{searchParams:Promise<{erro?:string;sucesso?:string}>}){
- const viewer=await requireActiveViewer();const feedback=await searchParams;const supabase=await createClient();const operation=viewer.operations.find((item)=>item.is_default)??viewer.operations[0];
- const {data:templates}=await supabase.from("checklist_templates").select("*,checklist_items(*)").eq("org_id",viewer.organization!.id).order("stage_code").order("version",{ascending:false});
- return <div className={styles.page}><header className={styles.header}><div><p className={styles.eyebrow}>Snapshots versionados</p><h1>Checklists comerciais</h1><p>Proposta, reserva, documentos, pagamento e venda. Arquivos continuam fora do checklist.</p></div><ListChecks/></header>{feedback.erro?<p className={styles.error}>{feedback.erro}</p>:null}{feedback.sucesso?<p className={styles.success}>Nova versão publicada.</p>:null}
- <div className={styles.layout}><main><section className={styles.panel}><div className={styles.panelHeader}><h2>Templates</h2><span>{templates?.length??0}</span></div><div className={styles.list}>{templates?.map((template)=><article className={styles.item} key={template.id}><span><strong>{template.name} · v{template.version}</strong><small>{template.stage_code} · {template.status}</small><small>{template.checklist_items?.map((item)=>`${item.required?'obrigatório':'opcional'}: ${item.label}`).join(' · ')}</small></span></article>)}</div></section></main>
- <aside><form action={publishChecklistTemplateAction} className={styles.formCard}><h2>Publicar nova versão</h2><input name="operationId" type="hidden" value={operation?.id}/><label><span>Etapa</span><select name="stageCode"><option value="proposal">Proposta</option><option value="reservation">Reserva</option><option value="documents">Documentos</option><option value="payment">Pagamento</option><option value="sale">Venda</option></select></label><label><span>Nome</span><input name="name" required/></label><label><span>Itens, um por linha</span><textarea name="itemsText" placeholder={'[x] Documento de identidade\n[ ] Comprovante complementar'} required rows={10}/></label><button>Publicar versão</button><p className={styles.definition}>Use [x] para obrigatório e [ ] para opcional. Dispensas exigem justificativa no lead.</p></form></aside></div></div>;
+export default function ChecklistSettingsPage() {
+  redirect("/app");
 }

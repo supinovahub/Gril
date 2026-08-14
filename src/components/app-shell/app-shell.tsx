@@ -1,11 +1,10 @@
 import {
   Activity,
-  BarChart3,
   BookOpenCheck,
   Building2,
   CalendarClock,
-  ChevronDown,
   CircleUserRound,
+  Ellipsis,
   FlaskConical,
   LayoutDashboard,
   LogOut,
@@ -15,7 +14,6 @@ import {
   Search,
   ScrollText,
   Settings2,
-  ShieldCheck,
   Sparkles,
   UsersRound,
   Webhook,
@@ -56,7 +54,7 @@ export function AppShell({
   const canConfigure = isOwner || viewer.permissions.includes("settings.manage");
   const canManageCampaigns = isOwner || viewer.permissions.includes("campaigns.manage");
   const canManageAi = isOwner || viewer.permissions.includes("ai.manage");
-  const canViewReports = isOwner || memberRole === "broker" || viewer.permissions.includes("reports.view");
+  const canViewAudit = isOwner || isManager || viewer.permissions.includes("reports.view");
   const environmentLabel = process.env.VERCEL_ENV === "preview"
     ? "Ambiente de homologação"
     : process.env.VERCEL_ENV === "development" || !process.env.VERCEL_ENV
@@ -74,9 +72,9 @@ export function AppShell({
 
       <aside className={styles.sidebar}>
         <Link className={styles.brand} href="/app">
-          <span className={styles.brandMark}>P</span>
+          <span className={styles.brandMark}>G</span>
           <span className={styles.brandCopy}>
-            <small>Gril · operação imobiliária</small>
+            <small>Workspace comercial</small>
             <strong>Gril</strong>
           </span>
         </Link>
@@ -84,10 +82,10 @@ export function AppShell({
         <div className={styles.operationPicker}>
           <span className={styles.operationIcon}><Building2 size={16} aria-hidden="true" /></span>
           <span>
-            <small>Operação em curso</small>
+            <small>Imobiliária</small>
             <strong>{operation?.name ?? "Nenhuma operação"}</strong>
           </span>
-          <ChevronDown size={14} aria-hidden="true" />
+          <span className={styles.operationStatus} title="Operação ativa" />
         </div>
 
         <nav className={styles.nav} aria-label="Navegação principal">
@@ -96,11 +94,11 @@ export function AppShell({
             <input aria-label="Busca global" name="q" placeholder="Buscar lead, conversa..." />
           </form>
 
-          <p className={styles.navLabel}>Atendimento</p>
+          <p className={styles.navLabel}>Principal</p>
           <NavLink activeClassName={styles.navItemActive} className={styles.navItem} exact href="/app">
             <LayoutDashboard size={17} aria-hidden="true" /><span>Visão geral</span>
           </NavLink>
-          <NavLink activeClassName={styles.navItemActive} aliases={["/app/inbox"]} className={styles.navItem} href="/app/conversas">
+          <NavLink activeClassName={styles.navItemActive} aliases={["/app/inbox", "/app/leads", "/app/kanban", "/app/meu-pipeline"]} className={styles.navItem} href="/app/conversas">
             <MessagesSquare size={17} aria-hidden="true" /><span>Conversas</span>
             <NotificationBadge className={styles.navNotificationBadge} count={inboxNotificationCount} label={notificationLabel} />
           </NavLink>
@@ -108,13 +106,18 @@ export function AppShell({
             <CalendarClock size={17} aria-hidden="true" /><span>Agenda</span>
           </NavLink>
 
-          <p className={styles.navLabel}>Operação</p>
+          <p className={styles.navLabel}>Trabalho</p>
           <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/central">
-            <Activity size={17} aria-hidden="true" /><span>Central de operações</span>
+            <Activity size={17} aria-hidden="true" /><span>Central</span>
           </NavLink>
           {canManageCampaigns ? (
             <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/campanhas">
               <Megaphone size={17} aria-hidden="true" /><span>Campanhas</span>
+            </NavLink>
+          ) : null}
+          {canManageAi ? (
+            <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/conhecimento">
+              <BookOpenCheck size={17} aria-hidden="true" /><span>Empreendimentos</span>
             </NavLink>
           ) : null}
           {canManageTeam(viewer) ? (
@@ -123,15 +126,10 @@ export function AppShell({
             </NavLink>
           ) : null}
 
-          {canManageAi || canViewReports ? <p className={styles.navLabel}>Inteligência</p> : null}
+          {canManageAi ? <p className={styles.navLabel}>Inteligência</p> : null}
           {canManageAi ? (
             <NavLink activeClassName={styles.navItemActive} className={styles.navItem} exact href="/app/pedro">
               <Sparkles size={17} aria-hidden="true" /><span>Pedro IA</span>
-            </NavLink>
-          ) : null}
-          {canManageAi ? (
-            <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/conhecimento">
-              <BookOpenCheck size={17} aria-hidden="true" /><span>Empreendimentos</span>
             </NavLink>
           ) : null}
           {canManageAi ? (
@@ -139,36 +137,17 @@ export function AppShell({
               <FlaskConical size={17} aria-hidden="true" /><span>Simulador</span>
             </NavLink>
           ) : null}
-          {canConfigure ? <p className={styles.navLabel}>Administração</p> : null}
-          {canConfigure ? (
-            <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/configuracoes/organizacao">
-              <Building2 size={17} aria-hidden="true" /><span>Organização</span>
-            </NavLink>
-          ) : null}
-          {canConfigure ? (
-            <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/configuracoes/whatsapp">
-              <Settings2 size={17} aria-hidden="true" /><span>WhatsApp</span>
-            </NavLink>
-          ) : null}
-          {canConfigure ? (
-            <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/configuracoes/meta">
-              <Webhook size={17} aria-hidden="true" /><span>Meta</span>
-            </NavLink>
-          ) : null}
-          {(isOwner || viewer.permissions.includes("checklists.manage")) ? (
-            <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/configuracoes/checklists">
-              <BookOpenCheck size={17} aria-hidden="true" /><span>Checklists</span>
-            </NavLink>
-          ) : null}
-          {(isOwner || isManager) ? (
-            <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/configuracoes/privacidade">
-              <ShieldCheck size={17} aria-hidden="true" /><span>Privacidade</span>
-            </NavLink>
-          ) : null}
-          {(isOwner || isManager || canViewReports) ? (
-            <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/configuracoes/auditoria">
-              <ScrollText size={17} aria-hidden="true" /><span>Auditoria</span>
-            </NavLink>
+          {canConfigure || canViewAudit ? (
+            <details className={styles.adminNav}>
+              <summary><Ellipsis size={17} aria-hidden="true" /><span>Administração</span></summary>
+              <div>
+                {canConfigure ? <NavLink activeClassName={styles.adminLinkActive} className={styles.adminLink} href="/app/configuracoes/organizacao"><Building2 size={16} />Organização</NavLink> : null}
+                {canConfigure ? <NavLink activeClassName={styles.adminLinkActive} className={styles.adminLink} href="/app/configuracoes/whatsapp"><Settings2 size={16} />Integrações</NavLink> : null}
+                {canConfigure ? <NavLink activeClassName={styles.adminLinkActive} className={styles.adminLink} href="/app/configuracoes/meta"><Webhook size={16} />Meta Cloud</NavLink> : null}
+                {canViewAudit ? <NavLink activeClassName={styles.adminLinkActive} className={styles.adminLink} href="/app/configuracoes/auditoria"><ScrollText size={16} />Auditoria</NavLink> : null}
+                <NavLink activeClassName={styles.adminLinkActive} className={styles.adminLink} href="/app/perfil"><CircleUserRound size={16} />Meu perfil</NavLink>
+              </div>
+            </details>
           ) : null}
         </nav>
 
@@ -188,7 +167,7 @@ export function AppShell({
 
       <header className={styles.mobileHeader}>
         <Link className={styles.mobileBrand} href="/app">
-          <span className={styles.brandMark}>P</span>
+          <span className={styles.brandMark}>G</span>
           <span><strong>Gril</strong><small>{operation?.name ?? "Sem operação"}</small></span>
         </Link>
         <div className={styles.mobileAvatar}>{initials(name, viewer.email)}</div>
@@ -203,7 +182,7 @@ export function AppShell({
         <NavLink activeClassName={styles.mobileNavActive} className={styles.mobileNavItem} exact href="/app">
           <LayoutDashboard size={19} aria-hidden="true" /><span>Início</span>
         </NavLink>
-        <NavLink activeClassName={styles.mobileNavActive} aliases={["/app/inbox"]} className={styles.mobileNavItem} href="/app/conversas">
+        <NavLink activeClassName={styles.mobileNavActive} aliases={["/app/inbox", "/app/leads", "/app/kanban", "/app/meu-pipeline"]} className={styles.mobileNavItem} href="/app/conversas">
           <span className={styles.mobileNavIcon}>
             <MessagesSquare aria-hidden="true" size={19} />
             <NotificationBadge className={styles.mobileNotificationBadge} count={inboxNotificationCount} label={notificationLabel} />
@@ -226,8 +205,8 @@ export function AppShell({
             {canManageAi ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} exact href="/app/pedro"><Sparkles size={17} />Pedro IA</NavLink> : null}
             {canManageAi ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/conhecimento"><BookOpenCheck size={17} />Empreendimentos</NavLink> : null}
             {canManageAi ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/simulador"><FlaskConical size={17} />Simulador</NavLink> : null}
-            {canViewReports ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/relatorios"><BarChart3 size={17} />Relatórios</NavLink> : null}
             {canConfigure ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/configuracoes/organizacao"><Settings2 size={17} />Configurações</NavLink> : null}
+            {canViewAudit ? <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/configuracoes/auditoria"><ScrollText size={17} />Auditoria</NavLink> : null}
             <NavLink activeClassName={styles.mobileMoreActive} className={styles.mobileMoreLink} href="/app/perfil"><CircleUserRound size={17} />Meu perfil</NavLink>
           </div>
         </details>

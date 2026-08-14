@@ -1,32 +1,32 @@
 import type { Metadata } from "next";
-import { Manrope, Newsreader } from "next/font/google";
+import { Geist, Geist_Mono } from "next/font/google";
 
 import { PwaRegister } from "@/components/pwa-register";
 import "./globals.css";
 
-const interfaceFont = Manrope({
+const interfaceFont = Geist({
   display: "swap",
   subsets: ["latin"],
   variable: "--font-interface",
 });
 
-const displayFont = Newsreader({
+const monoFont = Geist_Mono({
   display: "swap",
   subsets: ["latin"],
-  variable: "--font-display",
+  variable: "--font-mono",
 });
 
 export const metadata: Metadata = {
   title: {
-    default: "Pedro | Operação imobiliária",
-    template: "%s | Pedro",
+    default: "Gril | Operação imobiliária",
+    template: "%s | Gril",
   },
-  description: "Operação imobiliária assistida pelo Pedro.",
-  applicationName: "Pedro",
-  appleWebApp: { capable: true, statusBarStyle: "default", title: "Pedro" },
+  description: "Conversas, agenda e operação comercial imobiliária em um único workspace.",
+  applicationName: "Gril",
+  appleWebApp: { capable: true, statusBarStyle: "default", title: "Gril" },
 };
 
-export const viewport = { themeColor: "#1f1b17" };
+export const viewport = { themeColor: "#f3f6fb" };
 
 export default function RootLayout({
   children,
@@ -35,7 +35,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="pt-BR">
-      <body className={`${interfaceFont.variable} ${displayFont.variable}`}>
+      <body className={`${interfaceFont.variable} ${monoFont.variable}`}>
         <PwaRegister />
         {children}
       </body>

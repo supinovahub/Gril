@@ -177,7 +177,7 @@ export default async function ConversationPage({
   return (
     <div className={styles.page}>
       <ConversationReadMarker conversationId={conversation.id} />
-      <Link className={styles.backLink} href="/app/inbox"><ArrowLeft size={15} /> Voltar para Inbox</Link>
+      <Link className={styles.backLink} href="/app/conversas"><ArrowLeft size={15} /> Voltar para conversas</Link>
 
       <header className={styles.chatHeader}>
         <div className={styles.chatHeaderIdentity}>

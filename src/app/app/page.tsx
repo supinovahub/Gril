@@ -1,5 +1,6 @@
 import {
   ArrowUpRight,
+  BarChart3,
   CalendarClock,
   CheckCircle2,
   MessageCircle,
@@ -60,6 +61,14 @@ function one<T>(value: T | T[] | null | undefined) {
   return Array.isArray(value) ? value[0] : value;
 }
 
+function reportRow(label: string, count: number | null) {
+  return [label, count ?? 0] as const;
+}
+
+function reportTotal(rows: ReadonlyArray<readonly [string, number]>) {
+  return rows.reduce((total, row) => total + row[1], 0);
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -75,13 +84,40 @@ export default async function DashboardPage({
   const now = new Date().toISOString();
 
   let homologationPreview: HomologationPreview | null = null;
-  const [notifications, leadsTodayResult, inProgressResult, appointmentsResult, conversionsResult, recentResult] = await Promise.all([
+  const [
+    notifications,
+    leadsTodayResult,
+    inProgressResult,
+    appointmentsResult,
+    conversionsResult,
+    recentResult,
+    openOpportunitiesResult,
+    wonOpportunitiesResult,
+    lostOpportunitiesResult,
+    queuedCampaignContactsResult,
+    activeCampaignContactsResult,
+    returningCampaignContactsResult,
+    closedCampaignContactsResult,
+    negotiationCallResultsResult,
+    lostCallResultsResult,
+    followUpCallResultsResult,
+  ] = await Promise.all([
     loadInboxNotificationCounts(supabase, viewer.organization!.id),
     supabase.from("contacts").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).gte("created_at", start).lt("created_at", end),
     supabase.from("conversations").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).not("status", "in", "(closed,archived,completed,cancelled)"),
     supabase.from("calls").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).gte("starts_at", now).not("status", "in", "(completed,cancelled,no_show)"),
     supabase.from("opportunities").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).eq("status", "won").gte("updated_at", start).lt("updated_at", end),
     supabase.from("conversations").select("id,updated_at,last_message_preview,contacts!inner(name)").eq("org_id", viewer.organization!.id).order("updated_at", { ascending: false }).limit(5),
+    supabase.from("opportunities").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).eq("status", "open"),
+    supabase.from("opportunities").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).eq("status", "won"),
+    supabase.from("opportunities").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).eq("status", "lost"),
+    supabase.from("campaign_contacts").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).in("status", ["ready", "queued"]),
+    supabase.from("campaign_contacts").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).in("status", ["contacted", "followup"]),
+    supabase.from("campaign_contacts").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).in("status", ["replied", "scheduled"]),
+    supabase.from("campaign_contacts").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).in("status", ["opted_out", "suppressed", "failed", "completed", "excluded"]),
+    supabase.from("call_results").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).eq("result", "start_negotiation"),
+    supabase.from("call_results").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).eq("result", "lost"),
+    supabase.from("call_results").select("id", { count: "exact", head: true }).eq("org_id", viewer.organization!.id).in("result", ["no_show", "no_result", "reschedule"]),
   ]);
 
   if (managesTeam) {
@@ -90,8 +126,45 @@ export default async function DashboardPage({
   }
 
   const recentConversations = (recentResult.data ?? []) as unknown as RecentConversation[];
-  const recentErrors = [leadsTodayResult.error, inProgressResult.error, appointmentsResult.error, conversionsResult.error, recentResult.error].filter(Boolean);
+  const recentErrors = [
+    leadsTodayResult.error,
+    inProgressResult.error,
+    appointmentsResult.error,
+    conversionsResult.error,
+    recentResult.error,
+    openOpportunitiesResult.error,
+    wonOpportunitiesResult.error,
+    lostOpportunitiesResult.error,
+    queuedCampaignContactsResult.error,
+    activeCampaignContactsResult.error,
+    returningCampaignContactsResult.error,
+    closedCampaignContactsResult.error,
+    negotiationCallResultsResult.error,
+    lostCallResultsResult.error,
+    followUpCallResultsResult.error,
+  ].filter(Boolean);
   if (recentErrors.length) console.error("Failed to load dashboard overview metrics", recentErrors);
+  const opportunityRows = [
+    reportRow("Em andamento", openOpportunitiesResult.count),
+    reportRow("Ganhas", wonOpportunitiesResult.count),
+    reportRow("Perdidas", lostOpportunitiesResult.count),
+  ];
+  const campaignRows = [
+    reportRow("Prontos ou na fila", queuedCampaignContactsResult.count),
+    reportRow("Em contato", activeCampaignContactsResult.count),
+    reportRow("Com retorno", returningCampaignContactsResult.count),
+    reportRow("Encerrados", closedCampaignContactsResult.count),
+  ];
+  const callRows = [
+    reportRow("Negociação iniciada", negotiationCallResultsResult.count),
+    reportRow("Perdidas", lostCallResultsResult.count),
+    reportRow("A acompanhar", followUpCallResultsResult.count),
+  ];
+  const reportGroups = [
+    { title: "Funil comercial", rows: opportunityRows, total: reportTotal(opportunityRows) },
+    { title: "Campanhas", rows: campaignRows, total: reportTotal(campaignRows) },
+    { title: "Resultados de calls", rows: callRows, total: reportTotal(callRows) },
+  ];
 
   return (
     <div className={styles.page}>
@@ -159,6 +232,27 @@ export default async function DashboardPage({
           </ol>
         </aside>
       </div>
+
+      <section className={styles.reportPanel} id="indicadores" aria-labelledby="commercial-pulse-title">
+        <header className={styles.panelHeader}>
+          <div><p className={styles.eyebrow}>Indicadores integrados</p><h2 id="commercial-pulse-title">Pulso comercial</h2></div>
+          <span className={styles.reportContext}><BarChart3 size={15} /> Dados atuais da imobiliária</span>
+        </header>
+        <div className={styles.reportGrid}>
+          {reportGroups.map((group) => (
+            <section className={styles.reportColumn} key={group.title}>
+              <header><span>{group.title}</span><strong>{group.total}</strong></header>
+              <div>
+                {group.rows.slice(0, 5).map(([label, value]) => (
+                  <p key={label}><span>{label}</span><b>{value}</b></p>
+                ))}
+                {!group.rows.length ? <p><span>Sem dados neste período</span><b>0</b></p> : null}
+              </div>
+            </section>
+          ))}
+        </div>
+        <p className={styles.reportNote}>Qualificação, agendamento e conversão permanecem eventos separados; esta visão consolida o estado atual sem misturar definições.</p>
+      </section>
 
       {managesTeam ? (
         <details className={styles.adminDetails}>
