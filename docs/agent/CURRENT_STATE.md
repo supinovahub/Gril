@@ -6,7 +6,8 @@
 - Leads e Kanban deixam a navegação principal. Leads passa a ser uma visualização dentro de Conversas; o Kanban completo é aberto pelo resumo da Visão geral.
 - Central reúne Pedro, Lionel e eventos operacionais em ordem cronológica, com dez registros por página. Auditoria mostra trinta registros por página.
 - Campanhas não ganhou edição de personalidade do Pedro. Paleta, favicon e título da aba continuam iguais aos de produção.
-- Lint, 110 testes e build Webpack das 46 rotas passaram após a correção estrutural. O PR rascunho `#47` usa a preview protegida `https://gril-git-agent-workspace-redesign-real-brio5.vercel.app`; produção e Supabase não foram alterados e a segunda rodada de homologação autenticada ainda está pendente.
+- Lint, 110 testes, build Webpack das 46 rotas, CI e deploy de preview passaram após a correção estrutural. A preview protegida `https://gril-git-agent-workspace-redesign-real-brio5.vercel.app` foi inspecionada com dono, dados reais, desktop e viewport móvel; nenhuma ação de escrita foi executada. Produção e Supabase não foram alterados.
+- A preview mostra os callbacks do WhatsApp com base `http://localhost:3000`; revisar `NEXT_PUBLIC_APP_URL` em uma tarefa separada antes da homologação de webhook pela URL exibida.
 - Detalhes: `docs/agent/changes/2026-08-14-workspace-operacional-unificado.md` e `docs/decisions/2026-08-14-workspace-operacional-unificado.md`.
 
 ## Atualizacao de 07/08/2026 - producao automatica exclusiva para reativacao

@@ -23,8 +23,9 @@ Corrigir a entrega visual que havia alterado principalmente a aparência de algu
 ## Validação
 
 - Comandos/testes executados: `npm run lint`; `npm test`; `npx next build --webpack` com variáveis locais carregadas somente no processo.
-- Evidência observada: lint aprovado; 22 arquivos de teste e 110 testes aprovados; build Next.js 16.2.12 aprovado com TypeScript e 46 rotas. O build padrão com Turbopack foi tentado, mas o bundler recusou o symlink de `node_modules` do worktree; o fallback Webpack é uma opção oficial desta versão do Next.
-- Validações não executadas e motivo: a segunda rodada autenticada em desktop e celular depende da preview atualizada pelo novo commit. O login local com a conta fornecida não foi aceito pelo ambiente local; nenhuma credencial foi persistida e nenhuma ação de dados foi executada.
+- Evidência observada: lint aprovado; 22 arquivos de teste e 110 testes aprovados; build Next.js 16.2.12 aprovado com TypeScript e 46 rotas. O build padrão com Turbopack foi tentado, mas o bundler recusou o symlink de `node_modules` do worktree; o fallback Webpack é uma opção oficial desta versão do Next. O commit `1fb1177` ficou verde no CI e a Vercel reconstruiu a preview como `Ready`.
+- Homologação autenticada: com uma sessão de dono e dados reais, foram inspecionados Dashboard, Kanban, Agenda, Campanhas, Equipe, Base, Simulador, Pedro, Organização, WhatsApp, Auditoria, Central, Conversas e Leads. A navegação móvel foi validada em viewport responsivo de 390 CSS px. Nenhum formulário foi submetido e nenhum dado foi alterado.
+- Validações não executadas e motivo: ações de escrita, integrações e fluxos destrutivos não foram acionados porque esta rodada foi estritamente visual e de navegação.
 
 ## Impacto operacional
 
@@ -34,8 +35,7 @@ Corrigir a entrega visual que havia alterado principalmente a aparência de algu
 
 ## Pendências e riscos
 
-- Repetir a inspeção autenticada na preview atualizada, em desktop e celular, sem submeter formulários ou alterar dados reais.
-- Confirmar visualmente os estados com pouco conteúdo e conteúdo extenso, especialmente Kanban, Agenda, Pedro e WhatsApp.
+- A preview exibe callbacks do WhatsApp com base `http://localhost:3000`; revisar a variável `NEXT_PUBLIC_APP_URL` da preview em uma tarefa de configuração separada antes de homologar webhooks por essa URL. Nenhuma configuração Vercel foi alterada nesta mudança.
 
 ## Documentos relacionados
 

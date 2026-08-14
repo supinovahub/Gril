@@ -24,8 +24,8 @@ Aplicar a direção visual aprovada às telas operacionais, reduzir a exposiçã
 ## Validação
 
 - Comandos/testes executados: `npm run lint`; `npm test`; `npx next build --webpack` com as variáveis locais carregadas apenas no processo.
-- Evidência observada: lint aprovado; 22 arquivos e 110 testes aprovados; build Next.js 16.2.12 aprovado com TypeScript e 46 rotas; tela pública local renderizada sem overlay de erro.
-- Validações não executadas e motivo: a primeira inspeção autenticada da preview comprovou quais rotas ainda estavam superficiais e originou a correção registrada em `2026-08-14-correcao-redesign-rotas-operacionais.md`. A segunda rodada autenticada fica para a preview reconstruída com o novo commit.
+- Evidência observada: lint aprovado; 22 arquivos e 110 testes aprovados; build Next.js 16.2.12 aprovado com TypeScript e 46 rotas; CI e Vercel verdes no commit corretivo; preview autenticada inspecionada em desktop e viewport móvel com dados reais, sem ações de escrita.
+- Validações não executadas e motivo: a revisão visual não submeteu formulários nem executou integrações ou ações destrutivas. Esses fluxos permanecem no roteiro funcional de homologação.
 
 ## Impacto operacional
 
@@ -35,9 +35,10 @@ Aplicar a direção visual aprovada às telas operacionais, reduzir a exposiçã
 
 ## Pendências e riscos
 
-- Homologar na preview protegida, com dono/gestor e corretor, a navegação responsiva e as ações com dados reais.
+- Homologar as ações funcionais da preview com gestor e corretor; a navegação visual com dono já foi revisada em desktop e celular.
 - Confirmar visualmente que a Central respeita o recorte de operação e que a paginação de dez registros atende o volume real.
 - As rotas retiradas da navegação continuam acessíveis por URL neste ciclo; remoção funcional exige decisão e auditoria separadas.
+- A base dos callbacks do WhatsApp aparece como `http://localhost:3000` na preview e precisa de revisão separada da variável `NEXT_PUBLIC_APP_URL`; produção não foi alterada.
 
 ## Documentos relacionados
 
