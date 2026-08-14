@@ -58,6 +58,7 @@ const statusLabels: Record<string, string> = {
   awaiting_response: "Aguardando resposta",
   cancelled: "Cancelado",
   degraded: "Com atenção",
+  discussing: "Em discussão",
   error: "Com atenção",
   failed: "Com atenção",
   healthy: "Saudável",
@@ -70,6 +71,13 @@ const statusLabels: Record<string, string> = {
   review: "Em revisão",
   running: "Em andamento",
   unassigned_alerted: "Sem responsável",
+};
+
+const technicalLabels: Record<string, string> = {
+  call_result: "Resultado de chamada",
+  dead_letter: "Falha de automação",
+  external_human_intervention: "Intervenção pelo celular",
+  internal_chat: "Decisão interna",
 };
 
 const sourceRank: Record<RecordSource, number> = {
@@ -97,6 +105,7 @@ function recordIcon(source: RecordSource) {
 }
 
 function humanizeLabel(value: string) {
+  if (technicalLabels[value]) return technicalLabels[value];
   if (statusLabels[value]) return statusLabels[value];
   const normalized = value.replaceAll("_", " ").trim();
   return normalized ? normalized.charAt(0).toUpperCase() + normalized.slice(1) : "Sem estado";
@@ -104,6 +113,7 @@ function humanizeLabel(value: string) {
 
 function humanizeTitle(value: string) {
   if (value === "Job esgotou tentativas") return "Automação precisa de revisão";
+  if (technicalLabels[value]) return technicalLabels[value];
   return value;
 }
 

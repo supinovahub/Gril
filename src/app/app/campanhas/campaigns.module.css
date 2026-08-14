@@ -741,7 +741,9 @@
 .empty h2 { margin: 0; color: var(--ink); font-size: 18px; }
 .empty p { margin: 0; font-size: 12px; }
 
-@media (max-width: 1180px) {
+/* The app shell keeps a 280px navigation rail on desktop. Collapse the
+   four-column row before the content pane becomes narrower than the row. */
+@media (max-width: 1380px) {
   .campaignRow {
     grid-template-columns: minmax(260px, 1fr) minmax(210px, auto);
   }
