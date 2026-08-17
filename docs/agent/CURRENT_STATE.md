@@ -1,5 +1,14 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 17/08/2026 — workspace subsegundo publicado em produção
+
+- O PR #50 foi direcionado à branch canônica `phase/01-foundation` e mergeado no commit `9f28608040134b1ba5d675f8408fd3022d1ea5f1`. Esse merge contém integralmente Dashboard, Chat Pedro/Lionel, redesign operacional, correções de carregamento e `agent/continuous-improvement-loop`.
+- A integração automática da Vercel publicou o deployment `dpl_3kQzu51GdmGndaSd1PRo8eMstd6Y`, `Ready`, em `gru1`, com o alias `https://gril-lac.vercel.app`. O tree do merge é idêntico ao tree `7bd45de6789400d62e0abff632392bbb36da6d90` do commit de aplicação validado `dbabc10`.
+- O CI do merge passou com lint, 112 testes e build de 46 rotas. Depois da publicação, `/login` respondeu HTTP 200; `/app`, `/app/inbox` e `/app/aprendizados` responderam HTTP 307 para o login, como esperado; a consulta de logs de erro do deployment não retornou ocorrências.
+- As migrations até `20260817202000` já estavam aplicadas e alinhadas antes do deploy; nenhuma migration nem alteração de dados foi executada durante esta publicação.
+- A publicação foi feita por solicitação explícita do usuário mesmo com a homologação visual/funcional humana ainda pendente. Cold start prolongado continua podendo exceder um segundo; a evidência subsegundo comprovada permanece a navegação autenticada após aquecimento.
+- Evidência detalhada: `docs/agent/changes/2026-08-17-producao-workspace-subsegundo.md`.
+
 ## Atualização de 17/08/2026 — todas as telas do workspace abaixo de um segundo
 
 - A branch `perf/all-workspace-routes-under-one-second`, publicada no PR draft #50 contra `fix/workspace-loading-bottlenecks`, integra explicitamente `agent/continuous-improvement-loop` e preserva os dois históricos. O merge solicitado está no commit `7af28d0`.
@@ -7,7 +16,7 @@
 - Em sessão autenticada com organização populada, todas as 29 telas concluíram o carregamento em até 0,913 s depois do primeiro aquecimento. As rotas afetadas pela passagem fria foram repetidas cinco vezes por rota: os máximos ficaram em 0,867 s no Chat Pedro, 0,747 s em Campanhas, 0,695 s na Central e 0,684 s nos badges.
 - As migrations `20260817195000` a `20260817202000` desta entrega estão aplicadas e alinhadas no Supabase `frslhzwhaooqtivkzdez`. A migration de melhoria contínua foi corrigida antes da aplicação para manter o valor canônico `assisted_suggestion`; nenhuma linha foi removida ou normalizada à força.
 - `npm run lint`, 23 arquivos/112 testes e o build Next.js 16.2.12 das 46 rotas passaram. O db lint não retornou erros; contratos de RLS, grants, autorização, `search_path` e JIT foram confirmados diretamente no remoto. O pgTAP via CLI não rodou porque o host não possui Docker, limitação registrada no documento da mudança.
-- O preview final `https://gril-6w4x08b7u-brio5.vercel.app` (`dpl_EcpVXDE6YrrES2ZNVjsesb1bbaq8`) está `Ready` em `gru1`. Produção permanece inalterada; homologação visual e funcional humana ainda é obrigatória.
+- O preview final `https://gril-6w4x08b7u-brio5.vercel.app` (`dpl_EcpVXDE6YrrES2ZNVjsesb1bbaq8`) ficou `Ready` em `gru1` e serviu de evidência prévia; a publicação posterior em produção está registrada na atualização acima. A homologação visual e funcional humana continua obrigatória.
 - Evidência detalhada: `docs/agent/changes/2026-08-17-all-workspace-routes-under-one-second.md`.
 
 ## Atualização de 17/08/2026 — melhoria contínua governada em branch
