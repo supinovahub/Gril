@@ -1,6 +1,6 @@
 import { Bot, Inbox, Pause, UserRound } from "lucide-react";
 import { cookies } from "next/headers";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 import { redirect } from "next/navigation";
 
 import { NotificationBadge } from "@/components/notification-badge/notification-badge";

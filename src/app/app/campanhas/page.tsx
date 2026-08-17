@@ -1,4 +1,4 @@
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 import {
   Archive,
   CircleAlert,

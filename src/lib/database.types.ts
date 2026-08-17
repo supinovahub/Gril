@@ -11284,6 +11284,10 @@ export type Database = {
       }
     }
     Functions: {
+      agenda_workspace_bootstrap: {
+        Args: { p_org_id?: string }
+        Returns: Json
+      }
       apply_inbound_control_intent: {
         Args: { p_intent: string; p_message_id: string }
         Returns: Json
@@ -11338,6 +11342,22 @@ export type Database = {
       }
       claim_regression_case: {
         Args: { p_case_id: string; p_run_id: string }
+        Returns: Json
+      }
+      kanban_workspace_bootstrap: {
+        Args: { p_org_id?: string }
+        Returns: Json
+      }
+      lead_contact_options: {
+        Args: { p_org_id?: string }
+        Returns: Json
+      }
+      leads_workspace_bootstrap: {
+        Args: {
+          p_archived?: boolean
+          p_org_id?: string
+          p_search?: string
+        }
         Returns: Json
       }
       claim_retention_purge: {
@@ -11490,6 +11510,10 @@ export type Database = {
       }
       inbox_workspace_bootstrap: {
         Args: { p_limit?: number; p_org_id?: string }
+        Returns: Json
+      }
+      workspace_navigation_counts: {
+        Args: { p_org_id?: string }
         Returns: Json
       }
       decide_access_request: {

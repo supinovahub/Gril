@@ -1,33 +1,62 @@
 import { ArrowLeft, CircleDot, Clock3, UserRoundCheck, UsersRound } from "lucide-react";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 
 import { requireActiveViewer } from "@/lib/auth/session";
+import type { Json, Tables } from "@/lib/database.types";
 import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import { formatOperationDateTime } from "@/lib/time/operation-format";
 import styles from "../leads/leads.module.css";
+
+type KanbanOpportunity = {
+  id: string;
+  status: string;
+  source: string;
+  last_activity_at: string;
+  pipeline_stage_id: string;
+  assigned_membership_id: string | null;
+  unit_quantity: number;
+  amount_scope: Json;
+  contact_name: string;
+  contact_status: string;
+  primary_phone: string | null;
+  latest_score: number | null;
+  latest_score_explanation: Json;
+  latest_score_created_at: string | null;
+};
+
+type KanbanWorkspacePayload = {
+  authorized: boolean;
+  stages: Tables<"pipeline_stages">[];
+  opportunities: KanbanOpportunity[];
+};
 
 export default async function KanbanPage({
   searchParams,
 }: {
   searchParams: Promise<{ responsavel?: string }>;
 }) {
-  const viewer = await requireActiveViewer();
-  const query = await searchParams;
-  const supabase = await createClient();
-  const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
-  const [{ data: stages }, { data: opportunities }] = await Promise.all([
-    measureServerTask(
-      "kanban.stages",
-      () => supabase.from("pipeline_stages").select("*").eq("org_id", viewer.organization!.id).eq("is_active", true).order("position"),
-    ),
-    measureServerTask(
-      "kanban.opportunity_list",
-      () => supabase.from("kanban_opportunity_list").select("id,status,source,last_activity_at,pipeline_stage_id,assigned_membership_id,unit_quantity,amount_scope,contact_name,contact_status,primary_phone,latest_score,latest_score_explanation,latest_score_created_at").eq("org_id", viewer.organization!.id).eq("contact_status", "active").order("last_activity_at", { ascending: false }),
-    ),
+  const workspacePromise = (async () => {
+    const supabase = await createClient();
+    return measureServerTask(
+      "kanban.workspace",
+      () => supabase.rpc("kanban_workspace_bootstrap", {}),
+    );
+  })();
+  const [viewer, query, workspaceResult] = await Promise.all([
+    requireActiveViewer(),
+    searchParams,
+    workspacePromise,
   ]);
+  if (workspaceResult.error) {
+    console.error("Failed to load Kanban workspace", workspaceResult.error);
+    throw new Error("Não foi possível carregar o pipeline.");
+  }
+  const workspace = workspaceResult.data as unknown as KanbanWorkspacePayload;
+  const { stages, opportunities } = workspace;
+  const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
 
-  const allOpportunities = (opportunities ?? []).filter((item): item is typeof item & {
+  const allOpportunities = opportunities.filter((item): item is typeof item & {
     id: string;
     last_activity_at: string;
   } => Boolean(item.id && item.last_activity_at));
@@ -57,7 +86,7 @@ export default async function KanbanPage({
       <section className={styles.pipelineSummary} aria-label="Resumo do pipeline">
         <span><UsersRound aria-hidden="true" size={17} /><small>Oportunidades</small><strong>{allOpportunities.length}</strong></span>
         <span><UserRoundCheck aria-hidden="true" size={17} /><small>Com responsável</small><strong>{allOpportunities.length - unassignedCount}</strong></span>
-        <span><CircleDot aria-hidden="true" size={17} /><small>Etapas ativas</small><strong>{stages?.length ?? 0}</strong></span>
+        <span><CircleDot aria-hidden="true" size={17} /><small>Etapas ativas</small><strong>{stages.length}</strong></span>
         <span><Clock3 aria-hidden="true" size={17} /><small>Movimentadas em 7 dias</small><strong>{recentCount}</strong></span>
       </section>
 
@@ -67,7 +96,7 @@ export default async function KanbanPage({
           <small>Arraste horizontalmente para ver todas as etapas</small>
         </div>
         <div className={styles.kanbanBoard}>
-          {stages?.map((stage, stageIndex) => {
+          {stages.map((stage, stageIndex) => {
             const cards = visibleOpportunities.filter((item) => item.pipeline_stage_id === stage.id);
             return (
               <section className={styles.kanbanColumn} key={stage.id}>

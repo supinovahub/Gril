@@ -1,5 +1,5 @@
 import { ContactRound, MessagesSquare } from "lucide-react";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 
 import styles from "./inbox.module.css";
 

@@ -1,5 +1,5 @@
 import { Building2, ContactRound, Megaphone, Search } from "lucide-react";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";

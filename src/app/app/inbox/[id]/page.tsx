@@ -12,7 +12,7 @@ import {
   UserRoundCheck,
   X,
 } from "lucide-react";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 import { notFound } from "next/navigation";
 
 import { canManageCrm, requireActiveViewer } from "@/lib/auth/session";

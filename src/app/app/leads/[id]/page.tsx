@@ -11,6 +11,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 
 import { canManageCrm, canManageTeam, requireActiveViewer } from "@/lib/auth/session";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import { formatOperationDateTime } from "@/lib/time/operation-format";
 import { ConversationViews } from "../../inbox/conversation-views";
@@ -29,6 +30,16 @@ import {
   updatePurchaseStructureAction,
 } from "../actions";
 import styles from "../leads.module.css";
+
+type ContactOption = {
+  id: string;
+  name: string;
+  contact_phones: Array<{
+    e164: string;
+    is_primary: boolean;
+    status: string;
+  }>;
+};
 
 function sourceLabel(source: string) {
   if (source === "whatsapp_inbound" || source === "whatsapp_device") return "WhatsApp";
@@ -71,6 +82,17 @@ export default async function LeadDetailPage({
   const canEditContact = canManageCrm(viewer);
   const canManageArchive = viewer.membership?.role === "owner" ||
     (viewer.membership?.role === "manager" && viewer.permissions.includes("contacts.manage"));
+  const contactOptionsPromise = canManage
+    ? measureServerTask(
+        "lead-detail.contact-options",
+        () => supabase.rpc("lead_contact_options", {
+          p_org_id: viewer.organization!.id,
+        }),
+      ).then((result) => ({
+        data: (result.data ?? []) as unknown as ContactOption[],
+        error: result.error,
+      }))
+    : Promise.resolve({ data: [] as ContactOption[], error: null });
   const [opportunityResult, stagesResult, reasonsResult, historyResult, actionsResult, sourcesResult, salesResult, definitionsResult, qualificationResult, matchesResult, participantsResult, contactsResult, scoresResult, checklistsResult] = await Promise.all([
     supabase
       .from("opportunities")
@@ -87,7 +109,7 @@ export default async function LeadDetailPage({
     supabase.from("qualification_values").select("*").eq("opportunity_id", id),
     supabase.from("project_matches").select("*,projects!inner(name,region,neighborhood,min_price,min_down_payment,cover_storage_path)").eq("opportunity_id", id).eq("eligible", true).order("created_at", { ascending: false }).limit(4),
     supabase.from("opportunity_participants").select("id,contact_id,role,contacts!inner(id,name,contact_phones(e164,is_primary,status))").eq("opportunity_id", id).order("created_at"),
-    canManage ? supabase.from("contacts").select("id,name,contact_phones(e164,is_primary,status)").eq("org_id", viewer.organization!.id).eq("status", "active").order("name").limit(500) : Promise.resolve({ data: [] }),
+    contactOptionsPromise,
     supabase.from("opportunity_scores").select("score,explanation,created_at").eq("opportunity_id", id).order("created_at", { ascending: false }).limit(1),
     supabase.from("opportunity_checklists").select("*,checklist_templates!inner(name,stage_code)").eq("opportunity_id", id).order("created_at"),
   ]);

@@ -10,6 +10,8 @@ import {
 } from "lucide-react";
 
 import { requireActiveViewer } from "@/lib/auth/session";
+import type { Tables } from "@/lib/database.types";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import {
   acceptOfferAction,
@@ -36,6 +38,25 @@ const weekdays = [
   "Sábado",
 ];
 
+type AgendaWorkspacePayload = {
+  authorized: boolean;
+  settings: Tables<"membership_call_settings"> | null;
+  rules: Tables<"availability_rules">[];
+  exceptions: Tables<"availability_exceptions">[];
+  calls: Array<Tables<"calls"> & {
+    opportunities: { title: string; contacts: { name: string } | null } | null;
+  }>;
+  offers: Array<Tables<"call_offers"> & {
+    calls: Tables<"calls"> & {
+      opportunities: { title: string; contacts: { name: string } | null } | null;
+    };
+  }>;
+  opportunities: Array<Pick<Tables<"opportunities">, "id" | "title" | "version"> & {
+    contacts: { name: string } | null;
+    pipeline_stages: { code: string; name: string } | null;
+  }>;
+};
+
 function callStatusLabel(status: string) {
   const labels: Record<string, string> = {
     awaiting_distribution: "Aguardando distribuição",
@@ -60,67 +81,39 @@ export default async function AgendaPage({
 }: {
   searchParams: Promise<{ erro?: string; sucesso?: string }>;
 }) {
-  const viewer = await requireActiveViewer();
-  const feedback = await searchParams;
-  const supabase = await createClient();
+  const workspacePromise = (async () => {
+    const supabase = await createClient();
+    return measureServerTask(
+      "agenda.workspace",
+      () => supabase.rpc("agenda_workspace_bootstrap", {}),
+    );
+  })();
+  const [viewer, feedback, workspaceResult] = await Promise.all([
+    requireActiveViewer(),
+    searchParams,
+    workspacePromise,
+  ]);
+  if (workspaceResult.error) {
+    console.error("Failed to load Agenda workspace", workspaceResult.error);
+    throw new Error("Não foi possível carregar a Agenda.");
+  }
+  const workspace = workspaceResult.data as unknown as AgendaWorkspacePayload;
+  const {
+    settings,
+    rules,
+    exceptions,
+    calls,
+    offers,
+    opportunities,
+  } = workspace;
   const operation =
     viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
   const canManage =
     viewer.membership?.role === "owner" ||
     viewer.permissions.includes("pipeline.manage");
-  const [
-    { data: settings },
-    { data: rules },
-    { data: exceptions },
-    { data: calls },
-    { data: offers },
-    { data: opportunities },
-  ] = await Promise.all([
-    supabase
-      .from("membership_call_settings")
-      .select("*")
-      .eq("membership_id", viewer.membership!.id)
-      .maybeSingle(),
-    supabase
-      .from("availability_rules")
-      .select("*")
-      .eq("membership_id", viewer.membership!.id)
-      .eq("active", true)
-      .order("weekday")
-      .order("start_time"),
-    supabase
-      .from("availability_exceptions")
-      .select("*")
-      .eq("membership_id", viewer.membership!.id)
-      .gte("ends_at", new Date().toISOString())
-      .order("starts_at")
-      .limit(20),
-    supabase
-      .from("calls")
-      .select("*,opportunities(title,contacts(name))")
-      .order("starts_at", { ascending: true })
-      .limit(50),
-    supabase
-      .from("call_offers")
-      .select(
-        "*,calls!inner(id,starts_at,format,status,version,opportunities(title,contacts(name)))",
-      )
-      .eq("recipient_membership_id", viewer.membership!.id)
-      .eq("status", "pending")
-      .order("expires_at"),
-    canManage
-      ? supabase
-          .from("opportunities")
-          .select("id,title,version,contacts(name),pipeline_stages(code,name)")
-          .eq("org_id", viewer.organization!.id)
-          .eq("status", "open")
-          .order("last_activity_at", { ascending: false })
-          .limit(50)
-      : Promise.resolve({ data: [] }),
-  ]);
   const ready = Boolean(
     viewer.profile?.whatsapp_e164 &&
-    rules?.length &&
+    rules.length &&
     settings?.can_receive_calls,
   );
   const now = new Date();
@@ -132,9 +125,9 @@ export default async function AgendaPage({
     day: "2-digit",
   });
   const todayKey = dayFormatter.format(now);
-  const upcomingCalls = (calls ?? []).filter((call) => new Date(call.starts_at) > now && !["completed", "no_show", "cancelled"].includes(call.status));
-  const todayCalls = (calls ?? []).filter((call) => dayFormatter.format(new Date(call.starts_at)) === todayKey);
-  const availableDays = new Set((rules ?? []).map((rule) => rule.weekday)).size;
+  const upcomingCalls = calls.filter((call) => new Date(call.starts_at) > now && !["completed", "no_show", "cancelled"].includes(call.status));
+  const todayCalls = calls.filter((call) => dayFormatter.format(new Date(call.starts_at)) === todayKey);
+  const availableDays = new Set(rules.map((rule) => rule.weekday)).size;
   return (
     <div className={styles.page}>
       <header className={styles.header}>

@@ -19,13 +19,11 @@ import {
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
-import { Suspense } from "react";
 
 import { signOutAction } from "@/app/(auth)/actions";
 import { NotificationBadge } from "@/components/notification-badge/notification-badge";
 import { canManageTeam, roleLabels, type Viewer } from "@/lib/auth/session";
-import { getInboxNotificationCounts } from "@/lib/inbox/notifications";
-import { getInternalChatNotifications } from "@/lib/internal-chat/notifications";
+import type { WorkspaceNavigationCounts } from "@/lib/navigation/counts";
 import styles from "./app-shell.module.css";
 import { NavGroup } from "./nav-group";
 import { NavLink } from "./nav-link";
@@ -41,9 +39,7 @@ function initials(name: string | undefined, email: string) {
     .join("");
 }
 
-async function InboxNavigationBadge({ mobile, orgId }: { mobile?: boolean; orgId: string }) {
-  const notifications = await getInboxNotificationCounts(orgId);
-  const count = notifications.conversationsWithNotifications;
+function InboxNavigationBadge({ count, mobile }: { count: number; mobile?: boolean }) {
   return (
     <NotificationBadge
       className={mobile ? styles.mobileNotificationBadge : styles.navNotificationBadge}
@@ -53,21 +49,15 @@ async function InboxNavigationBadge({ mobile, orgId }: { mobile?: boolean; orgId
   );
 }
 
-async function InternalNavigationBadge({
+function InternalNavigationBadge({
+  count,
   kind,
   mobile,
-  orgId,
-  userId,
 }: {
+  count: number;
   kind: "broker" | "central";
   mobile?: boolean;
-  orgId: string;
-  userId: string;
 }) {
-  const notifications = await getInternalChatNotifications(orgId, userId);
-  const count = kind === "broker"
-    ? notifications.broker
-    : notifications.pedro + notifications.lionel;
   return (
     <NotificationBadge
       className={mobile ? styles.mobileNotificationBadge : styles.navNotificationBadge}
@@ -78,9 +68,11 @@ async function InternalNavigationBadge({
 }
 
 export function AppShell({
+  navigationCounts,
   viewer,
   children,
 }: {
+  navigationCounts: WorkspaceNavigationCounts;
   viewer: Viewer;
   children: React.ReactNode;
 }) {
@@ -99,7 +91,7 @@ export function AppShell({
     : process.env.VERCEL_ENV === "development" || !process.env.VERCEL_ENV
       ? "Desenvolvimento local · banco remoto"
       : null;
-  const orgId = viewer.organization!.id;
+  const internalCentralCount = navigationCounts.pedro + navigationCounts.lionel;
 
   return (
     <div className={`${styles.appFrame}${environmentLabel ? ` ${styles.hasEnvironment}` : ""}`}>
@@ -144,12 +136,12 @@ export function AppShell({
           ) : null}
           <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/inbox">
             <MessagesSquare size={17} aria-hidden="true" /><span>Conversas</span>
-            <Suspense fallback={null}><InboxNavigationBadge orgId={orgId} /></Suspense>
+            <InboxNavigationBadge count={navigationCounts.inbox} />
           </NavLink>
           {memberRole === "broker" ? (
             <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/assistente-corretor">
               <MessageSquareText size={17} aria-hidden="true" /><span>Assistente do corretor</span>
-              <Suspense fallback={null}><InternalNavigationBadge kind="broker" orgId={orgId} userId={viewer.userId} /></Suspense>
+              <InternalNavigationBadge count={navigationCounts.broker} kind="broker" />
             </NavLink>
           ) : null}
           <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/agenda">
@@ -157,7 +149,7 @@ export function AppShell({
           </NavLink>
           <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/central">
             <Activity size={17} aria-hidden="true" /><span>Central</span>
-            <Suspense fallback={null}><InternalNavigationBadge kind="central" orgId={orgId} userId={viewer.userId} /></Suspense>
+            <InternalNavigationBadge count={internalCentralCount} kind="central" />
           </NavLink>
           {canManageCampaigns ? (
             <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/campanhas">
@@ -246,7 +238,7 @@ export function AppShell({
         <NavLink activeClassName={styles.mobileNavActive} className={styles.mobileNavItem} href="/app/inbox">
           <span className={styles.mobileNavIcon}>
             <MessagesSquare aria-hidden="true" size={19} />
-            <Suspense fallback={null}><InboxNavigationBadge mobile orgId={orgId} /></Suspense>
+            <InboxNavigationBadge count={navigationCounts.inbox} mobile />
           </span>
           <span>Conversas</span>
         </NavLink>
@@ -256,7 +248,7 @@ export function AppShell({
         <NavLink activeClassName={styles.mobileNavActive} className={styles.mobileNavItem} href="/app/central">
           <span className={styles.mobileNavIcon}>
             <Activity aria-hidden="true" size={19} />
-            <Suspense fallback={null}><InternalNavigationBadge kind="central" mobile orgId={orgId} userId={viewer.userId} /></Suspense>
+            <InternalNavigationBadge count={internalCentralCount} kind="central" mobile />
           </span>
           <span>Central</span>
         </NavLink>

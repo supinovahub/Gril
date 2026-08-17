@@ -1,13 +1,34 @@
 import { CircleDot, Search, UserRoundPlus } from "lucide-react";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 
 import { requireActiveViewer } from "@/lib/auth/session";
+import type { Tables } from "@/lib/database.types";
 import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import { ConversationViews } from "../inbox/conversation-views";
 import { LeadForm } from "./lead-form";
 import { BulkCrmPanel } from "./bulk-crm-panel";
 import styles from "./leads.module.css";
+
+type LeadListRow = Pick<
+  Tables<"opportunities">,
+  "id" | "status" | "source" | "version" | "last_activity_at" | "assigned_membership_id"
+> & {
+  contact_id: string;
+  contact_name: string;
+  contact_status: string;
+  primary_phone: string | null;
+  stage_name: string;
+  stage_code: string;
+  stage_position: number;
+};
+
+type LeadsWorkspacePayload = {
+  authorized: boolean;
+  opportunities: LeadListRow[];
+  memberships: Array<Pick<Tables<"memberships">, "id" | "role">>;
+  campaigns: Array<Pick<Tables<"campaigns">, "id" | "name">>;
+};
 
 function sourceLabel(source: string) {
   if (source === "whatsapp_inbound" || source === "whatsapp_device") return "WhatsApp";
@@ -21,36 +42,32 @@ export default async function LeadsPage({
 }: {
   searchParams: Promise<{ q?: string; arquivados?: string; erro?: string; sucesso?: string }>;
 }) {
-  const viewer = await requireActiveViewer();
-  const { q, arquivados, erro, sucesso } = await searchParams;
-  const showingArchived = arquivados === "1";
-  const supabase = await createClient();
-  let query = supabase
-    .from("lead_list")
-    .select("id,status,source,version,last_activity_at,assigned_membership_id,contact_id,contact_name,contact_status,primary_phone,stage_name,stage_code,stage_position")
-    .eq("org_id", viewer.organization!.id)
-    .eq("contact_status", showingArchived ? "archived" : "active")
-    .order("last_activity_at", { ascending: false })
-    .limit(100);
-
-  if (q?.trim()) query = query.ilike("contact_name", `%${q.trim()}%`);
-
-  const [{ data: opportunities }, { data: memberships }, { data: campaigns }] = await Promise.all([
-    measureServerTask("leads.opportunity_list", () => query),
-    measureServerTask(
-      "leads.memberships",
-      () => supabase
-        .from("memberships")
-        .select("id, role")
-        .eq("org_id", viewer.organization!.id)
-        .eq("status", "active"),
-    ),
-    measureServerTask(
-      "leads.campaigns",
-      () => supabase.from("campaigns").select("id,name").eq("org_id", viewer.organization!.id).in("status", ["draft", "pending_approval", "approved", "paused"]).order("created_at", { ascending: false }),
-    ),
+  const paramsPromise = searchParams;
+  const workspacePromise = (async () => {
+    const params = await paramsPromise;
+    const supabase = await createClient();
+    return measureServerTask(
+      "leads.workspace",
+      () => supabase.rpc("leads_workspace_bootstrap", {
+        p_archived: params.arquivados === "1",
+        p_search: params.q?.trim() || undefined,
+      }),
+    );
+  })();
+  const [viewer, params, workspaceResult] = await Promise.all([
+    requireActiveViewer(),
+    paramsPromise,
+    workspacePromise,
   ]);
-  const contacts = Array.from(new Map((opportunities ?? []).flatMap((opportunity) => (
+  const { q, arquivados, erro, sucesso } = params;
+  const showingArchived = arquivados === "1";
+  if (workspaceResult.error) {
+    console.error("Failed to load Leads workspace", workspaceResult.error);
+    throw new Error("Não foi possível carregar os leads.");
+  }
+  const workspace = workspaceResult.data as unknown as LeadsWorkspacePayload;
+  const { opportunities, memberships, campaigns } = workspace;
+  const contacts = Array.from(new Map(opportunities.flatMap((opportunity) => (
     opportunity.contact_id && opportunity.contact_name
       ? [[opportunity.contact_id, { id: opportunity.contact_id, name: opportunity.contact_name }] as const]
       : []
@@ -73,7 +90,7 @@ export default async function LeadsPage({
 
       {erro ? <p className={styles.errorBanner}>{erro}</p> : null}
       {sucesso ? <p className={styles.successBanner}>Operação concluída.</p> : null}
-      <BulkCrmPanel contacts={contacts} managers={(memberships ?? []).filter((item)=>item.role!=='broker').map((item)=>({ id:item.id,label:`${item.role} · ${item.id.slice(0,8)}` }))} campaigns={(campaigns ?? []).map((item)=>({id:item.id,label:item.name}))}/>
+      <BulkCrmPanel contacts={contacts} managers={memberships.filter((item)=>item.role!=='broker').map((item)=>({ id:item.id,label:`${item.role} · ${item.id.slice(0,8)}` }))} campaigns={campaigns.map((item)=>({id:item.id,label:item.name}))}/>
 
       <section className={styles.layout}>
         <div className={styles.listPanel}>
@@ -84,12 +101,12 @@ export default async function LeadsPage({
           </form>
 
           <div className={styles.listHeader}>
-            <span>{opportunities?.length ?? 0} oportunidades {showingArchived ? "arquivadas" : "ativas"}</span>
+            <span>{opportunities.length} oportunidades {showingArchived ? "arquivadas" : "ativas"}</span>
             <span>Atualização mais recente primeiro</span>
           </div>
 
           <div className={styles.leadList}>
-            {opportunities?.map((opportunity) => {
+            {opportunities.map((opportunity) => {
               if (!opportunity.id || !opportunity.last_activity_at) return null;
               return (
                 <Link className={styles.leadRow} href={`/app/leads/${opportunity.id}`} key={opportunity.id} prefetch={false}>
@@ -103,7 +120,7 @@ export default async function LeadsPage({
                 </Link>
               );
             })}
-            {!opportunities?.length ? (
+            {!opportunities.length ? (
               <div className={styles.emptyState}><UserRoundPlus size={28} /><strong>Nenhum lead neste escopo</strong><span>Cadastre o primeiro usando o formulário ao lado.</span></div>
             ) : null}
           </div>
@@ -111,7 +128,7 @@ export default async function LeadsPage({
 
         <LeadForm
           currentMembershipId={viewer.membership!.id}
-          memberships={memberships ?? []}
+          memberships={memberships}
           operations={viewer.operations}
         />
       </section>

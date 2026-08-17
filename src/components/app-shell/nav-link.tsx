@@ -1,7 +1,8 @@
 "use client";
 
-import Link from "next/link";
 import { usePathname } from "next/navigation";
+
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 
 export function NavLink({
   activeClassName,

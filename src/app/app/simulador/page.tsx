@@ -1,5 +1,5 @@
 import { Archive, ArchiveRestore, FlaskConical, LockKeyhole, MessageSquarePlus, MessagesSquare, ShieldCheck } from "lucide-react";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 
 import { requireActiveViewer } from "@/lib/auth/session";
 import type { Json } from "@/lib/database.types";

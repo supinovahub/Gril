@@ -4,7 +4,7 @@ import {
   ExternalLink,
   MessageSquareText,
 } from "lucide-react";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 

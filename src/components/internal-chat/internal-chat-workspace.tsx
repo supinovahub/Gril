@@ -1,5 +1,5 @@
 import { Bot, CheckCircle2, CircleAlert, Clock3, CornerUpLeft, ExternalLink, Filter, Send, Sparkles, UserRound } from "lucide-react";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 
 import type { Tables } from "@/lib/database.types";
 import { createLearningCandidateAction, resolveExternalInterventionAction, reviewAiSuggestionFromChatAction, sendInternalMessageAction } from "@/app/app/chat-interno/actions";

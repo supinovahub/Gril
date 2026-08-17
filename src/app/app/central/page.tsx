@@ -11,7 +11,7 @@ import {
   RadioTower,
   Sparkles,
 } from "lucide-react";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 import { redirect } from "next/navigation";
 
 import { requireActiveViewer } from "@/lib/auth/session";
