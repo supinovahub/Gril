@@ -19,14 +19,17 @@ import {
   UsersRound,
 } from "lucide-react";
 import Link from "next/link";
+import { Suspense } from "react";
 
 import { signOutAction } from "@/app/(auth)/actions";
 import { NotificationBadge } from "@/components/notification-badge/notification-badge";
 import { canManageTeam, roleLabels, type Viewer } from "@/lib/auth/session";
+import { getInboxNotificationCounts } from "@/lib/inbox/notifications";
+import { getInternalChatNotifications } from "@/lib/internal-chat/notifications";
 import styles from "./app-shell.module.css";
 import { NavGroup } from "./nav-group";
 import { NavLink } from "./nav-link";
-import { RealtimeRefresh } from "./realtime-refresh";
+import { RealtimeRefreshLazy } from "./realtime-refresh-lazy";
 
 function initials(name: string | undefined, email: string) {
   const source = name?.trim() || email;
@@ -38,15 +41,47 @@ function initials(name: string | undefined, email: string) {
     .join("");
 }
 
+async function InboxNavigationBadge({ mobile, orgId }: { mobile?: boolean; orgId: string }) {
+  const notifications = await getInboxNotificationCounts(orgId);
+  const count = notifications.conversationsWithNotifications;
+  return (
+    <NotificationBadge
+      className={mobile ? styles.mobileNotificationBadge : styles.navNotificationBadge}
+      count={count}
+      label={`${count} ${count === 1 ? "conversa com notificação" : "conversas com notificações"}`}
+    />
+  );
+}
+
+async function InternalNavigationBadge({
+  kind,
+  mobile,
+  orgId,
+  userId,
+}: {
+  kind: "broker" | "central";
+  mobile?: boolean;
+  orgId: string;
+  userId: string;
+}) {
+  const notifications = await getInternalChatNotifications(orgId, userId);
+  const count = kind === "broker"
+    ? notifications.broker
+    : notifications.pedro + notifications.lionel;
+  return (
+    <NotificationBadge
+      className={mobile ? styles.mobileNotificationBadge : styles.navNotificationBadge}
+      count={count}
+      label={kind === "broker" ? `${count} consultas pendentes` : `${count} registros internos pendentes`}
+    />
+  );
+}
+
 export function AppShell({
   viewer,
-  inboxNotificationCount,
-  internalChatNotificationCounts,
   children,
 }: {
   viewer: Viewer;
-  inboxNotificationCount: number;
-  internalChatNotificationCounts: { pedro: number; lionel: number; broker: number };
   children: React.ReactNode;
 }) {
   const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
@@ -59,13 +94,12 @@ export function AppShell({
   const canManageAi = isOwner || viewer.permissions.includes("ai.manage");
   const canViewReports = isOwner || memberRole === "broker" || viewer.permissions.includes("reports.view");
   const canViewAudit = isOwner || isManager || canViewReports;
-  const centralNotificationCount = internalChatNotificationCounts.pedro + internalChatNotificationCounts.lionel;
   const environmentLabel = process.env.VERCEL_ENV === "preview"
     ? "Ambiente de homologação"
     : process.env.VERCEL_ENV === "development" || !process.env.VERCEL_ENV
       ? "Desenvolvimento local · banco remoto"
       : null;
-  const notificationLabel = `${inboxNotificationCount} ${inboxNotificationCount === 1 ? "conversa com notificação" : "conversas com notificações"}`;
+  const orgId = viewer.organization!.id;
 
   return (
     <div className={`${styles.appFrame}${environmentLabel ? ` ${styles.hasEnvironment}` : ""}`}>
@@ -110,12 +144,12 @@ export function AppShell({
           ) : null}
           <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/inbox">
             <MessagesSquare size={17} aria-hidden="true" /><span>Conversas</span>
-            <NotificationBadge className={styles.navNotificationBadge} count={inboxNotificationCount} label={notificationLabel} />
+            <Suspense fallback={null}><InboxNavigationBadge orgId={orgId} /></Suspense>
           </NavLink>
           {memberRole === "broker" ? (
             <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/assistente-corretor">
               <MessageSquareText size={17} aria-hidden="true" /><span>Assistente do corretor</span>
-              <NotificationBadge className={styles.navNotificationBadge} count={internalChatNotificationCounts.broker} label={`${internalChatNotificationCounts.broker} consultas pendentes`} />
+              <Suspense fallback={null}><InternalNavigationBadge kind="broker" orgId={orgId} userId={viewer.userId} /></Suspense>
             </NavLink>
           ) : null}
           <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/agenda">
@@ -123,7 +157,7 @@ export function AppShell({
           </NavLink>
           <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/central">
             <Activity size={17} aria-hidden="true" /><span>Central</span>
-            <NotificationBadge className={styles.navNotificationBadge} count={centralNotificationCount} label={`${centralNotificationCount} registros internos pendentes`} />
+            <Suspense fallback={null}><InternalNavigationBadge kind="central" orgId={orgId} userId={viewer.userId} /></Suspense>
           </NavLink>
           {canManageCampaigns ? (
             <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/campanhas">
@@ -201,7 +235,7 @@ export function AppShell({
       </header>
 
       <main className={styles.content}>
-        <RealtimeRefresh orgId={viewer.organization!.id} />
+        <RealtimeRefreshLazy orgId={viewer.organization!.id} />
         {children}
       </main>
 
@@ -212,7 +246,7 @@ export function AppShell({
         <NavLink activeClassName={styles.mobileNavActive} className={styles.mobileNavItem} href="/app/inbox">
           <span className={styles.mobileNavIcon}>
             <MessagesSquare aria-hidden="true" size={19} />
-            <NotificationBadge className={styles.mobileNotificationBadge} count={inboxNotificationCount} label={notificationLabel} />
+            <Suspense fallback={null}><InboxNavigationBadge mobile orgId={orgId} /></Suspense>
           </span>
           <span>Conversas</span>
         </NavLink>
@@ -222,7 +256,7 @@ export function AppShell({
         <NavLink activeClassName={styles.mobileNavActive} className={styles.mobileNavItem} href="/app/central">
           <span className={styles.mobileNavIcon}>
             <Activity aria-hidden="true" size={19} />
-            <NotificationBadge className={styles.mobileNotificationBadge} count={centralNotificationCount} label={`${centralNotificationCount} registros internos pendentes`} />
+            <Suspense fallback={null}><InternalNavigationBadge kind="central" mobile orgId={orgId} userId={viewer.userId} /></Suspense>
           </span>
           <span>Central</span>
         </NavLink>

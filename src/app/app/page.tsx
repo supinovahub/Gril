@@ -10,6 +10,7 @@ import Link from "next/link";
 import { TypedConfirmationButton } from "@/components/typed-confirmation-button";
 import { canManageTeam, requireActiveViewer } from "@/lib/auth/session";
 import type { Database } from "@/lib/database.types";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import { DEFAULT_OPERATION_TIMEZONE, formatOperationDateTime } from "@/lib/time/operation-format";
 import { zonedLocalDateTimeToIso } from "@/lib/time/zoned-local";
@@ -153,6 +154,31 @@ async function loadMetrics(
   orgId: string,
   range: PeriodRange,
 ): Promise<MetricSnapshot> {
+  const metricsResult = await supabase.rpc("dashboard_metrics", {
+    p_org_id: orgId,
+    p_range_end: range.end,
+    p_range_start: range.start,
+  });
+  const metric = metricsResult.data?.[0];
+  if (!metricsResult.error && metric) {
+    const newLeads = metric.new_leads ?? 0;
+    const appointments = metric.appointments ?? 0;
+    const sales = metric.sales ?? 0;
+    const inboundConversations = metric.inbound_conversations ?? 0;
+    const respondedConversations = metric.responded_conversations ?? 0;
+    return {
+      appointments,
+      conversionRate: newLeads > 0 ? (sales / newLeads) * 100 : null,
+      inboundConversations,
+      newLeads,
+      responseRate: inboundConversations > 0
+        ? (respondedConversations / inboundConversations) * 100
+        : null,
+      sales,
+    };
+  }
+
+  console.warn("Falling back to legacy Dashboard metric queries", metricsResult.error?.code);
   const [leadsResult, appointmentsResult, salesResult, conversationsResult] = await Promise.all([
     supabase
       .from("opportunities")
@@ -221,6 +247,31 @@ async function loadKanbanSnapshot(
   supabase: SupabaseClient<Database>,
   orgId: string,
 ): Promise<{ columns: KanbanColumn[]; failed: boolean }> {
+  const snapshotResult = await supabase
+    .from("dashboard_kanban_snapshot")
+    .select("stage_id,stage_code,stage_name,stage_position,card_count,card_id,assigned_membership_id,stage_entered_at,contact_name")
+    .eq("org_id", orgId)
+    .order("stage_position");
+
+  if (!snapshotResult.error) {
+    return {
+      columns: (snapshotResult.data ?? []).flatMap((stage) => stage.stage_id && stage.stage_code && stage.stage_name ? [{
+        cards: stage.card_id ? [{
+          assignedMembershipId: stage.assigned_membership_id,
+          id: stage.card_id,
+          name: stage.contact_name ?? "Contato",
+          stageEnteredAt: stage.stage_entered_at!,
+        }] : [],
+        code: stage.stage_code,
+        count: stage.card_count ?? 0,
+        id: stage.stage_id,
+        name: stage.stage_name,
+      }] : []),
+      failed: false,
+    };
+  }
+
+  console.warn("Falling back to legacy Dashboard Kanban queries", snapshotResult.error.code);
   const stagesResult = await supabase
     .from("pipeline_stages")
     .select("id,code,name,position")
@@ -276,6 +327,35 @@ async function loadAttentionItems(
   supabase: SupabaseClient<Database>,
   orgId: string,
 ): Promise<AttentionItem[]> {
+  const attentionResult = await supabase
+    .from("inbox_conversation_list")
+    .select("id,contact_name,last_inbound_at,updated_at,pending_suggestion_count,total_count,unread_inbound_count")
+    .eq("org_id", orgId)
+    .gt("total_count", 0)
+    .order("pending_suggestion_count", { ascending: false })
+    .order("unread_inbound_count", { ascending: false })
+    .order("updated_at", { ascending: false })
+    .limit(3);
+
+  if (!attentionResult.error) {
+    return (attentionResult.data ?? []).flatMap((conversation) => {
+      if (!conversation.id || !conversation.updated_at) return [];
+      const pendingSuggestions = conversation.pending_suggestion_count ?? 0;
+      const unreadMessages = conversation.unread_inbound_count ?? 0;
+      return [{
+        action: pendingSuggestions > 0 ? "Revisar" : "Responder",
+        href: `/app/inbox/${conversation.id}`,
+        id: conversation.id,
+        name: conversation.contact_name ?? "Contato",
+        reason: pendingSuggestions > 0
+          ? `${pendingSuggestions} ${pendingSuggestions === 1 ? "sugestão aguarda" : "sugestões aguardam"} revisão`
+          : `${unreadMessages} ${unreadMessages === 1 ? "mensagem nova" : "mensagens novas"}`,
+        waitingSince: conversation.last_inbound_at ?? conversation.updated_at,
+      }];
+    });
+  }
+
+  console.warn("Falling back to legacy Dashboard attention queries", attentionResult.error.code);
   const countsResult = await supabase
     .from("inbox_notification_counts")
     .select("conversation_id,pending_suggestion_count,total_count,unread_inbound_count")
@@ -428,11 +508,11 @@ export default async function DashboardPage({
     : Promise.resolve({ data: null, error: null });
 
   const [metrics, kanban, attentionItems, agendaItems, teamDirectory, previewResult] = await Promise.all([
-    loadMetrics(supabase, orgId, range),
-    loadKanbanSnapshot(supabase, orgId),
-    loadAttentionItems(supabase, orgId),
-    loadAgendaItems(supabase, orgId, now),
-    loadTeamDirectory(supabase, orgId),
+    measureServerTask("dashboard.metrics", () => loadMetrics(supabase, orgId, range)),
+    measureServerTask("dashboard.kanban", () => loadKanbanSnapshot(supabase, orgId)),
+    measureServerTask("dashboard.attention", () => loadAttentionItems(supabase, orgId)),
+    measureServerTask("dashboard.agenda", () => loadAgendaItems(supabase, orgId, now)),
+    measureServerTask("dashboard.team", () => loadTeamDirectory(supabase, orgId)),
     previewPromise,
   ]);
 

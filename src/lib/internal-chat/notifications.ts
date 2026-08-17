@@ -1,14 +1,29 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cache } from "react";
 
 import type { Database } from "@/lib/database.types";
+import { createClient } from "@/lib/supabase/server";
 
 export async function loadInternalChatNotifications(
   supabase: SupabaseClient<Database>,
   orgId: string,
   userId: string,
 ) {
+  const { data: notificationCounts, error: notificationCountsError } = await supabase.rpc(
+    "internal_chat_notification_counts",
+    { p_org_id: orgId },
+  );
+  if (!notificationCountsError && notificationCounts?.[0]) {
+    return {
+      broker: notificationCounts[0].broker ?? 0,
+      lionel: notificationCounts[0].lionel ?? 0,
+      pedro: notificationCounts[0].pedro ?? 0,
+    };
+  }
+
+  console.warn("Falling back to legacy internal notification queries", notificationCountsError?.code);
   const [{ data: threads }, { data: reads }] = await Promise.all([
     supabase.from("internal_threads")
       .select("id,assistant_role,thread_type,requires_action,updated_at")
@@ -27,3 +42,8 @@ export async function loadInternalChatNotifications(
   }
   return counts;
 }
+
+export const getInternalChatNotifications = cache(async (orgId: string, userId: string) => {
+  const supabase = await createClient();
+  return loadInternalChatNotifications(supabase, orgId, userId);
+});
