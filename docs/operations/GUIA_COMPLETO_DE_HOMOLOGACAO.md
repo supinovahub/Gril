@@ -403,6 +403,7 @@ Em uma sessão autenticada com dados reais e conexão estável, repita o percurs
 5. no painel de rede, confirme uma chamada `dashboard_workspace_bootstrap` na Visão geral, uma `inbox_workspace_bootstrap` no Inbox, uma consulta principal para Leads/Kanban e um RPC paginado para a Central, sem a antiga rajada de consultas por etapa ou transferência integral do feed;
 6. gere duas ou mais atualizações rápidas na rota ativa e confirme uma única atualização consolidada; com a aba oculta, nenhuma atualização deve interromper o usuário e os dados devem sincronizar ao retornar;
 7. registre tempos de resposta e qualquer tarefa `server_task_timing` acima de 250 ms. Em caso de regressão, anote rota, papel, organização, horário e nome da tarefa antes de prosseguir.
+8. a Visão geral não deve chamar `preview_homologation_context` durante a navegação comum; essa chamada acontece somente quando dono/gestor expande **Área administrativa**, exibindo o estado de carregamento dentro da seção.
 
 ### Visão geral
 
@@ -432,7 +433,7 @@ O dono/gestor pode arquivar e restaurar um lead, devolvê-lo ao Pedro e reativar
 
 ### Limpeza do contexto de homologação
 
-No dashboard, dono ou gestor com `team.manage` pode expandir **Área administrativa** e usar **Limpar contexto de homologação** para remover o contexto de teste da própria imobiliária. O preview considera somente contatos cujo nome começa por `HML-` e limita a operação a 20 contatos.
+No dashboard, dono ou gestor com `team.manage` pode expandir **Área administrativa** e usar **Limpar contexto de homologação** para remover o contexto de teste da própria imobiliária. O preview carrega sob demanda ao expandir a seção, considera somente contatos cujo nome começa por `HML-` e limita a operação a 20 contatos.
 
 1. Crie os registros de teste com o prefixo `HML-` e use somente contatos autorizados.
 2. Confira no preview contatos, oportunidades, conversas, mensagens, chamadas e jobs pendentes.

@@ -1,23 +1,20 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 import {
   CalendarDays,
-  ChevronDown,
   ExternalLink,
   MessageSquareText,
 } from "lucide-react";
 import Link from "next/link";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
-import { Suspense } from "react";
 
-import { TypedConfirmationButton } from "@/components/typed-confirmation-button";
 import { canManageTeam, requireActiveViewer } from "@/lib/auth/session";
 import type { Database } from "@/lib/database.types";
 import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import { DEFAULT_OPERATION_TIMEZONE, formatOperationDateTime } from "@/lib/time/operation-format";
 import { zonedLocalDateTimeToIso } from "@/lib/time/zoned-local";
-import { purgeHomologationContextAction } from "./homologation-actions";
+import { HomologationCleanupPanel } from "./homologation-cleanup-panel";
 import styles from "./dashboard.module.css";
 
 type DashboardPeriod = "today" | "7d" | "30d";
@@ -25,12 +22,6 @@ type DashboardSearchParams = {
   erro?: string;
   limpeza?: string;
   period?: string;
-};
-
-type HomologationPreview = {
-  eligible: boolean;
-  blocked: string[];
-  counts: Record<string, number>;
 };
 
 type PeriodRange = {
@@ -621,56 +612,6 @@ async function loadDashboardWorkspace(
   };
 }
 
-async function loadHomologationPreview(
-  supabase: SupabaseClient<Database>,
-  orgId: string,
-): Promise<HomologationPreview | null> {
-  const previewResult = await measureServerTask(
-    "dashboard.homologation_preview",
-    () => supabase.rpc("preview_homologation_context", { p_org_id: orgId }),
-  );
-  return !previewResult.error && previewResult.data
-    ? previewResult.data as unknown as HomologationPreview
-    : null;
-}
-
-async function HomologationPreviewContent({
-  previewPromise,
-}: {
-  previewPromise: Promise<HomologationPreview | null>;
-}) {
-  const homologationPreview = await previewPromise;
-  if (!homologationPreview) {
-    return <p className={styles.cleanupEmpty}>Não foi possível carregar o preview. A ação permanece indisponível.</p>;
-  }
-
-  return (
-    <div className={styles.cleanupBody}>
-      <dl className={styles.cleanupCounts}>
-        <div><dt>Contatos</dt><dd>{homologationPreview.counts.contacts ?? 0}</dd></div>
-        <div><dt>Oportunidades</dt><dd>{homologationPreview.counts.opportunities ?? 0}</dd></div>
-        <div><dt>Conversas</dt><dd>{homologationPreview.counts.conversations ?? 0}</dd></div>
-        <div><dt>Mensagens</dt><dd>{homologationPreview.counts.messages ?? 0}</dd></div>
-        <div><dt>Chamadas</dt><dd>{homologationPreview.counts.calls ?? 0}</dd></div>
-        <div><dt>Jobs</dt><dd>{homologationPreview.counts.scheduled_jobs ?? 0}</dd></div>
-      </dl>
-      {homologationPreview.blocked?.length ? (
-        <div className={styles.cleanupBlocked}>
-          <strong>Limpeza bloqueada por segurança</strong>
-          <ul>{homologationPreview.blocked.map((reason) => <li key={reason}>{reason}</li>)}</ul>
-        </div>
-      ) : homologationPreview.eligible ? (
-        <form action={purgeHomologationContextAction} className={styles.cleanupAction}>
-          <p>A execução é limitada a 20 contatos e exige a confirmação literal protegida.</p>
-          <TypedConfirmationButton description="Somente registros HML- desta imobiliária serão removidos. Configurações, equipe e auditoria serão preservadas." title="Limpar contexto de homologação">Limpar contexto HML-</TypedConfirmationButton>
-        </form>
-      ) : (
-        <p className={styles.cleanupEmpty}>Nenhum registro HML- elegível para limpar.</p>
-      )}
-    </div>
-  );
-}
-
 export default async function DashboardPage({
   searchParams,
 }: {
@@ -698,9 +639,7 @@ export default async function DashboardPage({
     teamDirectory,
     timeZone,
   } = workspace;
-  const orgId = workspace.organizationId;
   const range = buildPeriodRange(period, timeZone, now);
-  const previewPromise = managesTeam ? loadHomologationPreview(supabase, orgId) : null;
   const updatedAt = formatOperationDateTime(now, timeZone, {
     hour: "2-digit",
     minute: "2-digit",
@@ -881,25 +820,7 @@ export default async function DashboardPage({
         </section>
       </div>
 
-      {managesTeam ? (
-        <details className={styles.adminDisclosure}>
-          <summary>
-            <span>Área administrativa</span>
-            <ChevronDown aria-hidden="true" size={15} />
-          </summary>
-          <section className={styles.cleanupPanel} aria-labelledby="homologation-cleanup-title">
-            <div className={styles.cleanupIntro}>
-              <h2 id="homologation-cleanup-title">Limpar contexto de homologação</h2>
-              <p>Remove somente registros de teste com prefixo <code>HML-</code> desta imobiliária. Configurações, equipe e auditoria ficam preservadas.</p>
-            </div>
-            {previewPromise ? (
-              <Suspense fallback={<p className={styles.cleanupEmpty}>Carregando preview seguro...</p>}>
-                <HomologationPreviewContent previewPromise={previewPromise} />
-              </Suspense>
-            ) : null}
-          </section>
-        </details>
-      ) : null}
+      {managesTeam ? <HomologationCleanupPanel /> : null}
     </div>
   );
 }
