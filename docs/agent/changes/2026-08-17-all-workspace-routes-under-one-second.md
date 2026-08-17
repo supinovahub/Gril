@@ -17,19 +17,19 @@ Estender para todas as telas autenticadas do workspace a meta de carregamento de
 ## Escopo executado
 
 - Arquivos: shell do workspace, links de navegação, páginas de Agenda/Kanban/Leads, tipos gerados e utilitários de contagem/prefetch.
-- Migrations: `supabase/migrations/20260817195000_optimize_all_workspace_routes.sql` e `supabase/migrations/20260817195100_repair_workspace_feed_utf8.sql`.
+- Migrations: `supabase/migrations/20260817195000_optimize_all_workspace_routes.sql`, `supabase/migrations/20260817195100_repair_workspace_feed_utf8.sql` e `supabase/migrations/20260817195200_optimize_remaining_workspace_routes.sql`.
 - Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: migration de performance aplicada ao projeto Supabase canônico; dois deployments manuais de preview foram bloqueados antes do build e não alteraram produção; branch/PR e preview Git serão registrados na conclusão.
 
 ## Validação
 
 - Comandos/testes executados: `npm run lint`; `npm test`; `npm run build` com variáveis locais carregadas apenas no processo; medições HTTP autenticadas e medições diretas das RPCs com uma organização populada; `supabase migration list --linked`; `supabase db push --linked --dry-run`.
-- Evidência observada: 22 arquivos e 110 testes passaram; build Next.js 16.2.12 concluído; as consultas antigas mais lentas (2,1–4,1 s) caíram para 0,126–0,821 s nas novas RPCs. A matriz HTTP final ainda depende do preview Git desta branch.
+- Evidência observada: 22 arquivos e 110 testes passaram; build Next.js 16.2.12 concluído; as consultas antigas mais lentas (2,1–4,1 s) caíram para 0,126–0,821 s nas novas RPCs. No primeiro preview desta branch, 25 de 29 rotas ficaram abaixo de 1 s; Campanhas (1,170 s), Auditoria (1,097 s), Privacidade (1,604 s) e Relatórios (1,375 s) foram consolidados em novos bootstraps que, aquecidos, responderam entre 0,16 s e 0,33 s. A matriz HTTP final ainda será repetida no preview combinado.
 - Validações não executadas e motivo: lint do banco, advisors, cinco ciclos por rota e homologação humana permanecem pendentes até a integração da branch `agent/continuous-improvement-loop`.
 
 ## Impacto operacional
 
 - Deploy necessário: preview para validação; produção não alterada.
-- Migração aplicada: sim, as duas migrations acima estão aplicadas no projeto `frslhzwhaooqtivkzdez`; a segunda repara rótulos UTF-8 da função Central sem mudar sua assinatura.
+- Migração aplicada: sim, as três migrations acima estão aplicadas no projeto `frslhzwhaooqtivkzdez`; a segunda repara rótulos UTF-8 da função Central sem mudar sua assinatura.
 - Compatibilidade/rollback: as RPCs são aditivas, exceto pela substituição compatível da função `central_feed_page`; rollback de código exige manter as RPCs enquanto houver clientes novos em uso.
 
 ## Pendências e riscos

@@ -1,19 +1,29 @@
 import { BarChart3 } from "lucide-react";
 import { requireActiveViewer } from "@/lib/auth/session";
+import type { Database } from "@/lib/database.types";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import styles from "../operations.module.css";
 
+type ReportsWorkspacePayload = {
+  authorized: boolean;
+  opportunities: Array<Pick<Database["public"]["Tables"]["opportunities"]["Row"], "id" | "status"> & {
+    pipeline_stages: Pick<Database["public"]["Tables"]["pipeline_stages"]["Row"], "code" | "name">;
+  }>;
+  campaignContacts: Array<Pick<Database["public"]["Tables"]["campaign_contacts"]["Row"], "status">>;
+  calls: Array<Pick<Database["public"]["Tables"]["calls"]["Row"], "assigned_membership_id" | "id" | "status">>;
+  results: Array<Pick<Database["public"]["Tables"]["call_results"]["Row"], "result">>;
+  executions: Array<Pick<Database["public"]["Tables"]["ai_executions"]["Row"], "mode" | "status">>;
+  usage: Array<Pick<
+    Database["public"]["Tables"]["usage_ledger"]["Row"],
+    "estimated_cost_brl" | "fx_rate_to_brl" | "input_tokens" | "output_tokens" | "provider_cost_original" | "provider_currency" | "usage_type"
+  >>;
+  capacity: Array<Pick<Database["public"]["Tables"]["operation_capacity"]["Row"], "active_count" | "proactive_paused" | "updated_at">>;
+  settings: Pick<Database["public"]["Tables"]["organization_settings"]["Row"], "ai_monthly_budget_brl"> | null;
+};
+
 export default async function ReportsPage(){
-  const viewer=await requireActiveViewer();const supabase=await createClient();const canViewFinance=viewer.membership?.role==="owner"||viewer.permissions.includes("finance.view");const[{data:opportunities},{data:campaignContacts},{data:calls},{data:results},{data:executions},{data:usage},{data:capacity},{data:settings}]=await Promise.all([
-    supabase.from("opportunities").select("id,status,pipeline_stages(code,name)").eq("org_id",viewer.organization!.id),
-    supabase.from("campaign_contacts").select("status").eq("org_id",viewer.organization!.id),
-    supabase.from("calls").select("id,status,assigned_membership_id").eq("org_id",viewer.organization!.id),
-    supabase.from("call_results").select("result").eq("org_id",viewer.organization!.id),
-    supabase.from("ai_executions").select("mode,status").eq("org_id",viewer.organization!.id),
-    canViewFinance?supabase.from("usage_ledger").select("usage_type,input_tokens,output_tokens,provider_currency,provider_cost_original,fx_rate_to_brl,estimated_cost_brl").eq("org_id",viewer.organization!.id):Promise.resolve({data:[]}),
-    supabase.from("operation_capacity").select("active_count,proactive_paused,updated_at").eq("org_id",viewer.organization!.id),
-    supabase.from("organization_settings").select("ai_monthly_budget_brl").eq("org_id",viewer.organization!.id).maybeSingle(),
-  ]);
+  const supabase=await createClient();const[viewer,{data,error}]=await Promise.all([requireActiveViewer(),measureServerTask("reports.bootstrap",()=>supabase.rpc("reports_workspace_bootstrap",{}))]);if(error)throw new Error("Não foi possível carregar os relatórios.");const payload=(data??{}) as unknown as ReportsWorkspacePayload;const{opportunities=[],campaignContacts=[],calls=[],results=[],executions=[],usage=[],capacity=[],settings=null}=payload;const canViewFinance=viewer.membership?.role==="owner"||viewer.permissions.includes("finance.view");
   const group=<T extends string>(rows:Array<Record<string,unknown>>|null|undefined,key:string)=>Object.entries((rows??[]).reduce<Record<string,number>>((acc,row)=>{const value=String(row[key]??"unknown") as T;acc[value]=(acc[value]??0)+1;return acc;},{}));
   const cost=(usage??[]).reduce((sum,item)=>sum+Number(item.estimated_cost_brl),0);const completed=results?.filter((item)=>item.result!=="no_result").length??0;
   return <div className={styles.page}><header className={styles.header}><div><p className={styles.eyebrow}>Definições auditáveis</p><h1>Relatórios</h1><p>Qualificação/agendamento e conversão comercial permanecem métricas separadas.</p></div><span className={styles.badge}><BarChart3 size={13}/> dados do tenant</span></header>

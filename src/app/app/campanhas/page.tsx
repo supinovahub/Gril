@@ -18,6 +18,8 @@ import {
 import { requireActiveViewer } from "@/lib/auth/session";
 import { DEFAULT_CAMPAIGN_VARIANTS } from "@/lib/campaigns/message-variants";
 import { belongsToCampaignView } from "@/lib/campaigns/view";
+import type { Database as DatabaseSchema } from "@/lib/database.types";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import {
   editCampaignAction,
@@ -56,66 +58,70 @@ function waveLabel(waveCount: number) {
   return "restante";
 }
 
+type CampaignRow = DatabaseSchema["public"]["Tables"]["campaigns"]["Row"] & {
+  whatsapp_connections: Pick<
+    DatabaseSchema["public"]["Tables"]["whatsapp_connections"]["Row"],
+    "name" | "phone_e164" | "provider"
+  > | null;
+};
+type CampaignContactRow = Pick<
+  DatabaseSchema["public"]["Tables"]["campaign_contacts"]["Row"],
+  "campaign_id" | "id" | "status"
+> & { contacts: { name: string } };
+type CampaignImportRow = Pick<
+  DatabaseSchema["public"]["Tables"]["campaign_imports"]["Row"],
+  "campaign_id" | "created_at" | "duplicate_rows" | "error_rows" | "file_sha256" | "id" | "mapping" | "status" | "total_rows" | "valid_rows"
+>;
+type CampaignImportIssueRow = Pick<
+  DatabaseSchema["public"]["Tables"]["campaign_import_rows"]["Row"],
+  "error_code" | "import_id" | "normalized_name" | "normalized_phone" | "row_number" | "status"
+>;
+type CampaignWaveRow = Pick<
+  DatabaseSchema["public"]["Tables"]["campaign_waves"]["Row"],
+  "campaign_id" | "id" | "released_at" | "released_count" | "status" | "suppressed_count" | "wave_number"
+>;
+type CampaignWorkspacePayload = {
+  authorized: boolean;
+  campaigns: CampaignRow[];
+  connections: Array<Pick<
+    DatabaseSchema["public"]["Tables"]["whatsapp_connections"]["Row"],
+    "id" | "name" | "phone_e164" | "provider"
+  >>;
+  contacts: CampaignContactRow[];
+  imports: CampaignImportRow[];
+  importIssues: CampaignImportIssueRow[];
+  waves: CampaignWaveRow[];
+  templates: Array<Pick<
+    DatabaseSchema["public"]["Tables"]["whatsapp_message_templates"]["Row"],
+    "connection_id" | "external_name" | "id" | "language"
+  >>;
+};
+
 export default async function CampaignsPage({
   searchParams,
 }: {
   searchParams: Promise<{ arquivadas?: string; erro?: string; sucesso?: string }>;
 }) {
-  const viewer = await requireActiveViewer();
-  const feedback = await searchParams;
-  const supabase = await createClient();
+  const viewerPromise = requireActiveViewer();
+  const [feedback, supabase] = await Promise.all([searchParams, createClient()]);
   const showingArchived = feedback.arquivadas === "1";
-  const campaignsQuery = supabase
-    .from("campaigns")
-    .select("*,whatsapp_connections(name,phone_e164,provider)")
-    .eq("org_id", viewer.organization!.id);
-
-  if (showingArchived) campaignsQuery.eq("status", "archived").not("archived_at", "is", null);
-  else campaignsQuery.neq("status", "archived").is("archived_at", null);
-  campaignsQuery.order("created_at", { ascending: false });
-
-  const [
-    { data: campaigns },
-    { data: connections },
-    { data: contacts },
-    { data: imports },
-    { data: importIssues },
-    { data: waves },
-    { data: templates },
-  ] = await Promise.all([
-    campaignsQuery,
-    supabase
-      .from("whatsapp_connections")
-      .select("id,name,phone_e164,provider")
-      .eq("org_id", viewer.organization!.id)
-      .eq("status", "active")
-      .eq("campaign_enabled", true),
-    supabase.from("campaign_contacts").select("id,campaign_id,status,contacts(name)").eq("org_id", viewer.organization!.id),
-    supabase
-      .from("campaign_imports")
-      .select("id,campaign_id,total_rows,valid_rows,duplicate_rows,error_rows,status,created_at,mapping,file_sha256")
-      .eq("org_id", viewer.organization!.id)
-      .order("created_at", { ascending: false }),
-    supabase
-      .from("campaign_import_rows")
-      .select("import_id,row_number,status,error_code,normalized_name,normalized_phone")
-      .eq("org_id", viewer.organization!.id)
-      .in("status", ["error", "duplicate"])
-      .order("row_number")
-      .limit(100),
-    supabase
-      .from("campaign_waves")
-      .select("id,campaign_id,wave_number,released_count,suppressed_count,status,released_at")
-      .eq("org_id", viewer.organization!.id)
-      .order("wave_number", { ascending: false }),
-    supabase
-      .from("whatsapp_message_templates")
-      .select("id,connection_id,external_name,language")
-      .eq("org_id", viewer.organization!.id)
-      .eq("enabled", true)
-      .eq("purpose", "campaign")
-      .eq("provider_status", "APPROVED"),
+  const [, { data, error }] = await Promise.all([
+    viewerPromise,
+    measureServerTask("campaigns.bootstrap", () => supabase.rpc("campaigns_workspace_bootstrap", {
+      p_archived: showingArchived,
+    })),
   ]);
+  if (error) throw new Error("Não foi possível carregar as campanhas.");
+  const payload = (data ?? {}) as unknown as CampaignWorkspacePayload;
+  const {
+    campaigns = [],
+    connections = [],
+    contacts = [],
+    imports = [],
+    importIssues = [],
+    waves = [],
+    templates = [],
+  } = payload;
 
   const visibleCampaigns = (campaigns ?? []).filter((campaign) => belongsToCampaignView(campaign, showingArchived));
   const visibleCampaignIds = new Set(visibleCampaigns.map((campaign) => campaign.id));

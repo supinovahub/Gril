@@ -11288,6 +11288,10 @@ export type Database = {
         Args: { p_org_id?: string }
         Returns: Json
       }
+      audit_workspace_bootstrap: {
+        Args: { p_limit?: number; p_org_id?: string }
+        Returns: Json
+      }
       apply_inbound_control_intent: {
         Args: { p_intent: string; p_message_id: string }
         Returns: Json
@@ -11334,6 +11338,10 @@ export type Database = {
         Args: { p_request_id: string }
         Returns: undefined
       }
+      campaigns_workspace_bootstrap: {
+        Args: { p_archived?: boolean; p_org_id?: string }
+        Returns: Json
+      }
       claim_inbound_media: { Args: { p_message_id: string }; Returns: Json }
       claim_outbound_message: { Args: { p_message_id: string }; Returns: Json }
       claim_platform_push_notifications: {
@@ -11358,6 +11366,14 @@ export type Database = {
           p_org_id?: string
           p_search?: string
         }
+        Returns: Json
+      }
+      privacy_workspace_bootstrap: {
+        Args: { p_org_id?: string }
+        Returns: Json
+      }
+      reports_workspace_bootstrap: {
+        Args: { p_org_id?: string }
         Returns: Json
       }
       claim_retention_purge: {

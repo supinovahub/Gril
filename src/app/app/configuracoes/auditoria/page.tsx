@@ -2,12 +2,19 @@ import { ChevronLeft, ChevronRight, ScrollText } from "lucide-react";
 import Link from "next/link";
 
 import { requireActiveViewer } from "@/lib/auth/session";
+import type { Database } from "@/lib/database.types";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import { formatOperationDateTime } from "@/lib/time/operation-format";
 import styles from "../../operations.module.css";
 
 const PAGE_SIZE = 30;
 const QUERY_LIMIT = 250;
+
+type AuditWorkspacePayload = {
+  authorized: boolean;
+  events: Database["public"]["Functions"]["list_audit_events"]["Returns"];
+};
 
 function positivePage(value: string | undefined) {
   const parsed = Number(value);
@@ -19,7 +26,14 @@ export default async function AuditPage({
 }: {
   searchParams: Promise<{ pagina?: string }>;
 }) {
-  const viewer = await requireActiveViewer();
+  const supabase = await createClient();
+  const [viewer, query, { data, error }] = await Promise.all([
+    requireActiveViewer(),
+    searchParams,
+    measureServerTask("audit.bootstrap", () => supabase.rpc("audit_workspace_bootstrap", {
+      p_limit: QUERY_LIMIT,
+    })),
+  ]);
   const allowed = viewer.membership?.role === "owner"
     || viewer.membership?.role === "manager"
     || viewer.permissions.includes("reports.view");
@@ -28,14 +42,9 @@ export default async function AuditPage({
     return <div className={styles.page}><p className={styles.error}>Sem permissão para consultar auditoria.</p></div>;
   }
 
-  const query = await searchParams;
-  const supabase = await createClient();
   const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
-  const { data: events, error } = await supabase.rpc("list_audit_events", {
-    p_org_id: viewer.organization!.id,
-    p_limit: QUERY_LIMIT,
-  });
-  const allEvents = events ?? [];
+  const payload = (data ?? {}) as unknown as AuditWorkspacePayload;
+  const allEvents = payload.events ?? [];
   const pageCount = Math.max(1, Math.ceil(allEvents.length / PAGE_SIZE));
   const currentPage = Math.min(positivePage(query.pagina), pageCount);
   const visibleEvents = allEvents.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
