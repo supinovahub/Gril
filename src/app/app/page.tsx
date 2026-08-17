@@ -6,6 +6,9 @@ import {
   MessageSquareText,
 } from "lucide-react";
 import Link from "next/link";
+import { cookies } from "next/headers";
+import { redirect } from "next/navigation";
+import { Suspense } from "react";
 
 import { TypedConfirmationButton } from "@/components/typed-confirmation-button";
 import { canManageTeam, requireActiveViewer } from "@/lib/auth/session";
@@ -79,6 +82,50 @@ type AgendaItem = {
 
 type TeamDirectory = {
   namesByMembership: Record<string, string>;
+};
+
+type DashboardWorkspacePayload = {
+  authenticated: boolean;
+  authorized: boolean;
+  canManageTeam: boolean;
+  agendaItems: Array<{
+    format: string;
+    id: string;
+    name: string;
+    opportunityId: string;
+    startsAt: string;
+  }>;
+  attentionItems: Array<{
+    id: string;
+    name: string;
+    pendingSuggestionCount: number;
+    unreadInboundCount: number;
+    waitingSince: string;
+  }>;
+  kanban: KanbanColumn[];
+  metrics: {
+    appointments: number;
+    inboundConversations: number;
+    newLeads: number;
+    respondedConversations: number;
+    sales: number;
+  };
+  organizationId: string | null;
+  team: TeamDirectory;
+  timezone: string;
+};
+
+type DashboardWorkspace = {
+  agendaItems: AgendaItem[];
+  attentionItems: AttentionItem[];
+  authenticated: boolean;
+  authorized: boolean;
+  canManageTeam: boolean;
+  kanban: { columns: KanbanColumn[]; failed: boolean };
+  metrics: MetricSnapshot;
+  organizationId: string | null;
+  teamDirectory: TeamDirectory;
+  timeZone: string;
 };
 
 const periodOptions: Array<{ key: DashboardPeriod; label: string }> = [
@@ -487,38 +534,173 @@ async function loadTeamDirectory(
   };
 }
 
+async function loadDashboardWorkspace(
+  supabase: SupabaseClient<Database>,
+  requestedOrgId: string | undefined,
+  period: DashboardPeriod,
+  now: Date,
+): Promise<DashboardWorkspace> {
+  const workspaceResult = await supabase.rpc("dashboard_workspace_bootstrap", {
+    p_now: now.toISOString(),
+    p_period: period,
+    ...(requestedOrgId ? { p_org_id: requestedOrgId } : {}),
+  });
+
+  if (!workspaceResult.error && workspaceResult.data && !Array.isArray(workspaceResult.data)) {
+    const payload = workspaceResult.data as unknown as DashboardWorkspacePayload;
+    const newLeads = payload.metrics.newLeads ?? 0;
+    const appointments = payload.metrics.appointments ?? 0;
+    const sales = payload.metrics.sales ?? 0;
+    const inboundConversations = payload.metrics.inboundConversations ?? 0;
+    const respondedConversations = payload.metrics.respondedConversations ?? 0;
+    return {
+      agendaItems: (payload.agendaItems ?? []).map((item) => ({
+        format: item.format,
+        href: `/app/leads/${item.opportunityId}`,
+        id: item.id,
+        name: item.name,
+        startsAt: item.startsAt,
+      })),
+      authenticated: payload.authenticated,
+      authorized: payload.authorized,
+      canManageTeam: payload.canManageTeam,
+      attentionItems: (payload.attentionItems ?? []).map((item) => ({
+        action: item.pendingSuggestionCount > 0 ? "Revisar" : "Responder",
+        href: `/app/inbox/${item.id}`,
+        id: item.id,
+        name: item.name,
+        reason: item.pendingSuggestionCount > 0
+          ? `${item.pendingSuggestionCount} ${item.pendingSuggestionCount === 1 ? "sugestão aguarda" : "sugestões aguardam"} revisão`
+          : `${item.unreadInboundCount} ${item.unreadInboundCount === 1 ? "mensagem nova" : "mensagens novas"}`,
+        waitingSince: item.waitingSince,
+      })),
+      kanban: {
+        columns: payload.kanban ?? [],
+        failed: false,
+      },
+      metrics: {
+        appointments,
+        conversionRate: newLeads > 0 ? (sales / newLeads) * 100 : null,
+        inboundConversations,
+        newLeads,
+        responseRate: inboundConversations > 0
+          ? (respondedConversations / inboundConversations) * 100
+          : null,
+        sales,
+      },
+      organizationId: payload.organizationId,
+      teamDirectory: payload.team ?? { namesByMembership: {} },
+      timeZone: payload.timezone ?? DEFAULT_OPERATION_TIMEZONE,
+    };
+  }
+
+  console.warn("Falling back to legacy Dashboard queries", workspaceResult.error?.code);
+  const viewer = await requireActiveViewer();
+  const orgId = viewer.organization!.id;
+  const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
+  const timeZone = operation?.timezone ?? DEFAULT_OPERATION_TIMEZONE;
+  const range = buildPeriodRange(period, timeZone, now);
+  const [metrics, kanban, attentionItems, agendaItems, teamDirectory] = await Promise.all([
+    loadMetrics(supabase, orgId, range),
+    loadKanbanSnapshot(supabase, orgId),
+    loadAttentionItems(supabase, orgId),
+    loadAgendaItems(supabase, orgId, now),
+    loadTeamDirectory(supabase, orgId),
+  ]);
+  return {
+    agendaItems,
+    attentionItems,
+    authenticated: true,
+    authorized: true,
+    canManageTeam: canManageTeam(viewer),
+    kanban,
+    metrics,
+    organizationId: orgId,
+    teamDirectory,
+    timeZone,
+  };
+}
+
+async function loadHomologationPreview(
+  supabase: SupabaseClient<Database>,
+  orgId: string,
+): Promise<HomologationPreview | null> {
+  const previewResult = await measureServerTask(
+    "dashboard.homologation_preview",
+    () => supabase.rpc("preview_homologation_context", { p_org_id: orgId }),
+  );
+  return !previewResult.error && previewResult.data
+    ? previewResult.data as unknown as HomologationPreview
+    : null;
+}
+
+async function HomologationPreviewContent({
+  previewPromise,
+}: {
+  previewPromise: Promise<HomologationPreview | null>;
+}) {
+  const homologationPreview = await previewPromise;
+  if (!homologationPreview) {
+    return <p className={styles.cleanupEmpty}>Não foi possível carregar o preview. A ação permanece indisponível.</p>;
+  }
+
+  return (
+    <div className={styles.cleanupBody}>
+      <dl className={styles.cleanupCounts}>
+        <div><dt>Contatos</dt><dd>{homologationPreview.counts.contacts ?? 0}</dd></div>
+        <div><dt>Oportunidades</dt><dd>{homologationPreview.counts.opportunities ?? 0}</dd></div>
+        <div><dt>Conversas</dt><dd>{homologationPreview.counts.conversations ?? 0}</dd></div>
+        <div><dt>Mensagens</dt><dd>{homologationPreview.counts.messages ?? 0}</dd></div>
+        <div><dt>Chamadas</dt><dd>{homologationPreview.counts.calls ?? 0}</dd></div>
+        <div><dt>Jobs</dt><dd>{homologationPreview.counts.scheduled_jobs ?? 0}</dd></div>
+      </dl>
+      {homologationPreview.blocked?.length ? (
+        <div className={styles.cleanupBlocked}>
+          <strong>Limpeza bloqueada por segurança</strong>
+          <ul>{homologationPreview.blocked.map((reason) => <li key={reason}>{reason}</li>)}</ul>
+        </div>
+      ) : homologationPreview.eligible ? (
+        <form action={purgeHomologationContextAction} className={styles.cleanupAction}>
+          <p>A execução é limitada a 20 contatos e exige a confirmação literal protegida.</p>
+          <TypedConfirmationButton description="Somente registros HML- desta imobiliária serão removidos. Configurações, equipe e auditoria serão preservadas." title="Limpar contexto de homologação">Limpar contexto HML-</TypedConfirmationButton>
+        </form>
+      ) : (
+        <p className={styles.cleanupEmpty}>Nenhum registro HML- elegível para limpar.</p>
+      )}
+    </div>
+  );
+}
+
 export default async function DashboardPage({
   searchParams,
 }: {
   searchParams?: Promise<DashboardSearchParams>;
 }) {
-  const viewer = await requireActiveViewer();
   const supabase = await createClient();
-  const managesTeam = canManageTeam(viewer);
   const feedback = searchParams ? await searchParams : {};
   const period = resolvePeriod(feedback.period);
-  const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
-  const timeZone = operation?.timezone ?? DEFAULT_OPERATION_TIMEZONE;
   const now = new Date();
+  const supportOrgId = (await cookies()).get("gril_support_org")?.value;
+  const workspace = await measureServerTask(
+    "dashboard.workspace",
+    () => loadDashboardWorkspace(supabase, supportOrgId, period, now),
+    { alwaysLog: true },
+  );
+  if (!workspace.authenticated) redirect("/login");
+  if (!workspace.authorized || !workspace.organizationId) redirect("/aguardando-aprovacao");
+
+  const {
+    agendaItems,
+    attentionItems,
+    canManageTeam: managesTeam,
+    kanban,
+    metrics,
+    teamDirectory,
+    timeZone,
+  } = workspace;
+  const orgId = workspace.organizationId;
   const range = buildPeriodRange(period, timeZone, now);
-  const orgId = viewer.organization!.id;
-
-  const previewPromise = managesTeam
-    ? supabase.rpc("preview_homologation_context", { p_org_id: orgId })
-    : Promise.resolve({ data: null, error: null });
-
-  const [metrics, kanban, attentionItems, agendaItems, teamDirectory, previewResult] = await Promise.all([
-    measureServerTask("dashboard.metrics", () => loadMetrics(supabase, orgId, range)),
-    measureServerTask("dashboard.kanban", () => loadKanbanSnapshot(supabase, orgId)),
-    measureServerTask("dashboard.attention", () => loadAttentionItems(supabase, orgId)),
-    measureServerTask("dashboard.agenda", () => loadAgendaItems(supabase, orgId, now)),
-    measureServerTask("dashboard.team", () => loadTeamDirectory(supabase, orgId)),
-    previewPromise,
-  ]);
-
-  const homologationPreview = !previewResult.error && previewResult.data
-    ? previewResult.data as unknown as HomologationPreview
-    : null;
+  const previewPromise = managesTeam ? loadHomologationPreview(supabase, orgId) : null;
   const updatedAt = formatOperationDateTime(now, timeZone, {
     hour: "2-digit",
     minute: "2-digit",
@@ -710,33 +892,11 @@ export default async function DashboardPage({
               <h2 id="homologation-cleanup-title">Limpar contexto de homologação</h2>
               <p>Remove somente registros de teste com prefixo <code>HML-</code> desta imobiliária. Configurações, equipe e auditoria ficam preservadas.</p>
             </div>
-            {homologationPreview ? (
-              <div className={styles.cleanupBody}>
-                <dl className={styles.cleanupCounts}>
-                  <div><dt>Contatos</dt><dd>{homologationPreview.counts.contacts ?? 0}</dd></div>
-                  <div><dt>Oportunidades</dt><dd>{homologationPreview.counts.opportunities ?? 0}</dd></div>
-                  <div><dt>Conversas</dt><dd>{homologationPreview.counts.conversations ?? 0}</dd></div>
-                  <div><dt>Mensagens</dt><dd>{homologationPreview.counts.messages ?? 0}</dd></div>
-                  <div><dt>Chamadas</dt><dd>{homologationPreview.counts.calls ?? 0}</dd></div>
-                  <div><dt>Jobs</dt><dd>{homologationPreview.counts.scheduled_jobs ?? 0}</dd></div>
-                </dl>
-                {homologationPreview.blocked?.length ? (
-                  <div className={styles.cleanupBlocked}>
-                    <strong>Limpeza bloqueada por segurança</strong>
-                    <ul>{homologationPreview.blocked.map((reason) => <li key={reason}>{reason}</li>)}</ul>
-                  </div>
-                ) : homologationPreview.eligible ? (
-                  <form action={purgeHomologationContextAction} className={styles.cleanupAction}>
-                    <p>A execução é limitada a 20 contatos e exige a confirmação literal protegida.</p>
-                    <TypedConfirmationButton description="Somente registros HML- desta imobiliária serão removidos. Configurações, equipe e auditoria serão preservadas." title="Limpar contexto de homologação">Limpar contexto HML-</TypedConfirmationButton>
-                  </form>
-                ) : (
-                  <p className={styles.cleanupEmpty}>Nenhum registro HML- elegível para limpar.</p>
-                )}
-              </div>
-            ) : (
-              <p className={styles.cleanupEmpty}>Não foi possível carregar o preview. A ação permanece indisponível.</p>
-            )}
+            {previewPromise ? (
+              <Suspense fallback={<p className={styles.cleanupEmpty}>Carregando preview seguro...</p>}>
+                <HomologationPreviewContent previewPromise={previewPromise} />
+              </Suspense>
+            ) : null}
           </section>
         </details>
       ) : null}

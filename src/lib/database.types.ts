@@ -11853,6 +11853,20 @@ export type Database = {
         }[]
       }
       current_viewer_context_v2: { Args: never; Returns: Json }
+      current_viewer_context_v3: { Args: never; Returns: Json }
+      dashboard_workspace_bootstrap: {
+        Args: { p_now: string; p_org_id?: string; p_period: string }
+        Returns: Json
+      }
+      dashboard_workspace_v2: {
+        Args: {
+          p_now: string
+          p_org_id: string
+          p_range_end: string
+          p_range_start: string
+        }
+        Returns: Json
+      }
       dashboard_metrics: {
         Args: {
           p_org_id: string
@@ -11866,6 +11880,30 @@ export type Database = {
           responded_conversations: number
           sales: number
         }[]
+      }
+      inbox_conversation_page: {
+        Args: { p_limit?: number; p_org_id: string }
+        Returns: {
+          ai_mode: string
+          contact_name: string
+          has_attention: boolean
+          id: string
+          last_inbound_at: string
+          last_message_preview: string
+          operation_id: string
+          opportunity_id: string
+          ownership: string
+          pending_suggestion_count: number
+          stage_name: string
+          status: string
+          total_count: number
+          unread_inbound_count: number
+          updated_at: string
+        }[]
+      }
+      inbox_workspace_bootstrap: {
+        Args: { p_limit?: number; p_org_id?: string }
+        Returns: Json
       }
       decide_access_request: {
         Args: {
