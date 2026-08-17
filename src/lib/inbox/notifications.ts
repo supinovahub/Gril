@@ -1,8 +1,10 @@
 import "server-only";
 
 import type { SupabaseClient } from "@supabase/supabase-js";
+import { cache } from "react";
 
 import type { Database } from "@/lib/database.types";
+import { createClient } from "@/lib/supabase/server";
 
 export type InboxNotificationCount = {
   conversationId: string;
@@ -41,6 +43,11 @@ export async function loadInboxNotificationCounts(
     conversationsWithNotifications: counts.length,
   };
 }
+
+export const getInboxNotificationCounts = cache(async (orgId: string) => {
+  const supabase = await createClient();
+  return loadInboxNotificationCounts(supabase, orgId);
+});
 
 function plural(count: number, singular: string, pluralForm: string) {
   return `${count} ${count === 1 ? singular : pluralForm}`;

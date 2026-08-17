@@ -2,6 +2,9 @@ import {
   Cable,
   CheckCircle2,
   CircleDashed,
+  MessageSquareText,
+  RadioTower,
+  ShieldEllipsis,
   KeyRound,
   RefreshCw,
   ShieldCheck,
@@ -62,6 +65,15 @@ export default async function WhatsappSettingsPage({
   const appUrl = (
     process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000"
   ).replace(/\/$/, "");
+  const activeConnections = connections?.filter(
+    (connection) => connection.status === "active",
+  ).length ?? 0;
+  const verifiedAccounts = accounts?.filter(
+    (account) => account.status === "verified",
+  ).length ?? 0;
+  const enabledTemplates = templates?.filter(
+    (template) => template.enabled && template.provider_status === "APPROVED",
+  ).length ?? 0;
 
   return (
     <div className={styles.page}>
@@ -82,8 +94,21 @@ export default async function WhatsappSettingsPage({
         <p className={styles.successBanner}>{feedback.sucesso}</p>
       ) : null}
 
+      <section aria-label="Resumo dos canais" className={styles.channelSummary}>
+        <span><RadioTower aria-hidden="true" size={17} /><small>Conexões</small><strong>{connections?.length ?? 0}</strong></span>
+        <span><CheckCircle2 aria-hidden="true" size={17} /><small>Ativas</small><strong>{activeConnections}</strong></span>
+        <span><ShieldEllipsis aria-hidden="true" size={17} /><small>Credenciais verificadas</small><strong>{verifiedAccounts}</strong></span>
+        <span><MessageSquareText aria-hidden="true" size={17} /><small>Templates habilitados</small><strong>{enabledTemplates}</strong></span>
+      </section>
+
+      <nav aria-label="Seções dos canais de WhatsApp" className={styles.channelTabs}>
+        <a href="#conexoes">Conexões</a>
+        <a href="#templates">Templates</a>
+        <a href="#adicionar-canal">Adicionar canal</a>
+      </nav>
+
       <div className={styles.settingsLayout}>
-        <section className={styles.connectionList}>
+        <section className={styles.connectionList} id="conexoes">
           <h2>Conexões cadastradas</h2>
           {connections?.map((connection) => {
             const account = connection.integration_account_id
@@ -235,7 +260,7 @@ export default async function WhatsappSettingsPage({
             </div>
           ) : null}
           {templates?.length ? (
-            <section className={styles.connectionList}>
+            <section className={styles.connectionList} id="templates">
               <h2>Templates Meta</h2>
               {templates.map((template) => (
                 <article className={styles.connectionCard} key={template.id}>
@@ -301,15 +326,23 @@ export default async function WhatsappSettingsPage({
           ) : null}
         </section>
 
-        <div className={styles.formStack}>
+        <div className={styles.formStack} id="adicionar-canal">
           {isOwner ? (
             <>
-              <UazapiInstanceForm className={styles.connectionForm} />
-              <UazapiPairingForm className={styles.connectionForm} />
-              <form
-                action={connectUazapiAction}
-                className={styles.connectionForm}
-              >
+              <details className={styles.connectionCreator}>
+                <summary><span><small>Nova instância</small><strong>Criar Uazapi</strong></span><span>Configurar</span></summary>
+                <UazapiInstanceForm className={styles.connectionForm} />
+              </details>
+              <details className={styles.connectionCreator}>
+                <summary><span><small>Leitura pelo celular</small><strong>Parear por QR Code</strong></span><span>Configurar</span></summary>
+                <UazapiPairingForm className={styles.connectionForm} />
+              </details>
+              <details className={styles.connectionCreator}>
+                <summary><span><small>Instância existente</small><strong>Conectar Uazapi</strong></span><span>Configurar</span></summary>
+                <form
+                  action={connectUazapiAction}
+                  className={styles.connectionForm}
+                >
                 <div>
                   <p className={styles.eyebrow}>Instância existente</p>
                   <h2>Conectar Uazapi</h2>
@@ -358,12 +391,15 @@ export default async function WhatsappSettingsPage({
                 <button type="submit">
                   <KeyRound size={14} /> Validar e conectar
                 </button>
-              </form>
+                </form>
+              </details>
 
-              <form
-                action={connectMetaAction}
-                className={styles.connectionForm}
-              >
+              <details className={styles.connectionCreator}>
+                <summary><span><small>Cloud API direta</small><strong>Conectar Meta oficial</strong></span><span>Configurar</span></summary>
+                <form
+                  action={connectMetaAction}
+                  className={styles.connectionForm}
+                >
                 <div>
                   <p className={styles.eyebrow}>Cloud API direta</p>
                   <h2>Conectar Meta oficial</h2>
@@ -417,7 +453,8 @@ export default async function WhatsappSettingsPage({
                 <button type="submit">
                   <KeyRound size={14} /> Validar e conectar
                 </button>
-              </form>
+                </form>
+              </details>
             </>
           ) : (
             <section className={styles.connectionForm}>

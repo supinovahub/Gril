@@ -1,12 +1,17 @@
 import {
+  CalendarCheck2,
+  CalendarDays,
   CheckCircle2,
   Clock3,
   PhoneCall,
   ShieldAlert,
+  UserRoundSearch,
   Video,
 } from "lucide-react";
 
 import { requireActiveViewer } from "@/lib/auth/session";
+import type { Tables } from "@/lib/database.types";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import {
   acceptOfferAction,
@@ -33,6 +38,25 @@ const weekdays = [
   "Sábado",
 ];
 
+type AgendaWorkspacePayload = {
+  authorized: boolean;
+  settings: Tables<"membership_call_settings"> | null;
+  rules: Tables<"availability_rules">[];
+  exceptions: Tables<"availability_exceptions">[];
+  calls: Array<Tables<"calls"> & {
+    opportunities: { title: string; contacts: { name: string } | null } | null;
+  }>;
+  offers: Array<Tables<"call_offers"> & {
+    calls: Tables<"calls"> & {
+      opportunities: { title: string; contacts: { name: string } | null } | null;
+    };
+  }>;
+  opportunities: Array<Pick<Tables<"opportunities">, "id" | "title" | "version"> & {
+    contacts: { name: string } | null;
+    pipeline_stages: { code: string; name: string } | null;
+  }>;
+};
+
 function callStatusLabel(status: string) {
   const labels: Record<string, string> = {
     awaiting_distribution: "Aguardando distribuição",
@@ -57,75 +81,59 @@ export default async function AgendaPage({
 }: {
   searchParams: Promise<{ erro?: string; sucesso?: string }>;
 }) {
-  const viewer = await requireActiveViewer();
-  const feedback = await searchParams;
-  const supabase = await createClient();
+  const workspacePromise = (async () => {
+    const supabase = await createClient();
+    return measureServerTask(
+      "agenda.workspace",
+      () => supabase.rpc("agenda_workspace_bootstrap", {}),
+    );
+  })();
+  const [viewer, feedback, workspaceResult] = await Promise.all([
+    requireActiveViewer(),
+    searchParams,
+    workspacePromise,
+  ]);
+  if (workspaceResult.error) {
+    console.error("Failed to load Agenda workspace", workspaceResult.error);
+    throw new Error("Não foi possível carregar a Agenda.");
+  }
+  const workspace = workspaceResult.data as unknown as AgendaWorkspacePayload;
+  const {
+    settings,
+    rules,
+    exceptions,
+    calls,
+    offers,
+    opportunities,
+  } = workspace;
   const operation =
     viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
   const canManage =
     viewer.membership?.role === "owner" ||
     viewer.permissions.includes("pipeline.manage");
-  const [
-    { data: settings },
-    { data: rules },
-    { data: exceptions },
-    { data: calls },
-    { data: offers },
-    { data: opportunities },
-  ] = await Promise.all([
-    supabase
-      .from("membership_call_settings")
-      .select("*")
-      .eq("membership_id", viewer.membership!.id)
-      .maybeSingle(),
-    supabase
-      .from("availability_rules")
-      .select("*")
-      .eq("membership_id", viewer.membership!.id)
-      .eq("active", true)
-      .order("weekday")
-      .order("start_time"),
-    supabase
-      .from("availability_exceptions")
-      .select("*")
-      .eq("membership_id", viewer.membership!.id)
-      .gte("ends_at", new Date().toISOString())
-      .order("starts_at")
-      .limit(20),
-    supabase
-      .from("calls")
-      .select("*,opportunities(title,contacts(name))")
-      .order("starts_at", { ascending: true })
-      .limit(50),
-    supabase
-      .from("call_offers")
-      .select(
-        "*,calls!inner(id,starts_at,format,status,version,opportunities(title,contacts(name)))",
-      )
-      .eq("recipient_membership_id", viewer.membership!.id)
-      .eq("status", "pending")
-      .order("expires_at"),
-    canManage
-      ? supabase
-          .from("opportunities")
-          .select("id,title,version,contacts(name),pipeline_stages(code,name)")
-          .eq("org_id", viewer.organization!.id)
-          .eq("status", "open")
-          .order("last_activity_at", { ascending: false })
-          .limit(50)
-      : Promise.resolve({ data: [] }),
-  ]);
   const ready = Boolean(
     viewer.profile?.whatsapp_e164 &&
-    rules?.length &&
+    rules.length &&
     settings?.can_receive_calls,
   );
+  const now = new Date();
+  const timeZone = operation?.timezone ?? "America/Sao_Paulo";
+  const dayFormatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  });
+  const todayKey = dayFormatter.format(now);
+  const upcomingCalls = calls.filter((call) => new Date(call.starts_at) > now && !["completed", "no_show", "cancelled"].includes(call.status));
+  const todayCalls = calls.filter((call) => dayFormatter.format(new Date(call.starts_at)) === todayKey);
+  const availableDays = new Set(rules.map((rule) => rule.weekday)).size;
   return (
     <div className={styles.page}>
       <header className={styles.header}>
         <div>
           <p className={styles.eyebrow}>Agenda da operação</p>
-          <h1>Agenda e calls</h1>
+          <h1>Agenda</h1>
           <p>
             Organize sua disponibilidade, acompanhe os horários e registre o resultado de cada call.
           </p>
@@ -139,9 +147,15 @@ export default async function AgendaPage({
       {feedback.sucesso ? (
         <p className={styles.success}>{feedback.sucesso}</p>
       ) : null}
-      <section className={styles.agendaGuide} aria-label="Como funciona a agenda">
-        <div><strong>Como usar esta página</strong><span>As três áreas representam momentos diferentes do atendimento.</span></div>
-        <ol><li><b>1</b><span><strong>Disponibilidade</strong> informe quando pode receber calls.</span></li><li><b>2</b><span><strong>Agendamento</strong> reserve um horário alinhado com o lead.</span></li><li><b>3</b><span><strong>Resultado</strong> registre o que aconteceu depois da call.</span></li></ol>
+      <nav aria-label="Áreas da Agenda" className={styles.sectionTabs}>
+        <a href="#proximas-calls">Compromissos</a>
+        <a href="#disponibilidade">Disponibilidade</a>
+      </nav>
+      <section className={styles.agendaSummary} aria-label="Resumo da agenda">
+        <span><CalendarDays aria-hidden="true" size={17} /><small>Hoje</small><strong>{todayCalls.length}</strong><b>compromissos</b></span>
+        <span><CalendarCheck2 aria-hidden="true" size={17} /><small>Próximas</small><strong>{upcomingCalls.length}</strong><b>calls abertas</b></span>
+        <span><UserRoundSearch aria-hidden="true" size={17} /><small>Ofertas</small><strong>{offers?.length ?? 0}</strong><b>aguardando resposta</b></span>
+        <span><Clock3 aria-hidden="true" size={17} /><small>Disponibilidade</small><strong>{availableDays}</strong><b>dias configurados</b></span>
       </section>
       {offers?.length ? (
         <section className={styles.offers}>
@@ -196,7 +210,7 @@ export default async function AgendaPage({
       ) : null}
       <div className={styles.layout}>
         <main className={styles.main}>
-          <section className={styles.panel}>
+          <section className={styles.panel} id="proximas-calls">
             <div className={styles.panelHeader}>
               <h2>Próximas calls</h2>
               <span>{calls?.length ?? 0} visíveis</span>
@@ -340,7 +354,7 @@ export default async function AgendaPage({
               ) : null}
             </div>
           </section>
-          <section className={styles.panel}>
+          <section className={styles.panel} id="disponibilidade">
             <div className={styles.panelHeader}>
                 <h2>Quando você pode receber calls</h2>
               <span>
@@ -419,7 +433,7 @@ export default async function AgendaPage({
                       dateStyle: "short",
                       timeStyle: "short",
                     })}
-                    –
+                    até
                     {new Date(item.ends_at).toLocaleString("pt-BR", {
                       timeZone: operation?.timezone,
                       dateStyle: "short",

@@ -5,11 +5,18 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 
 import { canManageTeam, requireActiveViewer } from "@/lib/auth/session";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { TYPED_CONFIRMATION_PHRASE } from "@/lib/typed-confirmation";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { createClient } from "@/lib/supabase/server";
 
 type StorageObject = { bucket: string; path: string };
+
+export type HomologationPreview = {
+  eligible: boolean;
+  blocked: string[];
+  counts: Record<string, number>;
+};
 
 function readStorageObjects(value: unknown): StorageObject[] {
   if (!Array.isArray(value)) return [];
@@ -41,6 +48,23 @@ async function removeStorageObjects(objects: StorageObject[]) {
   } catch {
     return false;
   }
+}
+
+export async function loadHomologationPreviewAction(): Promise<HomologationPreview | null> {
+  const viewer = await requireActiveViewer();
+  if (!viewer.organization || viewer.supportAccess || !canManageTeam(viewer)) return null;
+
+  const supabase = await createClient();
+  const previewResult = await measureServerTask(
+    "dashboard.homologation_preview",
+    () => supabase.rpc("preview_homologation_context", {
+      p_org_id: viewer.organization!.id,
+    }),
+  );
+
+  return !previewResult.error && previewResult.data
+    ? previewResult.data as unknown as HomologationPreview
+    : null;
 }
 
 export async function purgeHomologationContextAction(formData: FormData) {

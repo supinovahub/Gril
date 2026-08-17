@@ -1,11 +1,34 @@
 import { CircleDot, Search, UserRoundPlus } from "lucide-react";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 
 import { requireActiveViewer } from "@/lib/auth/session";
+import type { Tables } from "@/lib/database.types";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
+import { ConversationViews } from "../inbox/conversation-views";
 import { LeadForm } from "./lead-form";
 import { BulkCrmPanel } from "./bulk-crm-panel";
 import styles from "./leads.module.css";
+
+type LeadListRow = Pick<
+  Tables<"opportunities">,
+  "id" | "status" | "source" | "version" | "last_activity_at" | "assigned_membership_id"
+> & {
+  contact_id: string;
+  contact_name: string;
+  contact_status: string;
+  primary_phone: string | null;
+  stage_name: string;
+  stage_code: string;
+  stage_position: number;
+};
+
+type LeadsWorkspacePayload = {
+  authorized: boolean;
+  opportunities: LeadListRow[];
+  memberships: Array<Pick<Tables<"memberships">, "id" | "role">>;
+  campaigns: Array<Pick<Tables<"campaigns">, "id" | "name">>;
+};
 
 function sourceLabel(source: string) {
   if (source === "whatsapp_inbound" || source === "whatsapp_device") return "WhatsApp";
@@ -19,55 +42,55 @@ export default async function LeadsPage({
 }: {
   searchParams: Promise<{ q?: string; arquivados?: string; erro?: string; sucesso?: string }>;
 }) {
-  const viewer = await requireActiveViewer();
-  const { q, arquivados, erro, sucesso } = await searchParams;
-  const showingArchived = arquivados === "1";
-  const supabase = await createClient();
-  let query = supabase
-    .from("opportunities")
-    .select("id, status, source, version, last_activity_at, assigned_membership_id, contacts!inner(id,name,status,contact_phones(e164,is_primary,status)), pipeline_stages!inner(name,code,position)")
-    .eq("org_id", viewer.organization!.id)
-    .eq("contacts.status", showingArchived ? "archived" : "active")
-    .order("last_activity_at", { ascending: false })
-    .limit(100);
-
-  if (q?.trim()) query = query.ilike("contacts.name", `%${q.trim()}%`);
-
-  const [{ data: opportunities }, { data: memberships }, { data: campaigns }] = await Promise.all([
-    query,
-    supabase
-      .from("memberships")
-      .select("id, role")
-      .eq("org_id", viewer.organization!.id)
-      .eq("status", "active"),
-    supabase.from("campaigns").select("id,name").eq("org_id", viewer.organization!.id).in("status", ["draft", "pending_approval", "approved", "paused"]).order("created_at", { ascending: false }),
+  const paramsPromise = searchParams;
+  const workspacePromise = (async () => {
+    const params = await paramsPromise;
+    const supabase = await createClient();
+    return measureServerTask(
+      "leads.workspace",
+      () => supabase.rpc("leads_workspace_bootstrap", {
+        p_archived: params.arquivados === "1",
+        p_search: params.q?.trim() || undefined,
+      }),
+    );
+  })();
+  const [viewer, params, workspaceResult] = await Promise.all([
+    requireActiveViewer(),
+    paramsPromise,
+    workspacePromise,
   ]);
-  const contacts = Array.from(new Map((opportunities ?? []).map((opportunity)=>{
-    const contact = Array.isArray(opportunity.contacts) ? opportunity.contacts[0] : opportunity.contacts;
-    return contact ? [contact.id, { id: contact.id, name: contact.name }] : ["", null];
-  }).filter((entry): entry is [string,{id:string;name:string}]=>Boolean(entry[0] && entry[1]))).values());
+  const { q, arquivados, erro, sucesso } = params;
+  const showingArchived = arquivados === "1";
+  if (workspaceResult.error) {
+    console.error("Failed to load Leads workspace", workspaceResult.error);
+    throw new Error("Não foi possível carregar os leads.");
+  }
+  const workspace = workspaceResult.data as unknown as LeadsWorkspacePayload;
+  const { opportunities, memberships, campaigns } = workspace;
+  const contacts = Array.from(new Map(opportunities.flatMap((opportunity) => (
+    opportunity.contact_id && opportunity.contact_name
+      ? [[opportunity.contact_id, { id: opportunity.contact_id, name: opportunity.contact_name }] as const]
+      : []
+  ))).values());
 
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
         <div>
-          <p className={styles.eyebrow}>Gestão comercial</p>
-          <h1>Leads e oportunidades</h1>
-          <p>Cada linha representa uma oportunidade de compra. A mesma pessoa pode ter mais de uma oportunidade sem duplicar o contato.</p>
+          <p className={styles.eyebrow}>Conversas</p>
+          <h1>Leads</h1>
+          <p>Visualize o contexto comercial das pessoas que estão em atendimento.</p>
         </div>
         <div className={styles.headerActions}>
-          <Link className={styles.secondaryButton} href={showingArchived ? "/app/leads" : "/app/leads?arquivados=1"}>{showingArchived ? "Ver ativos" : "Ver arquivados"}</Link>
-          <Link className={styles.secondaryButton} href="/app/kanban">Abrir Kanban</Link>
+          <Link className={styles.secondaryButton} href={showingArchived ? "/app/leads" : "/app/leads?arquivados=1"} prefetch={false}>{showingArchived ? "Ver ativos" : "Ver arquivados"}</Link>
         </div>
       </header>
 
+      <ConversationViews active="leads" />
+
       {erro ? <p className={styles.errorBanner}>{erro}</p> : null}
       {sucesso ? <p className={styles.successBanner}>Operação concluída.</p> : null}
-      <section className={styles.crmGuide} aria-label="Como usar o CRM">
-        <div><strong>Como trabalhar um lead</strong><span>Abra uma oportunidade para completar a qualificação e escolher o próximo passo.</span></div>
-        <ol><li><b>1</b>Confira o contexto e o responsável.</li><li><b>2</b>Preencha os dados que ainda faltam.</li><li><b>3</b>Avance a etapa ou agende uma call.</li></ol>
-      </section>
-      <BulkCrmPanel contacts={contacts} managers={(memberships ?? []).filter((item)=>item.role!=='broker').map((item)=>({ id:item.id,label:`${item.role} · ${item.id.slice(0,8)}` }))} campaigns={(campaigns ?? []).map((item)=>({id:item.id,label:item.name}))}/>
+      <BulkCrmPanel contacts={contacts} managers={memberships.filter((item)=>item.role!=='broker').map((item)=>({ id:item.id,label:`${item.role} · ${item.id.slice(0,8)}` }))} campaigns={campaigns.map((item)=>({id:item.id,label:item.name}))}/>
 
       <section className={styles.layout}>
         <div className={styles.listPanel}>
@@ -78,33 +101,26 @@ export default async function LeadsPage({
           </form>
 
           <div className={styles.listHeader}>
-            <span>{opportunities?.length ?? 0} oportunidades {showingArchived ? "arquivadas" : "ativas"}</span>
+            <span>{opportunities.length} oportunidades {showingArchived ? "arquivadas" : "ativas"}</span>
             <span>Atualização mais recente primeiro</span>
           </div>
 
           <div className={styles.leadList}>
-            {opportunities?.map((opportunity) => {
-              const contact = Array.isArray(opportunity.contacts) ? opportunity.contacts[0] : opportunity.contacts;
-              const stage = Array.isArray(opportunity.pipeline_stages) ? opportunity.pipeline_stages[0] : opportunity.pipeline_stages;
-              const phones = (contact?.contact_phones ?? []) as Array<{
-                e164: string;
-                is_primary: boolean;
-                status: string;
-              }>;
-              const phone = phones.find((item) => item.is_primary && item.status === "active")?.e164;
+            {opportunities.map((opportunity) => {
+              if (!opportunity.id || !opportunity.last_activity_at) return null;
               return (
-                <Link className={styles.leadRow} href={`/app/leads/${opportunity.id}`} key={opportunity.id}>
-                  <span className={styles.leadAvatar}>{contact?.name?.slice(0, 1).toUpperCase() ?? "?"}</span>
+                <Link className={styles.leadRow} href={`/app/leads/${opportunity.id}`} key={opportunity.id} prefetch={false}>
+                  <span className={styles.leadAvatar}>{opportunity.contact_name?.slice(0, 1).toUpperCase() ?? "?"}</span>
                   <span className={styles.leadIdentity}>
-                    <strong>{contact?.name ?? "Contato"}</strong>
-                    <small>{phone ?? "Sem telefone visível"} · {sourceLabel(opportunity.source)}</small>
+                    <strong>{opportunity.contact_name ?? "Contato"}</strong>
+                    <small>{opportunity.primary_phone ?? "Sem telefone visível"} · {sourceLabel(opportunity.source ?? "")}</small>
                   </span>
-                  <span className={styles.stagePill}><CircleDot size={13} /> {stage?.name ?? opportunity.status}</span>
+                  <span className={styles.stagePill}><CircleDot size={13} /> {opportunity.stage_name ?? opportunity.status}</span>
                   <time>{new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(opportunity.last_activity_at))}</time>
                 </Link>
               );
             })}
-            {!opportunities?.length ? (
+            {!opportunities.length ? (
               <div className={styles.emptyState}><UserRoundPlus size={28} /><strong>Nenhum lead neste escopo</strong><span>Cadastre o primeiro usando o formulário ao lado.</span></div>
             ) : null}
           </div>
@@ -112,7 +128,7 @@ export default async function LeadsPage({
 
         <LeadForm
           currentMembershipId={viewer.membership!.id}
-          memberships={memberships ?? []}
+          memberships={memberships}
           operations={viewer.operations}
         />
       </section>

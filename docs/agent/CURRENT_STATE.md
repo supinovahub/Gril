@@ -1,5 +1,48 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 17/08/2026 — todas as telas do workspace abaixo de um segundo
+
+- A branch `perf/all-workspace-routes-under-one-second`, publicada no PR draft #50 contra `fix/workspace-loading-bottlenecks`, integra explicitamente `agent/continuous-improvement-loop` e preserva os dois históricos. O merge solicitado está no commit `7af28d0`.
+- O shell não bloqueia mais em contadores; badges carregam por uma API assíncrona. Agenda, Kanban, Leads, Campanhas, Auditoria, Privacidade, Relatórios e Aprendizados usam contratos compactos, e o Chat interno substitui quatro viagens sequenciais por um único RPC `SECURITY INVOKER` submetido às RLS existentes.
+- Em sessão autenticada com organização populada, todas as 29 telas concluíram o carregamento em até 0,913 s depois do primeiro aquecimento. As rotas afetadas pela passagem fria foram repetidas cinco vezes por rota: os máximos ficaram em 0,867 s no Chat Pedro, 0,747 s em Campanhas, 0,695 s na Central e 0,684 s nos badges.
+- As migrations `20260817195000` a `20260817202000` desta entrega estão aplicadas e alinhadas no Supabase `frslhzwhaooqtivkzdez`. A migration de melhoria contínua foi corrigida antes da aplicação para manter o valor canônico `assisted_suggestion`; nenhuma linha foi removida ou normalizada à força.
+- `npm run lint`, 23 arquivos/112 testes e o build Next.js 16.2.12 das 46 rotas passaram. O db lint não retornou erros; contratos de RLS, grants, autorização, `search_path` e JIT foram confirmados diretamente no remoto. O pgTAP via CLI não rodou porque o host não possui Docker, limitação registrada no documento da mudança.
+- O preview final `https://gril-6w4x08b7u-brio5.vercel.app` (`dpl_EcpVXDE6YrrES2ZNVjsesb1bbaq8`) está `Ready` em `gru1`. Produção permanece inalterada; homologação visual e funcional humana ainda é obrigatória.
+- Evidência detalhada: `docs/agent/changes/2026-08-17-all-workspace-routes-under-one-second.md`.
+
+## Atualização de 17/08/2026 — melhoria contínua governada em branch
+
+- A branch `agent/continuous-improvement-loop`, publicada no PR draft #49 a partir de worktree isolada, foi integrada ao PR draft #50 e preserva `agent/workspace-redesign-real` e os contratos posteriores de desempenho de `fix/workspace-loading-bottlenecks`.
+- O código implementa sinais estruturados, agrupamento por meta-revisor, propostas do Lionel, skills versionadas, regressão materializada em jobs e publicação exclusiva pelo dono após 100% dos casos e zero falha crítica. O revisor nunca publica nem altera o prompt central.
+- A migration `20260817200000_continuous_improvement_loop.sql` está aplicada no remoto, com `assisted_suggestion` preservado no contrato de `internal_threads`; `20260817201000_optimize_continuous_improvement_routes.sql` consolida o carregamento da página sem mudar as regras de aprovação/publicação. Produção não foi alterada.
+- `npm run lint`, os 112 testes e o build das 46 rotas passaram. O db lint remoto ficou sem erros e manteve avisos históricos; os contratos que dependiam de pgTAP foram confirmados diretamente no remoto porque Docker/Podman não existem neste host. A visualização autenticada e os fluxos de escrita permanecem pendentes de homologação humana.
+- CI e preview automática do PR passaram; a preview exige SSO. Decisão e detalhes: `docs/decisions/2026-08-17-melhoria-continua-governada.md` e `docs/agent/changes/2026-08-17-melhoria-continua-governada.md`.
+
+## Atualização de 17/08/2026 — correção dos gargalos do workspace
+
+- A migration `20260817150703_optimize_workspace_loading.sql` foi aplicada no Supabase remoto `frslhzwhaooqtivkzdez`; o histórico local e remoto está alinhado nessa versão. Ela preserva o contrato de notificações do Inbox, adiciona projeções planas e agregações para sessão, Dashboard, Central, Leads e Kanban, além de nove índices direcionados às consultas medidas.
+- A medição autenticada posterior mostrou que a primeira correção ainda demorava aproximadamente cinco segundos: Inbox consumia 3.708–5.140 ms e a seção de atenção da Visão geral 4.211–4.993 ms. As migrations `20260817183000_workspace_navigation_under_one_second.sql`, `20260817191000_workspace_route_bootstrap.sql`, `20260817193000_lock_workspace_internal_contracts.sql` e `20260817194500_disable_workspace_query_jit.sql` foram então aplicadas e alinhadas no remoto.
+- Inbox e Visão geral agora fazem uma única chamada autenticada por rota. A autorização é calculada uma vez por `auth.uid()` e preserva organização, operação, papel, atribuição, grant de conversa e suporte contratual. Em cinco repetições aquecidas pela Data API, o proprietário obteve Inbox em 146–183 ms e Visão geral em 128–169 ms; o corretor ficou em 101–241 ms e 115–189 ms. A tentativa de outra organização retornou `authorized=false` e zero linhas.
+- O primeiro preview da correção confirmou `dashboard.workspace` em 370–420 ms e `inbox.workspace` em 528–569 ms nas repetições aquecidas, mas o documento completo ainda levou 1,22–1,85 s. As Functions estavam em `iad1` enquanto o Supabase canônico está em `sa-east-1`; `vercel.json` agora fixa o compute em `gru1` para eliminar essa viagem inter-regional.
+- A preview regional reduziu o documento completo do Inbox para 0,44–0,71 s. A Visão geral ainda concluía uma consulta administrativa de 0,47–0,81 s mesmo com a seção recolhida; o preview de limpeza HML- passou a carregar somente quando dono/gestor expande **Área administrativa**, fora da navegação crítica.
+- No deployment final de código `dpl_H7o873RJfb9AyRLap3V8bJAxg7Vo`, cinco ciclos autenticados de documento completo retornaram HTTP 200 com Visão geral em 0,36–0,54 s e Inbox em 0,33–0,48 s. Os runtime logs registraram `dashboard.workspace` em 142–240 ms e `inbox.workspace` em 128–243 ms, sem `dashboard.homologation_preview` na navegação comum.
+- A implementação de aplicação está na branch `fix/workspace-loading-bottlenecks`, no PR draft #48 contra `agent/workspace-redesign-real`. A preview automática `https://gril-git-fix-workspace-loading-bottlenecks-brio5.vercel.app` está `READY`; produção não foi alterada e o código anterior permanece compatível com a migration já aplicada.
+- O shell deixa de aguardar badges, as rotas críticas passam a exibir fallback de carregamento próprio e o Realtime agrupa rajadas, evita refresh em aba oculta e carrega o cliente somente quando necessário.
+- Smoke remoto retornou as listagens reais de Inbox, Leads e Kanban em 81–93 ms e os novos contratos de Dashboard, Central e badges em 97–242 ms. `npm run lint`, 110 testes, build Webpack das 46 rotas e CI do PR passaram; a preview não registrou erro nem resposta 500. Permanecem três erros TypeScript preexistentes em dois arquivos de teste, sem impacto no build.
+- Detalhes e pendências de publicação: `docs/agent/changes/2026-08-17-workspace-loading-bottlenecks.md` e `docs/agent/changes/2026-08-17-workspace-navigation-under-one-second.md`.
+
+## Atualização de 14/08/2026 — redesign do workspace em homologação
+
+- A Visão geral e o shell desta branch agora implementam arquitetura em camadas: métricas de sete dias como abertura, Kanban identificado como estoque atual sem rolagem horizontal e próximas ações abaixo; a navegação mantém o trabalho frequente visível e recolhe Gestão, Inteligência e Administração. A validação automatizada desta rodada está registrada em `docs/agent/changes/2026-08-14-dashboard-arquitetura-em-camadas.md`.
+- A branch `agent/workspace-redesign-real` aplica a arquitetura operacional aprovada sobre a nova Visão geral e preserva os fluxos de Chat com Pedro e Lionel. Uma auditoria autenticada posterior identificou rotas com alteração ainda superficial; Kanban, Agenda, Campanhas, Equipe, Base, Simulador, Organização, Pedro e WhatsApp foram então reestruturados antes da nova homologação.
+- Leads e Kanban deixam a navegação principal. Leads passa a ser uma visualização dentro de Conversas; o Kanban completo é aberto pelo resumo da Visão geral.
+- Central reúne Pedro, Lionel e eventos operacionais em ordem cronológica, com dez registros por página. Auditoria mostra trinta registros por página.
+- Campanhas não ganhou edição de personalidade do Pedro. Paleta, favicon e título da aba continuam iguais aos de produção.
+- Após a auditoria autenticada, Campanhas foi reorganizada como uma lista operacional de uma coluna, com uma próxima ação por registro e criação progressiva em quatro etapas. A Central agora abre em `Precisa agir`, mantém o registro cronológico em `Histórico`, traduz estados técnicos e consolida ocorrências repetidas do mesmo evento.
+- Lint, 110 testes, build Webpack das 46 rotas, CI e deploy de preview passaram após a correção estrutural. A preview protegida `https://gril-git-agent-workspace-redesign-real-brio5.vercel.app` foi inspecionada com dono, dados reais, desktop e viewport móvel; nenhuma ação de escrita foi executada. Produção e Supabase não foram alterados.
+- A preview mostra os callbacks do WhatsApp com base `http://localhost:3000`; revisar `NEXT_PUBLIC_APP_URL` em uma tarefa separada antes da homologação de webhook pela URL exibida.
+- Detalhes: `docs/agent/changes/2026-08-14-workspace-operacional-unificado.md` e `docs/decisions/2026-08-14-workspace-operacional-unificado.md`.
+
 ## Atualizacao de 07/08/2026 - producao automatica exclusiva para reativacao
 
 - A migration `20260807180741_reactivation_production_only.sql` foi aplicada no Supabase remoto e registrada como aplicada na history.
@@ -257,3 +300,19 @@ Este documento não substitui:
 - A homologação visual e operacional autenticada continua pendente. O build
   local pré-empacotado encontrou uma limitação de symlink do Windows depois de
   compilar; o build remoto da Vercel foi concluído com 46 rotas.
+
+## Atualização de 14/08/2026 — Visão geral com métricas e Kanban
+
+- A branch `agent/dashboard-redesign-real`, publicada no PR rascunho #46,
+  substitui a composição técnica do Dashboard por quatro métricas comerciais,
+  seletor de período e um snapshot somente leitura do Kanban real. A preview é
+  `https://gril-git-agent-dashboard-redesign-real-brio5.vercel.app`.
+- A decisão aprovada remove “Bom dia, Pedro” e “Hoje na operação”, limita
+  atenção e agenda a três itens e recolhe a limpeza HML em “Área
+  administrativa”.
+- Paleta, favicon, título do navegador, rotas, permissões, RLS e contratos de
+  banco permanecem iguais à produção. Nenhuma migration, alteração de dados ou
+  deploy de produção foi executado; a preview automática ficou `Ready`.
+- A validação automatizada desta branch está registrada em
+  `docs/agent/changes/2026-08-14-dashboard-metricas-kanban.md`; a homologação
+  autenticada em desktop e mobile com dados reais permanece pendente.

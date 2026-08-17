@@ -1,5 +1,5 @@
 import { Funnel } from "lucide-react";
-import Link from "next/link";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
@@ -12,6 +12,6 @@ export default async function MyPipelinePage() {
   const stages = new Map<string, typeof opportunities>();
   for (const item of opportunities ?? []) { const stage=(item.pipeline_stages as {name:string}|null)?.name ?? 'Sem etapa';stages.set(stage,[...(stages.get(stage)??[]),item]); }
   return <div className={styles.page}><header className={styles.header}><div><p className={styles.eyebrow}>Corretor</p><h1>Meu pipeline</h1><p>Somente as oportunidades atribuídas a você.</p></div><Funnel/></header>
-    <section className={styles.panel}><div className={styles.list}>{Array.from(stages.entries()).map(([stage,items])=><article className={styles.item} key={stage}><span><strong>{stage}</strong><small>{items?.length ?? 0} oportunidades</small></span><div className={styles.actions}>{items?.map((item)=><Link href={`/app/leads/${item.id}`} key={item.id}>{(item.contacts as {name:string}|null)?.name ?? 'Lead'}</Link>)}</div></article>)}{!opportunities?.length?<p className={styles.empty}>Nenhuma oportunidade atribuída.</p>:null}</div></section>
+    <section className={styles.panel}><div className={styles.list}>{Array.from(stages.entries()).map(([stage,items])=><article className={styles.item} key={stage}><span><strong>{stage}</strong><small>{items?.length ?? 0} oportunidades</small></span><div className={styles.actions}>{items?.map((item)=><Link href={`/app/leads/${item.id}`} key={item.id} prefetch={false}>{(item.contacts as {name:string}|null)?.name ?? 'Lead'}</Link>)}</div></article>)}{!opportunities?.length?<p className={styles.empty}>Nenhuma oportunidade atribuída.</p>:null}</div></section>
   </div>;
 }

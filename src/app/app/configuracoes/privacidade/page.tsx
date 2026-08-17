@@ -1,19 +1,31 @@
 import { ShieldCheck } from "lucide-react";
 
 import { requireActiveViewer } from "@/lib/auth/session";
+import type { Database } from "@/lib/database.types";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import { createPrivacyRequestAction, executePrivacyAction, reviewPrivacyRequestAction } from "./actions";
 import styles from "../../operations.module.css";
 
+type PrivacyWorkspacePayload = {
+  authorized: boolean;
+  requests: Array<Database["public"]["Tables"]["privacy_requests"]["Row"] & {
+    contacts: { name: string };
+  }>;
+  policies: Database["public"]["Tables"]["retention_policies"]["Row"][];
+  contacts: Array<Pick<Database["public"]["Tables"]["contacts"]["Row"], "id" | "name">>;
+};
+
 export default async function PrivacyPage({ searchParams }: { searchParams: Promise<{ erro?: string; sucesso?: string }> }) {
-  const viewer = await requireActiveViewer();
-  const feedback = await searchParams;
   const supabase = await createClient();
-  const [{ data: requests }, { data: policies }, { data: contacts }] = await Promise.all([
-    supabase.from("privacy_requests").select("*,contacts(name)").eq("org_id", viewer.organization!.id).order("created_at", { ascending: false }),
-    supabase.from("retention_policies").select("*").eq("org_id", viewer.organization!.id),
-    supabase.from("contacts").select("id,name").eq("org_id", viewer.organization!.id).eq("status", "active").order("name").limit(500),
+  const [, feedback, { data, error }] = await Promise.all([
+    requireActiveViewer(),
+    searchParams,
+    measureServerTask("privacy.bootstrap", () => supabase.rpc("privacy_workspace_bootstrap")),
   ]);
+  if (error) throw new Error("Não foi possível carregar os dados de privacidade.");
+  const payload = (data ?? {}) as unknown as PrivacyWorkspacePayload;
+  const { requests = [], policies = [], contacts = [] } = payload;
 
   return <div className={styles.page}>
     <header className={styles.header}><div><p className={styles.eyebrow}>Privacidade e retenção</p><h1>Solicitações de titular</h1><p>Decisões são auditadas; exclusão ou anonimização só pode ser concluída com evidência e sem bloqueio legal.</p></div><ShieldCheck /></header>

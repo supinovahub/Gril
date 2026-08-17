@@ -1,5 +1,5 @@
-import { Archive, ArchiveRestore, LockKeyhole, MessageSquarePlus } from "lucide-react";
-import Link from "next/link";
+import { Archive, ArchiveRestore, FlaskConical, LockKeyhole, MessageSquarePlus, MessagesSquare, ShieldCheck } from "lucide-react";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 
 import { requireActiveViewer } from "@/lib/auth/session";
 import type { Json } from "@/lib/database.types";
@@ -147,6 +147,11 @@ export default async function SimulatorPage({
     return !terminalStatuses.has(execution?.status ?? run.status);
   });
   const regressionPending = (regressions ?? []).some((run) => ["queued", "running"].includes(run.status));
+  const totalTurns = (sessions ?? []).reduce((total, session) => total + session.turn_count, 0);
+  const latestRegression = regressions?.[0];
+  const latestPassRate = latestRegression?.total_cases
+    ? Math.round((latestRegression.passed_cases / latestRegression.total_cases) * 100)
+    : null;
   const errorMessage = feedback.erro ? errorMessages[feedback.erro] ?? errorMessages["nao-foi-possivel-executar"] : null;
   const successMessage = feedback.sucesso ? successMessages[feedback.sucesso] : null;
 
@@ -154,15 +159,21 @@ export default async function SimulatorPage({
     <SimulationAutoRefresh active={hasPending || regressionPending} />
     <header className={styles.header}>
       <div>
-        <p className={styles.eyebrow}>Ambiente isolado</p>
+        <p className={styles.eyebrow}>Bancada de teste</p>
         <h1>Simulador</h1>
         <p>Converse continuamente com o Pedro sem criar lead, enviar WhatsApp, agendar ou alterar o pipeline.</p>
       </div>
-      <span className={styles.badge}><LockKeyhole size={13} /> sem efeitos externos</span>
+      <span className={styles.badge}><LockKeyhole size={13} /> simulação sem envio ao lead</span>
     </header>
 
     {errorMessage ? <p className={styles.notice}>{errorMessage}</p> : null}
     {successMessage ? <p className={styles.success}>{successMessage}</p> : null}
+
+    <section className={simulatorStyles.simulatorSummary} aria-label="Resumo do laboratório">
+      <span><MessagesSquare aria-hidden="true" size={17}/><small>{archivedView ? "Arquivadas" : "Conversas ativas"}</small><strong>{sessions?.length ?? 0}</strong></span>
+      <span><FlaskConical aria-hidden="true" size={17}/><small>Turnos registrados</small><strong>{totalTurns}</strong></span>
+      <span><ShieldCheck aria-hidden="true" size={17}/><small>Última regressão</small><strong>{latestPassRate === null ? "Não executada" : `${latestPassRate}%`}</strong></span>
+    </section>
 
     <section className={simulatorStyles.workspace}>
       <aside className={simulatorStyles.sessionsPanel}>
@@ -173,8 +184,8 @@ export default async function SimulatorPage({
           </Link>
         </div>
         <nav className={simulatorStyles.sessionFilters} aria-label="Filtrar conversas simuladas">
-          <Link className={!archivedView ? simulatorStyles.activeFilter : undefined} href="/app/simulador">Ativas</Link>
-          <Link className={archivedView ? simulatorStyles.activeFilter : undefined} href="/app/simulador?arquivadas=1">Arquivadas</Link>
+          <Link className={!archivedView ? simulatorStyles.activeFilter : undefined} href="/app/simulador" prefetch={false}>Ativas</Link>
+          <Link className={archivedView ? simulatorStyles.activeFilter : undefined} href="/app/simulador?arquivadas=1" prefetch={false}>Arquivadas</Link>
         </nav>
         <div className={simulatorStyles.sessionList}>
           {(sessions ?? []).map((session) => {
@@ -184,6 +195,7 @@ export default async function SimulatorPage({
               className={`${simulatorStyles.sessionItem} ${selectedSession?.id === session.id ? simulatorStyles.selectedSession : ""}`}
               href={href}
               key={session.id}
+              prefetch={false}
             >
               <strong>{session.title}</strong>
               <span>{session.turn_count} {session.turn_count === 1 ? "turno" : "turnos"}</span>
@@ -249,8 +261,8 @@ export default async function SimulatorPage({
                   <div className={simulatorStyles.traceGrid}>
                     <span><small>Próxima ação</small><strong>{trace.action ?? "responder"}</strong></span>
                     <span><small>Follow-up</small><strong>{trace.followup_strategy ?? "nenhum"}</strong></span>
-                    <span><small>Latência</small><strong>{execution?.latency_ms == null ? "—" : `${execution.latency_ms} ms`}</strong></span>
-                    <span><small>Custo estimado</small><strong>{execution?.estimated_cost == null ? "—" : Number(execution.estimated_cost).toFixed(6)}</strong></span>
+                    <span><small>Latência</small><strong>{execution?.latency_ms == null ? "Não disponível" : `${execution.latency_ms} ms`}</strong></span>
+                    <span><small>Custo estimado</small><strong>{execution?.estimated_cost == null ? "Não disponível" : Number(execution.estimated_cost).toFixed(6)}</strong></span>
                   </div>
                   {trace.conversation_summary?.summary ? <p><strong>Resumo acumulado:</strong> {trace.conversation_summary.summary}</p> : null}
                   {updates.length ? <div><strong>Qualificação extraída</strong><ul>{updates.map((update) => <li key={update.code}>{update.code}: {valueFromUpdate(update)} ({Math.round(update.confidence * 100)}%)</li>)}</ul></div> : <p>Nenhuma qualificação nova foi extraída neste turno.</p>}
