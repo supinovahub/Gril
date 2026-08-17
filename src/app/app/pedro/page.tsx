@@ -1,4 +1,5 @@
 import { Bot, BrainCircuit, CheckCircle2, CircleDashed, KeyRound, RefreshCw, ShieldCheck, Sparkles, Trash2 } from "lucide-react";
+import Link from "next/link";
 
 import { retestIntegrationAction, revokeIntegrationAction } from "@/app/app/integration-actions";
 import { requireActiveViewer } from "@/lib/auth/session";
@@ -49,7 +50,7 @@ export default async function PedroPage({
 
   return (
     <div className={styles.page}>
-      <header className={styles.pageHeader}><div><p className={styles.eyebrow}>Configuração de atendimento</p><h1>Pedro</h1><p>Defina como Pedro participa das conversas e revise o que pode ser enviado automaticamente.</p></div><span className={styles.modeBadge}><Bot size={15} /> Pedro: {modeLabels[inboundMode] ?? inboundMode}</span></header>
+      <header className={styles.pageHeader}><div><p className={styles.eyebrow}>Configuração de atendimento</p><h1>Pedro</h1><p>Defina como Pedro participa das conversas e revise o que pode ser enviado automaticamente.</p></div><div className={styles.headerActions}><Link className={styles.learningLink} href="/app/aprendizados"><BrainCircuit size={14} /> Melhoria contínua</Link><span className={styles.modeBadge}><Bot size={15} /> Pedro: {modeLabels[inboundMode] ?? inboundMode}</span></div></header>
       {feedback.erro ? <p className={styles.errorBanner}>{feedback.erro}</p> : null}
       {feedback.sucesso ? <p className={styles.successBanner}>{feedback.sucesso}</p> : null}
 

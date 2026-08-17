@@ -212,6 +212,14 @@ No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confir
 14. gere duas sugestões para a mesma conversa: elas devem permanecer no mesmo tópico do lead, sem duplicar tópicos, e a fila só pode ser resolvida depois da última pendência.
 15. na fila do Chat com Pedro, use busca, status, prioridade e **Só pendências**; confirme que os filtros alteram a lista sem expor tópicos de outra operação.
 16. abra um tópico com pendência e confirme que o painel **Próximo passo** explica que a aprovação é humana e que o lead só é afetado depois da ação explícita.
+17. em `Pedro`, abra **Melhoria contínua** e confirme que `/app/aprendizados` mostra casos novos, padrões, decisões pendentes, skills, regressões e histórico do revisor sem recolocar a rota no menu principal;
+18. registre um caso manual e confirme que ele entra na fila humana e cria um sinal na mesma organização, sem mudar a versão publicada do Pedro;
+19. solicite **Analisar novos casos** e execute o worker; confirme que o meta-revisor agrupa somente os sinais selecionados, cria um padrão, uma proposta de aprendizado e um tópico do Lionel, sem publicar regra;
+20. para um achado classificado como técnico, dados, conhecimento, prompt central ou `case_only`, confirme que a interface não oferece criação de skill; use **Adicionar só como teste** e valide que o cenário entra na regressão da versão publicada;
+21. para um candidato de `skill`, revise gatilho e instrução e use **Aprovar skill para testes**; confirme a criação de módulo/versão `draft`, novo pacote de regras `draft`, um resultado por caso ativo e jobs `regression.case.execute` na fila;
+22. force uma falha de regressão e confirme que nem gestor nem dono conseguem publicar; depois faça todos os casos passarem sem falha crítica e confirme que somente o dono vê e conclui **Publicar skills**;
+23. após publicar, gere novos sinais do mesmo padrão e confirme que ele reabre uma nova decisão humana, sem editar a versão anterior;
+24. confirme com corretor e outra organização que sinais, clusters, skills, propostas, regressões e controles de publicação não atravessam tenant nem permissão.
 
 ### 6.2 Chat geral, intervenção humana e corretor
 

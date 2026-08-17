@@ -4,6 +4,8 @@
 .pageHeader > div > p:last-child { margin: 8px 0 0; color: var(--ink-muted); font-size: 13px; }
 .eyebrow { margin: 0 0 7px; color: var(--accent-dark); font-size: 9px; font-weight: 780; letter-spacing: .12em; text-transform: uppercase; }
 .modeBadge,.versionChip { display: inline-flex; align-items: center; gap: 6px; padding: 7px 9px; border: 1px solid #cfbfaf; border-radius: 999px; background: #f3ebe2; color: #71452b; font-size: 9px; font-weight: 720; }
+.headerActions { display:flex; align-items:center; gap:8px; }
+.learningLink { display:inline-flex; min-height:32px; align-items:center; gap:6px; padding:0 10px; border:1px solid var(--border); border-radius:8px; background:var(--surface); color:var(--ink-secondary); font-size:9px; font-weight:720; text-decoration:none; }
 .errorBanner,.successBanner { padding: 11px 14px; margin: -6px 0 18px; border-radius: 10px; font-size: 11px; }
 .errorBanner { border: 1px solid #e2bab4; background: #fff1ef; color: var(--danger); }
 .successBanner { border: 1px solid #b8d7c7; background: #eff8f3; color: var(--positive); }
@@ -78,7 +80,7 @@
 .executionList strong { font-size: 9px; }
 .executionList small { color: var(--ink-muted); font-size: 8px; }
 @media (max-width: 1050px) { .grid { grid-template-columns: 1fr; } .modelRow { grid-template-columns: auto 1fr; } .modelRow > :not(.modelState):not(.modelCopy) { grid-column: 2; } }
-@media (max-width: 650px) { .pageHeader { align-items: flex-start; flex-direction: column; } .statusStrip { grid-template-columns: 1fr; } .credentialSummary { grid-template-columns: auto 1fr; } .credentialActions { grid-column: 2; flex-wrap: wrap; } .keyForm { align-items: stretch; flex-direction: column; } }
+@media (max-width: 650px) { .pageHeader { align-items: flex-start; flex-direction: column; } .headerActions { width:100%; flex-wrap:wrap; } .statusStrip { grid-template-columns: 1fr; } .credentialSummary { grid-template-columns: auto 1fr; } .credentialActions { grid-column: 2; flex-wrap: wrap; } .keyForm { align-items: stretch; flex-direction: column; } }
 
 /* Console do Pedro */
 .page { width:min(100%,1380px); max-width:none; }

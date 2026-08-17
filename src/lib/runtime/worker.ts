@@ -15,6 +15,7 @@ import {
   type QualificationValue,
 } from "@/lib/ai/pedro-turn";
 import { compilePedroInstructions } from "@/lib/ai/pedro-instructions";
+import { createMetaReview } from "@/lib/ai/meta-review";
 import { PEDRO_CALL_LEAD_TIME_MINUTES } from "@/lib/calls/lead-time";
 import { evaluateRegressionCase } from "@/lib/ai/regression";
 import {
@@ -67,6 +68,7 @@ const jobResultSchema = z.object({
   reason: z.string().optional(),
   run_id: z.string().uuid().optional(),
   case_id: z.string().uuid().optional(),
+  review_run_id: z.string().uuid().optional(),
 });
 
 const outboundTemplateSchema = z.object({
@@ -88,6 +90,16 @@ const regressionClaimSchema = z.object({
   input: z.string().optional(), initial_state: z.unknown().optional(), expected_response: z.string().nullable().optional(),
   rubric: z.unknown().optional(), allowed_actions: z.array(z.string()).optional(), prohibited_actions: z.array(z.string()).optional(),
   rules: z.unknown().optional(), model: z.string().optional(),
+});
+
+const metaReviewClaimSchema = z.object({
+  status: z.string(),
+  org_id: z.string().uuid().optional(),
+  integration_account_id: z.string().uuid().optional(),
+  model: z.string().optional(),
+  reasoning_effort: z.string().nullable().optional(),
+  text_verbosity: z.string().nullable().optional(),
+  signals: z.unknown().optional(),
 });
 
 const platformPushClaimSchema = z.array(z.object({
@@ -481,6 +493,15 @@ async function runAiExecution(executionId: string) {
       p_response_id: response.responseId,
     });
     if (completeError) throw completeError;
+    const qualificationConfidences = responseStructured.qualification_updates.map((item) => item.confidence);
+    const minimumConfidence = qualificationConfidences.length > 0 ? Math.min(...qualificationConfidences) : 1;
+    if (minimumConfidence < 0.65) {
+      const { error: confidenceSignalError } = await admin.rpc("record_ai_low_confidence_signal", {
+        p_confidence: minimumConfidence,
+        p_execution_id: executionId,
+      });
+      if (confidenceSignalError) console.warn("continuous_improvement_signal_failed");
+    }
     if (activeGuidance) {
       await admin.from("conversation_ai_guidance").update({
         status: "consumed",
@@ -672,6 +693,53 @@ async function processRegressionCase(runId: string, caseId: string) {
   }
 }
 
+async function processMetaReview(reviewRunId: string) {
+  const admin = createAdminClient();
+  const { data, error } = await admin.rpc("claim_ai_review_run", { p_run_id: reviewRunId });
+  if (error) throw error;
+  const claim = metaReviewClaimSchema.parse(data);
+  if (claim.status !== "claimed") return claim.status;
+  if (!claim.integration_account_id || !claim.model) {
+    await admin.rpc("fail_ai_review_run", {
+      p_error_redacted: "A revisão não recebeu um modelo ativo.",
+      p_run_id: reviewRunId,
+    });
+    return "blocked";
+  }
+  try {
+    const { data: apiKey, error: secretError } = await admin.rpc("get_integration_secret", {
+      p_integration_account_id: claim.integration_account_id,
+    });
+    if (secretError || !apiKey) throw secretError ?? new Error("meta_review_secret_missing");
+    const review = await createMetaReview({
+      apiKey,
+      model: claim.model,
+      reasoningEffort: claim.reasoning_effort,
+      textVerbosity: claim.text_verbosity,
+      signals: claim.signals ?? [],
+    });
+    const { error: completeError } = await admin.rpc("complete_ai_review_run", {
+      p_findings: review.findings as unknown as Json,
+      p_input_tokens: review.inputTokens,
+      p_model_returned: review.model,
+      p_output_tokens: review.outputTokens,
+      p_run_id: reviewRunId,
+    });
+    if (completeError) throw completeError;
+    return "completed";
+  } catch (reviewError) {
+    const message = reviewError instanceof OpenAiRuntimeError
+      ? reviewError.redactedMessage
+      : "A revisão automática falhou antes de registrar os achados.";
+    if (reviewError instanceof OpenAiRuntimeError && reviewError.retryable) {
+      await admin.rpc("retry_ai_review_run", { p_error_redacted: message, p_run_id: reviewRunId });
+      return "retry";
+    }
+    await admin.rpc("fail_ai_review_run", { p_error_redacted: message, p_run_id: reviewRunId });
+    return "failed";
+  }
+}
+
 async function processOutboundMessage(messageId: string) {
   const admin = createAdminClient();
   const { data, error } = await admin.rpc("claim_outbound_message", { p_message_id: messageId });
@@ -836,6 +904,16 @@ async function processRuntimeJob(message: Record<string, unknown>) {
   if (result.status === "run_regression" && result.run_id && result.case_id) {
     await processRegressionCase(result.run_id, result.case_id);
     await admin.rpc("finish_runtime_job", { p_error_redacted: undefined, p_job_id: jobId, p_retry_seconds: 60, p_success: true });
+    return;
+  }
+  if (result.status === "run_meta_review" && result.review_run_id) {
+    const metaReviewStatus = await processMetaReview(result.review_run_id);
+    await admin.rpc("finish_runtime_job", {
+      p_error_redacted: metaReviewStatus === "retry" ? "A revisão será tentada novamente." : undefined,
+      p_job_id: jobId,
+      p_retry_seconds: 60,
+      p_success: metaReviewStatus !== "retry",
+    });
     return;
   }
   if (result.status === "send" && result.message_id) {
@@ -1015,6 +1093,8 @@ async function drainRetention() {
 export async function drainRuntimeWorker() {
   const admin = createAdminClient();
   const summary: Record<string, { completed: number; retried: number }> = {};
+  const { data: metaReviewsQueued, error: metaReviewQueueError } = await admin.rpc("enqueue_due_ai_meta_reviews");
+  if (metaReviewQueueError) throw metaReviewQueueError;
   const { data: recovery, error: recoveryError } = await admin.rpc("recover_stalled_inbound_ai", { p_limit: 10 });
   if (recoveryError) throw recoveryError;
   for (let pass = 0; pass < 2; pass += 1) {
@@ -1051,6 +1131,7 @@ export async function drainRuntimeWorker() {
       summary,
       purged,
       platformPushDelivered,
+      metaReviewsQueued,
       stalledInboundRecovery: recovery,
       recentDeadInboundJobs: recentDeadInboundJobs ?? 0,
     },
@@ -1062,6 +1143,7 @@ export async function drainRuntimeWorker() {
     summary,
     purged,
     platformPushDelivered,
+    metaReviewsQueued,
     recovery,
     recentDeadInboundJobs: recentDeadInboundJobs ?? 0,
   };
