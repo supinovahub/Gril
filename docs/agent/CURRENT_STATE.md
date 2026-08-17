@@ -4,9 +4,9 @@
 
 - A branch `agent/continuous-improvement-loop`, publicada no PR draft #49 a partir de worktree isolada, preserva `agent/workspace-redesign-real` e os contratos posteriores de desempenho de `fix/workspace-loading-bottlenecks`.
 - O código implementa sinais estruturados, agrupamento por meta-revisor, propostas do Lionel, skills versionadas, regressão materializada em jobs e publicação exclusiva pelo dono após 100% dos casos e zero falha crítica. O revisor nunca publica nem altera o prompt central.
-- A migration local é `20260817200000_continuous_improvement_loop.sql`. O dry-run está alinhado com o remoto e lista somente essa migration, mas ela não foi aplicada; produção e Vercel não foram alterados.
+- A migration local é `20260817200000_continuous_improvement_loop.sql`. O dry-run está alinhado com o remoto e lista somente essa migration, mas ela não foi aplicada. O PR criou preview automática protegida da Vercel; produção não foi alterada.
 - `npm run lint`, os 112 testes, o build Webpack das 46 rotas e a análise sintática SQL/PLpgSQL passaram. O db lint remoto ficou sem erros e manteve apenas avisos preexistentes. A execução local da migration/pgTAP exige Docker ou Podman, ausentes neste host; a visualização autenticada da nova página permanece pendente. Permanecem somente os três erros `tsc` preexistentes já registrados.
-- Decisão e detalhes: `docs/decisions/2026-08-17-melhoria-continua-governada.md` e `docs/agent/changes/2026-08-17-melhoria-continua-governada.md`.
+- CI e preview automática do PR passaram; a preview exige SSO. Decisão e detalhes: `docs/decisions/2026-08-17-melhoria-continua-governada.md` e `docs/agent/changes/2026-08-17-melhoria-continua-governada.md`.
 
 ## Atualização de 17/08/2026 — correção dos gargalos do workspace
 
