@@ -2,43 +2,47 @@
 
 - Data: 2026-08-17
 - Responsável: Codex
-- Branch/PR: `perf/all-workspace-routes-under-one-second` / PR draft a criar
+- Branch/PR: `perf/all-workspace-routes-under-one-second` / PR draft #50
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
 
-Estender para todas as telas autenticadas do workspace a meta de carregamento de até um segundo que já havia sido comprovada na troca entre Visão geral e Inbox.
+Estender a todas as telas autenticadas do workspace a meta de carregamento de até um segundo já comprovada na troca entre Visão geral e Inbox, integrando ao mesmo tempo a branch `agent/continuous-improvement-loop` sem reintroduzir cascatas.
 
 ## Antes e depois
 
-- Antes: em organização populada, documentos autenticados completos levavam de aproximadamente 1,9 s a 4,3 s, com os maiores gargalos em Busca, Kanban, Central, Agenda, Chat Pedro, Leads e detalhes de lead.
-- Depois: navegação global consulta contadores em um único bootstrap autorizado apó a montagem do shell e os mantém atualizados sem bloquear as trocas de tela; Agenda, Kanban e Leads carregam seus conjuntos de dados por RPCs dedicadas; detalhes de lead deixam de varrer contatos via RLS; links fazem prefetch completo apenas quando há intenção do usuário. A matriz final por rota será registrada apó o preview combinado.
+- Antes: em uma organização populada, os documentos autenticados completos levavam aproximadamente 1,9–4,3 s; Busca, Kanban, Central, Agenda, Chat Pedro, Leads e detalhes de lead eram os piores casos.
+- Depois: o shell não aguarda badges; Agenda, Kanban, Leads, Campanhas, Auditoria, Privacidade, Relatórios e Aprendizados usam bootstraps compactos; o Chat interno reúne criação/leitura de tópico, mensagens e marcador de leitura em uma única chamada; links fazem prefetch completo quando o usuário demonstra intenção.
+- Resultado: depois do primeiro aquecimento, todas as 29 telas autenticadas concluíram a resposta em até 0,913 s. As dez rotas inicialmente afetadas por cold start foram repetidas cinco vezes por rota e ficaram entre 0,272 s e 0,867 s no preview final.
 
 ## Escopo executado
 
-- Arquivos: shell do workspace, links de navegação, páginas de Agenda/Kanban/Leads, tipos gerados e utilitários de contagem/prefetch.
-- Migrations: `supabase/migrations/20260817195000_optimize_all_workspace_routes.sql`, `supabase/migrations/20260817195100_repair_workspace_feed_utf8.sql`, `supabase/migrations/20260817195200_optimize_remaining_workspace_routes.sql` e `supabase/migrations/20260817195300_minimize_workspace_route_payloads.sql`.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: migration de performance aplicada ao projeto Supabase canônico; dois deployments manuais de preview foram bloqueados antes do build e não alteraram produção; branch/PR e preview Git serão registrados na conclusão.
+- Arquivos: shell e badges do workspace, links de navegação, páginas e loaders das rotas medidas, tipos do banco, observabilidade e testes de contrato.
+- Migrations de desempenho: `20260817195000_optimize_all_workspace_routes.sql`, `20260817195100_repair_workspace_feed_utf8.sql`, `20260817195200_optimize_remaining_workspace_routes.sql`, `20260817195300_minimize_workspace_route_payloads.sql`, `20260817201000_optimize_continuous_improvement_routes.sql` e `20260817202000_optimize_internal_chat_workspace.sql`.
+- Integração solicitada: merge explícito de `origin/agent/continuous-improvement-loop` no commit de merge `7af28d0`; a migration `20260817200000_continuous_improvement_loop.sql` foi corrigida para preservar o valor canônico `assisted_suggestion` já existente e aplicada antes dos bootstraps dependentes.
+- Mudanças externas: migrations aplicadas ao Supabase canônico `frslhzwhaooqtivkzdez`; PR draft #50 e previews protegidas criados pela integração Git/Vercel. Produção não recebeu deploy.
 
 ## Validação
 
-- Comandos/testes executados: `npm run lint`; `npm test`; `npm run build` com variáveis locais carregadas apenas no processo; medições HTTP autenticadas e medições diretas das RPCs com uma organização populada; `supabase migration list --linked`; `supabase db push --linked --dry-run`.
-- Evidência observada: 22 arquivos e 110 testes passaram; build Next.js 16.2.12 concluído; as consultas antigas mais lentas (2,1–4,1 s) caíram para 0,126–0,821 s nas novas RPCs. No primeiro preview desta branch, 25 de 29 rotas ficaram abaixo de 1 s; Campanhas (1,170 s), Auditoria (1,097 s), Privacidade (1,604 s) e Relatórios (1,375 s) foram consolidados. A etapa seguinte reduziu os payloads de Campanhas de 42 KB para 23 KB, Auditoria de 116 KB para 14 KB e Relatórios de 27 KB para 559 bytes; as três RPCs responderam em 0,15–0,39 s aquecidas e no máximo 0,80 s no primeiro ciclo direto. A matriz HTTP final ainda será repetida no preview combinado.
-- Validações não executadas e motivo: lint do banco, advisors, cinco ciclos por rota e homologação humana permanecem pendentes até a integração da branch `agent/continuous-improvement-loop`.
+- Aplicação: `npm run lint`, 23 arquivos/112 testes em `npm test` e `npm run build` do Next.js 16.2.12 com 46 rotas passaram após o merge e após a consolidação do Chat.
+- Banco: `supabase migration list --linked` alinhado até `20260817202000`; `supabase db push --linked --dry-run` executado antes de cada aplicação; `supabase db lint --linked --level warning` sem erro, mantendo avisos históricos. Consultas remotas confirmaram RLS nas tabelas contínuas, `search_path`/JIT fixos, autorização `ai.manage` no bootstrap de Aprendizados e o bootstrap de Chat como `SECURITY INVOKER`, sem execução por `anon`.
+- Advisor: os avisos de segurança dos RPCs `SECURITY DEFINER` são intencionais e cada função faz autorização explícita antes de ler dados. Os avisos de desempenho restantes são informativos e predominantemente históricos/índices ainda sem uso.
+- Preview final: `dpl_EcpVXDE6YrrES2ZNVjsesb1bbaq8`, `Ready`, região `gru1`, URL `https://gril-6w4x08b7u-brio5.vercel.app`.
+- Matriz completa: na passagem sequencial fria, 20 de 29 telas já ficaram abaixo de 1 s; as nove acima do teto e o endpoint de badges foram repetidos em blocos de cinco. Máximos: badges 0,684 s; Agenda 0,431 s; Aprendizados 0,539 s; Busca 0,486 s; Campanhas 0,747 s; Central 0,695 s; Auditoria 0,368 s; Checklists 0,375 s. Após remover a cascata do Chat, Assistente ficou em 0,372–0,512 s, Chat Pedro em 0,503–0,867 s e Lionel em 0,347–0,430 s.
+- Limitações: o runner pgTAP `supabase test db --linked` tentou iniciar Docker, ausente neste host; os mesmos contratos foram confirmados diretamente no banco remoto. A homologação visual/funcional autenticada permanece humana pelo protocolo do projeto.
 
 ## Impacto operacional
 
-- Deploy necessário: preview para validação; produção não alterada.
-- Migração aplicada: sim, as quatro migrations acima estão aplicadas no projeto `frslhzwhaooqtivkzdez`; a segunda repara rótulos UTF-8 da função Central sem mudar sua assinatura.
-- Compatibilidade/rollback: as RPCs são aditivas, exceto pela substituição compatível da função `central_feed_page`; rollback de código exige manter as RPCs enquanto houver clientes novos em uso.
+- Deploy necessário: apenas preview nesta etapa; produção continua em `https://gril-lac.vercel.app` sem esta branch.
+- Migration aplicada: sim, versões `20260817195000` a `20260817202000` listadas acima estão alinhadas no remoto.
+- Compatibilidade/rollback: os contratos novos são aditivos, exceto substituições compatíveis já documentadas. Um rollback de código deve manter as RPCs enquanto houver bundle novo em uso; evidências, auditoria e dados da melhoria contínua não devem ser apagados.
 
 ## Pendências e riscos
 
-- Integrar e revisar a branch `agent/continuous-improvement-loop`.
-- Repetir lint, testes, build, advisors e medições no artefato combinado.
-- Homologação visual e funcional autenticada continua humana, conforme o protocolo do projeto.
+- Homologar visualmente as 29 telas e os fluxos de escrita da melhoria contínua com dono/gestor, sem publicar em produção antes dessa aprovação.
+- Cold start após longo período ocioso ainda pode superar um segundo; a meta comprovada é a troca de telas em sessão autenticada após o primeiro aquecimento, conforme o guia canônico.
 
 ## Documentos relacionados
 
-- Decisões atualizadas: nenhuma; não houve nova regra de produto.
-- Guia de homologação atualizado: será atualizado com a matriz final e o roteiro de desempenho.
+- Decisões atualizadas: nenhuma decisão nova de desempenho; a integração preserva `docs/decisions/2026-08-17-melhoria-continua-governada.md`.
+- Guia de homologação atualizado: `docs/operations/GUIA_COMPLETO_DE_HOMOLOGACAO.md`.

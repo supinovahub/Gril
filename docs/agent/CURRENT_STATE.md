@@ -1,11 +1,21 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 17/08/2026 — todas as telas do workspace abaixo de um segundo
+
+- A branch `perf/all-workspace-routes-under-one-second`, publicada no PR draft #50 contra `fix/workspace-loading-bottlenecks`, integra explicitamente `agent/continuous-improvement-loop` e preserva os dois históricos. O merge solicitado está no commit `7af28d0`.
+- O shell não bloqueia mais em contadores; badges carregam por uma API assíncrona. Agenda, Kanban, Leads, Campanhas, Auditoria, Privacidade, Relatórios e Aprendizados usam contratos compactos, e o Chat interno substitui quatro viagens sequenciais por um único RPC `SECURITY INVOKER` submetido às RLS existentes.
+- Em sessão autenticada com organização populada, todas as 29 telas concluíram o carregamento em até 0,913 s depois do primeiro aquecimento. As rotas afetadas pela passagem fria foram repetidas cinco vezes por rota: os máximos ficaram em 0,867 s no Chat Pedro, 0,747 s em Campanhas, 0,695 s na Central e 0,684 s nos badges.
+- As migrations `20260817195000` a `20260817202000` desta entrega estão aplicadas e alinhadas no Supabase `frslhzwhaooqtivkzdez`. A migration de melhoria contínua foi corrigida antes da aplicação para manter o valor canônico `assisted_suggestion`; nenhuma linha foi removida ou normalizada à força.
+- `npm run lint`, 23 arquivos/112 testes e o build Next.js 16.2.12 das 46 rotas passaram. O db lint não retornou erros; contratos de RLS, grants, autorização, `search_path` e JIT foram confirmados diretamente no remoto. O pgTAP via CLI não rodou porque o host não possui Docker, limitação registrada no documento da mudança.
+- O preview final `https://gril-6w4x08b7u-brio5.vercel.app` (`dpl_EcpVXDE6YrrES2ZNVjsesb1bbaq8`) está `Ready` em `gru1`. Produção permanece inalterada; homologação visual e funcional humana ainda é obrigatória.
+- Evidência detalhada: `docs/agent/changes/2026-08-17-all-workspace-routes-under-one-second.md`.
+
 ## Atualização de 17/08/2026 — melhoria contínua governada em branch
 
-- A branch `agent/continuous-improvement-loop`, publicada no PR draft #49 a partir de worktree isolada, preserva `agent/workspace-redesign-real` e os contratos posteriores de desempenho de `fix/workspace-loading-bottlenecks`.
+- A branch `agent/continuous-improvement-loop`, publicada no PR draft #49 a partir de worktree isolada, foi integrada ao PR draft #50 e preserva `agent/workspace-redesign-real` e os contratos posteriores de desempenho de `fix/workspace-loading-bottlenecks`.
 - O código implementa sinais estruturados, agrupamento por meta-revisor, propostas do Lionel, skills versionadas, regressão materializada em jobs e publicação exclusiva pelo dono após 100% dos casos e zero falha crítica. O revisor nunca publica nem altera o prompt central.
-- A migration local é `20260817200000_continuous_improvement_loop.sql`. O dry-run está alinhado com o remoto e lista somente essa migration, mas ela não foi aplicada. O PR criou preview automática protegida da Vercel; produção não foi alterada.
-- `npm run lint`, os 112 testes, o build Webpack das 46 rotas e a análise sintática SQL/PLpgSQL passaram. O db lint remoto ficou sem erros e manteve apenas avisos preexistentes. A execução local da migration/pgTAP exige Docker ou Podman, ausentes neste host; a visualização autenticada da nova página permanece pendente. Permanecem somente os três erros `tsc` preexistentes já registrados.
+- A migration `20260817200000_continuous_improvement_loop.sql` está aplicada no remoto, com `assisted_suggestion` preservado no contrato de `internal_threads`; `20260817201000_optimize_continuous_improvement_routes.sql` consolida o carregamento da página sem mudar as regras de aprovação/publicação. Produção não foi alterada.
+- `npm run lint`, os 112 testes e o build das 46 rotas passaram. O db lint remoto ficou sem erros e manteve avisos históricos; os contratos que dependiam de pgTAP foram confirmados diretamente no remoto porque Docker/Podman não existem neste host. A visualização autenticada e os fluxos de escrita permanecem pendentes de homologação humana.
 - CI e preview automática do PR passaram; a preview exige SSO. Decisão e detalhes: `docs/decisions/2026-08-17-melhoria-continua-governada.md` e `docs/agent/changes/2026-08-17-melhoria-continua-governada.md`.
 
 ## Atualização de 17/08/2026 — correção dos gargalos do workspace
