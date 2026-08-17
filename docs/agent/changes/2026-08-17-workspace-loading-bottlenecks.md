@@ -2,7 +2,7 @@
 
 - Data: 17/08/2026
 - Responsável: Codex
-- Branch/PR: `fix/workspace-loading-bottlenecks`, derivada de `agent/workspace-redesign-real`; PR pendente de publicação
+- Branch/PR: `fix/workspace-loading-bottlenecks`; PR #48 contra `agent/workspace-redesign-real`
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
