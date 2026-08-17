@@ -1,6 +1,14 @@
 import "server-only";
 
+import type { Tables } from "@/lib/database.types";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
+
+type InternalWorkspacePayload = {
+  threads: Tables<"internal_threads">[];
+  activeThread: Tables<"internal_threads"> | null;
+  messages: Tables<"internal_messages">[];
+};
 
 export async function loadInternalWorkspace(input: {
   orgId: string;
@@ -14,37 +22,25 @@ export async function loadInternalWorkspace(input: {
   requiresAction?: boolean;
 }) {
   const supabase = await createClient();
-  if (input.operationId && !input.threadType) {
-    await supabase.rpc("ensure_internal_general_thread", {
+  const { data, error } = await measureServerTask(
+    "internal_chat.workspace",
+    () => supabase.rpc("internal_chat_workspace_bootstrap", {
       p_assistant_role: input.assistantRole,
-      p_operation_id: input.operationId,
-    });
-  }
-  let query = supabase.from("internal_threads")
-    .select("*")
-    .eq("org_id", input.orgId)
-    .eq("assistant_role", input.assistantRole)
-    .neq("status", "archived")
-    .order("requires_action", { ascending: false })
-    .order("updated_at", { ascending: false });
-  if (input.operationId) query = query.eq("operation_id", input.operationId);
-  if (input.threadType) query = query.eq("thread_type", input.threadType);
-  const search = input.search?.trim().slice(0, 80);
-  if (search) query = query.ilike("title", `%${search}%`);
-  if (input.status && ["awaiting_response", "discussing", "awaiting_confirmation", "resolved", "invalidated"].includes(input.status)) {
-    query = query.eq("status", input.status);
-  }
-  if (input.priority && ["low", "normal", "high", "critical"].includes(input.priority)) {
-    query = query.eq("priority", input.priority);
-  }
-  if (input.requiresAction) query = query.eq("requires_action", true);
-  const { data: threads, error } = await query.limit(100);
+      p_operation_id: input.operationId ?? null,
+      p_org_id: input.orgId,
+      p_priority: input.priority ?? null,
+      p_requested_thread_id: input.requestedThreadId ?? null,
+      p_requires_action: input.requiresAction ?? false,
+      p_search: input.search ?? null,
+      p_status: input.status ?? null,
+      p_thread_type: input.threadType ?? null,
+    }),
+  );
   if (error) throw error;
-  const activeThread = threads?.find((thread) => thread.id === input.requestedThreadId) ?? threads?.[0] ?? null;
-  const { data: messages, error: messagesError } = activeThread
-    ? await supabase.from("internal_messages").select("*").eq("thread_id", activeThread.id).order("created_at").limit(300)
-    : { data: [], error: null };
-  if (messagesError) throw messagesError;
-  if (activeThread) await supabase.rpc("mark_internal_thread_read", { p_thread_id: activeThread.id });
-  return { threads: threads ?? [], activeThread, messages: messages ?? [] };
+  const workspace = data as unknown as InternalWorkspacePayload;
+  return {
+    threads: workspace.threads ?? [],
+    activeThread: workspace.activeThread ?? null,
+    messages: workspace.messages ?? [],
+  };
 }

@@ -11686,6 +11686,20 @@ export type Database = {
       }
     }
     Functions: {
+      internal_chat_workspace_bootstrap: {
+        Args: {
+          p_assistant_role: string
+          p_operation_id?: string | null
+          p_org_id: string
+          p_priority?: string | null
+          p_requested_thread_id?: string | null
+          p_requires_action?: boolean
+          p_search?: string | null
+          p_status?: string | null
+          p_thread_type?: string | null
+        }
+        Returns: Json
+      }
       learnings_workspace_bootstrap: {
         Args: { p_org_id?: string | null }
         Returns: Json
