@@ -3,9 +3,9 @@
 ## Atualização de 17/08/2026 — correção dos gargalos do workspace
 
 - A migration `20260817150703_optimize_workspace_loading.sql` foi aplicada no Supabase remoto `frslhzwhaooqtivkzdez`; o histórico local e remoto está alinhado nessa versão. Ela preserva o contrato de notificações do Inbox, adiciona projeções planas e agregações para sessão, Dashboard, Central, Leads e Kanban, além de nove índices direcionados às consultas medidas.
-- A implementação de aplicação está na branch `fix/workspace-loading-bottlenecks`, derivada de `agent/workspace-redesign-real`, e ainda não foi publicada em produção. O código anterior permanece compatível com a migration já aplicada.
+- A implementação de aplicação está na branch `fix/workspace-loading-bottlenecks`, no PR draft #48 contra `agent/workspace-redesign-real`. A preview automática `https://gril-git-fix-workspace-loading-bottlenecks-brio5.vercel.app` está `READY`; produção não foi alterada e o código anterior permanece compatível com a migration já aplicada.
 - O shell deixa de aguardar badges, as rotas críticas passam a exibir fallback de carregamento próprio e o Realtime agrupa rajadas, evita refresh em aba oculta e carrega o cliente somente quando necessário.
-- Smoke remoto retornou as listagens reais de Inbox, Leads e Kanban em 81–93 ms e os novos contratos de Dashboard, Central e badges em 97–242 ms. `npm run lint`, 110 testes e o build Webpack das 46 rotas passaram; permanecem três erros TypeScript preexistentes em dois arquivos de teste, sem impacto no build.
+- Smoke remoto retornou as listagens reais de Inbox, Leads e Kanban em 81–93 ms e os novos contratos de Dashboard, Central e badges em 97–242 ms. `npm run lint`, 110 testes, build Webpack das 46 rotas e CI do PR passaram; a preview não registrou erro nem resposta 500. Permanecem três erros TypeScript preexistentes em dois arquivos de teste, sem impacto no build.
 - Detalhes e pendências de publicação: `docs/agent/changes/2026-08-17-workspace-loading-bottlenecks.md`.
 
 ## Atualização de 14/08/2026 — redesign do workspace em homologação

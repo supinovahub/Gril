@@ -18,13 +18,13 @@ Eliminar os gargalos de carregamento observados no redesign do workspace sem alt
 
 - Arquivos: `src/app/app/{layout,page,inbox,leads,kanban,central}`, `src/components/app-shell`, `src/lib/{auth,inbox,internal-chat,observability,database.types.ts}`, testes e documentação operacional.
 - Migrations: `20260817150703_optimize_workspace_loading.sql`, com cinco views `security_invoker`, quatro funções `security invoker` e nove índices direcionados aos filtros e ordenações medidos.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: a migration foi aplicada no projeto Supabase remoto `frslhzwhaooqtivkzdez`. O registro criado pelo conector como `20260817152309` foi corrigido somente na history para a versão local canônica `20260817150703`; o SQL não foi reaplicado. Nenhum deploy Vercel foi feito até este registro.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: a migration foi aplicada no projeto Supabase remoto `frslhzwhaooqtivkzdez`. O registro criado pelo conector como `20260817152309` foi corrigido somente na history para a versão local canônica `20260817150703`; o SQL não foi reaplicado. A branch foi publicada no PR draft #48 e gerou a preview automática `gril-git-fix-workspace-loading-bottlenecks-brio5.vercel.app`; nenhum deploy de produção foi feito.
 
 ## Validação
 
 - Comandos/testes executados: `npm run lint`; `npm test`; `npm run build -- --webpack`; `npx tsc --noEmit --pretty false`; `npx supabase db lint --linked --fail-on error`; `npx supabase migration list --linked`; `git diff --check`; smoke remoto pela Data API; advisors de segurança e performance do Supabase.
-- Evidência observada: lint aprovado; 22 arquivos e 110 testes aprovados; build das 46 rotas aprovado; migration local/remota alinhada em `20260817150703`; Data API retornou 83 registros reais de Inbox, Leads e Kanban em 81–93 ms, e os contratos de Dashboard, Central e badges responderam em 97–242 ms. Os advisors não apontaram alerta de segurança relacionado aos novos objetos.
-- Validações não executadas e motivo: o arquivo pgTAP foi adicionado, mas não executado localmente porque Docker não está disponível; as mesmas propriedades estruturais foram consultadas no banco remoto. A inspeção visual autenticada depende da publicação da preview. O `tsc` global preserva três erros preexistentes em `src/lib/ai/pedro-turn.test.ts` e `src/lib/integrations/openai-runtime.test.ts`; o build do Next e a suíte Vitest passam.
+- Evidência observada: lint aprovado; 22 arquivos e 110 testes aprovados; build das 46 rotas aprovado; as duas execuções de CI do PR passaram; migration local/remota alinhada em `20260817150703`; Data API retornou 83 registros reais de Inbox, Leads e Kanban em 81–93 ms, e os contratos de Dashboard, Central e badges responderam em 97–242 ms. Os advisors não apontaram alerta de segurança relacionado aos novos objetos. A preview ficou `READY`, `/login` respondeu HTTP 200 pelo acesso protegido e a busca de logs não retornou erros nem respostas 500.
+- Validações não executadas e motivo: o arquivo pgTAP foi adicionado, mas não executado localmente porque Docker não está disponível; as mesmas propriedades estruturais foram consultadas no banco remoto. A inspeção visual autenticada das rotas internas ficou pendente porque uma interface de extensão aberta bloqueou a automação do Chrome; nenhuma sessão ou credencial foi manipulada. O `tsc` global preserva três erros preexistentes em `src/lib/ai/pedro-turn.test.ts` e `src/lib/integrations/openai-runtime.test.ts`; o build do Next e a suíte Vitest passam.
 
 ## Impacto operacional
 
@@ -34,7 +34,7 @@ Eliminar os gargalos de carregamento observados no redesign do workspace sem alt
 
 ## Pendências e riscos
 
-- Publicar a branch e validar a preview autenticada nas rotas `/app`, `/app/inbox`, `/app/leads`, `/app/kanban` e `/app/central`.
+- Validar manualmente a preview autenticada nas rotas `/app`, `/app/inbox`, `/app/leads`, `/app/kanban` e `/app/central`.
 - Os índices recém-criados aparecem como não utilizados no advisor até acumularem tráfego suficiente; revisar `pg_stat_user_indexes` após a homologação, sem removê-los nesta rodada.
 - Não há staging Supabase: a migration já está no banco compartilhado, embora o bundle de aplicação ainda aguarde deploy.
 
