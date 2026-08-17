@@ -8,6 +8,10 @@ export async function loadInternalWorkspace(input: {
   assistantRole: "pedro" | "lionel";
   requestedThreadId?: string;
   threadType?: "broker_assistant";
+  search?: string;
+  status?: string;
+  priority?: string;
+  requiresAction?: boolean;
 }) {
   const supabase = await createClient();
   if (input.operationId && !input.threadType) {
@@ -25,6 +29,15 @@ export async function loadInternalWorkspace(input: {
     .order("updated_at", { ascending: false });
   if (input.operationId) query = query.eq("operation_id", input.operationId);
   if (input.threadType) query = query.eq("thread_type", input.threadType);
+  const search = input.search?.trim().slice(0, 80);
+  if (search) query = query.ilike("title", `%${search}%`);
+  if (input.status && ["awaiting_response", "discussing", "awaiting_confirmation", "resolved", "invalidated"].includes(input.status)) {
+    query = query.eq("status", input.status);
+  }
+  if (input.priority && ["low", "normal", "high", "critical"].includes(input.priority)) {
+    query = query.eq("priority", input.priority);
+  }
+  if (input.requiresAction) query = query.eq("requires_action", true);
   const { data: threads, error } = await query.limit(100);
   if (error) throw error;
   const activeThread = threads?.find((thread) => thread.id === input.requestedThreadId) ?? threads?.[0] ?? null;

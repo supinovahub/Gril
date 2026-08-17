@@ -4,7 +4,7 @@ import { InternalChatWorkspace } from "@/components/internal-chat/internal-chat-
 import { requireActiveViewer } from "@/lib/auth/session";
 import { loadInternalWorkspace } from "@/lib/internal-chat/load-workspace";
 
-export default async function PedroChatPage({ searchParams }: { searchParams: Promise<{ topico?: string; responder?: string; erro?: string; sucesso?: string }> }) {
+export default async function PedroChatPage({ searchParams }: { searchParams: Promise<{ topico?: string; responder?: string; erro?: string; sucesso?: string; busca?: string; status?: string; prioridade?: string; pendencia?: string }> }) {
   const viewer = await requireActiveViewer();
   if (viewer.membership?.role === "broker" || (!viewer.membership && viewer.supportAccess !== "full")) redirect("/app");
   const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
@@ -15,6 +15,10 @@ export default async function PedroChatPage({ searchParams }: { searchParams: Pr
     operationId: operation.id,
     assistantRole: "pedro",
     requestedThreadId: query.topico,
+    search: query.busca,
+    status: query.status,
+    priority: query.prioridade,
+    requiresAction: query.pendencia === "1",
   });
   return <InternalChatWorkspace
     assistant="pedro"
@@ -27,6 +31,7 @@ export default async function PedroChatPage({ searchParams }: { searchParams: Pr
     threads={workspace.threads}
     title="Chat geral com Pedro"
     replyToMessageId={query.responder}
+    filters={{ search: query.busca, status: query.status, priority: query.prioridade, requiresAction: query.pendencia === "1" }}
     feedback={{
       error: query.erro,
       success: query.sucesso === "sugestao-processada" ? "Sugestão processada. O tópico foi atualizado." : undefined,

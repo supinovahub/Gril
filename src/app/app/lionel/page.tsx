@@ -4,9 +4,9 @@ import { InternalChatWorkspace } from "@/components/internal-chat/internal-chat-
 import { requireActiveViewer } from "@/lib/auth/session";
 import { loadInternalWorkspace } from "@/lib/internal-chat/load-workspace";
 
-export default async function LionelPage({ searchParams }: { searchParams: Promise<{ topico?: string; responder?: string }> }) {
+export default async function LionelPage({ searchParams }: { searchParams: Promise<{ topico?: string; responder?: string; busca?: string; status?: string; prioridade?: string; pendencia?: string }> }) {
   const viewer = await requireActiveViewer();
-  const canManageAi = viewer.membership?.role === "owner" || viewer.permissions.includes("ai.manage") || viewer.supportAccess === "full";
+  const canManageAi = viewer.membership?.role === "owner" || viewer.membership?.role === "manager" || viewer.permissions.includes("ai.manage") || viewer.supportAccess === "full";
   if (!canManageAi) redirect("/app");
   const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
   if (!operation) redirect("/app");
@@ -16,6 +16,10 @@ export default async function LionelPage({ searchParams }: { searchParams: Promi
     operationId: operation.id,
     assistantRole: "lionel",
     requestedThreadId: query.topico,
+    search: query.busca,
+    status: query.status,
+    priority: query.prioridade,
+    requiresAction: query.pendencia === "1",
   });
   return <InternalChatWorkspace
     assistant="lionel"
@@ -28,5 +32,6 @@ export default async function LionelPage({ searchParams }: { searchParams: Promi
     threads={workspace.threads}
     title="Lionel"
     replyToMessageId={query.responder}
+    filters={{ search: query.busca, status: query.status, priority: query.prioridade, requiresAction: query.pendencia === "1" }}
   />;
 }

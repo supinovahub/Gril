@@ -1,5 +1,17 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 14/08/2026 — redesign do workspace em homologação
+
+- A Visão geral e o shell desta branch agora implementam arquitetura em camadas: métricas de sete dias como abertura, Kanban identificado como estoque atual sem rolagem horizontal e próximas ações abaixo; a navegação mantém o trabalho frequente visível e recolhe Gestão, Inteligência e Administração. A validação automatizada desta rodada está registrada em `docs/agent/changes/2026-08-14-dashboard-arquitetura-em-camadas.md`.
+- A branch `agent/workspace-redesign-real` aplica a arquitetura operacional aprovada sobre a nova Visão geral e preserva os fluxos de Chat com Pedro e Lionel. Uma auditoria autenticada posterior identificou rotas com alteração ainda superficial; Kanban, Agenda, Campanhas, Equipe, Base, Simulador, Organização, Pedro e WhatsApp foram então reestruturados antes da nova homologação.
+- Leads e Kanban deixam a navegação principal. Leads passa a ser uma visualização dentro de Conversas; o Kanban completo é aberto pelo resumo da Visão geral.
+- Central reúne Pedro, Lionel e eventos operacionais em ordem cronológica, com dez registros por página. Auditoria mostra trinta registros por página.
+- Campanhas não ganhou edição de personalidade do Pedro. Paleta, favicon e título da aba continuam iguais aos de produção.
+- Após a auditoria autenticada, Campanhas foi reorganizada como uma lista operacional de uma coluna, com uma próxima ação por registro e criação progressiva em quatro etapas. A Central agora abre em `Precisa agir`, mantém o registro cronológico em `Histórico`, traduz estados técnicos e consolida ocorrências repetidas do mesmo evento.
+- Lint, 110 testes, build Webpack das 46 rotas, CI e deploy de preview passaram após a correção estrutural. A preview protegida `https://gril-git-agent-workspace-redesign-real-brio5.vercel.app` foi inspecionada com dono, dados reais, desktop e viewport móvel; nenhuma ação de escrita foi executada. Produção e Supabase não foram alterados.
+- A preview mostra os callbacks do WhatsApp com base `http://localhost:3000`; revisar `NEXT_PUBLIC_APP_URL` em uma tarefa separada antes da homologação de webhook pela URL exibida.
+- Detalhes: `docs/agent/changes/2026-08-14-workspace-operacional-unificado.md` e `docs/decisions/2026-08-14-workspace-operacional-unificado.md`.
+
 ## Atualizacao de 07/08/2026 - producao automatica exclusiva para reativacao
 
 - A migration `20260807180741_reactivation_production_only.sql` foi aplicada no Supabase remoto e registrada como aplicada na history.
@@ -257,3 +269,19 @@ Este documento não substitui:
 - A homologação visual e operacional autenticada continua pendente. O build
   local pré-empacotado encontrou uma limitação de symlink do Windows depois de
   compilar; o build remoto da Vercel foi concluído com 46 rotas.
+
+## Atualização de 14/08/2026 — Visão geral com métricas e Kanban
+
+- A branch `agent/dashboard-redesign-real`, publicada no PR rascunho #46,
+  substitui a composição técnica do Dashboard por quatro métricas comerciais,
+  seletor de período e um snapshot somente leitura do Kanban real. A preview é
+  `https://gril-git-agent-dashboard-redesign-real-brio5.vercel.app`.
+- A decisão aprovada remove “Bom dia, Pedro” e “Hoje na operação”, limita
+  atenção e agenda a três itens e recolhe a limpeza HML em “Área
+  administrativa”.
+- Paleta, favicon, título do navegador, rotas, permissões, RLS e contratos de
+  banco permanecem iguais à produção. Nenhuma migration, alteração de dados ou
+  deploy de produção foi executado; a preview automática ficou `Ready`.
+- A validação automatizada desta branch está registrada em
+  `docs/agent/changes/2026-08-14-dashboard-metricas-kanban.md`; a homologação
+  autenticada em desktop e mobile com dados reais permanece pendente.

@@ -453,3 +453,10 @@
 .initialState { border-color:var(--border); background:var(--paper); }
 .archivedNotice { border-top-color:var(--border-soft); background:var(--ledger); }
 @media(max-width:900px){.workspace{grid-template-columns:1fr}.sessionsPanel{border-right:0;border-bottom:1px solid var(--border-soft)}}
+
+.simulatorSummary { display:grid; grid-template-columns:repeat(3,minmax(0,1fr)); overflow:hidden; margin-bottom:20px; border:1px solid var(--border); border-radius:var(--radius-panel); background:var(--border-soft); }
+.simulatorSummary > span { display:grid; grid-template-columns:auto 1fr; min-height:68px; align-content:center; gap:3px 9px; padding:12px 16px; background:var(--surface); }
+.simulatorSummary svg { grid-row:1/3; align-self:center; color:var(--accent); }
+.simulatorSummary small { color:var(--ink-muted); font-size:8px; font-weight:800; letter-spacing:.08em; text-transform:uppercase; }
+.simulatorSummary strong { overflow:hidden; font-size:16px; font-variant-numeric:tabular-nums; letter-spacing:-.03em; text-overflow:ellipsis; white-space:nowrap; }
+@media(max-width:680px){.simulatorSummary{grid-template-columns:1fr}.simulatorSummary > span{min-height:60px}}

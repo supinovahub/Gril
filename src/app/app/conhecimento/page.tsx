@@ -1,4 +1,4 @@
-import { BookOpenCheck, Building2, CircleAlert, FileQuestion, Trash2 } from "lucide-react";
+import { BookOpenCheck, Building2, CircleAlert, Database, FileImage, FileQuestion, MessageCircleQuestion, Trash2 } from "lucide-react";
 
 import { TypedConfirmationButton } from "@/components/typed-confirmation-button";
 import { requireActiveViewer } from "@/lib/auth/session";
@@ -25,7 +25,7 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
 
   return (
     <div className={styles.page}>
-      <header className={styles.pageHeader}><div><p className={styles.eyebrow}>Conhecimento aprovado</p><h1>Empreendimentos e FAQ</h1><p>Fatos estruturados têm precedência sobre texto livre e sempre carregam fonte e validade.</p></div></header>
+      <header className={styles.pageHeader}><div><p className={styles.eyebrow}>Fontes do Pedro</p><h1>Base de conhecimento</h1><p>Empreendimentos, respostas e critérios comerciais que podem ser usados no atendimento.</p></div></header>
       {feedback.erro ? <p className={styles.errorBanner}>{feedback.erro}</p> : null}
       {feedback.sucesso ? <p className={styles.successBanner}>{({
         "empreendimento-criado-em-rascunho": "Rascunho salvo. Adicione a foto principal e depois ative o empreendimento.",
@@ -36,14 +36,20 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
         "empreendimento-excluido-limpeza-pendente": "Empreendimento excluído. A limpeza física de um arquivo ficou pendente para o suporte.",
       } as Record<string, string>)[feedback.sucesso] ?? "Cadastro salvo."}</p> : null}
       <section className={styles.readiness}>
-        <div><Building2 size={18} /><span><small>Empreendimentos ativos</small><strong>{activeProjects} / 5 recomendados</strong></span></div>
-        <div><FileQuestion size={18} /><span><small>FAQs globais</small><strong>{publishedFaqs} / 10 recomendadas</strong></span></div>
+        <div><Building2 size={18} /><span><small>Empreendimentos ativos</small><strong>{activeProjects}</strong></span></div>
+        <div><FileQuestion size={18} /><span><small>FAQs publicadas</small><strong>{publishedFaqs}</strong></span></div>
         <div><BookOpenCheck size={18} /><span><small>Objetivos de qualificação</small><strong>{definitions?.length ?? 0} publicados</strong></span></div>
       </section>
 
+      <nav aria-label="Áreas da Base de conhecimento" className={styles.knowledgeTabs}>
+        <a href="#empreendimentos">Empreendimentos</a>
+        <a href="#faqs">FAQs</a>
+        <a href="#qualificacao">Qualificação</a>
+      </nav>
+
       <div className={styles.layout}>
         <div className={styles.main}>
-          <section className={styles.panel}>
+          <section className={styles.panel} id="empreendimentos">
             <div className={styles.panelHeader}><h2>Empreendimentos</h2><span>Preço + entrada são critérios mínimos</span></div>
             <div className={styles.catalog}>
               {projects?.map((project) => <article key={project.id}>
@@ -84,15 +90,28 @@ export default async function KnowledgePage({ searchParams }: { searchParams: Pr
               {!projects?.length ? <p className={styles.empty}>Nenhum empreendimento cadastrado.</p> : null}
             </div>
           </section>
-          <section className={styles.panel}><div className={styles.panelHeader}><h2>FAQs globais</h2><span>Comunicação, não valores</span></div><div className={styles.faqList}>{faqs?.map((faq) => { const versions = (faq.faq_versions ?? []) as Array<{ base_answer:string; response_mode:string; version:number; status:string }>; const version=versions.find((item)=>item.status==='published'); return <article key={faq.id}><strong>{faq.canonical_question}</strong><p>{version?.base_answer ?? "Sem versão publicada"}</p><small>{version?.response_mode} · v{version?.version}</small></article>; })}{!faqs?.length ? <p className={styles.empty}>Cadastre a base mínima antes do piloto.</p> : null}</div></section>
-          <section className={styles.panel}><div className={styles.panelHeader}><h2>Qualificação publicada</h2><span>Validade e fonte por resposta</span></div><ol className={styles.definitionList}>{definitions?.map((definition) => <li key={definition.id}><span>{definition.suggested_order}</span><strong>{definition.name}</strong><small>{definition.answer_type} · {definition.required ? "obrigatório" : "complementar"} · {definition.validity_days ? `${definition.validity_days} dias` : "recoletar"}</small></li>)}</ol></section>
+          <section className={styles.panel} id="faqs"><div className={styles.panelHeader}><h2>FAQs globais</h2><span>Comunicação, não valores</span></div><div className={styles.faqList}>{faqs?.map((faq) => { const versions = (faq.faq_versions ?? []) as Array<{ base_answer:string; response_mode:string; version:number; status:string }>; const version=versions.find((item)=>item.status==='published'); return <article key={faq.id}><strong>{faq.canonical_question}</strong><p>{version?.base_answer ?? "Sem versão publicada"}</p><small>{version?.response_mode} · v{version?.version}</small></article>; })}{!faqs?.length ? <p className={styles.empty}>Nenhuma FAQ publicada.</p> : null}</div></section>
+          <section className={styles.panel} id="qualificacao"><div className={styles.panelHeader}><h2>Qualificação publicada</h2><span>Validade e fonte por resposta</span></div><ol className={styles.definitionList}>{definitions?.map((definition) => <li key={definition.id}><span>{definition.suggested_order}</span><strong>{definition.name}</strong><small>{definition.answer_type} · {definition.required ? "obrigatório" : "complementar"} · {definition.validity_days ? `${definition.validity_days} dias` : "recoletar"}</small></li>)}</ol></section>
           {conflicts?.length ? <section className={styles.panel}><div className={styles.panelHeader}><h2>Conflitos de fatos</h2><span>O valor atual continua no Pedro até decisão</span></div><div className={styles.faqList}>{conflicts.map((conflict)=><article key={conflict.id}><strong>{(conflict.projects as {name:string}|null)?.name} · {conflict.code}</strong><p>Atual: {JSON.stringify(conflict.current_snapshot)}<br/>Proposto: {conflict.proposed_value_text ?? conflict.proposed_value_number} · fonte {conflict.proposed_source_name}</p><form action={resolveProjectFactConflictAction}><input name="conflictId" type="hidden" value={conflict.id}/><textarea name="reason" placeholder="Justificativa" required/><div className={styles.two}><button name="decision" value="accept_new">Aceitar novo</button><button name="decision" value="keep_current">Manter atual</button><button name="decision" value="quarantine_current">Quarentenar atual</button></div></form></article>)}</div></section> : null}
         </div>
         <aside className={styles.forms}>
-          <ProjectCreateForm />
-          <form action={createFaqAction} className={styles.formCard}><div><p className={styles.eyebrow}>Conhecimento global</p><h2>Nova FAQ</h2></div><label><span>Pergunta canônica</span><input name="question" required /></label><label><span>Resposta base</span><textarea name="answer" required rows={4} /></label><label><span>Modo</span><select name="responseMode"><option value="direct">Resposta direta</option><option value="brief_then_call">Breve + call</option><option value="silent_escalation">Escalada silenciosa</option></select></label><label><span>Fonte</span><input name="sourceName" required /></label><button type="submit">Publicar FAQ v1</button></form>
-          <form action={createProjectFactAction} className={styles.formCard}><div><p className={styles.eyebrow}>Fonte e validade</p><h2>Novo fato aprovado</h2></div><label><span>Empreendimento</span><select name="projectId" required><option value="">Selecione</option>{projects?.map((project)=><option key={project.id} value={project.id}>{project.name}</option>)}</select></label><label><span>Código</span><input name="code" placeholder="area_privativa" required /></label><label><span>Valor</span><textarea name="valueText" required rows={2} /></label><label><span>Unidade</span><input name="unit" placeholder="m², vagas, torres..." /></label><label><span>Fonte</span><input name="sourceName" required /></label><div className={styles.two}><label><span>Referência</span><input defaultValue={new Date().toISOString().slice(0,10)} name="referenceDate" type="date" required /></label><label><span>Válido até (opcional)</span><input name="validUntil" type="date" /></label></div><button>Salvar fato</button></form>
-          <ProjectMediaManager projects={(projects ?? []).map(({ id, name })=>({ id, name }))} media={media} />
+          <div className={styles.creationRail}><span><strong>Adicionar à base</strong><small>Abra somente o cadastro que precisa fazer agora.</small></span></div>
+          <details className={styles.knowledgeCreator} open={!projects?.length}>
+            <summary><Building2 aria-hidden="true" size={16}/><span><strong>Novo empreendimento</strong><small>Dados comerciais e recomendação</small></span></summary>
+            <div className={styles.creatorBody}><ProjectCreateForm /></div>
+          </details>
+          <details className={styles.knowledgeCreator}>
+            <summary><MessageCircleQuestion aria-hidden="true" size={16}/><span><strong>Nova FAQ</strong><small>Resposta aprovada para o Pedro</small></span></summary>
+            <form action={createFaqAction} className={styles.formCard}><div><p className={styles.eyebrow}>Conhecimento global</p><h2>Nova FAQ</h2></div><label><span>Pergunta canônica</span><input name="question" required /></label><label><span>Resposta base</span><textarea name="answer" required rows={4} /></label><label><span>Modo</span><select name="responseMode"><option value="direct">Resposta direta</option><option value="brief_then_call">Breve + call</option><option value="silent_escalation">Escalada silenciosa</option></select></label><label><span>Fonte</span><input name="sourceName" required /></label><button type="submit">Publicar FAQ v1</button></form>
+          </details>
+          <details className={styles.knowledgeCreator}>
+            <summary><Database aria-hidden="true" size={16}/><span><strong>Novo fato</strong><small>Valor, fonte e validade</small></span></summary>
+            <form action={createProjectFactAction} className={styles.formCard}><div><p className={styles.eyebrow}>Fonte e validade</p><h2>Novo fato aprovado</h2></div><label><span>Empreendimento</span><select name="projectId" required><option value="">Selecione</option>{projects?.map((project)=><option key={project.id} value={project.id}>{project.name}</option>)}</select></label><label><span>Código</span><input name="code" placeholder="area_privativa" required /></label><label><span>Valor</span><textarea name="valueText" required rows={2} /></label><label><span>Unidade</span><input name="unit" placeholder="m², vagas, torres..." /></label><label><span>Fonte</span><input name="sourceName" required /></label><div className={styles.two}><label><span>Referência</span><input defaultValue={new Date().toISOString().slice(0,10)} name="referenceDate" type="date" required /></label><label><span>Válido até (opcional)</span><input name="validUntil" type="date" /></label></div><button>Salvar fato</button></form>
+          </details>
+          <details className={styles.knowledgeCreator}>
+            <summary><FileImage aria-hidden="true" size={16}/><span><strong>Mídias</strong><small>Fotos, book e materiais</small></span></summary>
+            <div className={styles.creatorBody}><ProjectMediaManager projects={(projects ?? []).map(({ id, name })=>({ id, name }))} media={media} /></div>
+          </details>
           {(activeProjects < 5 || publishedFaqs < 10) ? <p className={styles.warning}><CircleAlert size={15} /> A base recomendada ainda está incompleta. É advertência de prontidão, não bloqueio técnico.</p> : null}
         </aside>
       </div>

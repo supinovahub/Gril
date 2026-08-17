@@ -1,4 +1,4 @@
-import { Bot, CheckCircle2, CircleAlert, Clock3, CornerUpLeft, ExternalLink, Send, Sparkles, UserRound } from "lucide-react";
+import { Bot, CheckCircle2, CircleAlert, Clock3, CornerUpLeft, ExternalLink, Filter, Send, Sparkles, UserRound } from "lucide-react";
 import Link from "next/link";
 
 import type { Tables } from "@/lib/database.types";
@@ -59,6 +59,61 @@ const proposalStatusLabels: Record<string, string> = {
   processed: "Processada",
 };
 
+const threadTypeLabels: Record<string, string> = {
+  general: "Conversa geral",
+  lead_case: "Caso de lead",
+  broker_assistant: "Apoio ao corretor",
+  learning: "Aprendizado",
+  incident: "Incidente",
+};
+
+const sourceLabels: Record<string, string> = {
+  manual: "Aberto pela equipe",
+  escalation: "Escalado pelo Pedro",
+  assisted_correction: "Correção assistida",
+  external_device: "Intervenção externa",
+  post_call: "Pós-call",
+  runtime_failure: "Falha de execução",
+};
+
+const priorityLabels: Record<string, string> = {
+  low: "baixa",
+  normal: "normal",
+  high: "alta",
+  critical: "crítica",
+};
+
+const statusFilterOptions = [
+  ["awaiting_response", "Aguardando resposta"],
+  ["discussing", "Em discussão"],
+  ["awaiting_confirmation", "Aguardando confirmação"],
+  ["resolved", "Resolvido"],
+] as const;
+
+const priorityFilterOptions = [
+  ["low", "Baixa"],
+  ["normal", "Normal"],
+  ["high", "Alta"],
+  ["critical", "Crítica"],
+] as const;
+
+type WorkspaceFilters = {
+  search?: string;
+  status?: string;
+  priority?: string;
+  requiresAction?: boolean;
+};
+
+function threadHref(basePath: string, threadId: string, filters?: WorkspaceFilters) {
+  const params = new URLSearchParams();
+  params.set("topico", threadId);
+  if (filters?.search) params.set("busca", filters.search);
+  if (filters?.status) params.set("status", filters.status);
+  if (filters?.priority) params.set("prioridade", filters.priority);
+  if (filters?.requiresAction) params.set("pendencia", "1");
+  return `${basePath}?${params.toString()}`;
+}
+
 export function InternalChatWorkspace({
   title,
   eyebrow,
@@ -71,6 +126,7 @@ export function InternalChatWorkspace({
   emptyText,
   replyToMessageId,
   feedback,
+  filters,
 }: {
   title: string;
   eyebrow: string;
@@ -83,7 +139,28 @@ export function InternalChatWorkspace({
   emptyText: string;
   replyToMessageId?: string;
   feedback?: { error?: string; success?: string };
+  filters?: WorkspaceFilters;
 }) {
+  const pendingCount = threads.filter((thread) => thread.requires_action).length;
+  const hasFilters = Boolean(filters?.search || filters?.status || filters?.priority || filters?.requiresAction);
+  const assistantLabel = assistant === "lionel" ? "Curadoria guiada" : "Apoio à operação";
+  const activeNeedsDecision = activeThread?.requires_action === true;
+  const decisionTitle = activeThread
+    ? activeThread.status === "invalidated"
+      ? "Atualize o contexto antes de decidir"
+      : activeNeedsDecision
+        ? assistant === "lionel" ? "Revise o consenso antes de registrar" : "Revise a sugestão antes de enviar"
+        : assistant === "lionel" ? "Responda à próxima pergunta do Lionel" : "Descreva o próximo impasse da operação"
+    : "Selecione um tópico para começar";
+  const decisionDescription = activeThread
+    ? activeThread.status === "invalidated"
+      ? "Uma mensagem nova ou mudança operacional deixou a análise anterior desatualizada. Consulte o contexto e peça uma nova análise."
+      : activeNeedsDecision
+        ? assistant === "lionel" ? "O tópico precisa de uma decisão humana. Confira escopo, exceções e evidências antes de criar um candidato."
+          : "A proposta só afeta o lead depois que você aprovar. Edite o texto se necessário ou abra o Inbox para conferir a conversa completa."
+        : assistant === "lionel" ? "Lionel conduz a curadoria uma pergunta por vez; o consenso só vira candidato quando você confirmar."
+          : "Pedro organiza o contexto e sugere um caminho. Use este tópico para tirar dúvidas sem enviar nada automaticamente ao lead."
+    : "A fila reúne conversas gerais, casos de lead e pendências que precisam da equipe.";
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
@@ -92,27 +169,53 @@ export function InternalChatWorkspace({
           <h1>{title}</h1>
           <p>{description}</p>
         </div>
-        <span className={styles.modeBadge}><Sparkles size={14} /> Conversa interna</span>
+        <span className={styles.modeBadge}><Sparkles size={14} /> {assistantLabel}</span>
       </header>
       {feedback?.error ? <p className={styles.feedbackError}>{feedback.error}</p> : null}
       {feedback?.success ? <p className={styles.feedbackSuccess}>{feedback.success}</p> : null}
 
       <div className={styles.workspace}>
-        <aside className={styles.topicRail} aria-label="Tópicos">
-          <div className={styles.railHeader}><span>Tópicos</span><small>{threads.length}</small></div>
+        <aside className={styles.topicRail} aria-label={assistant === "lionel" ? "Fila de curadoria" : "Fila de tópicos"}>
+          <div className={styles.railHeader}>
+            <div><span>{assistant === "lionel" ? "Fila de curadoria" : "Fila operacional"}</span><small>{threads.length}</small></div>
+            <em>{pendingCount} pendência{pendingCount === 1 ? "" : "s"}</em>
+          </div>
+          <form className={styles.railFilters} method="get">
+            <label htmlFor={`${assistant}-topic-search`}>Encontrar tópico</label>
+            <div className={styles.searchField}>
+              <Filter size={14} />
+              <input defaultValue={filters?.search} id={`${assistant}-topic-search`} maxLength={80} name="busca" placeholder="Buscar pelo título" />
+            </div>
+            <div className={styles.filterGrid}>
+              <select aria-label="Filtrar por status" defaultValue={filters?.status ?? ""} name="status">
+                <option value="">Todos os status</option>
+                {statusFilterOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+              <select aria-label="Filtrar por prioridade" defaultValue={filters?.priority ?? ""} name="prioridade">
+                <option value="">Todas prioridades</option>
+                {priorityFilterOptions.map(([value, label]) => <option key={value} value={value}>{label}</option>)}
+              </select>
+            </div>
+            <label className={styles.checkboxFilter}><input defaultChecked={filters?.requiresAction} name="pendencia" type="checkbox" value="1" /> Só pendências</label>
+            <div className={styles.filterActions}>
+              <button type="submit">Filtrar</button>
+              {hasFilters ? <Link href={basePath}>Limpar</Link> : null}
+            </div>
+          </form>
           <nav className={styles.topicList}>
             {threads.map((thread) => (
               <Link
                 className={`${styles.topicItem}${activeThread?.id === thread.id ? ` ${styles.topicItemActive}` : ""}`}
-                href={`${basePath}?topico=${thread.id}`}
+                href={threadHref(basePath, thread.id, filters)}
                 key={thread.id}
+                prefetch={false}
               >
                 <span className={styles.topicPulse} data-priority={thread.priority} />
                 <span className={styles.topicCopy}>
                   <strong>{thread.title}</strong>
-                  <small>{statusLabels[thread.status] ?? thread.status}</small>
+                  <small>{threadTypeLabels[thread.thread_type] ?? thread.thread_type} · {statusLabels[thread.status] ?? thread.status}</small>
                 </span>
-                {thread.requires_action ? <CircleAlert aria-label="Ação necessária" size={15} /> : null}
+                {thread.requires_action ? <CircleAlert aria-label="Ação necessária" size={15} /> : <span className={styles.topicPriority}>{priorityLabels[thread.priority] ?? thread.priority}</span>}
               </Link>
             ))}
             {!threads.length ? <p className={styles.emptyRail}>{emptyText}</p> : null}
@@ -123,12 +226,18 @@ export function InternalChatWorkspace({
           {activeThread ? (
             <>
               <header className={styles.chatHeader}>
-                <div><h2>{activeThread.title}</h2><p>{statusLabels[activeThread.status] ?? activeThread.status} · prioridade {activeThread.priority}</p></div>
+                <div><h2>{activeThread.title}</h2><p>{threadTypeLabels[activeThread.thread_type] ?? activeThread.thread_type} · {statusLabels[activeThread.status] ?? activeThread.status}</p></div>
                 <div className={styles.chatHeaderActions}>
-                  <span><Clock3 size={14} /> {dateLabel(activeThread.updated_at)}</span>
+                  <span className={styles.priorityTag} data-priority={activeThread.priority}>Prioridade {priorityLabels[activeThread.priority] ?? activeThread.priority}</span>
+                  <span><Clock3 size={14} /> atualizado {dateLabel(activeThread.updated_at)}</span>
                   {activeThread.conversation_id ? <Link href={`/app/inbox/${activeThread.conversation_id}`}><ExternalLink size={13} /> Abrir no Inbox</Link> : null}
                 </div>
               </header>
+              <div className={styles.decisionCard} data-assistant={assistant} data-pending={activeNeedsDecision}>
+                <div className={styles.decisionCardHeader}><span>{activeNeedsDecision ? <CircleAlert size={15} /> : <CheckCircle2 size={15} />}</span><div><small>Próximo passo</small><strong>{decisionTitle}</strong></div></div>
+                <p>{decisionDescription}</p>
+                <div className={styles.decisionMeta}><span>{sourceLabels[activeThread.source] ?? activeThread.source}</span><span>{activeThread.conversation_id ? "Ligado a uma conversa do Inbox" : "Contexto interno"}</span></div>
+              </div>
               <div className={styles.messages}>
                 {messages.map((message) => {
                   const isUser = message.actor_kind === "user";
@@ -160,7 +269,7 @@ export function InternalChatWorkspace({
                             </div>
                             <textarea defaultValue={proposal.body} disabled={proposal.status !== "pending"} maxLength={4096} name="body" readOnly={proposal.status !== "pending"} rows={4} form={`review-${message.id}`} />
                             <div className={styles.suggestionProposalActions}>
-                              <Link href={`/app/inbox/${proposal.conversationId}`}><ExternalLink size={13} /> Ver conversa</Link>
+                              <Link href={`/app/inbox/${proposal.conversationId}`} prefetch={false}><ExternalLink size={13} /> Ver conversa</Link>
                               {proposal.status === "pending" ? <form action={reviewAiSuggestionFromChatAction} id={`review-${message.id}`}>
                                 <input name="threadId" type="hidden" value={activeThread.id} />
                                 <input name="suggestionId" type="hidden" value={proposal.suggestionId} />
@@ -173,7 +282,7 @@ export function InternalChatWorkspace({
                           </div>
                         </div>
                       ) : <p>{message.body}</p>}
-                      <footer><time>{dateLabel(message.created_at)}</time><Link href={`${basePath}?topico=${activeThread.id}&responder=${message.id}`}><CornerUpLeft size={12} /> Responder</Link></footer>
+                      <footer><time>{dateLabel(message.created_at)}</time><Link href={`${basePath}?topico=${activeThread.id}&responder=${message.id}`} prefetch={false}><CornerUpLeft size={12} /> Responder</Link></footer>
                     </article>
                   );
                 })}
@@ -182,10 +291,10 @@ export function InternalChatWorkspace({
               <form action={sendInternalMessageAction} className={styles.composer}>
                 <input name="threadId" type="hidden" value={activeThread.id} />
                 {replyToMessageId ? <input name="replyToMessageId" type="hidden" value={replyToMessageId} /> : null}
-                {replyToMessageId ? <p className={styles.replyingTo}><CornerUpLeft size={12} /> Sua resposta ficará vinculada à mensagem selecionada. <Link href={`${basePath}?topico=${activeThread.id}`}>Cancelar</Link></p> : null}
+                {replyToMessageId ? <p className={styles.replyingTo}><CornerUpLeft size={12} /> Sua resposta ficará vinculada à mensagem selecionada. <Link href={threadHref(basePath, activeThread.id, filters)}>Cancelar</Link></p> : null}
                 <textarea maxLength={12000} name="body" placeholder={assistant === "lionel" ? "Responda à pergunta do Lionel ou descreva uma nova regra…" : "Converse com Pedro sobre a operação…"} required rows={3} />
                 <div>
-                  <span>Use @lead ou cite a mensagem ao tratar vários casos.</span>
+                  <span>Escolha o tópico correto na fila; nada é enviado ao lead a partir desta caixa.</span>
                   <button type="submit"><Send size={15} /> Enviar</button>
                 </div>
               </form>

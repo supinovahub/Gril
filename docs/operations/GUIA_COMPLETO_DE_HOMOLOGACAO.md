@@ -210,6 +210,8 @@ No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confir
 12. com uma sugestão `assisted` pendente, abra `/app/chat-pedro`: o tópico do lead deve mostrar a mesma resposta proposta no Inbox, o contexto resumido da análise, a mensagem inbound exata e o link para a conversa;
 13. edite a resposta no tópico e aprove: somente o texto editado deve ser enviado, o Inbox deve refletir o resultado e o tópico deve deixar de exigir ação;
 14. gere duas sugestões para a mesma conversa: elas devem permanecer no mesmo tópico do lead, sem duplicar tópicos, e a fila só pode ser resolvida depois da última pendência.
+15. na fila do Chat com Pedro, use busca, status, prioridade e **Só pendências**; confirme que os filtros alteram a lista sem expor tópicos de outra operação.
+16. abra um tópico com pendência e confirme que o painel **Próximo passo** explica que a aprovação é humana e que o lead só é afetado depois da ação explícita.
 
 ### 6.2 Chat geral, intervenção humana e corretor
 
@@ -220,6 +222,8 @@ No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confir
 5. durante uma janela ativa do corretor, use `Pedir ajuda ao Pedro`: `/app/assistente-corretor` deve mostrar somente aquele lead e responder de forma consultiva, sem enviar ao WhatsApp;
 6. depois do fim/revogação da janela, o corretor não deve mais acessar o tópico nem a conversa;
 7. confirme atualização automática, sem F5, e badges separados para Inbox, Chat com Pedro, Lionel e Assistente do corretor.
+8. no Lionel, confirme que a fila se identifica como **Fila de curadoria**, o painel **Próximo passo** orienta a responder uma pergunta por vez e o botão de candidato deixa claro que o resultado vai para revisão.
+9. com um gestor, confirme que Lionel e a action de registro de candidato seguem a mesma permissão; corretor continua sem acesso.
 
 No Inbox, valide a ordem da lista com uma conversa mais antiga que tenha uma
 mensagem inbound não lida, outra com sugestão `assisted` pendente e uma
@@ -369,13 +373,54 @@ Inbox, CRM e agenda devem exibir datas e horários no fuso configurado da opera�
 
 ## 11. CRM, privacidade e encerramento
 
+### Workspace operacional unificado
+
+Com dono ou gestor autenticado, valide a arquitetura de navegação antes dos fluxos detalhados:
+
+1. a primeira camada da navegação mostra `Visão geral`, `Conversas`, `Agenda`, `Central` e `Campanhas`, conforme as permissões, sem entradas independentes para Leads ou Kanban;
+2. `Gestão`, `Inteligência` e `Administração` ficam recolhidas por padrão, abrem por interação e permanecem abertas quando uma rota interna está ativa;
+3. em `Conversas`, alterne entre as visualizações `Conversas` e `Leads` e confirme que filtros, links profundos e ações continuam preservados;
+4. na Visão geral, use `Abrir Kanban completo` e confirme que esta é a entrada geral para a visão completa;
+5. em `Central`, confirme que a entrada `Precisa agir` mostra apenas registros acionáveis; alterne para `Histórico`, valide a ordem cronológica e verifique que cada página mostra no máximo dez registros reais, sem duplicações técnicas do mesmo evento;
+6. confirme que ações de alertas, notificações e escaladas continuam disponíveis no registro correspondente;
+7. em Auditoria, avance e volte entre páginas, sempre com no máximo trinta eventos;
+8. no Kanban completo, confirme métricas reais, filtros e todas as etapas em uma mesa horizontal; os cards devem abrir o registro completo e a navegação deve voltar somente à Visão geral;
+9. em Agenda, Campanhas, Equipe, Base e Simulador, confirme que o resumo inicial corresponde aos registros reais e que formulários e ações existentes continuam disponíveis;
+10. em Campanhas, confirme que cada registro apresenta uma ação principal coerente com seu estado e que a criação avança pelas etapas Campanha, Automação, Mensagens e Consentimento; criação e edição não devem mostrar personalidade ou persona do Pedro, mas devem preservar modo, consentimento, importação, ondas, pausa, retomada e arquivamento;
+11. em Pedro, use as âncoras de comportamento, persona, modelos e testes; confirme que editores avançados ficam recolhidos e abrem sem perder rascunhos ou ações;
+12. em Organização, alterne pelas seções de identidade, operação e segurança e confira se o resumo reflete os valores salvos;
+13. em WhatsApp, confira contagens de conexões, credenciais e templates; abra separadamente cada forma de adicionar canal e confirme que nenhuma credencial é exibida para papel sem permissão;
+14. em celular, confirme as entradas `Início`, `Conversas`, `Agenda`, `Central` e `Mais`; dentro de `Mais`, confirme os grupos Trabalho, Gestão, Inteligência, Administração e Conta, sem overflow lateral da página.
+
+### Visão geral
+
+Com uma conta de imobiliária autenticada, abra `/app` e valide:
+
+1. o título, o favicon e a paleta continuam iguais aos de produção; a tela não
+   mostra “Bom dia, Pedro” nem “Hoje na operação”;
+2. a abertura sem parâmetro seleciona 7 dias; os seletores Hoje, 7 dias e 30 dias
+   atualizam Leads, Taxa de resposta, Agendamentos e Vendas usando somente dados
+   do período, e a conversão aparece como contexto de Vendas;
+3. uma taxa sem denominador ou uma consulta indisponível aparece como `N/D`, e
+   não como zero inventado;
+4. o Kanban se identifica como estoque atual independente do período, segue a
+   ordem das etapas ativas, informa a contagem de todas elas e exibe no máximo
+   um card por etapa; o link abre o Kanban completo;
+5. todas as etapas do resumo se reorganizam sem rolagem horizontal cega e, em
+   celular, a página permanece sem overflow lateral;
+6. “Precisa de atenção” e “Agenda” mostram no máximo três itens reais e seus
+   links abrem a conversa ou o lead correto;
+7. modo do Pedro e quantidade de pessoas ativas não aparecem na Visão geral.
+
+### CRM, privacidade e encerramento
+
 Teste criação, deduplicação e merge de leads; co-comprador; origem; Kanban; checklists; proposta; perda; venda; ações em massa com prévia; exportação CSV; arquivamento e restauração manual, com Pedro ou com Pedro e follow-up.
 
 O dono/gestor pode arquivar e restaurar um lead, devolvê-lo ao Pedro e reativar follow-up conforme permissões.
 
 ### Limpeza do contexto de homologação
 
-No dashboard, dono ou gestor com `team.manage` pode usar **Limpar contexto de homologação** para remover o contexto de teste da própria imobiliária. O preview considera somente contatos cujo nome começa por `HML-` e limita a operação a 20 contatos.
+No dashboard, dono ou gestor com `team.manage` pode expandir **Área administrativa** e usar **Limpar contexto de homologação** para remover o contexto de teste da própria imobiliária. O preview considera somente contatos cujo nome começa por `HML-` e limita a operação a 20 contatos.
 
 1. Crie os registros de teste com o prefixo `HML-` e use somente contatos autorizados.
 2. Confira no preview contatos, oportunidades, conversas, mensagens, chamadas e jobs pendentes.
@@ -403,6 +448,7 @@ Valide ainda Central, push, pausa emergencial, relatórios, custos, carga por co
 - [ ] campanha respeita 20/50/restante, janela, ritmo e opt-out;
 - [ ] calls percorrem preferenciais, 5/5/5, broadcast, aceite e resultado;
 - [ ] CRM, privacidade, relatórios e auditoria refletem dados reais.
+- [ ] a Visão geral mostra métricas reais, Kanban na ordem correta e no máximo três itens em atenção e agenda;
 
 ### Qualidade e operação
 
