@@ -137,6 +137,384 @@ export type Database = {
           },
         ]
       }
+      ai_feedback_cluster_signals: {
+        Row: {
+          cluster_id: string
+          created_at: string
+          org_id: string
+          signal_id: string
+        }
+        Insert: {
+          cluster_id: string
+          created_at?: string
+          org_id: string
+          signal_id: string
+        }
+        Update: {
+          cluster_id?: string
+          created_at?: string
+          org_id?: string
+          signal_id?: string
+        }
+        Relationships: []
+      }
+      ai_feedback_clusters: {
+        Row: {
+          confidence: number
+          created_at: string
+          dedupe_key: string
+          evidence_count: number
+          failure_family: string
+          first_seen_at: string
+          id: string
+          last_review_run_id: string | null
+          last_seen_at: string
+          learning_suggestion_id: string | null
+          observed_pattern: string
+          occurrence_count: number
+          org_id: string
+          proposed_change: string
+          root_cause_layer: string
+          severity: string
+          status: string
+          target_skill_code: string | null
+          target_skill_module_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          confidence: number
+          created_at?: string
+          dedupe_key: string
+          evidence_count?: number
+          failure_family: string
+          first_seen_at: string
+          id?: string
+          last_review_run_id?: string | null
+          last_seen_at: string
+          learning_suggestion_id?: string | null
+          observed_pattern: string
+          occurrence_count?: number
+          org_id: string
+          proposed_change: string
+          root_cause_layer: string
+          severity: string
+          status?: string
+          target_skill_code?: string | null
+          target_skill_module_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          confidence?: number
+          created_at?: string
+          dedupe_key?: string
+          evidence_count?: number
+          failure_family?: string
+          first_seen_at?: string
+          id?: string
+          last_review_run_id?: string | null
+          last_seen_at?: string
+          learning_suggestion_id?: string | null
+          observed_pattern?: string
+          occurrence_count?: number
+          org_id?: string
+          proposed_change?: string
+          root_cause_layer?: string
+          severity?: string
+          status?: string
+          target_skill_code?: string | null
+          target_skill_module_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_feedback_signals: {
+        Row: {
+          ai_suggestion_id: string | null
+          conversation_id: string | null
+          created_at: string
+          dedupe_key: string
+          evidence: Json
+          execution_id: string | null
+          id: string
+          learning_suggestion_id: string | null
+          occurred_at: string
+          operation_id: string | null
+          org_id: string
+          severity: string
+          signal_type: string
+          source: string
+          status: string
+        }
+        Insert: {
+          ai_suggestion_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          dedupe_key: string
+          evidence?: Json
+          execution_id?: string | null
+          id?: string
+          learning_suggestion_id?: string | null
+          occurred_at?: string
+          operation_id?: string | null
+          org_id: string
+          severity?: string
+          signal_type: string
+          source: string
+          status?: string
+        }
+        Update: {
+          ai_suggestion_id?: string | null
+          conversation_id?: string | null
+          created_at?: string
+          dedupe_key?: string
+          evidence?: Json
+          execution_id?: string | null
+          id?: string
+          learning_suggestion_id?: string | null
+          occurred_at?: string
+          operation_id?: string | null
+          org_id?: string
+          severity?: string
+          signal_type?: string
+          source?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      ai_meta_review_requests: {
+        Row: {
+          actor_user_id: string
+          created_at: string
+          id: string
+          org_id: string
+          processed_at: string
+          review_run_id: string | null
+        }
+        Insert: {
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          org_id: string
+          processed_at?: string
+          review_run_id?: string | null
+        }
+        Update: {
+          actor_user_id?: string
+          created_at?: string
+          id?: string
+          org_id?: string
+          processed_at?: string
+          review_run_id?: string | null
+        }
+        Relationships: []
+      }
+      ai_review_run_signals: {
+        Row: {
+          created_at: string
+          org_id: string
+          review_run_id: string
+          signal_id: string
+        }
+        Insert: {
+          created_at?: string
+          org_id: string
+          review_run_id: string
+          signal_id: string
+        }
+        Update: {
+          created_at?: string
+          org_id?: string
+          review_run_id?: string
+          signal_id?: string
+        }
+        Relationships: []
+      }
+      ai_review_runs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_redacted: string | null
+          finding_count: number
+          id: string
+          input_tokens: number
+          model_profile_id: string | null
+          model_returned: string | null
+          org_id: string
+          output_tokens: number
+          requested_by: string
+          signal_count: number
+          source: string
+          started_at: string | null
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_redacted?: string | null
+          finding_count?: number
+          id?: string
+          input_tokens?: number
+          model_profile_id?: string | null
+          model_returned?: string | null
+          org_id: string
+          output_tokens?: number
+          requested_by: string
+          signal_count?: number
+          source: string
+          started_at?: string | null
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_redacted?: string | null
+          finding_count?: number
+          id?: string
+          input_tokens?: number
+          model_profile_id?: string | null
+          model_returned?: string | null
+          org_id?: string
+          output_tokens?: number
+          requested_by?: string
+          signal_count?: number
+          source?: string
+          started_at?: string | null
+          status?: string
+        }
+        Relationships: []
+      }
+      ai_skill_modules: {
+        Row: {
+          category: string
+          code: string
+          created_at: string
+          created_by: string
+          description: string | null
+          id: string
+          name: string
+          org_id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          code: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name: string
+          org_id: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          code?: string
+          created_at?: string
+          created_by?: string
+          description?: string | null
+          id?: string
+          name?: string
+          org_id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      ai_skill_release_items: {
+        Row: {
+          created_at: string
+          org_id: string
+          rule_version_id: string
+          skill_module_id: string
+          skill_version_id: string
+        }
+        Insert: {
+          created_at?: string
+          org_id: string
+          rule_version_id: string
+          skill_module_id: string
+          skill_version_id: string
+        }
+        Update: {
+          created_at?: string
+          org_id?: string
+          rule_version_id?: string
+          skill_module_id?: string
+          skill_version_id?: string
+        }
+        Relationships: []
+      }
+      ai_skill_versions: {
+        Row: {
+          allowed_actions: string[]
+          checksum: string
+          created_at: string
+          created_by: string
+          id: string
+          instructions: string
+          module_id: string
+          negative_examples: Json
+          org_id: string
+          positive_examples: Json
+          priority: number
+          prohibited_actions: string[]
+          published_at: string | null
+          published_by: string | null
+          source_learning_suggestion_id: string | null
+          status: string
+          trigger_config: Json
+          updated_at: string
+          version: number
+        }
+        Insert: {
+          allowed_actions?: string[]
+          checksum: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          instructions: string
+          module_id: string
+          negative_examples?: Json
+          org_id: string
+          positive_examples?: Json
+          priority?: number
+          prohibited_actions?: string[]
+          published_at?: string | null
+          published_by?: string | null
+          source_learning_suggestion_id?: string | null
+          status?: string
+          trigger_config?: Json
+          updated_at?: string
+          version: number
+        }
+        Update: {
+          allowed_actions?: string[]
+          checksum?: string
+          created_at?: string
+          created_by?: string
+          id?: string
+          instructions?: string
+          module_id?: string
+          negative_examples?: Json
+          org_id?: string
+          positive_examples?: Json
+          priority?: number
+          prohibited_actions?: string[]
+          published_at?: string | null
+          published_by?: string | null
+          source_learning_suggestion_id?: string | null
+          status?: string
+          trigger_config?: Json
+          updated_at?: string
+          version?: number
+        }
+        Relationships: []
+      }
       ai_action_executions: {
         Row: {
           action_input: Json
@@ -5561,6 +5939,12 @@ export type Database = {
           processed_at: string
           reason: string | null
           regression_case_id: string | null
+          final_instructions: string | null
+          skill_code: string | null
+          skill_name: string | null
+          skill_version_id: string | null
+          target_skill_module_id: string | null
+          trigger_description: string | null
         }
         Insert: {
           actor_user_id?: string
@@ -5573,6 +5957,12 @@ export type Database = {
           processed_at?: string
           reason?: string | null
           regression_case_id?: string | null
+          final_instructions?: string | null
+          skill_code?: string | null
+          skill_name?: string | null
+          skill_version_id?: string | null
+          target_skill_module_id?: string | null
+          trigger_description?: string | null
         }
         Update: {
           actor_user_id?: string
@@ -5585,6 +5975,12 @@ export type Database = {
           processed_at?: string
           reason?: string | null
           regression_case_id?: string | null
+          final_instructions?: string | null
+          skill_code?: string | null
+          skill_name?: string | null
+          skill_version_id?: string | null
+          target_skill_module_id?: string | null
+          trigger_description?: string | null
         }
         Relationships: [
           {
@@ -5614,6 +6010,7 @@ export type Database = {
           draft_rule_version_id: string | null
           duration: string
           evidence: Json
+          feedback_cluster_id: string | null
           human_observation: string
           id: string
           message_id: string | null
@@ -5631,6 +6028,7 @@ export type Database = {
           suggested_change: string
           supersedes_id: string | null
           target_scope: Json
+          target_skill_module_id: string | null
           updated_at: string
           version: number
         }
@@ -5644,6 +6042,7 @@ export type Database = {
           draft_rule_version_id?: string | null
           duration?: string
           evidence?: Json
+          feedback_cluster_id?: string | null
           human_observation: string
           id?: string
           message_id?: string | null
@@ -5661,6 +6060,7 @@ export type Database = {
           suggested_change: string
           supersedes_id?: string | null
           target_scope?: Json
+          target_skill_module_id?: string | null
           updated_at?: string
           version?: number
         }
@@ -5674,6 +6074,7 @@ export type Database = {
           draft_rule_version_id?: string | null
           duration?: string
           evidence?: Json
+          feedback_cluster_id?: string | null
           human_observation?: string
           id?: string
           message_id?: string | null
@@ -5691,6 +6092,7 @@ export type Database = {
           suggested_change?: string
           supersedes_id?: string | null
           target_scope?: Json
+          target_skill_module_id?: string | null
           updated_at?: string
           version?: number
         }
@@ -11331,6 +11733,7 @@ export type Database = {
         Returns: undefined
       }
       claim_inbound_media: { Args: { p_message_id: string }; Returns: Json }
+      claim_ai_review_run: { Args: { p_run_id: string }; Returns: Json }
       claim_outbound_message: { Args: { p_message_id: string }; Returns: Json }
       claim_platform_push_notifications: {
         Args: { p_limit?: number }
@@ -11372,6 +11775,16 @@ export type Database = {
           p_output_text: string
           p_output_tokens: number
           p_response_id: string
+        }
+        Returns: Json
+      }
+      complete_ai_review_run: {
+        Args: {
+          p_findings: Json
+          p_input_tokens: number
+          p_model_returned: string
+          p_output_tokens: number
+          p_run_id: string
         }
         Returns: Json
       }
@@ -11470,6 +11883,7 @@ export type Database = {
         Args: { p_batch_size?: number }
         Returns: Json
       }
+      enqueue_due_ai_meta_reviews: { Args: never; Returns: number }
       enqueue_pedro_project_media: {
         Args: { p_execution_id: string }
         Returns: number
@@ -11529,6 +11943,10 @@ export type Database = {
           p_error_redacted: string
           p_execution_id: string
         }
+        Returns: undefined
+      }
+      fail_ai_review_run: {
+        Args: { p_error_redacted: string; p_run_id: string }
         Returns: undefined
       }
       fail_outbound_message: {
@@ -11715,6 +12133,10 @@ export type Database = {
         Args: { p_event_type: string; p_ip_hash: string; p_user_id: string }
         Returns: undefined
       }
+      record_ai_low_confidence_signal: {
+        Args: { p_confidence: number; p_execution_id: string }
+        Returns: undefined
+      }
       recover_stalled_inbound_ai: { Args: { p_limit?: number }; Returns: Json }
       register_platform_invitation: {
         Args: {
@@ -11748,6 +12170,10 @@ export type Database = {
           p_execution_id: string
         }
         Returns: boolean
+      }
+      retry_ai_review_run: {
+        Args: { p_error_redacted: string; p_run_id: string }
+        Returns: undefined
       }
       revoke_external_support_access: {
         Args: { p_confirmation: string }
