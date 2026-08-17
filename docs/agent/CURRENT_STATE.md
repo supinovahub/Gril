@@ -2,7 +2,7 @@
 
 ## Atualização de 17/08/2026 — melhoria contínua governada em branch
 
-- A branch local `agent/continuous-improvement-loop`, criada em worktree isolada, preserva `agent/workspace-redesign-real` e os contratos posteriores de desempenho de `fix/workspace-loading-bottlenecks`.
+- A branch `agent/continuous-improvement-loop`, publicada no PR draft #49 a partir de worktree isolada, preserva `agent/workspace-redesign-real` e os contratos posteriores de desempenho de `fix/workspace-loading-bottlenecks`.
 - O código implementa sinais estruturados, agrupamento por meta-revisor, propostas do Lionel, skills versionadas, regressão materializada em jobs e publicação exclusiva pelo dono após 100% dos casos e zero falha crítica. O revisor nunca publica nem altera o prompt central.
 - A migration local é `20260817200000_continuous_improvement_loop.sql`. O dry-run está alinhado com o remoto e lista somente essa migration, mas ela não foi aplicada; produção e Vercel não foram alterados.
 - `npm run lint`, os 112 testes, o build Webpack das 46 rotas e a análise sintática SQL/PLpgSQL passaram. O db lint remoto ficou sem erros e manteve apenas avisos preexistentes. A execução local da migration/pgTAP exige Docker ou Podman, ausentes neste host; a visualização autenticada da nova página permanece pendente. Permanecem somente os três erros `tsc` preexistentes já registrados.

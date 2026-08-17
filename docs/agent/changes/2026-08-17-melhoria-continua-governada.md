@@ -2,7 +2,7 @@
 
 - Data: 17/08/2026
 - Responsável: Codex
-- Branch/PR: `agent/continuous-improvement-loop` / PR pendente
+- Branch/PR: `agent/continuous-improvement-loop` / PR draft #49
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
