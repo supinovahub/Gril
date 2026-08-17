@@ -40,10 +40,17 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     return null;
   }
 
-  const contextResult = await measureServerTask(
+  let contextResult = await measureServerTask(
     "auth.viewer_context",
-    () => supabase.rpc("current_viewer_context_v2"),
+    () => supabase.rpc("current_viewer_context_v3"),
   );
+  if (contextResult.error) {
+    console.warn("Falling back to viewer context v2", contextResult.error.code);
+    contextResult = await measureServerTask(
+      "auth.viewer_context_v2_fallback",
+      () => supabase.rpc("current_viewer_context_v2"),
+    );
+  }
   const context = !contextResult.error && contextResult.data && !Array.isArray(contextResult.data)
     ? contextResult.data as unknown as ViewerContextPayload
     : null;

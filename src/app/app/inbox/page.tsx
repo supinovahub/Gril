@@ -1,8 +1,10 @@
 import { Bot, Inbox, Pause, UserRound } from "lucide-react";
+import { cookies } from "next/headers";
 import Link from "next/link";
+import { redirect } from "next/navigation";
 
 import { NotificationBadge } from "@/components/notification-badge/notification-badge";
-import { requireActiveViewer } from "@/lib/auth/session";
+import type { Database } from "@/lib/database.types";
 import {
   describeInboxNotifications,
   type InboxNotificationCount,
@@ -13,36 +15,51 @@ import { formatOperationDateTime } from "@/lib/time/operation-format";
 import { ConversationViews } from "./conversation-views";
 import styles from "./inbox.module.css";
 
+type InboxConversationRow = Omit<
+  Database["public"]["Views"]["inbox_conversation_list"]["Row"],
+  "org_id"
+>;
+
+type InboxWorkspacePayload = {
+  authenticated: boolean;
+  authorized: boolean;
+  conversations: InboxConversationRow[];
+  memberRole: string | null;
+  operations: Array<{ id: string; timezone: string }>;
+  organizationId: string | null;
+};
+
 export default async function InboxPage() {
-  const viewer = await requireActiveViewer();
   const supabase = await createClient();
-  const { data: conversations, error: conversationsError } = await measureServerTask(
-    "inbox.conversation_list",
-    () => supabase
-      .from("inbox_conversation_list")
-      .select("id,operation_id,status,ownership,ai_mode,last_inbound_at,last_message_preview,updated_at,contact_name,opportunity_id,stage_name,unread_inbound_count,pending_suggestion_count,total_count,has_attention")
-      .eq("org_id", viewer.organization!.id)
-      .order("has_attention", { ascending: false })
-      .order("updated_at", { ascending: false })
-      .order("id")
-      .limit(100),
+  const supportOrgId = (await cookies()).get("gril_support_org")?.value;
+  const workspaceResult = await measureServerTask(
+    "inbox.workspace",
+    () => supabase.rpc("inbox_workspace_bootstrap", {
+      p_limit: 100,
+      ...(supportOrgId ? { p_org_id: supportOrgId } : {}),
+    }),
+    { alwaysLog: true },
   );
 
-  if (conversationsError) {
-    console.error("Failed to load Inbox conversations", conversationsError);
+  if (workspaceResult.error || !workspaceResult.data || Array.isArray(workspaceResult.data)) {
+    console.error("Failed to load Inbox workspace", workspaceResult.error);
     throw new Error("Não foi possível carregar as conversas do Inbox.");
   }
 
-  const orderedConversations = (conversations ?? []).filter((conversation) => (
+  const workspace = workspaceResult.data as unknown as InboxWorkspacePayload;
+  if (!workspace.authenticated) redirect("/login");
+  if (!workspace.authorized || !workspace.organizationId) redirect("/aguardando-aprovacao");
+
+  const orderedConversations = (workspace.conversations ?? []).filter((conversation) => (
     conversation.id && conversation.operation_id && conversation.updated_at
   ));
-  const operationTimezones = new Map(viewer.operations.map((operation) => [operation.id, operation.timezone]));
+  const operationTimezones = new Map(workspace.operations.map((operation) => [operation.id, operation.timezone]));
 
   return (
     <div className={styles.page}>
       <header className={styles.pageHeader}>
         <div><p className={styles.eyebrow}>Atendimento</p><h1>Conversas</h1><p>Mensagens, sugestões e contexto comercial reunidos no mesmo workspace.</p></div>
-        {viewer.membership?.role !== "broker" ? <Link className={styles.secondaryButton} href="/app/configuracoes/whatsapp">Configurar números</Link> : null}
+        {workspace.memberRole !== "broker" ? <Link className={styles.secondaryButton} href="/app/configuracoes/whatsapp">Configurar números</Link> : null}
       </header>
 
       <ConversationViews active="conversations" />
