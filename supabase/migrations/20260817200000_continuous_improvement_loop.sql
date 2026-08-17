@@ -608,7 +608,7 @@ returns uuid language plpgsql security definer set search_path=pg_catalog as $$
 declare v_run uuid;v_model uuid;v_count integer;
 begin
   select id into v_model from public.model_profiles
-  where org_id=p_org_id and status='active'
+  where org_id=p_org_id and status='active' and integration_account_id is not null
   order by is_default desc,case workload_role when 'quality' then 0 when 'balanced' then 1 else 2 end,created_at
   limit 1;
   if v_model is null then raise exception 'meta_review_model_required' using errcode='22023'; end if;
@@ -667,14 +667,19 @@ begin
       order by membership.created_at limit 1
     ) owner_membership on true
     where signal.status='new'
-      and exists(select 1 from public.model_profiles model where model.org_id=signal.org_id and model.status='active')
+      and exists(select 1 from public.model_profiles model where model.org_id=signal.org_id
+        and model.status='active' and model.integration_account_id is not null)
       and not exists(select 1 from public.ai_review_runs run where run.org_id=signal.org_id
         and (run.status in ('queued','running') or run.created_at>now()-interval '24 hours'))
     group by signal.org_id,owner_membership.user_id
     having count(*)>=3
   loop
-    perform private.create_ai_review_run(v_target.org_id,'automatic',v_target.user_id);
-    v_count:=v_count+1;
+    begin
+      perform private.create_ai_review_run(v_target.org_id,'automatic',v_target.user_id);
+      v_count:=v_count+1;
+    exception when unique_violation then
+      null;
+    end;
   end loop;
   return v_count;
 end; $$;
@@ -810,6 +815,10 @@ begin
       confidence=greatest(public.ai_feedback_clusters.confidence,excluded.confidence),
       observed_pattern=excluded.observed_pattern,proposed_change=excluded.proposed_change,
       target_skill_code=coalesce(excluded.target_skill_code,public.ai_feedback_clusters.target_skill_code),
+      status=case when public.ai_feedback_clusters.status in ('resolved','ignored') then 'open'
+        else public.ai_feedback_clusters.status end,
+      learning_suggestion_id=case when public.ai_feedback_clusters.status in ('resolved','ignored') then null
+        else public.ai_feedback_clusters.learning_suggestion_id end,
       last_review_run_id=excluded.last_review_run_id,updated_at=now()
     returning id,learning_suggestion_id into v_cluster,v_learning;
 

@@ -1,7 +1,7 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(14);
+select extensions.plan(15);
 
 select extensions.ok(
   to_regclass('public.ai_feedback_signals') is not null
@@ -100,6 +100,11 @@ select extensions.ok(
     and indexname='ai_review_runs_one_active_idx' and indexdef ilike '%unique%')
   and position('never publish' in lower(obj_description('public.ai_review_runs'::regclass)))>0,
   'only one reviewer runs per tenant and its contract forbids publication'
+);
+
+select extensions.ok(
+  position('status in (''resolved'', ''ignored'')' in pg_get_functiondef('public.complete_ai_review_run(uuid,jsonb,text,integer,integer)'::regprocedure))>0,
+  'a recurring pattern reopens a fresh human decision instead of being silently ignored'
 );
 
 select * from extensions.finish();
