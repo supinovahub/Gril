@@ -9,11 +9,11 @@ import { formatOperationDateTime } from "@/lib/time/operation-format";
 import styles from "../../operations.module.css";
 
 const PAGE_SIZE = 30;
-const QUERY_LIMIT = 250;
 
 type AuditWorkspacePayload = {
   authorized: boolean;
   events: Database["public"]["Functions"]["list_audit_events"]["Returns"];
+  totalCount: number;
 };
 
 function positivePage(value: string | undefined) {
@@ -27,11 +27,14 @@ export default async function AuditPage({
   searchParams: Promise<{ pagina?: string }>;
 }) {
   const supabase = await createClient();
-  const [viewer, query, { data, error }] = await Promise.all([
-    requireActiveViewer(),
-    searchParams,
-    measureServerTask("audit.bootstrap", () => supabase.rpc("audit_workspace_bootstrap", {
-      p_limit: QUERY_LIMIT,
+  const viewerPromise = requireActiveViewer();
+  const query = await searchParams;
+  const requestedPage = positivePage(query.pagina);
+  const [viewer, { data, error }] = await Promise.all([
+    viewerPromise,
+    measureServerTask("audit.bootstrap", () => supabase.rpc("audit_workspace_page", {
+      p_page: requestedPage,
+      p_page_size: PAGE_SIZE,
     })),
   ]);
   const allowed = viewer.membership?.role === "owner"
@@ -43,11 +46,17 @@ export default async function AuditPage({
   }
 
   const operation = viewer.operations.find((item) => item.is_default) ?? viewer.operations[0];
-  const payload = (data ?? {}) as unknown as AuditWorkspacePayload;
+  let payload = (data ?? {}) as unknown as AuditWorkspacePayload;
+  const pageCount = Math.max(1, Math.ceil((payload.totalCount ?? 0) / PAGE_SIZE));
+  const currentPage = Math.min(requestedPage, pageCount);
+  if (!error && currentPage !== requestedPage) {
+    const correctedResult = await measureServerTask("audit.bootstrap.corrected_page", () => (
+      supabase.rpc("audit_workspace_page", { p_page: currentPage, p_page_size: PAGE_SIZE })
+    ));
+    if (!correctedResult.error) payload = correctedResult.data as unknown as AuditWorkspacePayload;
+  }
   const allEvents = payload.events ?? [];
-  const pageCount = Math.max(1, Math.ceil(allEvents.length / PAGE_SIZE));
-  const currentPage = Math.min(positivePage(query.pagina), pageCount);
-  const visibleEvents = allEvents.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
+  const visibleEvents = allEvents;
   const auditHref = (page: number) => page > 1
     ? `/app/configuracoes/auditoria?pagina=${page}`
     : "/app/configuracoes/auditoria";
@@ -85,7 +94,7 @@ export default async function AuditPage({
 
         {!visibleEvents.length && !error ? <p className={styles.empty}>Nenhum evento visível.</p> : null}
 
-        {allEvents.length ? (
+        {(payload.totalCount ?? 0) > 0 ? (
           <footer className={styles.centralPagination}>
             <span>Página {currentPage} de {pageCount}</span>
             <div>

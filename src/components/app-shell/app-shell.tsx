@@ -21,12 +21,11 @@ import {
 import Link from "next/link";
 
 import { signOutAction } from "@/app/(auth)/actions";
-import { NotificationBadge } from "@/components/notification-badge/notification-badge";
 import { canManageTeam, roleLabels, type Viewer } from "@/lib/auth/session";
-import type { WorkspaceNavigationCounts } from "@/lib/navigation/counts";
 import styles from "./app-shell.module.css";
 import { NavGroup } from "./nav-group";
 import { NavLink } from "./nav-link";
+import { NavigationCountBadge, NavigationCountsProvider } from "./navigation-counts-provider";
 import { RealtimeRefreshLazy } from "./realtime-refresh-lazy";
 
 function initials(name: string | undefined, email: string) {
@@ -39,40 +38,10 @@ function initials(name: string | undefined, email: string) {
     .join("");
 }
 
-function InboxNavigationBadge({ count, mobile }: { count: number; mobile?: boolean }) {
-  return (
-    <NotificationBadge
-      className={mobile ? styles.mobileNotificationBadge : styles.navNotificationBadge}
-      count={count}
-      label={`${count} ${count === 1 ? "conversa com notificação" : "conversas com notificações"}`}
-    />
-  );
-}
-
-function InternalNavigationBadge({
-  count,
-  kind,
-  mobile,
-}: {
-  count: number;
-  kind: "broker" | "central";
-  mobile?: boolean;
-}) {
-  return (
-    <NotificationBadge
-      className={mobile ? styles.mobileNotificationBadge : styles.navNotificationBadge}
-      count={count}
-      label={kind === "broker" ? `${count} consultas pendentes` : `${count} registros internos pendentes`}
-    />
-  );
-}
-
 export function AppShell({
-  navigationCounts,
   viewer,
   children,
 }: {
-  navigationCounts: WorkspaceNavigationCounts;
   viewer: Viewer;
   children: React.ReactNode;
 }) {
@@ -91,10 +60,9 @@ export function AppShell({
     : process.env.VERCEL_ENV === "development" || !process.env.VERCEL_ENV
       ? "Desenvolvimento local · banco remoto"
       : null;
-  const internalCentralCount = navigationCounts.pedro + navigationCounts.lionel;
-
   return (
-    <div className={`${styles.appFrame}${environmentLabel ? ` ${styles.hasEnvironment}` : ""}`}>
+    <NavigationCountsProvider>
+      <div className={`${styles.appFrame}${environmentLabel ? ` ${styles.hasEnvironment}` : ""}`}>
       {environmentLabel ? (
         <div className={styles.environmentBar}>
           <span aria-hidden="true" /> {environmentLabel}
@@ -136,12 +104,12 @@ export function AppShell({
           ) : null}
           <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/inbox">
             <MessagesSquare size={17} aria-hidden="true" /><span>Conversas</span>
-            <InboxNavigationBadge count={navigationCounts.inbox} />
+            <NavigationCountBadge kind="inbox" />
           </NavLink>
           {memberRole === "broker" ? (
             <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/assistente-corretor">
               <MessageSquareText size={17} aria-hidden="true" /><span>Assistente do corretor</span>
-              <InternalNavigationBadge count={navigationCounts.broker} kind="broker" />
+              <NavigationCountBadge kind="broker" />
             </NavLink>
           ) : null}
           <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/agenda">
@@ -149,7 +117,7 @@ export function AppShell({
           </NavLink>
           <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/central">
             <Activity size={17} aria-hidden="true" /><span>Central</span>
-            <InternalNavigationBadge count={internalCentralCount} kind="central" />
+            <NavigationCountBadge kind="central" />
           </NavLink>
           {canManageCampaigns ? (
             <NavLink activeClassName={styles.navItemActive} className={styles.navItem} href="/app/campanhas">
@@ -238,7 +206,7 @@ export function AppShell({
         <NavLink activeClassName={styles.mobileNavActive} className={styles.mobileNavItem} href="/app/inbox">
           <span className={styles.mobileNavIcon}>
             <MessagesSquare aria-hidden="true" size={19} />
-            <InboxNavigationBadge count={navigationCounts.inbox} mobile />
+            <NavigationCountBadge kind="inbox" mobile />
           </span>
           <span>Conversas</span>
         </NavLink>
@@ -248,7 +216,7 @@ export function AppShell({
         <NavLink activeClassName={styles.mobileNavActive} className={styles.mobileNavItem} href="/app/central">
           <span className={styles.mobileNavIcon}>
             <Activity aria-hidden="true" size={19} />
-            <InternalNavigationBadge count={internalCentralCount} kind="central" mobile />
+            <NavigationCountBadge kind="central" mobile />
           </span>
           <span>Central</span>
         </NavLink>
@@ -277,6 +245,7 @@ export function AppShell({
           </div>
         </details>
       </nav>
-    </div>
+      </div>
+    </NavigationCountsProvider>
   );
 }

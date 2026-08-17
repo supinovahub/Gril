@@ -64,10 +64,11 @@ type CampaignRow = DatabaseSchema["public"]["Tables"]["campaigns"]["Row"] & {
     "name" | "phone_e164" | "provider"
   > | null;
 };
-type CampaignContactRow = Pick<
-  DatabaseSchema["public"]["Tables"]["campaign_contacts"]["Row"],
-  "campaign_id" | "id" | "status"
-> & { contacts: { name: string } };
+type CampaignContactStat = {
+  campaign_id: string;
+  count: number;
+  status: string;
+};
 type CampaignImportRow = Pick<
   DatabaseSchema["public"]["Tables"]["campaign_imports"]["Row"],
   "campaign_id" | "created_at" | "duplicate_rows" | "error_rows" | "file_sha256" | "id" | "mapping" | "status" | "total_rows" | "valid_rows"
@@ -87,7 +88,7 @@ type CampaignWorkspacePayload = {
     DatabaseSchema["public"]["Tables"]["whatsapp_connections"]["Row"],
     "id" | "name" | "phone_e164" | "provider"
   >>;
-  contacts: CampaignContactRow[];
+  contactStats: CampaignContactStat[];
   imports: CampaignImportRow[];
   importIssues: CampaignImportIssueRow[];
   waves: CampaignWaveRow[];
@@ -107,7 +108,7 @@ export default async function CampaignsPage({
   const showingArchived = feedback.arquivadas === "1";
   const [, { data, error }] = await Promise.all([
     viewerPromise,
-    measureServerTask("campaigns.bootstrap", () => supabase.rpc("campaigns_workspace_bootstrap", {
+    measureServerTask("campaigns.bootstrap", () => supabase.rpc("campaigns_workspace_bootstrap_v2", {
       p_archived: showingArchived,
     })),
   ]);
@@ -116,7 +117,7 @@ export default async function CampaignsPage({
   const {
     campaigns = [],
     connections = [],
-    contacts = [],
+    contactStats = [],
     imports = [],
     importIssues = [],
     waves = [],
@@ -125,11 +126,15 @@ export default async function CampaignsPage({
 
   const visibleCampaigns = (campaigns ?? []).filter((campaign) => belongsToCampaignView(campaign, showingArchived));
   const visibleCampaignIds = new Set(visibleCampaigns.map((campaign) => campaign.id));
-  const visibleContacts = (contacts ?? []).filter((contact) => visibleCampaignIds.has(contact.campaign_id));
+  const visibleContactStats = contactStats.filter((stat) => visibleCampaignIds.has(stat.campaign_id));
   const runningCampaigns = visibleCampaigns.filter((campaign) => campaign.status === "running").length;
   const campaignsInPreparation = visibleCampaigns.filter((campaign) => ["draft", "importing", "review"].includes(campaign.status)).length;
-  const readyContacts = visibleContacts.filter((contact) => contact.status === "ready").length;
-  const queuedContacts = visibleContacts.filter((contact) => contact.status === "queued").length;
+  const readyContacts = visibleContactStats
+    .filter((stat) => stat.status === "ready")
+    .reduce((total, stat) => total + stat.count, 0);
+  const queuedContacts = visibleContactStats
+    .filter((stat) => stat.status === "queued")
+    .reduce((total, stat) => total + stat.count, 0);
 
   return (
     <div className={styles.page}>
@@ -190,9 +195,9 @@ export default async function CampaignsPage({
         </div>
 
         {visibleCampaigns.map((campaign) => {
-          const campaignContacts = (contacts ?? []).filter((item) => item.campaign_id === campaign.id);
+          const campaignContacts = contactStats.filter((item) => item.campaign_id === campaign.id);
           const stats = campaignContacts.reduce<Record<string, number>>((acc, item) => {
-            acc[item.status] = (acc[item.status] ?? 0) + 1;
+            acc[item.status] = (acc[item.status] ?? 0) + item.count;
             return acc;
           }, {});
           const latestImport = (imports ?? []).find((item) => item.campaign_id === campaign.id);

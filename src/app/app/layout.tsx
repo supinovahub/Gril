@@ -1,19 +1,15 @@
 import { AppShell } from "@/components/app-shell/app-shell";
 import { requireActiveViewer } from "@/lib/auth/session";
-import { getWorkspaceNavigationCounts } from "@/lib/navigation/counts";
 
 export default async function ApplicationLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const [viewer, navigationCounts] = await Promise.all([
-    requireActiveViewer(),
-    getWorkspaceNavigationCounts(),
-  ]);
+  const viewer = await requireActiveViewer();
 
   return (
-    <AppShell navigationCounts={navigationCounts} viewer={viewer}>
+    <AppShell viewer={viewer}>
       {children}
     </AppShell>
   );
