@@ -1,7 +1,7 @@
 import { Bot, BrainCircuit, CheckCircle2, CircleDashed, KeyRound, RefreshCw, ShieldCheck, Sparkles, Trash2 } from "lucide-react";
-import Link from "next/link";
 
 import { retestIntegrationAction, revokeIntegrationAction } from "@/app/app/integration-actions";
+import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { addAiTestNumberAction, addPersonaSampleAction, changeGlobalAiModeAction, clonePersonaAction, configureFallbackModelAction, configureModelAction, configureReactivationAiAction, connectOpenAiAction, createPersonaDraftAction, publishPersonaAction, removeAiTestNumberAction } from "./actions";

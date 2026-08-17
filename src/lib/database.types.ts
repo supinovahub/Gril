@@ -11686,6 +11686,10 @@ export type Database = {
       }
     }
     Functions: {
+      learnings_workspace_bootstrap: {
+        Args: { p_org_id?: string | null }
+        Returns: Json
+      }
       agenda_workspace_bootstrap: {
         Args: { p_org_id?: string }
         Returns: Json

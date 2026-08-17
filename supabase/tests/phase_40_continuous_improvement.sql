@@ -1,7 +1,16 @@
 begin;
 
 create extension if not exists pgtap with schema extensions;
-select extensions.plan(15);
+select extensions.plan(16);
+
+select extensions.ok(
+  position('assisted_suggestion' in pg_get_constraintdef(
+    (select oid from pg_constraint
+     where conrelid='public.internal_threads'::regclass
+       and conname='internal_threads_source_check')
+  ))>0,
+  'continuous improvement preserves assisted suggestion threads'
+);
 
 select extensions.ok(
   to_regclass('public.ai_feedback_signals') is not null

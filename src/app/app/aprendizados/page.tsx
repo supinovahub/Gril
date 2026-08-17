@@ -8,6 +8,8 @@ import {
 } from "lucide-react";
 
 import { requireActiveViewer } from "@/lib/auth/session";
+import type { Tables } from "@/lib/database.types";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import {
   createLearningAction,
@@ -19,6 +21,38 @@ import styles from "../operations.module.css";
 import learningStyles from "./learnings.module.css";
 
 const reviewableStatuses = new Set(["new", "reviewing", "conflict"]);
+
+type LearningsWorkspacePayload = {
+  authorized: boolean;
+  newSignalCount: number;
+  activeCaseCount: number;
+  suggestions: Array<Pick<Tables<"learning_suggestions">,
+    "id" | "source" | "observed_response" | "human_observation" | "suggested_change" |
+    "scope" | "status" | "candidate_kind" | "conflict_details" | "target_skill_module_id" |
+    "feedback_cluster_id" | "draft_rule_version_id" | "created_at"
+  >>;
+  runs: Array<Pick<Tables<"regression_runs">,
+    "id" | "rule_version_id" | "status" | "total_cases" | "passed_cases" |
+    "critical_failures" | "created_at"
+  >>;
+  clusters: Array<Pick<Tables<"ai_feedback_clusters">,
+    "id" | "title" | "failure_family" | "root_cause_layer" | "severity" | "confidence" |
+    "status" | "observed_pattern" | "proposed_change" | "target_skill_code" |
+    "target_skill_module_id" | "occurrence_count" | "evidence_count" | "last_seen_at"
+  >>;
+  modules: Array<Pick<Tables<"ai_skill_modules">,
+    "id" | "code" | "name" | "category" | "description" | "status" | "created_at"
+  >>;
+  skillVersions: Array<Pick<Tables<"ai_skill_versions">,
+    "id" | "module_id" | "version" | "status" | "instructions" | "trigger_config" |
+    "created_at" | "published_at"
+  >>;
+  drafts: Array<Pick<Tables<"rule_versions">, "id" | "version" | "status" | "created_at">>;
+  reviewRuns: Array<Pick<Tables<"ai_review_runs">,
+    "id" | "source" | "status" | "signal_count" | "finding_count" | "model_returned" |
+    "error_redacted" | "created_at" | "completed_at"
+  >>;
+};
 
 const statusLabels: Record<string, string> = {
   new: "Aguardando revisão",
@@ -63,78 +97,32 @@ export default async function LearningsPage({
 }: {
   searchParams: Promise<{ erro?: string; sucesso?: string }>;
 }) {
-  const viewer = await requireActiveViewer();
-  const feedback = await searchParams;
-  const supabase = await createClient();
-  const orgId = viewer.organization!.id;
-  const [
-    suggestionsResult,
-    casesResult,
-    runsResult,
-    signalsResult,
-    clustersResult,
-    modulesResult,
-    skillVersionsResult,
-    ruleVersionsResult,
-    reviewRunsResult,
-  ] = await Promise.all([
-    supabase.from("learning_suggestions")
-      .select("id,source,observed_response,human_observation,suggested_change,scope,status,candidate_kind,conflict_details,target_skill_module_id,feedback_cluster_id,draft_rule_version_id,created_at")
-      .eq("org_id", orgId)
-      .order("created_at", { ascending: false })
-      .limit(80),
-    supabase.from("regression_cases")
-      .select("id,title,severity,source,active")
-      .eq("org_id", orgId)
-      .order("created_at", { ascending: false })
-      .limit(100),
-    supabase.from("regression_runs")
-      .select("id,rule_version_id,status,total_cases,passed_cases,critical_failures,created_at")
-      .eq("org_id", orgId)
-      .order("created_at", { ascending: false })
-      .limit(30),
-    supabase.from("ai_feedback_signals")
-      .select("id,status,severity,signal_type,occurred_at")
-      .eq("org_id", orgId)
-      .order("occurred_at", { ascending: false })
-      .limit(200),
-    supabase.from("ai_feedback_clusters")
-      .select("id,title,failure_family,root_cause_layer,severity,confidence,status,observed_pattern,proposed_change,target_skill_code,target_skill_module_id,occurrence_count,evidence_count,last_seen_at")
-      .eq("org_id", orgId)
-      .order("last_seen_at", { ascending: false })
-      .limit(50),
-    supabase.from("ai_skill_modules")
-      .select("id,code,name,category,description,status,created_at")
-      .eq("org_id", orgId)
-      .order("name"),
-    supabase.from("ai_skill_versions")
-      .select("id,module_id,version,status,instructions,trigger_config,created_at,published_at")
-      .eq("org_id", orgId)
-      .order("version", { ascending: false }),
-    supabase.from("rule_versions")
-      .select("id,version,status,created_at")
-      .eq("org_id", orgId)
-      .in("status", ["draft", "published"])
-      .order("version", { ascending: false }),
-    supabase.from("ai_review_runs")
-      .select("id,source,status,signal_count,finding_count,model_returned,error_redacted,created_at,completed_at")
-      .eq("org_id", orgId)
-      .order("created_at", { ascending: false })
-      .limit(12),
+  const workspacePromise = (async () => {
+    const supabase = await createClient();
+    return measureServerTask(
+      "learnings.workspace",
+      () => supabase.rpc("learnings_workspace_bootstrap", {}),
+    );
+  })();
+  const [viewer, feedback, workspaceResult] = await Promise.all([
+    requireActiveViewer(),
+    searchParams,
+    workspacePromise,
   ]);
-
-  const suggestions = suggestionsResult.data ?? [];
-  const cases = casesResult.data ?? [];
-  const runs = runsResult.data ?? [];
-  const signals = signalsResult.data ?? [];
-  const clusters = clustersResult.data ?? [];
-  const modules = modulesResult.data ?? [];
-  const skillVersions = skillVersionsResult.data ?? [];
-  const ruleVersions = ruleVersionsResult.data ?? [];
-  const reviewRuns = reviewRunsResult.data ?? [];
+  if (workspaceResult.error) {
+    console.error("Failed to load Learnings workspace", workspaceResult.error);
+    throw new Error("Unable to load the learnings workspace.");
+  }
+  const workspace = workspaceResult.data as unknown as LearningsWorkspacePayload;
+  const suggestions = workspace.suggestions ?? [];
+  const runs = workspace.runs ?? [];
+  const clusters = workspace.clusters ?? [];
+  const modules = workspace.modules ?? [];
+  const skillVersions = workspace.skillVersions ?? [];
+  const drafts = workspace.drafts ?? [];
+  const reviewRuns = workspace.reviewRuns ?? [];
   const pendingSuggestions = suggestions.filter((item) => reviewableStatuses.has(item.status));
   const openClusters = clusters.filter((item) => ["open", "reviewing"].includes(item.status));
-  const newSignals = signals.filter((item) => item.status === "new");
   const activeModules = modules.filter((item) => item.status === "active");
   const clusterById = new Map(clusters.map((cluster) => [cluster.id, cluster]));
   const latestSkillByModule = new Map<string, (typeof skillVersions)[number]>();
@@ -145,7 +133,6 @@ export default async function LearningsPage({
   for (const run of runs) {
     if (!latestRunByRule.has(run.rule_version_id)) latestRunByRule.set(run.rule_version_id, run);
   }
-  const drafts = ruleVersions.filter((item) => item.status === "draft");
   const canPublish = viewer.membership?.role === "owner";
 
   return (
@@ -157,7 +144,7 @@ export default async function LearningsPage({
           <p>O sistema encontra padrões, Lionel prepara propostas e a equipe decide. Nada muda o Pedro sozinho.</p>
         </div>
         <form action={requestMetaReviewAction}>
-          <button className={learningStyles.primaryAction} disabled={newSignals.length === 0} type="submit">
+          <button className={learningStyles.primaryAction} disabled={workspace.newSignalCount === 0} type="submit">
             <Play size={14} /> Analisar novos casos
           </button>
         </form>
@@ -167,7 +154,7 @@ export default async function LearningsPage({
       {feedback.sucesso ? <p className={styles.success}>Alteração registrada: {feedback.sucesso.replaceAll("-", " ")}.</p> : null}
 
       <section className={styles.metrics} aria-label="Resumo da melhoria contínua">
-        <article className={styles.metric}><small>Casos novos</small><strong>{newSignals.length}</strong></article>
+        <article className={styles.metric}><small>Casos novos</small><strong>{workspace.newSignalCount}</strong></article>
         <article className={styles.metric}><small>Padrões em análise</small><strong>{openClusters.length}</strong></article>
         <article className={styles.metric}><small>Decisões pendentes</small><strong>{pendingSuggestions.length}</strong></article>
         <article className={styles.metric}><small>Skills ativas</small><strong>{activeModules.length}</strong></article>
@@ -320,7 +307,7 @@ export default async function LearningsPage({
                 <tbody>{runs.slice(0, 10).map((run) => <tr key={run.id}><td>{formatDate(run.created_at)}</td><td>{statusLabels[run.status] ?? run.status}</td><td>{run.passed_cases}/{run.total_cases}</td><td>{run.critical_failures}</td></tr>)}</tbody>
               </table>
             </div>
-            <p className={styles.definition}>{cases.filter((item) => item.active).length} casos ativos. Publicação exige todos aprovados e nenhuma falha crítica.</p>
+            <p className={styles.definition}>{workspace.activeCaseCount} casos ativos. Publicação exige todos aprovados e nenhuma falha crítica.</p>
           </section>
         </main>
 

@@ -210,7 +210,7 @@ alter table public.learning_review_requests
 
 alter table public.internal_threads drop constraint if exists internal_threads_source_check;
 alter table public.internal_threads add constraint internal_threads_source_check
-  check (source in ('manual','escalation','assisted_correction','external_device','post_call','runtime_failure','meta_review'));
+  check (source in ('manual','escalation','assisted_correction','assisted_suggestion','external_device','post_call','runtime_failure','meta_review'));
 
 create trigger ai_skill_modules_set_updated_at before update on public.ai_skill_modules
 for each row execute function private.set_updated_at();
