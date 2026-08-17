@@ -1,7 +1,7 @@
 "use client";
 
 import { usePathname, useRouter } from "next/navigation";
-import { useEffect, useMemo } from "react";
+import { startTransition, useEffect, useMemo } from "react";
 
 import { createClient } from "@/lib/supabase/client";
 
@@ -11,10 +11,18 @@ type RealtimeTable =
   | "ai_suggestions"
   | "conversation_read_states"
   | "alerts"
+  | "escalations"
+  | "notifications"
+  | "integration_health_checks"
   | "calls"
   | "call_offers"
   | "campaigns"
   | "campaign_waves"
+  | "opportunities"
+  | "opportunity_scores"
+  | "pipeline_stages"
+  | "contacts"
+  | "contact_phones"
   | "internal_threads"
   | "internal_messages";
 
@@ -29,7 +37,7 @@ const routeTables: Array<{ prefixes: string[]; tables: RealtimeTable[] }> = [
   },
   {
     prefixes: ["/app/central"],
-    tables: ["alerts", "calls", "call_offers", "campaigns", "campaign_waves", "messages", "conversations"],
+    tables: ["alerts", "escalations", "notifications", "integration_health_checks", "calls", "campaigns", "internal_threads"],
   },
   {
     prefixes: ["/app/agenda"],
@@ -41,7 +49,7 @@ const routeTables: Array<{ prefixes: string[]; tables: RealtimeTable[] }> = [
   },
   {
     prefixes: ["/app/kanban", "/app/leads", "/app/meu-pipeline", "/app/hoje"],
-    tables: ["messages", "conversations", "calls", "call_offers"],
+    tables: ["opportunities", "opportunity_scores", "pipeline_stages", "contacts", "contact_phones", "calls"],
   },
 ];
 
@@ -59,18 +67,36 @@ export function RealtimeRefresh({ orgId }: { orgId: string }) {
 
     const supabase = createClient();
     let timer: ReturnType<typeof setTimeout> | undefined;
-    const channel = supabase.channel(`app-refresh:${orgId}`);
+    let pendingWhileHidden = false;
+    const refresh = () => {
+      if (document.visibilityState !== "visible") {
+        pendingWhileHidden = true;
+        return;
+      }
+      pendingWhileHidden = false;
+      startTransition(() => router.refresh());
+    };
+    const scheduleRefresh = () => {
+      clearTimeout(timer);
+      timer = setTimeout(refresh, 800);
+    };
+    const handleVisibility = () => {
+      if (document.visibilityState === "visible" && pendingWhileHidden) scheduleRefresh();
+    };
+    const channel = supabase.channel(`app-refresh:${orgId}:${pathname}`);
     for (const table of tables) {
       channel.on("postgres_changes", { event: "*", schema: "public", table, filter: `org_id=eq.${orgId}` }, () => {
-        clearTimeout(timer);
-        timer = setTimeout(() => {
-          if (document.visibilityState === "visible") router.refresh();
-        }, 300);
+        scheduleRefresh();
       });
     }
     channel.subscribe();
-    return () => { clearTimeout(timer); void supabase.removeChannel(channel); };
-  }, [orgId, router, tables]);
+    document.addEventListener("visibilitychange", handleVisibility);
+    return () => {
+      clearTimeout(timer);
+      document.removeEventListener("visibilitychange", handleVisibility);
+      void supabase.removeChannel(channel);
+    };
+  }, [orgId, pathname, router, tables]);
 
   return null;
 }

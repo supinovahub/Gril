@@ -2,6 +2,7 @@ import { CircleDot, Search, UserRoundPlus } from "lucide-react";
 import Link from "next/link";
 
 import { requireActiveViewer } from "@/lib/auth/session";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import { ConversationViews } from "../inbox/conversation-views";
 import { LeadForm } from "./lead-form";
@@ -25,28 +26,35 @@ export default async function LeadsPage({
   const showingArchived = arquivados === "1";
   const supabase = await createClient();
   let query = supabase
-    .from("opportunities")
-    .select("id, status, source, version, last_activity_at, assigned_membership_id, contacts!inner(id,name,status,contact_phones(e164,is_primary,status)), pipeline_stages!inner(name,code,position)")
+    .from("lead_list")
+    .select("id,status,source,version,last_activity_at,assigned_membership_id,contact_id,contact_name,contact_status,primary_phone,stage_name,stage_code,stage_position")
     .eq("org_id", viewer.organization!.id)
-    .eq("contacts.status", showingArchived ? "archived" : "active")
+    .eq("contact_status", showingArchived ? "archived" : "active")
     .order("last_activity_at", { ascending: false })
     .limit(100);
 
-  if (q?.trim()) query = query.ilike("contacts.name", `%${q.trim()}%`);
+  if (q?.trim()) query = query.ilike("contact_name", `%${q.trim()}%`);
 
   const [{ data: opportunities }, { data: memberships }, { data: campaigns }] = await Promise.all([
-    query,
-    supabase
-      .from("memberships")
-      .select("id, role")
-      .eq("org_id", viewer.organization!.id)
-      .eq("status", "active"),
-    supabase.from("campaigns").select("id,name").eq("org_id", viewer.organization!.id).in("status", ["draft", "pending_approval", "approved", "paused"]).order("created_at", { ascending: false }),
+    measureServerTask("leads.opportunity_list", () => query),
+    measureServerTask(
+      "leads.memberships",
+      () => supabase
+        .from("memberships")
+        .select("id, role")
+        .eq("org_id", viewer.organization!.id)
+        .eq("status", "active"),
+    ),
+    measureServerTask(
+      "leads.campaigns",
+      () => supabase.from("campaigns").select("id,name").eq("org_id", viewer.organization!.id).in("status", ["draft", "pending_approval", "approved", "paused"]).order("created_at", { ascending: false }),
+    ),
   ]);
-  const contacts = Array.from(new Map((opportunities ?? []).map((opportunity)=>{
-    const contact = Array.isArray(opportunity.contacts) ? opportunity.contacts[0] : opportunity.contacts;
-    return contact ? [contact.id, { id: contact.id, name: contact.name }] : ["", null];
-  }).filter((entry): entry is [string,{id:string;name:string}]=>Boolean(entry[0] && entry[1]))).values());
+  const contacts = Array.from(new Map((opportunities ?? []).flatMap((opportunity) => (
+    opportunity.contact_id && opportunity.contact_name
+      ? [[opportunity.contact_id, { id: opportunity.contact_id, name: opportunity.contact_name }] as const]
+      : []
+  ))).values());
 
   return (
     <div className={styles.page}>
@@ -82,22 +90,15 @@ export default async function LeadsPage({
 
           <div className={styles.leadList}>
             {opportunities?.map((opportunity) => {
-              const contact = Array.isArray(opportunity.contacts) ? opportunity.contacts[0] : opportunity.contacts;
-              const stage = Array.isArray(opportunity.pipeline_stages) ? opportunity.pipeline_stages[0] : opportunity.pipeline_stages;
-              const phones = (contact?.contact_phones ?? []) as Array<{
-                e164: string;
-                is_primary: boolean;
-                status: string;
-              }>;
-              const phone = phones.find((item) => item.is_primary && item.status === "active")?.e164;
+              if (!opportunity.id || !opportunity.last_activity_at) return null;
               return (
                 <Link className={styles.leadRow} href={`/app/leads/${opportunity.id}`} key={opportunity.id} prefetch={false}>
-                  <span className={styles.leadAvatar}>{contact?.name?.slice(0, 1).toUpperCase() ?? "?"}</span>
+                  <span className={styles.leadAvatar}>{opportunity.contact_name?.slice(0, 1).toUpperCase() ?? "?"}</span>
                   <span className={styles.leadIdentity}>
-                    <strong>{contact?.name ?? "Contato"}</strong>
-                    <small>{phone ?? "Sem telefone visível"} · {sourceLabel(opportunity.source)}</small>
+                    <strong>{opportunity.contact_name ?? "Contato"}</strong>
+                    <small>{opportunity.primary_phone ?? "Sem telefone visível"} · {sourceLabel(opportunity.source ?? "")}</small>
                   </span>
-                  <span className={styles.stagePill}><CircleDot size={13} /> {stage?.name ?? opportunity.status}</span>
+                  <span className={styles.stagePill}><CircleDot size={13} /> {opportunity.stage_name ?? opportunity.status}</span>
                   <time>{new Intl.DateTimeFormat("pt-BR", { dateStyle: "short", timeStyle: "short" }).format(new Date(opportunity.last_activity_at))}</time>
                 </Link>
               );

@@ -5,6 +5,7 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 
 import type { Tables } from "@/lib/database.types";
+import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 
 export type Viewer = {
@@ -20,6 +21,16 @@ export type Viewer = {
   accessBlock: { type: string; message: string | null } | null;
 };
 
+type ViewerContextPayload = {
+  access_block: { message: string | null; type: string } | null;
+  membership: Tables<"memberships"> | null;
+  operations: Tables<"operations">[];
+  organization: Tables<"organizations"> | null;
+  permissions: string[];
+  platform_role: string | null;
+  profile: Tables<"profiles"> | null;
+};
+
 export const getViewer = cache(async (): Promise<Viewer | null> => {
   const supabase = await createClient();
   const { data: claimsData, error: claimsError } = await supabase.auth.getClaims();
@@ -29,38 +40,47 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
     return null;
   }
 
-  const [{ data: profile }, { data: memberships }, { data: platformContext }, { data: accessBlocks }] = await Promise.all([
-    supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
-    supabase
-      .from("memberships")
-      .select("*")
-      .eq("user_id", userId)
-      .order("created_at", { ascending: true }),
-    supabase.rpc("current_platform_context"),
-    supabase.rpc("current_access_block"),
-  ]);
-
-  const platformRole = (platformContext?.[0]?.role === "platform_admin" || platformContext?.[0]?.role === "support")
-    ? platformContext[0].role
-    : null;
-  const accessBlock = accessBlocks?.[0]
-    ? { type: accessBlocks[0].block_type, message: accessBlocks[0].public_message }
+  const contextResult = await measureServerTask(
+    "auth.viewer_context",
+    () => supabase.rpc("current_viewer_context_v2"),
+  );
+  const context = !contextResult.error && contextResult.data && !Array.isArray(contextResult.data)
+    ? contextResult.data as unknown as ViewerContextPayload
     : null;
 
-  const membership =
-    memberships?.find((item) => item.status === "active") ??
-    memberships?.find((item) => item.status === "pending") ??
-    memberships?.[0] ??
-    null;
-
-  let organization: Tables<"organizations"> | null = null;
-  let operations: Tables<"operations">[] = [];
-  let permissions: string[] = [];
+  let profile = context?.profile ?? null;
+  let membership = context?.membership ?? null;
+  let organization = context?.organization ?? null;
+  let operations = context?.operations ?? [];
+  let permissions = context?.permissions ?? [];
+  let platformRole: "platform_admin" | "support" | null = context?.platform_role === "platform_admin" || context?.platform_role === "support"
+    ? context.platform_role
+    : null;
+  let accessBlock = context?.access_block ?? null;
   let supportAccess: "read_only" | "full" | null = null;
 
-  if (membership?.status === "active") {
-    const [organizationResult, operationsResult, permissionsResult] =
-      await Promise.all([
+  if (!context) {
+    console.warn("Falling back to legacy viewer context queries", contextResult.error?.code);
+    const [{ data: legacyProfile }, { data: memberships }, { data: platformContext }, { data: accessBlocks }] = await Promise.all([
+      supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
+      supabase.from("memberships").select("*").eq("user_id", userId).order("created_at", { ascending: true }),
+      supabase.rpc("current_platform_context"),
+      supabase.rpc("current_access_block"),
+    ]);
+    profile = legacyProfile;
+    membership = memberships?.find((item) => item.status === "active")
+      ?? memberships?.find((item) => item.status === "pending")
+      ?? memberships?.[0]
+      ?? null;
+    platformRole = platformContext?.[0]?.role === "platform_admin" || platformContext?.[0]?.role === "support"
+      ? platformContext[0].role
+      : null;
+    accessBlock = accessBlocks?.[0]
+      ? { type: accessBlocks[0].block_type, message: accessBlocks[0].public_message }
+      : null;
+
+    if (membership?.status === "active") {
+      const [organizationResult, operationsResult, permissionsResult] = await Promise.all([
         supabase
           .from("organizations")
           .select("*")
@@ -78,12 +98,13 @@ export const getViewer = cache(async (): Promise<Viewer | null> => {
           .select("permission")
           .eq("membership_id", membership.id),
       ]);
+      organization = organizationResult.data;
+      operations = operationsResult.data ?? [];
+      permissions = permissionsResult.data?.map((item) => item.permission) ?? [];
+    }
+  }
 
-    organization = organizationResult.data;
-    operations = operationsResult.data ?? [];
-    permissions =
-      permissionsResult.data?.map((item) => item.permission) ?? [];
-  } else if (platformRole) {
+  if (membership?.status !== "active" && platformRole) {
     const cookieStore = await cookies();
     const supportOrgId = cookieStore.get("gril_support_org")?.value;
     if (supportOrgId) {

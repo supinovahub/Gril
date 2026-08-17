@@ -392,6 +392,18 @@ Com dono ou gestor autenticado, valide a arquitetura de navegação antes dos fl
 13. em WhatsApp, confira contagens de conexões, credenciais e templates; abra separadamente cada forma de adicionar canal e confirme que nenhuma credencial é exibida para papel sem permissão;
 14. em celular, confirme as entradas `Início`, `Conversas`, `Agenda`, `Central` e `Mais`; dentro de `Mais`, confirme os grupos Trabalho, Gestão, Inteligência, Administração e Conta, sem overflow lateral da página.
 
+### Desempenho e atualização do workspace
+
+Em uma sessão autenticada com dados reais e conexão estável, repita o percurso `/app` → `/app/inbox` → `/app/leads` → `/app/kanban` → `/app/central`:
+
+1. cada navegação deve apresentar resposta visual imediata; enquanto os dados chegam, o conteúdo principal mostra o fallback da rota sem apagar ou bloquear o shell;
+2. os badges podem aparecer depois do menu, mas não podem atrasar a navegação nem exibir contagens de outra organização;
+3. Inbox continua ordenando pendências primeiro; Leads e Kanban mantêm os mesmos registros, filtros, responsáveis, etapas, telefones e score mais recente;
+4. a Visão geral mantém métricas, contagens por etapa e até um card representativo por etapa; a Central mantém filtros, deduplicação, resumo e páginas de até dez registros;
+5. no painel de rede, confirme uma consulta principal para cada listagem e um RPC paginado para a Central, sem a antiga rajada de consultas por etapa ou transferência integral do feed;
+6. gere duas ou mais atualizações rápidas na rota ativa e confirme uma única atualização consolidada; com a aba oculta, nenhuma atualização deve interromper o usuário e os dados devem sincronizar ao retornar;
+7. registre tempos de resposta e qualquer tarefa `server_task_timing` acima de 250 ms. Em caso de regressão, anote rota, papel, organização, horário e nome da tarefa antes de prosseguir.
+
 ### Visão geral
 
 Com uma conta de imobiliária autenticada, abra `/app` e valide:

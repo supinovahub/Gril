@@ -11189,6 +11189,42 @@ export type Database = {
       }
     }
     Views: {
+      dashboard_kanban_snapshot: {
+        Row: {
+          assigned_membership_id: string | null
+          card_count: number | null
+          card_id: string | null
+          contact_name: string | null
+          org_id: string | null
+          stage_code: string | null
+          stage_entered_at: string | null
+          stage_id: string | null
+          stage_name: string | null
+          stage_position: number | null
+        }
+        Relationships: []
+      }
+      inbox_conversation_list: {
+        Row: {
+          ai_mode: string | null
+          contact_name: string | null
+          has_attention: boolean | null
+          id: string | null
+          last_inbound_at: string | null
+          last_message_preview: string | null
+          operation_id: string | null
+          opportunity_id: string | null
+          org_id: string | null
+          ownership: string | null
+          pending_suggestion_count: number | null
+          stage_name: string | null
+          status: string | null
+          total_count: number | null
+          unread_inbound_count: number | null
+          updated_at: string | null
+        }
+        Relationships: []
+      }
       inbox_notification_counts: {
         Row: {
           conversation_id: string | null
@@ -11206,6 +11242,45 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      kanban_opportunity_list: {
+        Row: {
+          amount_scope: string | null
+          assigned_membership_id: string | null
+          contact_name: string | null
+          contact_status: string | null
+          id: string | null
+          last_activity_at: string | null
+          latest_score: number | null
+          latest_score_created_at: string | null
+          latest_score_explanation: Json | null
+          org_id: string | null
+          pipeline_stage_id: string | null
+          primary_phone: string | null
+          source: string | null
+          status: string | null
+          unit_quantity: number | null
+        }
+        Relationships: []
+      }
+      lead_list: {
+        Row: {
+          assigned_membership_id: string | null
+          contact_id: string | null
+          contact_name: string | null
+          contact_status: string | null
+          id: string | null
+          last_activity_at: string | null
+          org_id: string | null
+          primary_phone: string | null
+          source: string | null
+          stage_code: string | null
+          stage_name: string | null
+          stage_position: number | null
+          status: string | null
+          version: number | null
+        }
+        Relationships: []
       }
     }
     Functions: {
@@ -11276,6 +11351,16 @@ export type Database = {
           storage_bucket: string
           storage_path: string
         }[]
+      }
+      central_feed_page: {
+        Args: {
+          p_limit: number
+          p_offset: number
+          p_operation_id: string | null
+          p_org_id: string
+          p_view: string
+        }
+        Returns: Json
       }
       complete_ai_execution: {
         Args: {
@@ -11352,6 +11437,21 @@ export type Database = {
         Returns: {
           role: string
           status: string
+        }[]
+      }
+      current_viewer_context_v2: { Args: never; Returns: Json }
+      dashboard_metrics: {
+        Args: {
+          p_org_id: string
+          p_range_end: string
+          p_range_start: string
+        }
+        Returns: {
+          appointments: number
+          inbound_conversations: number
+          new_leads: number
+          responded_conversations: number
+          sales: number
         }[]
       }
       decide_access_request: {
@@ -11476,6 +11576,14 @@ export type Database = {
           invited_role: string
           operation_name: string
           organization_name: string
+        }[]
+      }
+      internal_chat_notification_counts: {
+        Args: { p_org_id: string }
+        Returns: {
+          broker: number
+          lionel: number
+          pedro: number
         }[]
       }
       list_audit_events: {
