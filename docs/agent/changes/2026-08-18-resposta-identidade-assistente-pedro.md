@@ -22,8 +22,8 @@ Evitar que o atendimento pare na primeira pergunta sobre IA, respondendo de form
 
 ## Validação
 
-- Comandos/testes executados: `npm ci`; teste direcionado de `pedro-instructions`; `npm run lint`; `npm test`; `npm run build` com as variáveis locais carregadas somente no processo; `npm audit --omit=dev`; `git diff --check`; checks de CI e preview do PR; inspeção Vercel; smokes HTTP; consulta de logs de erro.
-- Evidência observada: lint sem erro; 24 arquivos e 117 testes passaram; o build Next.js 16.2.12 compilou, validou TypeScript e gerou 46 rotas. O teste unitário exige o marcador `GRIL_BEHAVIOR_V5`, a apresentação como assistente, a proibição de afirmar ser o próprio Pedro ou negar ser IA e a escalação somente após insistência. O deployment canônico ficou `READY`; `/login` respondeu HTTP 200, `/app/pedro` respondeu HTTP 307 para o login e nenhum erro apareceu nos logs consultados.
+- Comandos/testes executados: `npm ci`; teste direcionado de `pedro-instructions`; `npm run lint`; `npm test`; `npm run build` com as variáveis locais carregadas somente no processo; `npm audit --omit=dev`; `git diff --check`; checks de CI e preview do PR; inspeção Vercel; smokes HTTP; consulta de logs de erro; consulta somente leitura do modo inbound e da whitelist.
+- Evidência observada: lint sem erro; 24 arquivos e 117 testes passaram; o build Next.js 16.2.12 compilou, validou TypeScript e gerou 46 rotas. O teste unitário exige o marcador `GRIL_BEHAVIOR_V5`, a apresentação como assistente, a proibição de afirmar ser o próprio Pedro ou negar ser IA e a escalação somente após insistência. O deployment canônico ficou `READY`; `/login` respondeu HTTP 200, `/app/pedro` respondeu HTTP 307 para o login e nenhum erro apareceu nos logs consultados. O inbound permaneceu em `production`, com exatamente uma entrada ativa na whitelist.
 - Validações não executadas e motivo: o cenário de dois turnos com o modelo real e uma conversa de WhatsApp permanece para homologação pós-deploy, pois executá-lo automaticamente enviaria ou registraria uma interação operacional além do smoke técnico autorizado.
 
 ## Impacto operacional

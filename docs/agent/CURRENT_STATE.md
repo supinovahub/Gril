@@ -7,6 +7,7 @@
 - A resposta não pode afirmar que o atendimento é o próprio Pedro nem negar ser IA. Somente uma insistência posterior na mesma pergunta escala como `identity_question`, sem nova resposta automática.
 - A mudança está concentrada no compilador de instruções usado pelo worker e pelo simulador; schema, whitelist, modos, banco e efeitos determinísticos permanecem inalterados.
 - A integração Vercel publicou o deployment `dpl_Dc8crJygSyq3WiuCsbb9g9FKgcUS`, `READY`, com o alias `https://gril-lac.vercel.app`. `/login` respondeu HTTP 200, `/app/pedro` redirecionou para o login e a consulta de logs de erro do deployment não retornou ocorrências.
+- A verificação viva posterior encontrou o inbound em `production` e exatamente uma entrada ativa na whitelist. O deploy não alterou esses valores: o número autorizado pode gerar resposta automática e destinatários fora da whitelist continuam bloqueados.
 - Lint, 24 arquivos/117 testes, build Next.js 16.2.12 das 46 rotas, CI e preview passaram. A conversa real de dois turnos continua como homologação pós-deploy.
 - Decisão e evidência: `docs/decisions/2026-08-18-identidade-assistente-pedro.md` e `docs/agent/changes/2026-08-18-resposta-identidade-assistente-pedro.md`.
 
