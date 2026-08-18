@@ -1,5 +1,25 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 18/08/2026 — nova limpeza de contexto operacional
+
+- Um único contexto de homologação solicitado foi removido novamente do Supabase
+  canônico `frslhzwhaooqtivkzdez`. O recibo registrou 1 contato, 1 telefone,
+  1 oportunidade, 1 conversa, 18 mensagens, 5 anexos, 10 execuções de IA,
+  9 sugestões, 192 jobs, 34 eventos de outbox e 5 objetos de Storage.
+- A simulação integral com rollback passou antes da execução definitiva. Após o
+  commit, contato, telefone, conversa, mensagens, execuções e sinais de IA
+  relacionados ficaram em zero; os 5 arquivos de mídia foram removidos pela API
+  do Storage e uma verificação posterior confirmou zero objeto residual.
+- A auditoria foi preservada e contém o recibo `status=purged`. A whitelist não
+  faz parte do expurgo e continua com uma entrada ativa; por isso, uma nova
+  mensagem desse número pode recriar um contexto limpo.
+- A tabela `ai_feedback_signals`, adicionada depois da rotina protegida de
+  limpeza, não é tratada por ela. Dois sinais do alvo precisaram ser removidos
+  explicitamente na mesma transação. A rotina publicada deve ser atualizada em
+  migration futura para que o botão de limpeza também cubra esse caso.
+- Não houve migration, mudança de código ou deploy. Evidência detalhada:
+  `docs/agent/changes/2026-08-18-nova-limpeza-contexto-operacional.md`.
+
 ## Atualização de 18/08/2026 — production inbound sem três gates operacionais
 
 - O PR #60 foi mergeado na branch canônica `phase/01-foundation` no commit
