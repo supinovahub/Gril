@@ -1,5 +1,13 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 18/08/2026 — nova limpeza exata do contexto de homologação
+
+- Por solicitação explícita do usuário, o contexto do contato de homologação foi removido novamente do Supabase canônico após uma simulação integral com rollback.
+- O recibo registrou a remoção de um contato, um telefone, uma oportunidade, uma conversa, nove mensagens, um anexo, quatro execuções de IA, doze eventos de outbox e setenta e um jobs agendados. Um sinal de feedback associado, ainda não coberto pela função publicada de limpeza, foi removido dentro da mesma transação após o descarte dos seus vínculos restritivos.
+- O único arquivo de áudio relacionado foi removido pela Storage API. A verificação final encontrou zero contato, zero conversa e zero objeto físico do alvo, mantendo um recibo em auditoria.
+- A única entrada ativa da whitelist da organização permaneceu ativa. Uma nova mensagem autorizada poderá criar um contexto limpo; configurações, migrations, código e modo operacional não foram alterados por esta operação.
+- Evidência detalhada: `docs/agent/changes/2026-08-18-limpeza-contexto-homologacao-adicional.md`.
+
 ## Atualização de 18/08/2026 — production inbound sem três gates operacionais
 
 - O PR #60 foi mergeado na branch canônica `phase/01-foundation` no commit
