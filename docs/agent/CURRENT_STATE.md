@@ -1,5 +1,12 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 18/08/2026 — tom leve da identidade e coerência do slot da call
+
+- O runtime `GRIL_BEHAVIOR_V6` refina a primeira resposta sobre IA: depois de algumas trocas e diante de uma pergunta leve, o atendimento espelha o tom, usa uma risada curta e se apresenta como assistente do Pedro e também corretor; sem rapport, em contexto neutro ou diante de irritação, não força humor.
+- Slots aprovados passam ao modelo com o instante técnico `starts_at` e o rótulo `operation_local`. O modelo deve copiar o instante literalmente e comunicar o rótulo; o worker regenera qualquer decisão que anuncie uma separação sem `call_request` ou cujo texto e ação representem horas diferentes no fuso da operação.
+- O caso observado foi confirmado no Supabase: o texto disse 10h, enquanto a ação validada gravou 16:00Z, equivalente a 13h em `America/Sao_Paulo`; 13h também existia na lista e por isso a validação antiga não bloqueou o turno.
+- A correção é somente de aplicação e documentação: não cria migration nem altera retroativamente calls existentes. Decisão e evidência: `docs/decisions/2026-08-18-tom-leve-identidade-assistente-pedro.md` e `docs/agent/changes/2026-08-18-tom-identidade-coerencia-slot-call.md`.
+
 ## Atualização de 18/08/2026 — identidade apresentada como assistente do Pedro
 
 - A primeira pergunta sobre IA deixa de pausar silenciosamente a conversa. O runtime `GRIL_BEHAVIOR_V5` exige uma resposta curta, natural e descontraída dizendo apenas que o atendimento é o assistente do Pedro Sifuentes, corretor imobiliário.

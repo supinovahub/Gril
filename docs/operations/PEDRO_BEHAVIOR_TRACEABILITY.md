@@ -4,18 +4,18 @@ Fonte de verdade original: `docs/product/Especificacao-do-Produto-v1.md`. Decis�
 
 | Decisão do Grill Me | Garantia principal | Evidência |
 |---|---|---|
-| Pedro Sifuentes, pt-BR, natural e sem biografia inventada | Persona versionada + instruções do runtime | `pedro-instructions.ts`; controles correntes com `GRIL_BEHAVIOR_V5` |
+| Pedro Sifuentes, pt-BR, natural e sem biografia inventada | Persona versionada + instruções do runtime | `pedro-instructions.ts`; controles correntes com `GRIL_BEHAVIOR_V6` |
 | Humor, emoji e abreviação somente após rapport; irritação sem humor | Persona v3 | campos `style` e prompt publicado |
 | Uma pergunta principal, sem interrogatório, repetição ou pressão após recusa | Persona v3 + estado de qualificação | prompt e instruções; `refused` é persistido |
 | Fatos aprovados e válidos; nenhuma promessa inventada | Contexto filtrado + instrução + escalada | worker filtra validade de fatos, projetos, FAQ e qualificação |
 | Opt-out, privacidade, documento, pagamento, jurídico, fraude, discriminação, idioma e abuso | Pedro analisa histórico + resumo + contexto; depois o backend aplica efeitos rígidos e idempotentes | `pedro-instructions.ts`; `pedro-turn.ts`; `complete_ai_execution`; `contextual-controls-after-ai.md` |
-| Primeira pergunta sobre IA recebe apresentação curta e descontraída como assistente do Pedro; insistência posterior sobe para humano | Instrução contextual + escalada estruturada | `pedro-instructions.ts`; categoria `identity_question`; decisão de 18/08/2026 |
+| Primeira pergunta sobre IA recebe apresentação curta como assistente do Pedro e também corretor; com rapport e tom leve, começa com risada curta; insistência posterior sobe para humano | Instrução contextual + escalada estruturada | `pedro-instructions.ts`; categoria `identity_question`; decisões de 18/08/2026 |
 | Qualificação só com dado explícito | Ferramenta estruturada + validação de tipo + request transacional | `pedro-turn.ts`; `qualification_value_requests` |
 | Curadoria e quantidade de imóveis são decididas contextualmente pelo Pedro | Plano explícito; backend apenas valida IDs ativos | `recommended_project_ids`; `validatePedroDecision` |
 | Texto e projetos recomendados não são recompostos depois do modelo | Guarda contra mutação semântica | `complete_pedro_turn`; `decision_hash` |
 | Pedido de material oferece fotos restantes ou book | Ações exatas por projeto; executor não amplia a lista | `project_media_requests`; `enqueue_pedro_project_media` |
 | Pedro não envia áudio | Instrução obrigatória | pacote v3 |
-| Call exige data e hora explícitas; só confirma após aceite do corretor | Pedro decide; backend valida o slot exato e distribui | `validatePedroDecision`; requests de call e ofertas |
+| Call exige data e hora explícitas; texto e ação devem representar o mesmo horário local; só confirma após aceite do corretor | Pedro decide; backend rotula cada instante no fuso da operação, valida coerência, exige ação ao anunciar separação e distribui | `validatePedroDecision`; `hasCallDecisionTemporalMismatch`; requests de call e ofertas |
 | Pedido nominal por humano | Escalada | categoria `human_requested` |
 | Follow-up curto, longo, compra futura e cancelamento | Jobs duráveis | triggers de cadência; runtime assistido ou produção |
 | Inbound normal em production é controlado por whitelist | Execução não é criada fora da lista; revalidação antes do worker e trigger final antes de qualquer outbound AI | `ai_test_allowlist`; `is_conversation_ai_eligible`; `start_ai_execution`; `messages_pedro_inbound_allowlist` |
