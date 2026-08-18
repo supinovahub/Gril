@@ -26,8 +26,10 @@ cadastrar um número e sem permitir respostas automáticas fora da whitelist.
   o valor `production`, preserva os gates de prontidão, exige whitelist ativa
   para a transição e combina as travas finais de inbound e reativação.
 - Testes SQL: `supabase/tests/phase_44_inbound_whitelist_production.sql`.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: serão
-  registradas após aplicação e publicação.
+- Mudanças externas: PR GitHub `#58` e migration
+  `20260818162655_enable_allowlisted_inbound_production` aplicada no Supabase
+  canônico `frslhzwhaooqtivkzdez`. O deploy de produção será registrado após a
+  integração na branch canônica.
 
 ## Validação
 
@@ -41,20 +43,28 @@ cadastrar um número e sem permitir respostas automáticas fora da whitelist.
   estava alinhado até `20260818153716`; o dry-run selecionou somente
   `20260818162655_enable_allowlisted_inbound_production.sql`. O lint remoto
   manteve apenas avisos preexistentes.
+- Verificação remota pós-migration: a constraint aceita `production`, o check
+  proibitivo anterior não existe, os guards de ativação e outbound contêm as
+  regras de whitelist/inbound e reativação, e nenhuma das duas funções é
+  executável por `public`, `anon`, `authenticated` ou `service_role`. Os
+  advisors não apontaram item relacionado às funções alteradas.
+- Estado preservado: há um número ativo na whitelist, mas a organização e a
+  conversa inbound verificada continuam em `assisted`; a migration não ativou
+  respostas automáticas.
 - Validações não executadas e motivo: a homologação visual e o envio real pelo
   WhatsApp permanecem sob responsabilidade do usuário.
 
 ## Impacto operacional
 
 - Deploy necessário: sim, código e migration juntos.
-- Migração aplicada: ainda não neste registro inicial.
+- Migração aplicada: sim, `20260818162655`, no projeto
+  `frslhzwhaooqtivkzdez`.
 - Compatibilidade/rollback: voltar o inbound para `assisted`, restaurar os
   checks anteriores e o guard final de reativação; a whitelist e a auditoria
   são preservadas.
 
 ## Pendências e riscos
 
-- Aplicar e validar a migration no Supabase remoto serialmente.
 - Publicar o bundle a partir da branch canônica e confirmar a rota pública.
 - Homologar visualmente a exibição condicional do quarto modo e um novo áudio
   com o inbound explicitamente colocado em `production`.
