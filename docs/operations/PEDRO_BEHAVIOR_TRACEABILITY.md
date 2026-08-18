@@ -19,6 +19,7 @@ Fonte de verdade: `docs/product/Especificacao-do-Produto-v1.md`. O pacote v3 sep
 | Pedido nominal por humano | Escalada | categoria `human_requested` |
 | Follow-up curto, longo, compra futura e cancelamento | Jobs duráveis | triggers de cadência; runtime assistido ou produção |
 | Inbound normal em production é controlado por whitelist | Execução não é criada fora da lista; revalidação antes do worker e trigger final antes de qualquer outbound AI | `ai_test_allowlist`; `is_conversation_ai_eligible`; `start_ai_execution`; `messages_pedro_inbound_allowlist` |
+| Ativação do inbound production não depende de perfil institucional, health recente ou regressão | Dono explícito + whitelist + conhecimento/modelos + conexão inbound ativa; os três sinais removidos permanecem diagnósticos | `enforce_ai_production_readiness`; decisão de 18/08/2026 |
 | Aprovação sem edição aplica qualificação, match, call, follow-up e mídia | Transação única antes do envio | `apply_approved_assisted_actions` |
 | Edição humana substitui a mensagem, mas nunca reutiliza ações antigas | Plano anterior invalidado; envio somente do texto editado | `process_ai_suggestion_review_request`; `validated_action_plan` |
 | Conversa antiga mantém sua persona; conversa nova recebe v3 | Snapshot imutável | `conversation_context_versions` aponta para a versão publicada na criação |
@@ -32,6 +33,8 @@ O sistema não inventa informação operacional. Antes da homologação real, o 
 Production automática existe em dois escopos independentes. No inbound normal,
 a opção só aparece quando há número ativo em `ai_test_allowlist`, precisa ser
 selecionada explicitamente pelo dono e responde apenas aos números listados.
+Perfil institucional, health check recente e regressão não bloqueiam essa
+seleção; conhecimento, modelos e conexão inbound ativa continuam obrigatórios.
 Na reativação, campanha, onda, conversa, worker e outbound exigem campanha
 `reactivation`; `test_controlled` usa a whitelist e `released` usa a base
 elegível da campanha.

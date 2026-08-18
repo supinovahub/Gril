@@ -48,6 +48,11 @@ destinatários allowlisted e tornou a presença da whitelist condição para a
 opção aparecer na interface. Consulte
 `docs/decisions/2026-08-18-inbound-production-condicionada-a-whitelist.md`.
 
+Uma decisão complementar no mesmo dia removeu perfil institucional, health
+check recente/sem erro e regressão dos gates de ativação, preservando
+whitelist, conhecimento, modelos e conexão inbound ativa. Consulte
+`docs/decisions/2026-08-18-production-inbound-sem-gates-operacionais.md`.
+
 ## Rollout
 
 A mudança de código e a migration devem ser publicadas juntas. Após a
