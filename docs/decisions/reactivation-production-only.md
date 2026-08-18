@@ -26,6 +26,14 @@ Esta decisão substitui explicitamente
 `docs/decisions/inbound-production-restored.md` no ponto em que aquela decisão
 permitia `production` para atendimento normal.
 
+## Supersessão posterior
+
+Em 18/08/2026, o usuário restaurou `production` no atendimento inbound com
+destinatários obrigatoriamente controlados por whitelist. Consulte
+`docs/decisions/2026-08-18-inbound-production-condicionada-a-whitelist.md`.
+Esta decisão continua vigente para o domínio de campanhas: somente campanhas
+`reactivation` podem usar production, com release e proveniência próprios.
+
 ## Rollout
 
 Código e migration devem ser publicados juntos. A migration foi aplicada ao

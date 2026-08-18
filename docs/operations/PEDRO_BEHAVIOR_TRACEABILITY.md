@@ -29,10 +29,12 @@ O sistema não inventa informação operacional. Antes da homologação real, o 
 
 ## Escopo de production
 
-Production automatica e exclusiva de campanhas de reativacao. Campanha, onda,
-conversa, worker e outbound recusam production fora de `reactivation`; o teste
-controlado usa `ai_test_allowlist`. O atendimento normal continua limitado a
-`off`, `shadow` e `assisted`.
+Production automática existe em dois escopos independentes. No inbound normal,
+a opção só aparece quando há número ativo em `ai_test_allowlist`, precisa ser
+selecionada explicitamente pelo dono e responde apenas aos números listados.
+Na reativação, campanha, onda, conversa, worker e outbound exigem campanha
+`reactivation`; `test_controlled` usa a whitelist e `released` usa a base
+elegível da campanha.
 
 ## Modos
 

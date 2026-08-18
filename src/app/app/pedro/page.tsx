@@ -2,6 +2,7 @@ import { Bot, BrainCircuit, CheckCircle2, CircleDashed, KeyRound, RefreshCw, Shi
 
 import { retestIntegrationAction, revokeIntegrationAction } from "@/app/app/integration-actions";
 import { IntentPrefetchLink as Link } from "@/components/navigation/intent-prefetch-link";
+import { getInboundModeOptions } from "@/lib/ai/inbound-mode-options";
 import { requireActiveViewer } from "@/lib/auth/session";
 import { createClient } from "@/lib/supabase/server";
 import { addAiTestNumberAction, addPersonaSampleAction, changeGlobalAiModeAction, clonePersonaAction, configureFallbackModelAction, configureModelAction, configureReactivationAiAction, connectOpenAiAction, createPersonaDraftAction, publishPersonaAction, removeAiTestNumberAction } from "./actions";
@@ -47,6 +48,8 @@ export default async function PedroPage({
   const openAiAccount = integrationsResult.data?.find((item) => item.status !== "revoked");
   const { data: allowlist } = await supabase.from("ai_test_allowlist").select("id,phone_e164,active").eq("org_id", viewer.organization!.id).eq("active", true).order("created_at");
   const inboundMode = settings?.inbound_ai_mode ?? settings?.ai_global_mode ?? "off";
+  const hasAllowlistedNumber = Boolean(allowlist?.length);
+  const inboundModes = getInboundModeOptions(hasAllowlistedNumber);
 
   return (
     <div className={styles.page}>
@@ -75,10 +78,11 @@ export default async function PedroPage({
       <section className={styles.behaviorGrid} id="comportamentos" aria-label="Comportamentos do Pedro">
         <article className={styles.behaviorPanel}>
           <header><span><p className={styles.eyebrow}>Atendimento via WhatsApp</p><h2>Conversas recebidas</h2></span><span className={styles.behaviorState}>{modeLabels[inboundMode] ?? inboundMode}</span></header>
-          <p>Controle como Pedro participa das conversas iniciadas pelo lead. O modo assistido prepara a resposta e espera a revisão da equipe.</p>
+          <p>Controle como Pedro participa das conversas iniciadas pelo lead. Ter um número na whitelist apenas mostra a opção automática; a ativação continua sendo uma escolha explícita do dono.</p>
           <form action={changeGlobalAiModeAction} className={styles.modeForm}>
-            {["off", "shadow", "assisted"].map((mode) => <button className={inboundMode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{modeLabels[mode]}</button>)}
+            {inboundModes.map((mode) => <button className={inboundMode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{modeLabels[mode]}</button>)}
           </form>
+          <p>{hasAllowlistedNumber ? "A opção Responde automaticamente está visível. Selecioná-la ainda exige os demais gates de produção, e somente números ativos da whitelist podem receber respostas automáticas no inbound normal." : "Cadastre um número autorizado para que Responde automaticamente apareça entre os modos."}</p>
         </article>
         <article className={styles.behaviorPanel}>
           <header><span><p className={styles.eyebrow}>Campanhas de reativação</p><h2>Conversas antigas</h2></span><span className={styles.behaviorState}>{modeLabels[settings?.reactivation_ai_mode ?? "off"]}</span></header>
@@ -176,9 +180,9 @@ export default async function PedroPage({
         <aside className={styles.sideColumn}>
           <section className={styles.panel} id="testes">
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Teste controlado</p><h2>Números autorizados para teste</h2></span></div>
-            <p className={styles.notice}>A whitelist controla o teste de campanhas de reativação. Em <strong>Todos os contatos elegíveis</strong>, a campanha pode responder respeitando opt-out e supressão; o atendimento normal continua sem respostas automáticas.</p>
+            <p className={styles.notice}>A whitelist libera destinatários para o inbound normal em <strong>Responde automaticamente</strong> e para reativação em teste controlado. Adicionar um número não ativa production sozinho.</p>
             <form action={addAiTestNumberAction} className={styles.keyForm}><label><span>Número liberado para teste</span><input name="phoneE164" placeholder="+5511999999999" required /></label><button type="submit">Adicionar</button></form>
-            <div className={styles.executionList}>{allowlist?.map((entry) => <article key={entry.id}><span><strong>{entry.phone_e164}</strong><small>Reativação em teste controlado</small></span><form action={removeAiTestNumberAction}><input name="allowlistId" type="hidden" value={entry.id} /><button type="submit">Remover</button></form></article>)}{!allowlist?.length ? <p className={styles.notice}>Nenhum número liberado para o teste controlado de reativação.</p> : null}</div>
+            <div className={styles.executionList}>{allowlist?.map((entry) => <article key={entry.id}><span><strong>{entry.phone_e164}</strong><small>Inbound production e reativação controlada</small></span><form action={removeAiTestNumberAction}><input name="allowlistId" type="hidden" value={entry.id} /><button type="submit">Remover</button></form></article>)}{!allowlist?.length ? <p className={styles.notice}>Nenhum número autorizado. O modo automático do inbound permanece oculto.</p> : null}</div>
           </section>
           <section className={styles.panel}>
             <div className={styles.panelHeader}><span><p className={styles.eyebrow}>Últimas execuções</p><h2>Rastreabilidade</h2></span></div>
