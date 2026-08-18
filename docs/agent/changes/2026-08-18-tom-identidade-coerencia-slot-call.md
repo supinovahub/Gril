@@ -18,13 +18,13 @@ Tornar descontraída a apresentação do assistente quando já existe rapport e 
 
 - Arquivos: instruções e schema estruturado do Pedro, validação temporal do worker, testes unitários, decisão de produto, rastreabilidade, fluxos e guia de homologação, estado compartilhado e este registro.
 - Migrations: nenhuma.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: Supabase consultado somente para diagnóstico do turno observado; nenhum dado, schema ou estado remoto foi alterado nesta implementação. Branch publicada e PR draft #66 aberto contra `phase/01-foundation`; nenhum merge ou deploy foi executado.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: Supabase consultado somente para diagnóstico do turno observado; nenhum dado, schema ou estado remoto foi alterado nesta implementação. Branch publicada e PR draft #66 aberto contra `phase/01-foundation`; a integração GitHub/Vercel criou a preview automática `https://gril-8i2qk3l4v-brio5.vercel.app`, sem merge ou deploy de produção.
 
 ## Validação
 
 - Comandos/testes executados: `npm ci`; teste direcionado de `pedro-turn` e `pedro-instructions`; ESLint direcionado; `npm run lint`; `npm test`; `npm run build` com as variáveis locais carregadas somente no processo; `git diff --check` antes da publicação.
-- Evidência observada: 14 testes direcionados passaram, incluindo a reprodução de texto `10h` com ação equivalente a 13h local, a promessa de slot sem ação e o rótulo 10h para `2026-08-19T13:00:00Z` em `America/Sao_Paulo`; lint completo passou; 24 arquivos e 120 testes passaram; o build Next.js 16.2.12 compilou, validou TypeScript e gerou 46 rotas.
-- Validações não executadas e motivo: o cenário real de WhatsApp ficará para homologação manual após publicação; não será criado outro agendamento real durante a implementação.
+- Evidência observada: 14 testes direcionados passaram, incluindo a reprodução de texto `10h` com ação equivalente a 13h local, a promessa de slot sem ação e o rótulo 10h para `2026-08-19T13:00:00Z` em `America/Sao_Paulo`; lint completo passou; 24 arquivos e 120 testes passaram; o build Next.js 16.2.12 compilou, validou TypeScript e gerou 46 rotas. As duas execuções de CI iniciadas pelos pushes passaram; o deployment GitHub da preview ficou `success` e `/login` respondeu com o redirecionamento 302 esperado para o SSO da Vercel.
+- Validações não executadas e motivo: o cenário real de WhatsApp e a navegação autenticada da preview ficam para homologação manual; não será criado outro agendamento real durante a implementação.
 
 ## Impacto operacional
 
