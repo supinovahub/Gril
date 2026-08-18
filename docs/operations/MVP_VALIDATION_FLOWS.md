@@ -112,7 +112,7 @@ Esperado: áudio é transcrito, imagem descrita, documento sensível não vai ao
 
 Testar separadamente: opt-out, número errado, origem contestada, privacidade, pagamento e uma conversa de dois turnos sobre a identidade da IA.
 
-Esperado: opt-out confirma uma vez e bloqueia novos envios; número errado confirma e suprime o telefone; privacidade e pagamento pausam/escalam sem resposta inventada; na primeira pergunta sobre IA, Pedro responde de forma curta e descontraída que é o assistente do Pedro Sifuentes, corretor imobiliário, sem afirmar ser o próprio Pedro nem negar ser IA; somente uma insistência posterior pausa e escala como `identity_question`; documentos e dados de pagamento não chegam ao modelo.
+Esperado: opt-out confirma uma vez e bloqueia novos envios; número errado confirma e suprime o telefone; privacidade e pagamento pausam/escalam sem resposta inventada; na primeira pergunta casual sobre IA depois de rapport, Pedro começa com risada curta e se apresenta como assistente do Pedro e também corretor, sem explicação técnica, sem afirmar ser o próprio Pedro nem negar ser IA; em contexto neutro não força humor; somente uma insistência posterior pausa e escala como `identity_question`; documentos e dados de pagamento não chegam ao modelo.
 
 ### Fluxo 12 — tomada e devolução humana
 
@@ -155,10 +155,11 @@ Esperado: resposta cancela automações conflitantes; short/long follow-up respe
 
 1. Cadastrar agenda recorrente e uma exceção.
 2. Marcar corretor preferencial e habilitar alertas urgentes.
-3. Criar call confirmada pelo lead.
-4. Fazer dois corretores aceitarem simultaneamente.
+3. Escolher 10h com o lead, definir vídeo ou telefone no turno seguinte e confirmar que texto, ação estruturada e call mantêm 10h no fuso da operação.
+4. Criar a distribuição da call confirmada pelo lead.
+5. Fazer dois corretores aceitarem simultaneamente.
 
-Esperado: bloco 20+10 é reservado; indisponíveis não recebem oferta; primeiro aceite válido vence atomicamente; o outro recebe conflito sem duplicar atribuição.
+Esperado: bloco 20+10 é reservado; o horário dito pelo Pedro, a call, a oferta ao corretor e a confirmação ao lead são iguais no fuso da operação; indisponíveis não recebem oferta; primeiro aceite válido vence atomicamente; o outro recebe conflito sem duplicar atribuição.
 
 ### Fluxo 17 — videochamada e lembretes
 

@@ -186,7 +186,7 @@ Com o Pedro em `assisted`, valide que palavras isoladas nunca pausam a conversa 
 3. peça ou envie um book/planta; o arquivo não pode ser tratado como documento sensível apenas pelo tipo;
 4. depois, peça explicitamente uma chave Pix para pagar o sinal de uma reserva; Pedro deve analisar a conversa e então escalar como `payment`, registrando evidência e confiança;
 5. devolva a mesma conversa ao Pedro mais de uma vez; a mesma execução não pode criar escaladas duplicadas;
-6. em uma conversa limpa, pergunte se está falando com uma IA; Pedro deve responder de forma curta, natural e descontraída que é o assistente do Pedro Sifuentes, corretor imobiliário, sem afirmar ser o próprio Pedro, sem negar ser IA e sem criar `pending_handoff`;
+6. depois de algumas trocas leves em uma conversa limpa, pergunte de modo casual se está falando com uma IA; Pedro deve espelhar o tom, começar com uma risada curta e se apresentar como assistente do Pedro e também corretor, com variação natural, sem explicação técnica, sem afirmar ser o próprio Pedro, sem negar ser IA e sem criar `pending_handoff`; repita em uma conversa neutra e confirme a mesma apresentação sem risada forçada;
 7. insista novamente na mesma pergunta; somente esse segundo turno deve escalar como `identity_question`, sem nova resposta automática;
 8. teste opt-out explícito e confirme supressão, cancelamento de jobs e ausência de novo envio automático.
 
@@ -320,7 +320,7 @@ Confirme:
 3. somente imóveis publicados e compatíveis são recomendados;
 4. foto principal, fotos extras e book seguem a decisão do lead;
 5. horários respeitam disponibilidade;
-6. se o lead escolher vídeo ou telefone depois do horário, a resposta mantém o mesmo horário, a ação estruturada reaproveita o slot e não surge uma segunda call ativa;
+6. escolha explicitamente 10h, confirme que o texto e a ação estruturada representam 10h no fuso da operação e, ao escolher vídeo ou telefone no turno seguinte, confirme que a resposta mantém 10h, a ação reaproveita o mesmo slot e não surge uma segunda call ativa;
 7. Pedro não confirma a call antes do aceite de um corretor;
 8. aceite atribui e bloqueia agenda atomicamente;
 9. follow-up é criado e cancelado na condição correta;
@@ -382,7 +382,7 @@ Confirme que:
 - somente humano registra no-show;
 - terceiro reagendamento alerta o gestor.
 
-Inbox, CRM e agenda devem exibir datas e horários no fuso configurado da operação, nunca no UTC do servidor.
+Inbox, CRM, agenda, oferta operacional ao corretor, resposta do Pedro e confirmação ao lead devem exibir a mesma data e hora no fuso configurado da operação, nunca o UTC do servidor nem outro slot disponível.
 
 ## 11. CRM, privacidade e encerramento
 

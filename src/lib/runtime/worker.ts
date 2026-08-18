@@ -5,6 +5,8 @@ import { z } from "zod";
 import webpush from "web-push";
 
 import {
+  formatPedroCallSlotForOperation,
+  hasCallDecisionTemporalMismatch,
   hasFutureCallTemporalContradiction,
   hasSpecificFinancialProfile,
   isPedroQualificationComplete,
@@ -337,11 +339,15 @@ async function runAiExecution(executionId: string) {
         timezone: operationTimezone,
         approved_call_availability: {
           duration_minutes: 15,
-          slots: availableCallSlots,
-          instruction: "Ofereça apenas horários desta lista. Se o lead pedir disponibilidade sem escolher um horário, não escale: apresente até três opções.",
+          slots: availableCallSlots.map((slot) => ({
+            ...slot,
+            operation_local: formatPedroCallSlotForOperation(slot.starts_at, operationTimezone),
+          })),
+          instruction: "Ofereça apenas horários desta lista. Mostre operation_local ao lead e, quando ele escolher, copie starts_at literalmente para call_request sem converter o instante. Se o lead pedir disponibilidade sem escolher um horário, não escale: apresente até três opções.",
         },
         active_call: existingCall ? {
           starts_at: existingCall.starts_at,
+          operation_local: formatPedroCallSlotForOperation(existingCall.starts_at, operationTimezone),
           status: existingCall.status,
           format: existingCall.format,
           canonical: true,
@@ -404,29 +410,36 @@ async function runAiExecution(executionId: string) {
       },
     };
     let response = await createPedroResponse(responseInput);
-
-    if (existingCall && hasFutureCallTemporalContradiction(response.structured.reply, existingCall)) {
-      response = await createPedroResponse({
-        ...responseInput,
-        instructions: `${responseInput.instructions}\n\nA resposta anterior foi rejeitada porque contradisse uma call futura ja separada. Gere novamente este turno de forma coerente: preserve o horario exato de active_call, nao diga que ele passou, nao ofereca novos horarios e registre call_request com o mesmo starts_at e o formato escolhido pelo lead.`,
-      });
-      if (hasFutureCallTemporalContradiction(response.structured.reply, existingCall) || !response.structured.call_request) {
+    let responseStructured = {
+      ...response.structured,
+      call_request: normalizePedroCallRequest(response.structured.call_request, conversationMessages, existingCall),
+    };
+    for (let semanticAttempt = 0; semanticAttempt < 2; semanticAttempt += 1) {
+      const activeCallConflict = existingCall
+        ? hasFutureCallTemporalContradiction(responseStructured.reply, existingCall)
+        : false;
+      const callDecisionConflict = hasCallDecisionTemporalMismatch(
+        responseStructured.reply,
+        responseStructured.call_request,
+        operationTimezone,
+      );
+      if (!activeCallConflict && !callDecisionConflict) break;
+      if (semanticAttempt === 1) {
         throw new OpenAiRuntimeError(
-          "active_call_response_conflict",
-          "A resposta do Pedro contradisse uma call futura ja separada e sera gerada novamente.",
+          "call_decision_temporal_conflict",
+          "A resposta do Pedro e a acao de call indicaram horarios diferentes e serao geradas novamente.",
           true,
         );
       }
+      response = await createPedroResponse({
+        ...responseInput,
+        instructions: `${responseInput.instructions}\n\nCOERENCIA OBRIGATORIA DA CALL: a resposta anterior foi rejeitada porque o texto e a acao estruturada divergiram, uma separacao foi anunciada sem call_request ou uma call futura foi contradita. Refaça a decisao inteira. Se o lead escolheu data e horario, call_request e obrigatorio. Escolha uma unica entrada de approved_call_availability.slots, copie starts_at literalmente sem converter o instante ou o offset e use somente o operation_local correspondente no texto. Se existir active_call, copie active_call.starts_at e comunique active_call.operation_local. O reply e o call_request devem representar exatamente o mesmo horario da operacao.`,
+      });
+      responseStructured = {
+        ...response.structured,
+        call_request: normalizePedroCallRequest(response.structured.call_request, conversationMessages, existingCall),
+      };
     }
-
-    const responseStructured = {
-      ...response.structured,
-      call_request: normalizePedroCallRequest(
-        response.structured.call_request,
-        conversationMessages,
-        existingCall,
-      ),
-    };
     const validation = validatePedroDecision({
       turn: responseStructured,
       qualificationDefinitions: definitions.map((definition) => ({

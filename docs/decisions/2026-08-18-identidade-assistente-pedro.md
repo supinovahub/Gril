@@ -26,3 +26,7 @@ Esta decisão substitui somente, para perguntas diretas sobre a identidade do at
 - a linha anterior de handoff imediato em `PEDRO_BEHAVIOR_TRACEABILITY.md`.
 
 O restante da persona, da biografia aprovada e das regras de escalada permanece inalterado.
+
+## Refinamento posterior
+
+O tom da apresentação em conversas que já têm rapport foi refinado em `docs/decisions/2026-08-18-tom-leve-identidade-assistente-pedro.md`. A primeira pergunta continua recebendo resposta e somente a insistência posterior escala.

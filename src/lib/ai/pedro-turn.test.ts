@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 
 import {
+  formatPedroCallSlotForOperation,
+  hasCallDecisionTemporalMismatch,
   hasSpecificFinancialProfile,
   hasFutureCallTemporalContradiction,
   isPedroQualificationComplete,
@@ -191,5 +193,37 @@ describe("plano explícito do Pedro", () => {
 
     expect(hasFutureCallTemporalContradiction("Como 17h já passou, consigo separar amanhã às 9h.", existingCall, now)).toBe(true);
     expect(hasFutureCallTemporalContradiction("Vídeo, beleza. Mantive hoje às 17h.", existingCall, now)).toBe(false);
+  });
+
+  it("rejeita divergencia entre o horario dito ao lead e o instante estruturado", () => {
+    expect(hasCallDecisionTemporalMismatch(
+      "Beleza, deixei solicitado amanhã às 10h por telefone.",
+      { starts_at: "2026-08-19T13:00:00-03:00", format: "phone" },
+      "America/Sao_Paulo",
+    )).toBe(true);
+    expect(hasCallDecisionTemporalMismatch(
+      "Beleza, deixei solicitado amanhã às 10h por telefone.",
+      { starts_at: "2026-08-19T13:00:00Z", format: "phone" },
+      "America/Sao_Paulo",
+    )).toBe(false);
+  });
+
+  it("rejeita promessa de slot sem acao e permite apenas oferecer opcoes", () => {
+    expect(hasCallDecisionTemporalMismatch(
+      "Fechado, separei amanhã às 10h. Você prefere vídeo ou telefone?",
+      null,
+      "America/Sao_Paulo",
+    )).toBe(true);
+    expect(hasCallDecisionTemporalMismatch(
+      "Amanhã tenho 9h, 9h30 ou 10h. Qual fica melhor?",
+      null,
+      "America/Sao_Paulo",
+    )).toBe(false);
+  });
+
+  it("rotula o instante tecnico no fuso da operacao", () => {
+    const label = formatPedroCallSlotForOperation("2026-08-19T13:00:00Z", "America/Sao_Paulo");
+    expect(label).toContain("19/08/2026");
+    expect(label).toContain("10:00");
   });
 });

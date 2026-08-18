@@ -214,7 +214,7 @@ export const pedroTurnTool = {
             type: "object",
             additionalProperties: false,
             properties: {
-              starts_at: { type: "string", description: "Data e hora ISO 8601 com fuso, já confirmada explicitamente pelo contato." },
+              starts_at: { type: "string", description: "Instante ISO 8601 de um slot aprovado e confirmado pelo contato. Copie literalmente o starts_at fornecido pelo backend; nunca converta ou altere o offset." },
               format: { type: "string", enum: ["video", "phone", "unknown"] },
             },
             required: ["starts_at", "format"],
@@ -325,6 +325,53 @@ type ExistingCallSlot = { starts_at: string; status: string };
 
 function normalizeSchedulingText(value: string) {
   return value.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+}
+
+function extractSchedulingClockTimes(value: string) {
+  const normalized = normalizeSchedulingText(value);
+  return Array.from(normalized.matchAll(/\b([01]?\d|2[0-3])(?::([0-5]\d)|h(?:([0-5]\d))?)\b/g), (match) => {
+    const hour = Number(match[1]);
+    const minute = Number(match[2] ?? match[3] ?? "0");
+    return `${hour.toString().padStart(2, "0")}:${minute.toString().padStart(2, "0")}`;
+  });
+}
+
+function hasSchedulingCommitment(value: string) {
+  const normalized = normalizeSchedulingText(value);
+  return /\b(?:separei|agendei|marquei|solicitei|(?:deixei|ficou|foi)\b[^.!?]{0,60}\b(?:separad[oa]|solicitad[oa]|agendad[oa]|marcad[oa]))\b/.test(normalized);
+}
+
+function operationLocalClock(startsAt: string, timezone: string) {
+  const parts = new Intl.DateTimeFormat("en-GB", {
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+    timeZone: timezone,
+  }).formatToParts(new Date(startsAt));
+  const hour = parts.find((part) => part.type === "hour")?.value;
+  const minute = parts.find((part) => part.type === "minute")?.value;
+  return hour && minute ? `${hour}:${minute}` : null;
+}
+
+export function formatPedroCallSlotForOperation(startsAt: string, timezone: string) {
+  return new Intl.DateTimeFormat("pt-BR", {
+    dateStyle: "short",
+    timeStyle: "short",
+    timeZone: timezone,
+  }).format(new Date(startsAt));
+}
+
+export function hasCallDecisionTemporalMismatch(
+  reply: string | null | undefined,
+  request: PedroTurn["call_request"],
+  timezone: string,
+) {
+  if (!reply) return false;
+  const mentionedTimes = extractSchedulingClockTimes(reply);
+  if (!request) return mentionedTimes.length > 0 && hasSchedulingCommitment(reply);
+  if (mentionedTimes.length === 0) return false;
+  const requestLocalClock = operationLocalClock(request.starts_at, timezone);
+  return !requestLocalClock || !mentionedTimes.includes(requestLocalClock);
 }
 
 function isFormatOnlyCallConfirmation(
