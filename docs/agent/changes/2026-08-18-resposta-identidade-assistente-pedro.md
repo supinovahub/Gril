@@ -18,17 +18,17 @@ Evitar que o atendimento pare na primeira pergunta sobre IA, respondendo de form
 
 - Arquivos: compilador e teste das instruções do Pedro; decisão de produto; rastreabilidade; fluxos e guia de homologação; estado compartilhado e este registro.
 - Migrations: nenhuma.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: branch publicada e PR draft #64 aberto contra `phase/01-foundation`; Supabase e schema não exigem alteração. O deploy Vercel será registrado após a integração canônica.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: o PR #64 foi mergeado em `phase/01-foundation` no commit `66fb26ef984b7b187a61d4a12ada8b7977cd3f3e`; a integração Vercel publicou o deployment de produção `dpl_Dc8crJygSyq3WiuCsbb9g9FKgcUS`, `READY`, com o alias `https://gril-lac.vercel.app`. Supabase e schema não foram alterados.
 
 ## Validação
 
-- Comandos/testes executados: `npm ci`; teste direcionado de `pedro-instructions`; `npm run lint`; `npm test`; `npm run build` com as variáveis locais carregadas somente no processo; `npm audit --omit=dev`; `git diff --check`.
-- Evidência observada: lint sem erro; 24 arquivos e 117 testes passaram; o build Next.js 16.2.12 compilou, validou TypeScript e gerou 46 rotas. O teste unitário exige o marcador `GRIL_BEHAVIOR_V5`, a apresentação como assistente, a proibição de afirmar ser o próprio Pedro ou negar ser IA e a escalação somente após insistência.
-- Validações não executadas e motivo: o cenário de dois turnos com o modelo real e uma conversa de WhatsApp será validado depois do deploy para não criar efeito externo antes da publicação aprovada.
+- Comandos/testes executados: `npm ci`; teste direcionado de `pedro-instructions`; `npm run lint`; `npm test`; `npm run build` com as variáveis locais carregadas somente no processo; `npm audit --omit=dev`; `git diff --check`; checks de CI e preview do PR; inspeção Vercel; smokes HTTP; consulta de logs de erro.
+- Evidência observada: lint sem erro; 24 arquivos e 117 testes passaram; o build Next.js 16.2.12 compilou, validou TypeScript e gerou 46 rotas. O teste unitário exige o marcador `GRIL_BEHAVIOR_V5`, a apresentação como assistente, a proibição de afirmar ser o próprio Pedro ou negar ser IA e a escalação somente após insistência. O deployment canônico ficou `READY`; `/login` respondeu HTTP 200, `/app/pedro` respondeu HTTP 307 para o login e nenhum erro apareceu nos logs consultados.
+- Validações não executadas e motivo: o cenário de dois turnos com o modelo real e uma conversa de WhatsApp permanece para homologação pós-deploy, pois executá-lo automaticamente enviaria ou registraria uma interação operacional além do smoke técnico autorizado.
 
 ## Impacto operacional
 
-- Deploy necessário: sim, porque o worker compila essas instruções no runtime da aplicação.
+- Deploy necessário: executado em produção pelo merge canônico.
 - Migração aplicada: não.
 - Compatibilidade/rollback: reversível por deploy do commit anterior; schemas, banco e conversas persistidas permanecem compatíveis.
 
