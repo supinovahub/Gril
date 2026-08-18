@@ -1,5 +1,19 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 18/08/2026 — nova limpeza de contexto operacional
+
+- Um contexto operacional recriado para homologação foi removido do Supabase
+  canônico por solicitação explícita do usuário, incluindo a call futura das
+  13h e dois objetos de áudio no Storage.
+- O recibo da operação registrou 1 contato, 1 telefone, 1 oportunidade, 1
+  conversa, 28 mensagens, 11 execuções de IA, 1 call, 156 jobs e 32 eventos
+  de outbox removidos. A verificação posterior retornou zero para os agregados,
+  efeitos pendentes e mídias abrangidos.
+- A trilha de auditoria imutável foi preservada e recebeu um novo recibo de
+  limpeza. Não houve migration, alteração de schema, código ou deploy.
+- Evidência detalhada:
+  `docs/agent/changes/2026-08-18-limpeza-contexto-operacional-13h.md`.
+
 ## Atualização de 18/08/2026 — identidade apresentada como assistente do Pedro
 
 - A primeira pergunta sobre IA deixa de pausar silenciosamente a conversa. O runtime `GRIL_BEHAVIOR_V5` exige uma resposta curta, natural e descontraída dizendo apenas que o atendimento é o assistente do Pedro Sifuentes, corretor imobiliário.
