@@ -160,6 +160,42 @@ describe("adapters de tráfego real", () => {
     });
   });
 
+  it("normaliza áudio no formato real da Uazapi sem usar a URL criptografada do WhatsApp", () => {
+    const inbound = verifyAndNormalizeUazapiWebhook(
+      {
+        EventType: "messages",
+        token: "token-seguro",
+        message: {
+          messageid: "3EB0AUDIOFIXTURE",
+          sender: "5511999999999@s.whatsapp.net",
+          fromMe: false,
+          isGroup: false,
+          messageType: "AudioMessage",
+          messageTimestamp: 1_700_000_000,
+          content: {
+            URL: "https://mmg.whatsapp.net/example/audio.enc",
+            mimetype: "audio/ogg; codecs=opus",
+            fileSHA256: "audio-sha256",
+            mediaKey: "chave-que-nao-deve-ser-usada",
+          },
+        },
+      },
+      "token-seguro",
+    );
+
+    expect(inbound?.inbound[0]).toMatchObject({
+      providerMessageId: "3EB0AUDIOFIXTURE",
+      contentType: "audio",
+      media: {
+        providerMediaId: "3EB0AUDIOFIXTURE",
+        mimeType: "audio/ogg; codecs=opus",
+        sha256: "audio-sha256",
+      },
+    });
+    expect(inbound?.inbound[0].media?.sourceUrl).toBeUndefined();
+    expect(JSON.stringify(inbound?.inbound[0].rawPayload)).not.toContain("token-seguro");
+  });
+
   it("normaliza edição Uazapi sem criar uma segunda mensagem bruta", () => {
     const update = verifyAndNormalizeUazapiWebhook(
       { EventType: "messages_update", token: "token-seguro", message: { messageid: "2", sender: "5511999999999", messageTimestamp: 1700000001000, text: "Texto corrigido" } },
@@ -341,6 +377,46 @@ describe("adapters de tráfego real", () => {
       endpointUrl: "https://cliente.uazapi.com",
       secret: "uaz-token",
       sourceUrl: "https://atacante.example/arquivo.pdf",
+    })).rejects.toMatchObject({ code: "uazapi_media_url_unsafe", retryable: false });
+  });
+
+  it("resolve e baixa mídia Uazapi pelo identificador autenticado da mensagem", async () => {
+    const fetchMock = vi.fn()
+      .mockResolvedValueOnce(Response.json({
+        fileURL: "https://cliente.uazapi.com/files/audio.mp3",
+        mimetype: "audio/mpeg",
+      }))
+      .mockResolvedValueOnce(new Response(new Uint8Array([1, 2, 3]), {
+        status: 200,
+        headers: { "content-type": "audio/mpeg", "content-length": "3" },
+      }));
+    vi.stubGlobal("fetch", fetchMock);
+
+    await expect(downloadWhatsappMedia({
+      provider: "uazapi",
+      endpointUrl: "https://cliente.uazapi.com",
+      secret: "uaz-token",
+      providerMediaId: "audio-message-id",
+    })).resolves.toMatchObject({ bytes: new Uint8Array([1, 2, 3]), mimeType: "audio/mpeg" });
+
+    expect(fetchMock.mock.calls[0]?.[0]).toBe("https://cliente.uazapi.com/message/download");
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({
+      method: "POST",
+      body: JSON.stringify({ id: "audio-message-id", transcribe: false }),
+    });
+    expect(new Headers(fetchMock.mock.calls[0]?.[1]?.headers).get("token")).toBe("uaz-token");
+    expect(fetchMock.mock.calls[1]?.[0]).toBe("https://cliente.uazapi.com/files/audio.mp3");
+    expect(new Headers(fetchMock.mock.calls[1]?.[1]?.headers).get("token")).toBe("uaz-token");
+  });
+
+  it("recusa URL insegura devolvida pela resolução autenticada da Uazapi", async () => {
+    vi.stubGlobal("fetch", vi.fn(async () => Response.json({ fileURL: "https://atacante.example/audio.mp3" })));
+
+    await expect(downloadWhatsappMedia({
+      provider: "uazapi",
+      endpointUrl: "https://cliente.uazapi.com",
+      secret: "uaz-token",
+      providerMediaId: "audio-message-id",
     })).rejects.toMatchObject({ code: "uazapi_media_url_unsafe", retryable: false });
   });
 
