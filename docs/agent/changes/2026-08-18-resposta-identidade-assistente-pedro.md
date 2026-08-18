@@ -2,7 +2,7 @@
 
 - Data: 18/08/2026
 - Responsável: Codex
-- Branch/PR: `fix/pedro-assistant-identity` / PR a criar
+- Branch/PR: `fix/pedro-assistant-identity` / PR #64
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
@@ -18,7 +18,7 @@ Evitar que o atendimento pare na primeira pergunta sobre IA, respondendo de form
 
 - Arquivos: compilador e teste das instruções do Pedro; decisão de produto; rastreabilidade; fluxos e guia de homologação; estado compartilhado e este registro.
 - Migrations: nenhuma.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma até este commit; Supabase e schema não exigem alteração. O deploy Vercel será registrado após a integração canônica.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: branch publicada e PR draft #64 aberto contra `phase/01-foundation`; Supabase e schema não exigem alteração. O deploy Vercel será registrado após a integração canônica.
 
 ## Validação
 
