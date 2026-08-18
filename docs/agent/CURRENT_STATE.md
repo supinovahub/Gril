@@ -1,5 +1,20 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 18/08/2026 — limpeza de contexto operacional
+
+- Por solicitação explícita do usuário, um único contexto de homologação foi
+  removido transacionalmente do Supabase canônico, sem registrar os dados
+  pessoais do alvo no repositório.
+- A limpeza removeu contato, telefone, oportunidade, conversa, 35 mensagens,
+  qualificações e histórico, 14 execuções de IA, 1 call, 284 jobs, 34 eventos
+  de outbox, ingestões e vínculos derivados. Campanhas e configurações
+  compartilhadas foram preservadas.
+- A consulta pós-operação retornou zero para todos os conjuntos relacionados;
+  a auditoria imutável foi preservada e recebeu o evento da limpeza. Não houve
+  migration nem deploy.
+- Evidência detalhada:
+  `docs/agent/changes/2026-08-18-limpeza-contexto-operacional.md`.
+
 ## Atualização de 17/08/2026 — workspace subsegundo publicado em produção
 
 - O PR #50 foi direcionado à branch canônica `phase/01-foundation` e mergeado no commit `9f28608040134b1ba5d675f8408fd3022d1ea5f1`. Esse merge contém integralmente Dashboard, Chat Pedro/Lionel, redesign operacional, correções de carregamento e `agent/continuous-improvement-loop`.
