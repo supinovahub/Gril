@@ -1,15 +1,15 @@
-# Rastreabilidade comportamental do Pedro v3
+# Rastreabilidade comportamental do Pedro
 
-Fonte de verdade: `docs/product/Especificacao-do-Produto-v1.md`. O pacote v3 separa comportamento conversacional, controles determinísticos e dados que cada imobiliária precisa cadastrar.
+Fonte de verdade original: `docs/product/Especificacao-do-Produto-v1.md`. Decisões posteriores explicitamente registradas substituem os pontos indicados; para identidade do atendimento, vale `docs/decisions/2026-08-18-identidade-assistente-pedro.md`. O pacote separa comportamento conversacional, controles determinísticos e dados que cada imobiliária precisa cadastrar.
 
 | Decisão do Grill Me | Garantia principal | Evidência |
 |---|---|---|
-| Pedro Sifuentes, pt-BR, natural e sem biografia inventada | Persona versionada + instruções do runtime | `pedro-instructions.ts`; persona publicada com `GRIL_BEHAVIOR_V3` |
+| Pedro Sifuentes, pt-BR, natural e sem biografia inventada | Persona versionada + instruções do runtime | `pedro-instructions.ts`; controles correntes com `GRIL_BEHAVIOR_V5` |
 | Humor, emoji e abreviação somente após rapport; irritação sem humor | Persona v3 | campos `style` e prompt publicado |
 | Uma pergunta principal, sem interrogatório, repetição ou pressão após recusa | Persona v3 + estado de qualificação | prompt e instruções; `refused` é persistido |
 | Fatos aprovados e válidos; nenhuma promessa inventada | Contexto filtrado + instrução + escalada | worker filtra validade de fatos, projetos, FAQ e qualificação |
 | Opt-out, privacidade, documento, pagamento, jurídico, fraude, discriminação, idioma e abuso | Pedro analisa histórico + resumo + contexto; depois o backend aplica efeitos rígidos e idempotentes | `pedro-instructions.ts`; `pedro-turn.ts`; `complete_ai_execution`; `contextual-controls-after-ai.md` |
-| Pergunta direta sobre IA não recebe improviso | Controle determinístico | intent `identity_question` e handoff silencioso |
+| Primeira pergunta sobre IA recebe apresentação curta e descontraída como assistente do Pedro; insistência posterior sobe para humano | Instrução contextual + escalada estruturada | `pedro-instructions.ts`; categoria `identity_question`; decisão de 18/08/2026 |
 | Qualificação só com dado explícito | Ferramenta estruturada + validação de tipo + request transacional | `pedro-turn.ts`; `qualification_value_requests` |
 | Curadoria e quantidade de imóveis são decididas contextualmente pelo Pedro | Plano explícito; backend apenas valida IDs ativos | `recommended_project_ids`; `validatePedroDecision` |
 | Texto e projetos recomendados não são recompostos depois do modelo | Guarda contra mutação semântica | `complete_pedro_turn`; `decision_hash` |

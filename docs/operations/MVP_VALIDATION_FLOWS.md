@@ -110,9 +110,9 @@ Esperado: áudio é transcrito, imagem descrita, documento sensível não vai ao
 
 ### Fluxo 11 — controles determinísticos
 
-Testar separadamente: opt-out, número errado, origem contestada, privacidade, pagamento e pergunta direta sobre IA.
+Testar separadamente: opt-out, número errado, origem contestada, privacidade, pagamento e uma conversa de dois turnos sobre a identidade da IA.
 
-Esperado: opt-out confirma uma vez e bloqueia novos envios; número errado confirma e suprime o telefone; privacidade, pagamento e pergunta sobre IA pausam/escalam sem resposta inventada; documentos e dados de pagamento não chegam ao modelo.
+Esperado: opt-out confirma uma vez e bloqueia novos envios; número errado confirma e suprime o telefone; privacidade e pagamento pausam/escalam sem resposta inventada; na primeira pergunta sobre IA, Pedro responde de forma curta e descontraída que é o assistente do Pedro Sifuentes, corretor imobiliário, sem afirmar ser o próprio Pedro nem negar ser IA; somente uma insistência posterior pausa e escala como `identity_question`; documentos e dados de pagamento não chegam ao modelo.
 
 ### Fluxo 12 — tomada e devolução humana
 
