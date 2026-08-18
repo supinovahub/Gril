@@ -186,7 +186,9 @@ Com o Pedro em `assisted`, valide que palavras isoladas nunca pausam a conversa 
 3. peça ou envie um book/planta; o arquivo não pode ser tratado como documento sensível apenas pelo tipo;
 4. depois, peça explicitamente uma chave Pix para pagar o sinal de uma reserva; Pedro deve analisar a conversa e então escalar como `payment`, registrando evidência e confiança;
 5. devolva a mesma conversa ao Pedro mais de uma vez; a mesma execução não pode criar escaladas duplicadas;
-6. teste opt-out explícito e confirme supressão, cancelamento de jobs e ausência de novo envio automático.
+6. em uma conversa limpa, pergunte se está falando com uma IA; Pedro deve responder de forma curta, natural e descontraída que é o assistente do Pedro Sifuentes, corretor imobiliário, sem afirmar ser o próprio Pedro, sem negar ser IA e sem criar `pending_handoff`;
+7. insista novamente na mesma pergunta; somente esse segundo turno deve escalar como `identity_question`, sem nova resposta automática;
+8. teste opt-out explícito e confirme supressão, cancelamento de jobs e ausência de novo envio automático.
 
 Na interface do Inbox, uma sugestão pendente aparece como **Enviar resposta**, **Gerar outra resposta** ou **Descartar**. A primeira envia a sugestão aprovada; a segunda pede uma nova sugestão sem falar com o lead; a terceira não envia nada. Para uma resposta escrita pela equipe, use **Enviar resposta humana** e confirme a fila de envio.
 

@@ -1,5 +1,12 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 18/08/2026 — identidade apresentada como assistente do Pedro
+
+- A primeira pergunta sobre IA deixa de pausar silenciosamente a conversa. O runtime `GRIL_BEHAVIOR_V5` exige uma resposta curta, natural e descontraída dizendo apenas que o atendimento é o assistente do Pedro Sifuentes, corretor imobiliário.
+- A resposta não pode afirmar que o atendimento é o próprio Pedro nem negar ser IA. Somente uma insistência posterior na mesma pergunta escala como `identity_question`, sem nova resposta automática.
+- A mudança está concentrada no compilador de instruções usado pelo worker e pelo simulador; schema, whitelist, modos, banco e efeitos determinísticos permanecem inalterados.
+- Decisão e evidência: `docs/decisions/2026-08-18-identidade-assistente-pedro.md` e `docs/agent/changes/2026-08-18-resposta-identidade-assistente-pedro.md`.
+
 ## Atualização de 18/08/2026 — production inbound sem três gates operacionais
 
 - O PR #60 foi mergeado na branch canônica `phase/01-foundation` no commit

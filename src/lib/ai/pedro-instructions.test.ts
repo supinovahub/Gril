@@ -17,5 +17,11 @@ describe("compilePedroInstructions", () => {
     expect(instructions).toContain("As regras rígidas limitam o que você pode executar");
     expect(instructions).toContain("Você pode tratar orçamento, entrada, parcelas, financiamento");
     expect(instructions).toContain("book, planta e material imobiliário não são sensíveis");
+    expect(PEDRO_BEHAVIOR_V3_MARKER).toBe("GRIL_BEHAVIOR_V5");
+    expect(instructions).toContain("prioridade sobre qualquer trecho da persona publicada que diga que você é Pedro");
+    expect(instructions).toContain("dizendo apenas que você é o assistente do Pedro Sifuentes, corretor imobiliário");
+    expect(instructions).toContain("Não afirme que é o próprio Pedro e não negue ser IA");
+    expect(instructions).toContain("depois dessa resposta, o lead insistir na mesma pergunta");
+    expect(instructions).not.toContain("ou pergunta direta sobre identidade da IA");
   });
 });
