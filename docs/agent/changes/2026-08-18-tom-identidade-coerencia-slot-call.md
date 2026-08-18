@@ -2,7 +2,7 @@
 
 - Data: 18/08/2026
 - Responsável: Codex
-- Branch/PR: `fix/pedro-tone-call-slot-consistency` / PR a abrir
+- Branch/PR: `fix/pedro-tone-call-slot-consistency` / PR #66
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
@@ -18,7 +18,7 @@ Tornar descontraída a apresentação do assistente quando já existe rapport e 
 
 - Arquivos: instruções e schema estruturado do Pedro, validação temporal do worker, testes unitários, decisão de produto, rastreabilidade, fluxos e guia de homologação, estado compartilhado e este registro.
 - Migrations: nenhuma.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: Supabase consultado somente para diagnóstico do turno observado; nenhum dado, schema ou estado remoto foi alterado nesta implementação. Branch e PR serão registrados na publicação.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: Supabase consultado somente para diagnóstico do turno observado; nenhum dado, schema ou estado remoto foi alterado nesta implementação. Branch publicada e PR draft #66 aberto contra `phase/01-foundation`; nenhum merge ou deploy foi executado.
 
 ## Validação
 
