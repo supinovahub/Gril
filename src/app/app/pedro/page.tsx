@@ -82,7 +82,7 @@ export default async function PedroPage({
           <form action={changeGlobalAiModeAction} className={styles.modeForm}>
             {inboundModes.map((mode) => <button className={inboundMode === mode ? styles.selectedMode : ""} name="mode" type="submit" value={mode} key={mode}>{modeLabels[mode]}</button>)}
           </form>
-          <p>{hasAllowlistedNumber ? "A opção Responde automaticamente está visível. Selecioná-la ainda exige os demais gates de produção, e somente números ativos da whitelist podem receber respostas automáticas no inbound normal." : "Cadastre um número autorizado para que Responde automaticamente apareça entre os modos."}</p>
+          <p>{hasAllowlistedNumber ? "A opção Responde automaticamente está visível. A ativação exige conhecimento, modelos e uma conexão inbound ativa; somente números ativos da whitelist podem receber respostas automáticas no inbound normal." : "Cadastre um número autorizado para que Responde automaticamente apareça entre os modos."}</p>
         </article>
         <article className={styles.behaviorPanel}>
           <header><span><p className={styles.eyebrow}>Campanhas de reativação</p><h2>Conversas antigas</h2></span><span className={styles.behaviorState}>{modeLabels[settings?.reactivation_ai_mode ?? "off"]}</span></header>

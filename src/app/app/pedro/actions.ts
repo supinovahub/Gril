@@ -234,11 +234,9 @@ export async function changeGlobalAiModeAction(formData: FormData) {
   const { error } = await supabase.from("organization_settings").update({ ai_global_mode: mode.data, inbound_ai_mode: mode.data }).eq("org_id", viewer.organization!.id);
   if (error) {
     const reason = error.message.includes("allowlist") ? "Cadastre ao menos um número de teste antes de selecionar Responde automaticamente."
-      : error.message.includes("institutional") ? "Complete a identidade institucional."
       : error.message.includes("knowledge_or_rules") ? "Publique persona, regras, qualificação e ao menos um empreendimento válido."
       : error.message.includes("models") ? "Configure modelo principal e fallback aprovado."
-      : error.message.includes("channel_unhealthy") ? "Teste um WhatsApp inbound ativo e saudável nos últimos 15 minutos."
-      : error.message.includes("regression") ? "Execute os 100 casos reais: mínimo de 90% geral e nenhum erro crítico."
+      : error.message.includes("channel_") ? "Mantenha uma conexão WhatsApp ativa com inbound habilitado."
       : "O banco recusou a mudança de modo por um gate de segurança.";
     redirect(`/app/pedro?erro=${encodeURIComponent(reason)}`);
   }

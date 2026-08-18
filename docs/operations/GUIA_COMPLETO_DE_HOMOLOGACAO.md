@@ -197,7 +197,7 @@ No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confir
 ### 6.1 Modos, aprendizado e curadoria
 
 1. em `Pedro`, sem whitelist ativa, confirme que o atendimento normal oferece **Desligado**, **Só observa** e **Sugere para revisão**; cadastre um telefone E.164 e confirme que **Responde automaticamente** aparece sem ser selecionado automaticamente;
-2. selecione `production` explicitamente e confirme que a mudança só é salva quando whitelist e portões técnicos de produção estiverem aprovados; então prove que o número cadastrado pode receber a resposta automática;
+2. selecione `production` explicitamente e confirme que a mudança exige whitelist ativa, conhecimento/modelos válidos e conexão WhatsApp ativa com inbound habilitado; perfil institucional, health check recente e regressão não bloqueiam a seleção; então prove que o número cadastrado pode receber a resposta automática;
 3. coloque o inbound em `assisted` e envie uma mensagem de um contato fora da whitelist; prove no banco/log que ele criou execução/sugestão, mas não enviou mensagem outbound automaticamente;
 4. coloque o inbound em `production` e envie uma mensagem de um contato fora da whitelist; prove que ele foi registrado no Inbox, mas não criou execução nem mensagem outbound automática;
 5. remova um número da whitelist com uma execução `production` pendente e confirme que o worker bloqueia a execução antes do envio;
