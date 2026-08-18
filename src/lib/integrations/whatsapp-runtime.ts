@@ -374,14 +374,16 @@ export function verifyAndNormalizeUazapiWebhook(
       ?? text(message.type)
       ?? ((text(message.text) ?? text(message.body)) ? "text" : undefined),
   );
+  const content = record(message.content);
   const media = record(message.media) ?? record(message.file) ?? record(message.document) ?? record(message.image) ?? record(message.audio) ?? record(message.video);
   const sourceUrl = text(media?.url) ?? text(media?.URL) ?? text(message.fileURL) ?? text(message.mediaUrl) ?? text(message.url);
+  const hasDownloadableMedia = ["image", "audio", "video", "document"].includes(contentType);
   const normalizedMedia = contentType !== "text" ? {
-    providerMediaId: text(media?.id) ?? text(message.mediaId),
+    providerMediaId: text(media?.id) ?? text(message.mediaId) ?? (hasDownloadableMedia ? providerMessageId : undefined),
     sourceUrl,
-    mimeType: text(media?.mimetype) ?? text(media?.mimeType) ?? text(message.mimetype),
-    fileName: text(media?.fileName) ?? text(media?.filename) ?? text(message.fileName),
-    sha256: text(media?.sha256),
+    mimeType: text(media?.mimetype) ?? text(media?.mimeType) ?? text(message.mimetype) ?? text(content?.mimetype) ?? text(content?.mimeType),
+    fileName: text(media?.fileName) ?? text(media?.filename) ?? text(message.fileName) ?? text(content?.fileName) ?? text(content?.filename),
+    sha256: text(media?.sha256) ?? text(content?.sha256) ?? text(content?.fileSHA256) ?? text(content?.fileSha256),
   } : undefined;
 
   if (fromMe && !wasSentByApi && !isGroup && providerMessageId && fromE164) {
@@ -593,6 +595,26 @@ async function downloadBinary(url: string, headers: HeadersInit) {
   return { bytes, mimeType: response.headers.get("content-type")?.split(";")[0] };
 }
 
+function safeUazapiMediaUrl(sourceUrl: string, endpointUrl: string) {
+  let mediaUrl: URL;
+  let endpoint: URL;
+  try {
+    mediaUrl = new URL(sourceUrl);
+    endpoint = new URL(endpointUrl);
+  } catch {
+    throw new RuntimeProviderError("uazapi_media_url_invalid", "A Uazapi informou uma URL de mídia inválida.");
+  }
+  const allowedHosts = new Set([
+    endpoint.hostname.toLowerCase(),
+    ...(process.env.UAZAPI_ALLOWED_HOSTS ?? "").split(",").map((item) => item.trim().toLowerCase()).filter(Boolean),
+  ]);
+  const hostname = mediaUrl.hostname.toLowerCase();
+  if (mediaUrl.protocol !== "https:" || (!allowedHosts.has(hostname) && !hostname.endsWith(".uazapi.com"))) {
+    throw new RuntimeProviderError("uazapi_media_url_unsafe", "A Uazapi informou uma origem de mídia não autorizada.");
+  }
+  return mediaUrl;
+}
+
 export async function downloadWhatsappMedia(input: {
   provider: WhatsappProvider;
   endpointUrl: string;
@@ -612,16 +634,23 @@ export async function downloadWhatsappMedia(input: {
     if (!mediaUrl) throw new RuntimeProviderError("meta_media_url_missing", "A Meta não devolveu a URL temporária da mídia.");
     return downloadBinary(mediaUrl, { authorization: `Bearer ${parsedSecret.accessToken}` });
   }
-  if (!input.sourceUrl) throw new RuntimeProviderError("uazapi_media_url_missing", "A Uazapi não informou a URL da mídia.");
-  const mediaUrl = new URL(input.sourceUrl);
-  const endpoint = new URL(input.endpointUrl);
-  const allowedHosts = new Set([
-    endpoint.hostname.toLowerCase(),
-    ...(process.env.UAZAPI_ALLOWED_HOSTS ?? "").split(",").map((item) => item.trim().toLowerCase()).filter(Boolean),
-  ]);
-  if (mediaUrl.protocol !== "https:" || (!allowedHosts.has(mediaUrl.hostname.toLowerCase()) && !mediaUrl.hostname.toLowerCase().endsWith(".uazapi.com"))) {
-    throw new RuntimeProviderError("uazapi_media_url_unsafe", "A Uazapi informou uma origem de mídia não autorizada.");
+  if (input.providerMediaId) {
+    const descriptor = await runtimeFetch(`${input.endpointUrl.replace(/\/$/, "")}/message/download`, {
+      method: "POST",
+      headers: { "content-type": "application/json", accept: "application/json", token: input.secret },
+      body: JSON.stringify({ id: input.providerMediaId, transcribe: false }),
+    }, { idempotent: true });
+    const mediaUrlValue = text(record(descriptor)?.fileURL) ?? text(record(descriptor)?.fileUrl) ?? text(record(descriptor)?.url);
+    if (!mediaUrlValue) throw new RuntimeProviderError("uazapi_media_url_missing", "A Uazapi não devolveu a URL da mídia.");
+    const mediaUrl = safeUazapiMediaUrl(mediaUrlValue, input.endpointUrl);
+    const downloaded = await downloadBinary(mediaUrl.toString(), { token: input.secret });
+    return {
+      ...downloaded,
+      mimeType: downloaded.mimeType ?? text(record(descriptor)?.mimetype) ?? text(record(descriptor)?.mimeType),
+    };
   }
+  if (!input.sourceUrl) throw new RuntimeProviderError("uazapi_media_locator_missing", "A Uazapi não informou como localizar a mídia.");
+  const mediaUrl = safeUazapiMediaUrl(input.sourceUrl, input.endpointUrl);
   return downloadBinary(mediaUrl.toString(), { token: input.secret });
 }
 
