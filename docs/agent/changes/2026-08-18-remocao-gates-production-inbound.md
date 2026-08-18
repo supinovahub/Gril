@@ -3,7 +3,7 @@
 - Data: 18/08/2026
 - Responsável: Codex
 - Branch/PR: `agent/relax-inbound-production-gates`, PR #60
-- Commit: o commit que contém este arquivo
+- Commit de código canônico: `5d76dfe3d6db8e5adc8176a676067ae940c16144`
 
 ## Objetivo
 
@@ -26,8 +26,8 @@ a restrição de destinatários pela whitelist.
 - Migrations: `20260818170835_relax_inbound_production_gates.sql` substitui
   somente o trigger function de prontidão.
 - Testes SQL: `supabase/tests/phase_45_relaxed_inbound_production_gates.sql`.
-- Mudanças externas: migration aplicada no Supabase canônico; PR #60 e preview
-  Vercel publicados. O deploy canônico ainda depende do merge.
+- Mudanças externas: migration aplicada no Supabase canônico; PR #60 mergeado;
+  deploy canônico da Vercel publicado e verificado.
 
 ## Validação
 
@@ -51,12 +51,16 @@ a restrição de destinatários pela whitelist.
   diretamente no PostgreSQL remoto.
 - Advisors de segurança e desempenho: nenhum achado relacionado à função
   alterada; os avisos gerais preexistentes permanecem fora deste escopo.
+- O status Vercel do commit canônico aponta para o deployment
+  `dpl_GGWVB82LjdopuTPUAVNyynFvmocw`, `READY`, com o alias
+  `https://gril-lac.vercel.app`; `/login` retornou 200 e `/app/pedro`, 307 para
+  o login. Não houve log de erro nos dez minutos consultados.
 - A seleção autenticada de production e o envio real de WhatsApp permanecem
   para homologação manual do usuário.
 
 ## Impacto operacional
 
-- Deploy necessário: sim, migration, aplicação e documentação juntos.
+- Deploy necessário: concluído a partir da branch canônica.
 - Migração aplicada: sim, `20260818170835` no projeto
   `frslhzwhaooqtivkzdez`.
 - Compatibilidade/rollback: restaurar a versão anterior do trigger function;
@@ -64,7 +68,6 @@ a restrição de destinatários pela whitelist.
 
 ## Pendências e riscos
 
-- Publicar a aplicação a partir da branch canônica e confirmar a rota pública.
 - Confirmar manualmente a seleção de production e um novo áudio do número
   allowlisted.
 

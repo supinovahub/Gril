@@ -1,5 +1,38 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 18/08/2026 — production inbound sem três gates operacionais
+
+- O PR #60 foi mergeado na branch canônica `phase/01-foundation` no commit
+  `5d76dfe3d6db8e5adc8176a676067ae940c16144`. O dashboard continua mostrando
+  **Responde automaticamente** quando há whitelist ativa, sem ativar o modo ao
+  cadastrar um telefone.
+- A migration `20260818170835_relax_inbound_production_gates.sql` foi aplicada
+  e confirmada no Supabase `frslhzwhaooqtivkzdez`. Perfil institucional, health
+  check recente/sem erro e regressão aprovada deixaram de bloquear a seleção de
+  production; conhecimento, modelos e conexão WhatsApp ativa com inbound
+  habilitado permanecem obrigatórios.
+- A organização continua em `assisted`, com exatamente uma entrada ativa na
+  whitelist e uma conexão inbound ativa. Portanto a publicação não ativou
+  production nem enviou mensagem automaticamente.
+- No inbound production, destinatário fora da whitelist continua bloqueado em
+  três camadas: elegibilidade antes da execução, revalidação do worker e trigger
+  final antes do outbound. A função privada de prontidão permanece sem permissão
+  de execução para os papéis da API.
+- Reativação continua independente: `test_controlled` usa whitelist, enquanto
+  uma campanha explicitamente liberada como `released` pode alcançar sua base
+  elegível fora da whitelist. O botão inbound de Pedro não altera esse release.
+- A Vercel publicou o deployment `dpl_GGWVB82LjdopuTPUAVNyynFvmocw`, `READY`,
+  vinculado pelo status do commit canônico, com o alias
+  `https://gril-lac.vercel.app`. `/login` respondeu HTTP 200, `/app/pedro`
+  redirecionou corretamente ao login e não houve log de erro nos dez minutos
+  consultados.
+- Lint, 24 arquivos/117 testes, build Next.js 16.2.12, CI, db lint, dry-run e
+  validação direta das definições vivas passaram. A seleção autenticada de
+  production e um novo áudio do número allowlisted permanecem para homologação
+  manual.
+- Evidência detalhada:
+  `docs/agent/changes/2026-08-18-remocao-gates-production-inbound.md`.
+
 ## Atualização de 18/08/2026 — production inbound visível com whitelist, sem ativação automática
 
 - O PR #58 foi mergeado na branch canônica `phase/01-foundation` no commit
@@ -9,10 +42,10 @@
   ativa o modo.
 - A migration
   `20260818162655_enable_allowlisted_inbound_production.sql` foi aplicada e
-  confirmada no Supabase canônico `frslhzwhaooqtivkzdez`. A ativação continua
-  exigindo todos os gates de prontidão, e elegibilidade, worker e outbound
-  bloqueiam respostas automáticas para inbound fora da whitelist. A liberação
-  independente de reativação foi preservada.
+  confirmada no Supabase canônico `frslhzwhaooqtivkzdez`. Naquele release, a
+  ativação ainda exigia todos os gates de prontidão; elegibilidade, worker e
+  outbound bloqueavam respostas automáticas para inbound fora da whitelist. A
+  liberação independente de reativação foi preservada.
 - Após a migration, a organização e a conversa inbound de homologação
   continuaram em `assisted`, com um número ativo na whitelist. Portanto não
   houve liberação automática de produção nem envio de mensagem.
@@ -22,9 +55,9 @@
   `/app/pedro` redirecionou corretamente ao login; a consulta de logs de erro
   não retornou ocorrências.
 - Lint, 24 arquivos/117 testes, build Next.js 16.2.12 das 46 rotas, CI, dry-run
-  e db lint passaram. A seleção explícita de production ainda não pode ser
-  concluída no estado atual porque perfil institucional, saúde recente do
-  canal e regressão permanecem abaixo dos gates obrigatórios.
+  e db lint passaram. A limitação de perfil institucional, saúde recente do
+  canal e regressão registrada naquele momento foi removida pela atualização
+  imediatamente acima.
 - Evidência detalhada:
   `docs/agent/changes/2026-08-18-production-inbound-condicionada-a-whitelist.md`.
 
