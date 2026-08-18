@@ -214,15 +214,27 @@ export async function clonePersonaAction(formData: FormData) {
 }
 
 export async function changeGlobalAiModeAction(formData: FormData) {
-  const mode = z.enum(["off", "shadow", "assisted"]).safeParse(formData.get("mode"));
+  const mode = z.enum(["off", "shadow", "assisted", "production"]).safeParse(formData.get("mode"));
   if (!mode.success) return;
   const viewer = await requireActiveViewer();
   if (viewer.membership?.role !== "owner") return;
   const supabase = await createClient();
 
+  if (mode.data === "production") {
+    const { count, error: allowlistError } = await supabase
+      .from("ai_test_allowlist")
+      .select("id", { count: "exact", head: true })
+      .eq("org_id", viewer.organization!.id)
+      .eq("active", true);
+    if (allowlistError || !count) {
+      redirect(`/app/pedro?erro=${encodeURIComponent("Cadastre ao menos um número de teste antes de selecionar Responde automaticamente.")}`);
+    }
+  }
+
   const { error } = await supabase.from("organization_settings").update({ ai_global_mode: mode.data, inbound_ai_mode: mode.data }).eq("org_id", viewer.organization!.id);
   if (error) {
-    const reason = error.message.includes("institutional") ? "Complete a identidade institucional."
+    const reason = error.message.includes("allowlist") ? "Cadastre ao menos um número de teste antes de selecionar Responde automaticamente."
+      : error.message.includes("institutional") ? "Complete a identidade institucional."
       : error.message.includes("knowledge_or_rules") ? "Publique persona, regras, qualificação e ao menos um empreendimento válido."
       : error.message.includes("models") ? "Configure modelo principal e fallback aprovado."
       : error.message.includes("channel_unhealthy") ? "Teste um WhatsApp inbound ativo e saudável nos últimos 15 minutos."

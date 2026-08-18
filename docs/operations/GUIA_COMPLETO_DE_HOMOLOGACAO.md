@@ -196,8 +196,8 @@ No simulador, abra uma conversa e envie vários turnos no mesmo cenário. Confir
 
 ### 6.1 Modos, aprendizado e curadoria
 
-1. em `Pedro`, confirme que o atendimento normal oferece **Desligado**, **Só observa**, **Sugere para revisão** e **Responde automaticamente** (valores técnicos `off`, `shadow`, `assisted` e `production`); `production` só pode ser salvo quando os portões técnicos de produção estiverem aprovados;
-2. na seção **Números autorizados para teste**, cadastre o telefone E.164 do lead de teste, coloque o inbound em `production` e confirme que esse número pode receber a resposta automática;
+1. em `Pedro`, sem whitelist ativa, confirme que o atendimento normal oferece **Desligado**, **Só observa** e **Sugere para revisão**; cadastre um telefone E.164 e confirme que **Responde automaticamente** aparece sem ser selecionado automaticamente;
+2. selecione `production` explicitamente e confirme que a mudança só é salva quando whitelist e portões técnicos de produção estiverem aprovados; então prove que o número cadastrado pode receber a resposta automática;
 3. coloque o inbound em `assisted` e envie uma mensagem de um contato fora da whitelist; prove no banco/log que ele criou execução/sugestão, mas não enviou mensagem outbound automaticamente;
 4. coloque o inbound em `production` e envie uma mensagem de um contato fora da whitelist; prove que ele foi registrado no Inbox, mas não criou execução nem mensagem outbound automática;
 5. remova um número da whitelist com uma execução `production` pendente e confirme que o worker bloqueia a execução antes do envio;
@@ -291,16 +291,19 @@ Uma conexão real saudável basta para o piloto. Teste ambos os provedores antes
 
 Critério comum: webhook inválido é rejeitado; organização arquivada retorna bloqueio definitivo; organização suspensa ainda registra inbound, mas não envia mensagens; retry não duplica lead, mensagem ou oportunidade.
 
-### Reativacao em production
+### Inbound e reativação em production
 
-1. em `Pedro`, confirme que o atendimento normal oferece somente `off`, `shadow`
-   e `assisted`; `production` nao deve estar disponivel no inbound normal;
-2. configure reativacao como `production + teste controlado`, cadastre o telefone
+1. em `Pedro`, confirme que o inbound mostra `production` somente quando há
+   ao menos um número ativo na whitelist e que cadastrar o número não altera o
+   modo atual;
+2. selecione `production` no inbound e prove que o número allowlisted responde,
+   enquanto um contato fora da lista entra no Inbox sem execução nem outbound;
+3. configure reativação como `production + teste controlado`, cadastre o telefone
    E.164 do lead de teste e confirme que um contato fora da allowlist e bloqueado;
-3. libere a reativacao como `released`, execute uma onda e confirme que a
+4. libere a reativação como `released`, execute uma onda e confirme que a
    conversa recebe `journey = reactivation`;
-4. envie uma mensagem inbound normal e confirme que ela permanece inelegivel
-   para production, mesmo que exista uma configuracao antiga no banco.
+5. remova um número da whitelist e confirme que novas execuções e mensagens
+   automáticas para ele são bloqueadas imediatamente.
 
 ## 9. Jornada vertical principal
 

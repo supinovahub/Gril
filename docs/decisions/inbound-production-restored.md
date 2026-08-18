@@ -43,6 +43,11 @@ Em 07/08/2026, o pedido atual do usuario voltou a restringir `production` as
 campanhas de reativacao. Consulte `docs/decisions/reactivation-production-only.md`;
 esta decisao permanece como historico da permissao anterior.
 
+Em 18/08/2026, uma nova decisão restaurou o inbound production somente para
+destinatários allowlisted e tornou a presença da whitelist condição para a
+opção aparecer na interface. Consulte
+`docs/decisions/2026-08-18-inbound-production-condicionada-a-whitelist.md`.
+
 ## Rollout
 
 A mudança de código e a migration devem ser publicadas juntas. Após a
