@@ -1,5 +1,33 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 18/08/2026 — production inbound visível com whitelist, sem ativação automática
+
+- O PR #58 foi mergeado na branch canônica `phase/01-foundation` no commit
+  `0e128fcc2487a8eeec01a41a16ff4eda1090feb6`. Quando existe ao menos um número
+  ativo na whitelist, o dashboard de Pedro mostra **Responde automaticamente**
+  junto com `off`, `shadow` e `assisted`; cadastrar o número não seleciona nem
+  ativa o modo.
+- A migration
+  `20260818162655_enable_allowlisted_inbound_production.sql` foi aplicada e
+  confirmada no Supabase canônico `frslhzwhaooqtivkzdez`. A ativação continua
+  exigindo todos os gates de prontidão, e elegibilidade, worker e outbound
+  bloqueiam respostas automáticas para inbound fora da whitelist. A liberação
+  independente de reativação foi preservada.
+- Após a migration, a organização e a conversa inbound de homologação
+  continuaram em `assisted`, com um número ativo na whitelist. Portanto não
+  houve liberação automática de produção nem envio de mensagem.
+- A integração automática da Vercel publicou o deployment
+  `dpl_2fPZAKYGWb1vfohjakWnWrqMN5LH`, `READY`, a partir do merge canônico e com
+  o alias `https://gril-lac.vercel.app`. `/login` respondeu HTTP 200 e
+  `/app/pedro` redirecionou corretamente ao login; a consulta de logs de erro
+  não retornou ocorrências.
+- Lint, 24 arquivos/117 testes, build Next.js 16.2.12 das 46 rotas, CI, dry-run
+  e db lint passaram. A seleção explícita de production ainda não pode ser
+  concluída no estado atual porque perfil institucional, saúde recente do
+  canal e regressão permanecem abaixo dos gates obrigatórios.
+- Evidência detalhada:
+  `docs/agent/changes/2026-08-18-production-inbound-condicionada-a-whitelist.md`.
+
 ## Atualização de 17/08/2026 — workspace subsegundo publicado em produção
 
 - O PR #50 foi direcionado à branch canônica `phase/01-foundation` e mergeado no commit `9f28608040134b1ba5d675f8408fd3022d1ea5f1`. Esse merge contém integralmente Dashboard, Chat Pedro/Lionel, redesign operacional, correções de carregamento e `agent/continuous-improvement-loop`.
@@ -54,6 +82,9 @@
 
 ## Atualizacao de 07/08/2026 - producao automatica exclusiva para reativacao
 
+- Estado histórico, substituído em 18/08/2026 para o inbound normal pela
+  decisão de visibilidade condicionada à whitelist; a restrição de campanhas
+  a conversas de reativação continua vigente.
 - A migration `20260807180741_reactivation_production_only.sql` foi aplicada no Supabase remoto e registrada como aplicada na history.
 - O banco permite `production` somente em campanhas `reactivation`; o inbound normal fica limitado a `off`, `shadow` e `assisted`.
 - A abertura da campanha marca a conversa como `journey = reactivation` e os gates de onda, elegibilidade, worker e outbound revalidam a origem.

@@ -26,10 +26,11 @@ cadastrar um número e sem permitir respostas automáticas fora da whitelist.
   o valor `production`, preserva os gates de prontidão, exige whitelist ativa
   para a transição e combina as travas finais de inbound e reativação.
 - Testes SQL: `supabase/tests/phase_44_inbound_whitelist_production.sql`.
-- Mudanças externas: PR GitHub `#58` e migration
+- Mudanças externas: PR GitHub `#58`, merge canônico
+  `0e128fcc2487a8eeec01a41a16ff4eda1090feb6` e migration
   `20260818162655_enable_allowlisted_inbound_production` aplicada no Supabase
-  canônico `frslhzwhaooqtivkzdez`. O deploy de produção será registrado após a
-  integração na branch canônica.
+  canônico `frslhzwhaooqtivkzdez`. A Vercel publicou o deployment de produção
+  `dpl_2fPZAKYGWb1vfohjakWnWrqMN5LH` a partir desse merge.
 
 ## Validação
 
@@ -51,6 +52,9 @@ cadastrar um número e sem permitir respostas automáticas fora da whitelist.
 - Estado preservado: há um número ativo na whitelist, mas a organização e a
   conversa inbound verificada continuam em `assisted`; a migration não ativou
   respostas automáticas.
+- Produção: deployment `READY`, com `https://gril-lac.vercel.app` entre os
+  aliases. `/login` respondeu HTTP 200, `/app/pedro` redirecionou para o login
+  como esperado e a consulta de logs de erro não retornou ocorrências.
 - Validações não executadas e motivo: a homologação visual e o envio real pelo
   WhatsApp permanecem sob responsabilidade do usuário.
 
@@ -65,9 +69,11 @@ cadastrar um número e sem permitir respostas automáticas fora da whitelist.
 
 ## Pendências e riscos
 
-- Publicar o bundle a partir da branch canônica e confirmar a rota pública.
 - Homologar visualmente a exibição condicional do quarto modo e um novo áudio
   com o inbound explicitamente colocado em `production`.
+- No estado remoto observado, perfil institucional, saúde recente do canal e
+  regressão ainda não satisfazem os gates de ativação. A opção pode ser vista,
+  mas o banco rejeitará a seleção até esses requisitos serem regularizados.
 
 ## Documentos relacionados
 
