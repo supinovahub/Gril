@@ -2,7 +2,7 @@
 
 - Data: 18/08/2026
 - Responsável: Codex
-- Branch/PR: `fix/uazapi-audio-transcription`
+- Branch/PR: `fix/uazapi-audio-transcription`, PR #54
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
@@ -33,8 +33,11 @@ da Uazapi e conter a cadência criada pelo incidente observado.
   `cancelled_after_unprocessed_audio`. O filtro usou conversa, tipo, status e
   prefixo de deduplicação da execução exatos. A Uazapi foi consultada de forma
   autenticada e somente leitura para validar o contrato real de download; não
-  houve envio de mensagem nem alteração no fornecedor. Deploy ainda pendente
-  neste commit.
+  houve envio de mensagem nem alteração no fornecedor. O PR #54 foi mergeado
+  por squash na branch padrão no commit
+  `f96275b2b2e41a3e39f71c3c8bcc9cd382d8848e`. O Git Integration publicou o
+  deployment Vercel `dpl_HbFe8AKw4hUW187HVs3vDisg8ieb`, que ficou `READY` em
+  produção e recebeu o alias `https://gril-lac.vercel.app`.
 
 ## Validação
 
@@ -45,13 +48,18 @@ da Uazapi e conter a cadência criada pelo incidente observado.
   zero attachment e zero transcrição. O endpoint real devolveu um MP3 por
   `fileURL`; após a contenção, o lote afetado ficou com zero job pendente e 25
   cancelados. A suíte automatizada passou com 23 arquivos e 115 testes; o lint
-  completo passou; o build concluiu TypeScript e gerou 46 rotas.
-- Validações não executadas e motivo: merge, deploy e homologação ponta a ponta
-  ainda serão executados antes da conclusão.
+  completo passou; o build concluiu TypeScript e gerou 46 rotas. Após o deploy,
+  `/login` e a raiz pública responderam HTTP 200; a raiz terminou em `/login`,
+  como esperado para sessão anônima. O scan de logs de erro do deployment não
+  retornou ocorrências.
+- Validações não executadas e motivo: a homologação ponta a ponta com um novo
+  áudio real permanece pendente para não gerar nova interação com o lead sem
+  coordenação humana.
 
 ## Impacto operacional
 
-- Deploy necessário: sim.
+- Deploy necessário: concluído no deployment
+  `dpl_HbFe8AKw4hUW187HVs3vDisg8ieb`, a partir do commit canônico `f96275b`.
 - Migração aplicada: não.
 - Compatibilidade/rollback: o caminho antigo por `sourceUrl` continua como
   fallback para payloads compatíveis. O rollback do código restaura o adapter
@@ -60,7 +68,7 @@ da Uazapi e conter a cadência criada pelo incidente observado.
 
 ## Pendências e riscos
 
-- Reprocessar os áudios históricos somente depois do deploy, evitando novo
+- Reprocessar os áudios históricos somente com revisão humana, evitando novo
   efeito conversacional automático antes de revisar o resultado.
 - Homologar um novo áudio real e confirmar transcrição, anexo privado e
   sugestão assistida antes de considerar o incidente encerrado.
