@@ -1,5 +1,34 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 19/08/2026 — respostas citadas do WhatsApp em produção
+
+- O PR `#74` foi mergeado na branch canônica `phase/01-foundation` no commit
+  `791285d136e479afdfa73c519904ed0956209acb`. Uazapi e Meta agora preservam o
+  identificador da mensagem citada; o vínculo é restrito à mesma organização e
+  conversa, e o Pedro recebe o texto citado mesmo quando ele está fora das 120
+  mensagens recentes.
+- A migration `20260819150905_preserve_whatsapp_quoted_replies.sql` foi aplicada
+  de forma serializada no Supabase `frslhzwhaooqtivkzdez`; o histórico
+  local/remoto ficou alinhado. O trigger está ativo, a função privada mantém
+  `search_path` fixo e não é executável por papéis da API.
+- O backfill vinculou exatamente a resposta citada reportada para o Izaias à
+  mensagem antiga correta. A atualização não reprocessou IA nem enviou nova
+  mensagem; o último outbound da conversa continuou sendo o envio humano já
+  existente.
+- O deployment de produção `dpl_F4cYLL6BCMXGn3YN4vcwJBWeqQvk`, associado ao
+  merge pelo status do commit, está `READY` e atende pelo alias
+  `https://gril-lac.vercel.app`. `/login` respondeu HTTP 200,
+  `/app/conversas` redirecionou para autenticação e a consulta pós-deploy não
+  encontrou logs de erro nem respostas 5xx.
+- Lint, 26 arquivos/123 testes, build Next.js 16.2.12 das 46 rotas, CI, dry-run,
+  pgTAP remoto em transação revertida, db lint e verificações diretas do schema
+  passaram. A homologação manual de uma nova resposta citada em número
+  autorizado permanece pendente.
+- O PR rascunho `#66` também toca outra região do worker e deve atualizar sua
+  base após o merge `791285d`; nenhum trecho dele foi incorporado nesta
+  correção. Evidência detalhada em
+  `docs/agent/changes/2026-08-19-whatsapp-respostas-citadas.md`.
+
 ## Atualização de 19/08/2026 — relógio da última mensagem corrigido em produção
 
 - O PR #70 foi mergeado na branch canônica `phase/01-foundation` no commit
@@ -185,7 +214,7 @@
 - A consulta remota confirmou 11 campanhas de reativacao nao-production, nenhuma campanha production e nenhuma organizacao liberada; nenhum lead foi apagado ou alterado.
 - Nenhum deploy Vercel foi feito; a homologacao manual de uma campanha de teste permanece pendente.
 
-> Atualizado em 07/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
+> Atualizado em 19/08/2026. Este arquivo descreve o estado corrente conhecido; valide fatos mutáveis antes de alterá-los.
 
 ## Repositório
 
