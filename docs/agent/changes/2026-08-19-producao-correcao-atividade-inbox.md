@@ -3,7 +3,7 @@
 - Data: 19/08/2026
 - Responsável: Codex
 - Branch/PR: implementação em `fix/inbox-activity-timestamp`, PR #70; registro
-  em `docs/record-inbox-activity-production`
+  em `docs/record-inbox-activity-production`, PR #71
 - Commit: o commit que contém este arquivo; implementação integrada por
   `7879f67bb9782ce1feeb36622eba8402fa218771`
 
