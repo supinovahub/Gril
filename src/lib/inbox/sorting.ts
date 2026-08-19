@@ -1,5 +1,9 @@
 export type InboxConversationActivity = {
   id: string;
+  /**
+   * Legacy RPC key containing the latest message `created_at` (or the
+   * conversation start when it has no messages), not conversation metadata.
+   */
   updated_at: string;
 };
 
@@ -9,7 +13,7 @@ function activityTimestamp(value: string) {
 }
 
 /**
- * Mirrors WhatsApp's conversation list: the latest activity comes first.
+ * Mirrors WhatsApp's conversation list: the latest message comes first.
  */
 export function sortInboxConversations<T extends InboxConversationActivity>(
   conversations: readonly T[],
