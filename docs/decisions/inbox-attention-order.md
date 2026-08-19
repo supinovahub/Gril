@@ -1,7 +1,7 @@
 # Ordenação do Inbox por atenção e atividade
 
 - Data: 10/08/2026
-- Status: decisão de produto solicitada pelo usuário
+- Status: substituída em 19/08/2026 por `2026-08-19-inbox-chronological-order.md`
 
 ## Decisão
 
