@@ -2,7 +2,7 @@
 
 - Data: 19/08/2026
 - Responsável: Codex
-- Branch/PR: `fix/inbox-activity-timestamp`; PR a registrar
+- Branch/PR: `fix/inbox-activity-timestamp`; PR #70
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
