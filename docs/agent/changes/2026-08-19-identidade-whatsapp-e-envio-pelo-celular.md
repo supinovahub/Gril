@@ -2,7 +2,7 @@
 
 - Data: 19/08/2026
 - Responsável: Codex
-- Branch/PR: `fix/contact-identity-outbound-sync` / a abrir
+- Branch/PR: `fix/contact-identity-outbound-sync` / PR #76
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
