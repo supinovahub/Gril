@@ -1,5 +1,30 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 19/08/2026 — conversas em ordem cronológica em produção
+
+- O PR #68 foi mergeado na branch canônica `phase/01-foundation` no commit
+  `a27a46662aa93869795a5a1f7bfb79f00c29710b`. A Inbox agora ordena toda a
+  lista por `updated_at DESC`, com desempate por ID, sem promover conversas com
+  mensagens não lidas ou sugestões pendentes. As pendências continuam visíveis
+  como badges e contadores.
+- A migration `20260819123017_inbox_chronological_order.sql` foi a única
+  pendente, foi aplicada no Supabase canônico `frslhzwhaooqtivkzdez` e ficou
+  alinhada no histórico remoto. As funções vivas `inbox_conversation_page` e
+  `inbox_workspace_bootstrap` confirmam a ordem cronológica, `search_path`
+  bloqueado, JIT desativado e permissões restritas aos papéis esperados.
+- A integração Git/Vercel publicou o deployment
+  `dpl_DSS1hbi8AHMABCLYXkrRwxZtgQMP`, `Ready`, com o alias
+  `https://gril-lac.vercel.app`. `/login` respondeu HTTP 200 e `/app/inbox`
+  respondeu HTTP 307 para o login; a consulta de logs de erro não retornou
+  ocorrências.
+- Lint, 24 arquivos/117 testes, build das 46 rotas, CI do PR e do merge,
+  dry-run, db lint e consultas diretas ao banco passaram. O pgTAP não foi
+  executado porque o host não possui Docker/Podman; a conferência visual em
+  sessão autenticada permanece para homologação humana.
+- Decisão e evidência:
+  `docs/decisions/2026-08-19-inbox-chronological-order.md` e
+  `docs/agent/changes/2026-08-19-producao-ordenacao-cronologica-conversas.md`.
+
 ## Atualização de 18/08/2026 — identidade apresentada como assistente do Pedro
 
 - A primeira pergunta sobre IA deixa de pausar silenciosamente a conversa. O runtime `GRIL_BEHAVIOR_V5` exige uma resposta curta, natural e descontraída dizendo apenas que o atendimento é o assistente do Pedro Sifuentes, corretor imobiliário.
