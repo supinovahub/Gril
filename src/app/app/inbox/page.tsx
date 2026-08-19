@@ -9,6 +9,7 @@ import {
   describeInboxNotifications,
   type InboxNotificationCount,
 } from "@/lib/inbox/notifications";
+import { sortInboxConversations } from "@/lib/inbox/sorting";
 import { measureServerTask } from "@/lib/observability/server-performance";
 import { createClient } from "@/lib/supabase/server";
 import { formatOperationDateTime } from "@/lib/time/operation-format";
@@ -28,6 +29,16 @@ type InboxWorkspacePayload = {
   operations: Array<{ id: string; timezone: string }>;
   organizationId: string | null;
 };
+
+function isRenderableConversation(
+  conversation: InboxConversationRow,
+): conversation is InboxConversationRow & {
+  id: string;
+  operation_id: string;
+  updated_at: string;
+} {
+  return Boolean(conversation.id && conversation.operation_id && conversation.updated_at);
+}
 
 export default async function InboxPage() {
   const supabase = await createClient();
@@ -50,9 +61,9 @@ export default async function InboxPage() {
   if (!workspace.authenticated) redirect("/login");
   if (!workspace.authorized || !workspace.organizationId) redirect("/aguardando-aprovacao");
 
-  const orderedConversations = (workspace.conversations ?? []).filter((conversation) => (
-    conversation.id && conversation.operation_id && conversation.updated_at
-  ));
+  const orderedConversations = sortInboxConversations(
+    (workspace.conversations ?? []).filter(isRenderableConversation),
+  );
   const operationTimezones = new Map(workspace.operations.map((operation) => [operation.id, operation.timezone]));
 
   return (
@@ -65,7 +76,7 @@ export default async function InboxPage() {
       <ConversationViews active="conversations" />
 
       <section className={styles.inboxPanel}>
-        <div className={styles.inboxHeader}><span>{orderedConversations.length} conversas</span><span>Pendências primeiro</span></div>
+        <div className={styles.inboxHeader}><span>{orderedConversations.length} conversas</span><span>Mais recentes primeiro</span></div>
         <div className={styles.conversationList}>
           {orderedConversations.map((conversation) => {
             const notification: InboxNotificationCount | null = (conversation.total_count ?? 0) > 0 ? {
