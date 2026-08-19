@@ -1,5 +1,36 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 19/08/2026 — notificações e identidade WhatsApp em produção
+
+- O PR `#76` foi mergeado na branch canônica `phase/01-foundation` no commit
+  `1da7a5c26d4e92b957b1500acc448a20c8d7afc6`. O workspace agora avisa novas
+  mensagens inbound com som, mostra o contador canônico do Inbox no título da
+  aba e oferece controle persistente para silenciar o áudio. A reconciliação já
+  existente continua recuperando badges quando um evento Realtime é perdido.
+- A migration `20260819165442_fix_whatsapp_identity_and_device_outbound.sql` foi
+  aplicada de forma serializada no Supabase `frslhzwhaooqtivkzdez` e aparece
+  como a última migration remota. Celulares brasileiros legados recebidos sem o
+  nono dígito são canonicalizados antes do vínculo com contato e conversa.
+- A reparação consolidou três pares técnicos inequívocos, incluindo os casos
+  reportados de Gabriel e Tânia, preservando em cada caso a conversa e a jornada
+  da campanha. Depois da aplicação não restou grupo duplicado nem celular legado
+  ativo no escopo corrigido; as origens foram encerradas e mantidas em auditoria.
+- O gatilho de ingestão de mensagens enviadas pelo aparelho passou a usar
+  `source_execution_id`. Quatro mensagens manuais que estavam ausentes na
+  conversa reportada de Uira foram reprocessadas idempotentemente e persistidas
+  como outbound humano; a conversa ficou pausada em `pending_handoff`, conforme
+  o contrato de intervenção do corretor.
+- O deployment `dpl_HPC8qc1uhStjCKXkvaC8sMXcmrLh` está `READY`, com alvo
+  `production` e alias `https://gril-lac.vercel.app`. `/login` respondeu 200,
+  `/app/inbox` redirecionou corretamente para autenticação e não houve log de
+  nível `error` no deployment após a publicação.
+- Lint, 27 arquivos/130 testes, build Next.js 16.2.12 das 46 rotas, checks do PR,
+  dry-run, lint remoto do banco e verificações pós-migration passaram. O pgTAP
+  local não rodou por ausência de Docker/Podman; permanece pendente somente a
+  homologação humana do som/contador em Chrome e de uma nova resposta controlada.
+- Evidência detalhada em
+  `docs/agent/changes/2026-08-19-producao-notificacoes-identidade-whatsapp.md`.
+
 ## Atualização de 19/08/2026 — respostas citadas do WhatsApp em produção
 
 - O PR `#74` foi mergeado na branch canônica `phase/01-foundation` no commit
