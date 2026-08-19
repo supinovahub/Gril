@@ -8,6 +8,7 @@ Fonte de verdade original: `docs/product/Especificacao-do-Produto-v1.md`. Decis�
 | Humor, emoji e abreviação somente após rapport; irritação sem humor | Persona v3 | campos `style` e prompt publicado |
 | Uma pergunta principal, sem interrogatório, repetição ou pressão após recusa | Persona v3 + estado de qualificação | prompt e instruções; `refused` é persistido |
 | Fatos aprovados e válidos; nenhuma promessa inventada | Contexto filtrado + instrução + escalada | worker filtra validade de fatos, projetos, FAQ e qualificação |
+| Resposta do WhatsApp que cita mensagem anterior | Adapter normaliza o ID do provedor, banco vincula somente na mesma conversa e worker inclui autor e conteúdo citados | `reply_to_message_id`; `conversation-context.ts`; migration `20260819150905` |
 | Opt-out, privacidade, documento, pagamento, jurídico, fraude, discriminação, idioma e abuso | Pedro analisa histórico + resumo + contexto; depois o backend aplica efeitos rígidos e idempotentes | `pedro-instructions.ts`; `pedro-turn.ts`; `complete_ai_execution`; `contextual-controls-after-ai.md` |
 | Primeira pergunta sobre IA recebe apresentação curta e descontraída como assistente do Pedro; insistência posterior sobe para humano | Instrução contextual + escalada estruturada | `pedro-instructions.ts`; categoria `identity_question`; decisão de 18/08/2026 |
 | Qualificação só com dado explícito | Ferramenta estruturada + validação de tipo + request transacional | `pedro-turn.ts`; `qualification_value_requests` |

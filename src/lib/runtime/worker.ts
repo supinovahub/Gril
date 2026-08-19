@@ -14,6 +14,10 @@ import {
   type ProjectCandidate,
   type QualificationValue,
 } from "@/lib/ai/pedro-turn";
+import {
+  formatConversationMessageForAi,
+  type ConversationContextMessage,
+} from "@/lib/ai/conversation-context";
 import { compilePedroInstructions } from "@/lib/ai/pedro-instructions";
 import { createMetaReview } from "@/lib/ai/meta-review";
 import { PEDRO_CALL_LEAD_TIME_MINUTES } from "@/lib/calls/lead-time";
@@ -191,18 +195,49 @@ async function runAiExecution(executionId: string) {
       : null;
     if (execution.conversation_id) {
       const [{ data: messages, error: messagesError }, { data: summary }, { data: guidance }] = await Promise.all([
-        admin.from("messages").select("direction,content_type,body,created_at,metadata").eq("conversation_id", execution.conversation_id).order("created_at", { ascending: false }).limit(120),
+        admin.from("messages").select("id,direction,content_type,body,created_at,metadata,reply_to_message_id").eq("conversation_id", execution.conversation_id).order("created_at", { ascending: false }).limit(120),
         admin.from("conversation_summaries").select("summary,facts").eq("conversation_id", execution.conversation_id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
         admin.from("conversation_ai_guidance").select("id,guidance,exact_reply").eq("conversation_id", execution.conversation_id).eq("status", "active").maybeSingle(),
       ]);
       if (messagesError) throw messagesError;
       priorSummary = summary;
       activeGuidance = guidance;
-      for (const message of [...(messages ?? [])].reverse()) {
+      const recentMessages = messages ?? [];
+      const recentMessageIds = new Set(recentMessages.map((message) => message.id));
+      const messageById = new Map<string, ConversationContextMessage>();
+      for (const message of recentMessages) {
+        if (!(message.metadata as { excluded_from_ai?: boolean } | null)?.excluded_from_ai) {
+          messageById.set(message.id, message);
+        }
+      }
+      const missingReplyIds = [...new Set(
+        recentMessages
+          .map((message) => message.reply_to_message_id)
+          .filter((messageId): messageId is string => typeof messageId === "string" && !recentMessageIds.has(messageId)),
+      )];
+      if (missingReplyIds.length > 0) {
+        const { data: referencedMessages, error: referencedMessagesError } = await admin
+          .from("messages")
+          .select("id,direction,content_type,body,metadata")
+          .eq("conversation_id", execution.conversation_id)
+          .in("id", missingReplyIds);
+        if (referencedMessagesError) throw referencedMessagesError;
+        for (const referencedMessage of referencedMessages ?? []) {
+          if (!(referencedMessage.metadata as { excluded_from_ai?: boolean } | null)?.excluded_from_ai) {
+            messageById.set(referencedMessage.id, referencedMessage);
+          }
+        }
+      }
+      for (const message of [...recentMessages].reverse()) {
         if ((message.metadata as { excluded_from_ai?: boolean } | null)?.excluded_from_ai) continue;
         conversationMessages.push({
           role: message.direction === "inbound" ? "user" : "assistant",
-          text: message.body ?? `[${message.content_type}]`,
+          text: formatConversationMessageForAi(
+            message,
+            message.reply_to_message_id
+              ? messageById.get(message.reply_to_message_id)
+              : null,
+          ),
         });
       }
     } else if (simulatorSnapshot) {

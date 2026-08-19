@@ -287,6 +287,13 @@ Uma conexão real saudável basta para o piloto. Teste ambos os provedores antes
 - confirme bloqueio de texto livre fora da janela;
 - revogue e restaure o token.
 
+Nos dois provedores, responda com uma frase curta como `Estes.` citando uma
+mensagem antiga da conversa. Confirme que a mensagem recebida fica vinculada à
+mensagem citada e que a sugestão do Pedro interpreta explicitamente esse
+conteúdo, mesmo quando a mensagem original estiver fora das 120 mais recentes.
+Se o provedor indicar uma referência que não existe no Gril, Pedro deve pedir
+um esclarecimento curto, sem inventar a referência.
+
 ### Formulários Meta
 
 - mapeie nome, telefone, e-mail, campanha e empreendimento;
