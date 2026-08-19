@@ -11335,6 +11335,7 @@ export type Database = {
           payload_sha256: string
           processed_at: string
           provider_message_id: string
+          reply_to_provider_message_id: string | null
           provider_timestamp: string | null
         }
         Insert: {
@@ -11354,6 +11355,7 @@ export type Database = {
           payload_sha256: string
           processed_at?: string
           provider_message_id: string
+          reply_to_provider_message_id?: string | null
           provider_timestamp?: string | null
         }
         Update: {
@@ -11373,6 +11375,7 @@ export type Database = {
           payload_sha256?: string
           processed_at?: string
           provider_message_id?: string
+          reply_to_provider_message_id?: string | null
           provider_timestamp?: string | null
         }
         Relationships: [

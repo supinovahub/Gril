@@ -33,13 +33,18 @@ describe("adapters de tráfego real", () => {
           field: "messages",
           value: {
             contacts: [{ profile: { name: "Maria" } }],
-            messages: [{ id: "wamid.in", from: "5511999999999", timestamp: "1700000000", type: "text", text: { body: "Olá" } }],
+            messages: [{ id: "wamid.in", from: "5511999999999", timestamp: "1700000000", type: "text", text: { body: "Olá" }, context: { id: "wamid.quoted" } }],
             statuses: [{ id: "wamid.out", status: "delivered", timestamp: "1700000001" }],
           },
         }],
       }],
     });
-    expect(normalized.inbound[0]).toMatchObject({ providerMessageId: "wamid.in", fromE164: "+5511999999999", body: "Olá" });
+    expect(normalized.inbound[0]).toMatchObject({
+      providerMessageId: "wamid.in",
+      replyToProviderMessageId: "wamid.quoted",
+      fromE164: "+5511999999999",
+      body: "Olá",
+    });
     expect(normalized.statuses[0]).toMatchObject({ providerMessageId: "wamid.out", status: "delivered" });
   });
 
@@ -91,10 +96,15 @@ describe("adapters de tráfego real", () => {
     expect(verifyAndNormalizeUazapiWebhook({ token: "errado" }, "token-seguro")).toBeNull();
 
     const inbound = verifyAndNormalizeUazapiWebhook(
-      { EventType: "messages", token: "token-seguro", message: { messageid: "2", sender: "5511999999999", senderName: "João", messageType: "text", messageTimestamp: 1700000000000, text: "Quero saber mais" } },
+      { EventType: "messages", token: "token-seguro", message: { messageid: "2", quoted: "uazapi-mensagem-anterior", sender: "5511999999999", senderName: "João", messageType: "text", messageTimestamp: 1700000000000, text: "Quero saber mais" } },
       "token-seguro",
     );
-    expect(inbound?.inbound[0]).toMatchObject({ providerMessageId: "2", fromE164: "+5511999999999", body: "Quero saber mais" });
+    expect(inbound?.inbound[0]).toMatchObject({
+      providerMessageId: "2",
+      replyToProviderMessageId: "uazapi-mensagem-anterior",
+      fromE164: "+5511999999999",
+      body: "Quero saber mais",
+    });
     expect(JSON.stringify(inbound?.inbound[0].rawPayload)).not.toContain("token-seguro");
   });
 

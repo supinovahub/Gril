@@ -16,6 +16,7 @@ import { readBodyWithinLimit, sha256, verifyWebhookSecret } from "@/lib/webhooks
 const normalizedWebhook = z.object({
   external_event_id: z.string().min(1).max(300),
   provider_message_id: z.string().min(1).max(300),
+  reply_to_provider_message_id: z.string().min(1).max(300).optional(),
   from_e164: z.string().regex(/^\+[1-9][0-9]{7,14}$/),
   contact_name: z.string().trim().max(160).optional(),
   content_type: z.enum(["text", "image", "audio", "video", "document", "location", "unknown"]).default("text"),
@@ -124,6 +125,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         inbound: [{
           externalEventId: parsed.data.external_event_id,
           providerMessageId: parsed.data.provider_message_id,
+          replyToProviderMessageId: parsed.data.reply_to_provider_message_id,
           fromE164: parsed.data.from_e164,
           contactName: parsed.data.contact_name,
           contentType: parsed.data.content_type,
@@ -207,6 +209,7 @@ export async function POST(request: Request, { params }: RouteParams) {
       from_e164: message.fromE164,
       contact_name: message.contactName ?? null,
       provider_message_id: message.providerMessageId,
+      reply_to_provider_message_id: message.replyToProviderMessageId ?? null,
       content_type: message.contentType,
       body: message.body ?? null,
       provider_timestamp: message.providerTimestamp ?? null,
@@ -265,6 +268,7 @@ export async function POST(request: Request, { params }: RouteParams) {
         from_e164: message.fromE164,
         contact_name: message.contactName ?? null,
         provider_message_id: message.providerMessageId,
+        reply_to_provider_message_id: message.replyToProviderMessageId ?? null,
         content_type: message.contentType,
         body: message.body ?? null,
         provider_timestamp: message.providerTimestamp ?? null,

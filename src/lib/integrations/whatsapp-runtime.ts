@@ -11,6 +11,7 @@ export type WhatsappProvider = "uazapi" | "meta_cloud";
 export type NormalizedInboundMessage = {
   externalEventId: string;
   providerMessageId: string;
+  replyToProviderMessageId?: string;
   fromE164: string;
   contactName?: string;
   contentType: "text" | "image" | "audio" | "video" | "document" | "location" | "unknown";
@@ -182,12 +183,14 @@ export function normalizeMetaWebhook(raw: unknown): NormalizedWhatsappWebhook {
           const contentType = mapContentType(messageType);
           const textBody = text(record(message.text)?.body);
           const mediaObject = record(message[messageType ?? ""]);
+          const replyToProviderMessageId = firstNonEmptyText(record(message.context)?.id);
           const caption = text(mediaObject?.caption);
           const rawPayload: Record<string, unknown> = { entryId: entry.id, changeField: change.field, message };
           if (contactName) rawPayload._gril = { contact_name: contactName };
           inbound.push({
             externalEventId: providerMessageId,
             providerMessageId,
+            replyToProviderMessageId,
             fromE164,
             contactName,
             contentType,
@@ -277,6 +280,28 @@ function uazapiMessagePhone(message: Record<string, unknown>) {
     if (normalized) return normalized;
   }
   return null;
+}
+
+function uazapiReplyToProviderMessageId(message: Record<string, unknown>) {
+  const quoted = record(message.quoted);
+  const quotedMessage = record(message.quotedMessage) ?? record(message.quotedMsg);
+  const context = record(message.contextInfo) ?? record(message.context);
+  return firstNonEmptyText(
+    message.quoted,
+    quoted?.messageid,
+    quoted?.messageId,
+    quoted?.id,
+    record(quoted?.key)?.id,
+    quotedMessage?.messageid,
+    quotedMessage?.messageId,
+    quotedMessage?.id,
+    record(quotedMessage?.key)?.id,
+    message.quotedMessageId,
+    message.replyToMessageId,
+    context?.stanzaId,
+    context?.messageId,
+    context?.id,
+  );
 }
 
 function uazapiInstanceId(root: Record<string, unknown>) {
@@ -369,6 +394,7 @@ export function verifyAndNormalizeUazapiWebhook(
 
   const isGroup = message.isGroup === true || text(message.chatid)?.endsWith("@g.us") === true;
   const fromE164 = uazapiMessagePhone(message);
+  const replyToProviderMessageId = uazapiReplyToProviderMessageId(message);
   const contentType = mapContentType(
     text(message.messageType)
       ?? text(message.type)
@@ -390,6 +416,7 @@ export function verifyAndNormalizeUazapiWebhook(
     externalOutbound.push({
       externalEventId: providerMessageId,
       providerMessageId,
+      replyToProviderMessageId,
       fromE164,
       contactName: uazapiContactName(root, message),
       contentType,
@@ -403,6 +430,7 @@ export function verifyAndNormalizeUazapiWebhook(
     inbound.push({
       externalEventId: providerMessageId,
       providerMessageId,
+      replyToProviderMessageId,
       fromE164,
       contactName: uazapiInboundContactName(root, message),
       contentType,
