@@ -23,6 +23,8 @@ import Link from "next/link";
 import { signOutAction } from "@/app/(auth)/actions";
 import { canManageTeam, roleLabels, type Viewer } from "@/lib/auth/session";
 import styles from "./app-shell.module.css";
+import { BrowserMessageNotificationsLazy } from "./browser-message-notifications-lazy";
+import { MessageSoundToggle } from "./message-sound-toggle";
 import { NavGroup } from "./nav-group";
 import { NavLink } from "./nav-link";
 import { NavigationCountBadge, NavigationCountsProvider } from "./navigation-counts-provider";
@@ -178,11 +180,14 @@ export function AppShell({
             <strong>{name ?? viewer.email}</strong>
             <small>{roleLabels[memberRole] ?? memberRole}</small>
           </span>
-          <form action={signOutAction}>
-            <button className={styles.iconButton} title="Sair" type="submit">
-              <LogOut size={16} aria-hidden="true" /><span className="srOnly">Sair</span>
-            </button>
-          </form>
+          <div className={styles.sidebarActions}>
+            <MessageSoundToggle />
+            <form action={signOutAction}>
+              <button className={styles.iconButton} title="Sair" type="submit">
+                <LogOut size={16} aria-hidden="true" /><span className="srOnly">Sair</span>
+              </button>
+            </form>
+          </div>
         </div>
       </aside>
 
@@ -195,6 +200,7 @@ export function AppShell({
       </header>
 
       <main className={styles.content}>
+        <BrowserMessageNotificationsLazy orgId={viewer.organization!.id} />
         <RealtimeRefreshLazy orgId={viewer.organization!.id} />
         {children}
       </main>

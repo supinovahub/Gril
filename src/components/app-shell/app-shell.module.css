@@ -332,6 +332,11 @@
   flex: 0 0 auto;
 }
 
+.sidebarActions {
+  display: flex;
+  align-items: center;
+}
+
 .avatar,
 .mobileAvatar {
   display: grid;
@@ -367,6 +372,10 @@
 .iconButton:hover {
   background: var(--surface);
   color: var(--danger);
+}
+
+.soundButton:hover {
+  color: var(--accent-strong);
 }
 
 .content {

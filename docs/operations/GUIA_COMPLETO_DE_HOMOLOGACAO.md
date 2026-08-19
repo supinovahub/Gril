@@ -273,7 +273,9 @@ Uma conexão real saudável basta para o piloto. Teste ambos os provedores antes
 - configure o webhook fornecido pelo Gril;
 - teste envio, recebimento, entregue, lido e falha;
 - envie uma mensagem pelo celular conectado e confirme que o nome do chat/cliente aparece no Inbox, em vez de `Contato do WhatsApp`;
+- confirme que a mensagem enviada pelo celular aparece no histórico com o rótulo correspondente, pausa o Pedro e não retorna erro no webhook;
 - repita o teste com uma conversa que já exista como placeholder e confirme que o nome recebido atualiza o contato sem substituir um nome cadastrado manualmente;
+- em uma campanha para celular brasileiro, responda pelo WhatsApp quando o provedor devolver o JID sem o nono dígito; a resposta deve entrar na conversa da campanha e não criar outro card, contato ou oportunidade;
 - como dono/gestor, abra uma conversa ou lead, use o lápis ao lado do nome, salve uma alteração e confirme que o novo nome aparece no Inbox, no lead e após recarregar a página;
 - repita o mesmo webhook e confirme idempotência;
 - desconecte e reconecte.
@@ -428,6 +430,9 @@ Em uma sessão autenticada com dados reais e conexão estável, percorra todas a
 8. a Visão geral não deve chamar `preview_homologation_context` durante a navegação comum; essa chamada acontece somente quando dono/gestor expande **Área administrativa**, exibindo o estado de carregamento dentro da seção.
 9. para qualquer rota que ultrapasse um segundo na primeira chamada após longo período ocioso, repita cinco vezes consecutivas e registre separadamente o cold start e o máximo dos ciclos aquecidos; não aprove se qualquer ciclo aquecido continuar acima de um segundo;
 10. no Chat Pedro, Assistente do corretor e Lionel, confirme que tópicos, mensagem ativa e marcador de leitura permanecem corretos depois da consolidação no RPC único.
+11. no Chrome, interaja uma vez com o workspace, mantenha o som habilitado no ícone do rodapé e receba uma mensagem inbound autorizada: sem F5, deve tocar um único aviso, o badge deve atualizar e o título da aba deve ganhar o contador do Inbox; um envio outbound não pode tocar som;
+12. abra a conversa notificada e confirme que o contador da aba diminui ou desaparece junto com o badge; silencie o som, recarregue e confirme que a preferência persiste, mas o título e os badges continuam atualizando;
+13. repita a entrada com duas abas do mesmo workspace abertas: uma única mensagem deve produzir no máximo um som entre elas. Com a aba oculta ou após uma desconexão, o título deve reconciliar ao recuperar foco/rede, sem reproduzir retroativamente mensagens antigas.
 
 ### Visão geral
 

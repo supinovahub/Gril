@@ -11,6 +11,15 @@ describe("normalizePhoneToE164", () => {
     expect(normalizePhoneToE164("+1 (415) 555-2671")).toBe("+14155552671");
   });
 
+  it("recompõe o nono dígito de celular brasileiro recebido no formato legado", () => {
+    expect(normalizePhoneToE164("+55 (11) 8765-4321")).toBe("+5511987654321");
+    expect(normalizePhoneToE164("62 7654-3210")).toBe("+5562976543210");
+  });
+
+  it("não altera telefone fixo brasileiro com oito dígitos", () => {
+    expect(normalizePhoneToE164("+55 (11) 3333-4444")).toBe("+551133334444");
+  });
+
   it("não inventa DDD", () => {
     expect(normalizePhoneToE164("99999-1234")).toBeNull();
   });

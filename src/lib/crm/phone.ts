@@ -1,22 +1,31 @@
 import { z } from "zod";
 
+function canonicalizeBrazilianMobile(digits: string) {
+  if (!/^55[1-9][0-9][6-9][0-9]{7}$/.test(digits)) return digits;
+
+  return `${digits.slice(0, 4)}9${digits.slice(4)}`;
+}
+
 export function normalizePhoneToE164(value: string) {
   const input = value.trim();
   const digits = input.replace(/\D/g, "");
 
   if (input.startsWith("+")) {
-    return digits.length >= 8 && digits.length <= 15 ? `+${digits}` : null;
+    const canonicalDigits = canonicalizeBrazilianMobile(digits);
+    return canonicalDigits.length >= 8 && canonicalDigits.length <= 15
+      ? `+${canonicalDigits}`
+      : null;
   }
 
   if (digits.length === 10 || digits.length === 11) {
-    return `+55${digits}`;
+    return `+${canonicalizeBrazilianMobile(`55${digits}`)}`;
   }
 
   if (
     digits.startsWith("55") &&
     (digits.length === 12 || digits.length === 13)
   ) {
-    return `+${digits}`;
+    return `+${canonicalizeBrazilianMobile(digits)}`;
   }
 
   return null;
