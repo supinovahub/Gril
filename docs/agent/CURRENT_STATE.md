@@ -1,5 +1,34 @@
 # Estado atual compartilhado do Gril
 
+## Atualização de 19/08/2026 — relógio da última mensagem corrigido em produção
+
+- O PR #70 foi mergeado na branch canônica `phase/01-foundation` no commit
+  `7879f67bb9782ce1feeb36622eba8402fa218771`. Esta correção substitui o
+  diagnóstico da seção imediatamente abaixo: a Inbox não usa mais o
+  `conversations.updated_at` operacional para ordenar ou mostrar o horário.
+- A lista e o horário dos cards agora usam `messages.created_at` da última
+  mensagem real, com `conversations.started_at` somente para conversas ainda
+  sem mensagens. Pendências permanecem como badges; alterações de modo,
+  responsável, pausa ou status não mudam a posição da conversa.
+- A migration `20260819132358_inbox_message_activity_order.sql` foi aplicada de
+  forma serializada no Supabase canônico `frslhzwhaooqtivkzdez`; o histórico
+  local/remoto está alinhado. A função viva confirma a nova origem do relógio e
+  o índice `messages_conversation_activity_idx` atende a busca da última
+  mensagem sem mudar dados existentes.
+- O deployment Vercel `dpl_E8CYQtVGzNaoUTqGXTZpZF2HrBJc`, originado do commit
+  canônico acima, está `READY` e atende o alias `https://gril-lac.vercel.app`.
+  A consulta de erros de runtime pós-deploy não retornou ocorrências.
+- Em sessão autenticada, a Inbox apresentou a conversa recente do caso reportado
+  na posição 1 com o horário da mensagem de 18/08 e a conversa antiga na posição
+  61 com o horário da mensagem de 05/08. Isso confirma a ordem e os horários das
+  evidências sem expor alterações operacionais de 19/08 nos cards.
+- Lint, 24 arquivos/117 testes, build das 46 rotas, CI do PR, dry-run, db lint,
+  histórico linked, inspeção da função viva e homologação autenticada passaram.
+  O pgTAP local não foi executado porque o host não possui Docker/Podman.
+- Decisão e evidência:
+  `docs/decisions/2026-08-19-inbox-chronological-order.md` e
+  `docs/agent/changes/2026-08-19-producao-correcao-atividade-inbox.md`.
+
 ## Atualização de 19/08/2026 — conversas em ordem cronológica em produção
 
 - O PR #68 foi mergeado na branch canônica `phase/01-foundation` no commit
