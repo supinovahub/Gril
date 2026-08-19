@@ -273,7 +273,9 @@ Uma conexão real saudável basta para o piloto. Teste ambos os provedores antes
 - configure o webhook fornecido pelo Gril;
 - teste envio, recebimento, entregue, lido e falha;
 - envie uma mensagem pelo celular conectado e confirme que o nome do chat/cliente aparece no Inbox, em vez de `Contato do WhatsApp`;
+- confirme que a mensagem enviada pelo celular aparece no histórico com o rótulo correspondente, pausa o Pedro e não retorna erro no webhook;
 - repita o teste com uma conversa que já exista como placeholder e confirme que o nome recebido atualiza o contato sem substituir um nome cadastrado manualmente;
+- em uma campanha para celular brasileiro, responda pelo WhatsApp quando o provedor devolver o JID sem o nono dígito; a resposta deve entrar na conversa da campanha e não criar outro card, contato ou oportunidade;
 - como dono/gestor, abra uma conversa ou lead, use o lápis ao lado do nome, salve uma alteração e confirme que o novo nome aparece no Inbox, no lead e após recarregar a página;
 - repita o mesmo webhook e confirme idempotência;
 - desconecte e reconecte.

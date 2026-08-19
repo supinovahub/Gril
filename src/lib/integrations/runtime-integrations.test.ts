@@ -82,6 +82,14 @@ describe("adapters de tráfego real", () => {
     );
     expect(nestedChat?.externalOutbound[0]).toMatchObject({ contactName: "Maria" });
 
+    const legacyBrazilianMobile = verifyAndNormalizeUazapiWebhook(
+      { EventType: "messages", token: "token-seguro", message: { messageid: "legacy-1", chatid: "551187654321@s.whatsapp.net", fromMe: false, text: "resposta" } },
+      "token-seguro",
+    );
+    expect(legacyBrazilianMobile?.inbound[0]).toMatchObject({
+      fromE164: "+5511987654321",
+    });
+
     const apiEcho = verifyAndNormalizeUazapiWebhook(
       { EventType: "messages", token: "token-seguro", message: { messageid: "api-1", chatid: "5511999999999@s.whatsapp.net", fromMe: true, wasSentByApi: true, text: "eco" } },
       "token-seguro",
