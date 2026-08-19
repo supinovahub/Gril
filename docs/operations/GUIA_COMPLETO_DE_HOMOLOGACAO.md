@@ -239,9 +239,11 @@ No Inbox, valide a ordem da lista com uma conversa mais antiga que tenha uma
 mensagem inbound não lida, outra com sugestão `assisted` pendente e uma
 conversa mais recente sem pendência. A conversa mais recente deve ficar acima
 das duas antigas, independentemente das pendências. Dentro da lista inteira, a
-atividade mais recente deve vir primeiro; em timestamps iguais, o ID desempata
-de forma determinística. Abra a conversa antiga, marque-a como lida e resolva a
-sugestão: os badges devem ser atualizados sem mudar artificialmente a ordem.
+última mensagem real mais recente deve vir primeiro; o horário do card deve ser
+o mesmo horário dessa mensagem dentro da conversa. Em timestamps iguais, o ID
+desempata de forma determinística. Abra a conversa antiga, marque-a como lida,
+resolva a sugestão e altere responsável ou modo: os badges e metadados devem ser
+atualizados sem mudar artificialmente a ordem ou o horário do card.
 
 Também valide:
 
@@ -411,7 +413,7 @@ Em uma sessão autenticada com dados reais e conexão estável, percorra todas a
 
 1. cada navegação deve apresentar resposta visual imediata; enquanto os dados chegam, o conteúdo principal mostra o fallback da rota sem apagar ou bloquear o shell. Depois do primeiro aquecimento, cada tela deve concluir o carregamento em até um segundo;
 2. os badges podem aparecer depois do menu, mas não podem atrasar a navegação nem exibir contagens de outra organização;
-3. Inbox ordena todas as conversas pela atividade mais recente, sem promover pendências; Leads e Kanban mantêm os mesmos registros, filtros, responsáveis, etapas, telefones e score mais recente;
+3. Inbox ordena todas as conversas pela última mensagem real e mostra esse mesmo horário no card, sem promover pendências nem reagir a alterações de metadados; Leads e Kanban mantêm os mesmos registros, filtros, responsáveis, etapas, telefones e score mais recente;
 4. a Visão geral mantém métricas, contagens por etapa e até um card representativo por etapa; a Central mantém filtros, deduplicação, resumo e páginas de até dez registros;
 5. no painel de rede/logs, confirme uma chamada principal por rota otimizada: `dashboard_workspace_bootstrap`, `inbox_workspace_bootstrap`, `agenda_workspace_bootstrap`, `kanban_workspace_bootstrap`, `leads_workspace_bootstrap`, `campaigns_workspace_bootstrap_v2`, `audit_workspace_page`, `privacy_workspace_bootstrap`, `reports_workspace_summary`, `learnings_workspace_bootstrap` ou `internal_chat_workspace_bootstrap`, conforme a tela; não deve reaparecer a antiga rajada de consultas nem a transferência integral de feeds;
 6. gere duas ou mais atualizações rápidas na rota ativa e confirme uma única atualização consolidada; com a aba oculta, nenhuma atualização deve interromper o usuário e os dados devem sincronizar ao retornar;
