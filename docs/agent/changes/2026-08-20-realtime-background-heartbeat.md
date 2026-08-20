@@ -2,7 +2,7 @@
 
 - Data: 2026-08-20
 - Responsável: Codex
-- Branch/PR: `fix/realtime-background-heartbeat` / PR ainda não aberto
+- Branch/PR: `fix/realtime-background-heartbeat` / PR #78
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
@@ -18,13 +18,13 @@ Evitar que o Chrome interrompa silenciosamente a conexão Realtime do dashboard 
 
 - Arquivos: `src/lib/supabase/client.ts`, `src/lib/supabase/client.test.ts` e este registro.
 - Migrations: nenhuma.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma. GitHub, Supabase, Vercel e a aplicação em produção foram apenas consultados para diagnóstico.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: branch enviada ao GitHub e PR draft #78 aberto. Supabase, Vercel e a aplicação em produção foram apenas consultados para diagnóstico; nenhuma configuração ou dado foi alterado.
 
 ## Validação
 
 - Comandos/testes executados: `npm ci`; teste Vitest direcionado ao cliente Supabase; ESLint direcionado; `npm run lint`; `npm test`; `npm run build`; inspeção do bundle gerado; consulta SQL somente leitura à publicação Realtime; `git diff --check`.
 - Evidência observada: lint concluído sem erros; 28 arquivos e 131 testes aprovados; build Next.js 16.2.12 concluído com TypeScript e 46 rotas; o bundle do navegador contém `realtime: { worker: true }`; o teste novo garante que essa opção seja repassada a `createBrowserClient`; as tabelas `messages` e `conversations` continuam presentes em `supabase_realtime` no projeto canônico.
-- Validações não executadas e motivo: o teste humano completo com uma nova mensagem real enquanto o Chrome permanece em segundo plano depende de uma versão publicada/autenticada. Esta branch ainda não foi enviada nem implantada. Nenhuma mensagem de teste foi criada no ambiente único de produção.
+- Validações não executadas e motivo: o teste humano completo com uma nova mensagem real enquanto o Chrome permanece em segundo plano depende de uma versão publicada/autenticada. O PR ainda não foi integrado nem implantado. Nenhuma mensagem de teste foi criada no ambiente único de produção.
 
 ## Impacto operacional
 
