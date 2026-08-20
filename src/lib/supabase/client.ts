@@ -7,5 +7,10 @@ export function createClient() {
   return createBrowserClient<Database>(
     supabaseEnv.url,
     supabaseEnv.publishableKey,
+    {
+      realtime: {
+        worker: true,
+      },
+    },
   );
 }
