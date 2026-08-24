@@ -13,15 +13,17 @@ Leia integralmente:
 
 - AGENTS.md
 - docs/agent/README.md
+- docs/agent/DEVELOPER_HANDOFF.md
 - docs/agent/CURRENT_STATE.md
 - os registros mais recentes e relevantes em docs/agent/changes/
 - docs/product/README-Pacote-Tecnico-v1.md
 - docs/operations/GUIA_COMPLETO_DE_HOMOLOGACAO.md
 - docs/operations/PEDRO_BEHAVIOR_TRACEABILITY.md
+- docs/operations/AI_CONVERSATION_RUNBOOK.md
 
 Depois, inspecione sem modificar nada: branch atual, working tree, remote Git, branch padrão, últimos commits e estrutura principal.
 
-Resuma: produto, arquitetura, integrações, estado atual, comportamento esperado do Pedro, ambientes, pendências, protocolo obrigatório e divergências encontradas.
+Resuma: produto, arquitetura, integrações, estado atual, comportamento esperado do Pedro, ambientes, pendências, protocolo obrigatório, correção conversacional em andamento e divergências encontradas.
 
 Não altere arquivos, banco, GitHub ou Vercel.
 ```
@@ -107,4 +109,24 @@ Comportamento esperado:
 [...]
 
 Consulte o fluxo canônico conforme o protocolo do AGENTS.md. Se houver lacuna ou conflito de produto, explique e discuta comigo antes de implementar. Se for um defeito técnico inequívoco e eu tiver autorizado a execução, corrija de ponta a ponta.
+```
+
+## Prompt para assumir o desenvolvimento principal
+
+```text
+Estou assumindo a responsabilidade principal pelo Gril.
+
+Depois de concluir os cinco prompts de onboarding, releia docs/agent/DEVELOPER_HANDOFF.md e docs/operations/AI_CONVERSATION_RUNBOOK.md. Revalide em modo leitura todos os fatos marcados como mutáveis, principalmente branch padrão, PR #66, migrations, deployment, modo da IA, allowlist e filas pendentes.
+
+Entregue um plano de assunção com:
+
+1. acessos confirmados e ausentes;
+2. diferenças entre o handoff e o estado vivo;
+3. responsável e branch para a correção do horário da conversa;
+4. decisões de produto que precisam do dono;
+5. estratégia de homologação em assisted;
+6. riscos de migrations, production e PRs antigas;
+7. prioridades das primeiras duas horas, primeiro dia e primeira semana.
+
+Não altere banco, GitHub, Vercel, allowlist, modo da IA ou arquivos neste prompt. Separe fatos confirmados, hipóteses e bloqueios.
 ```

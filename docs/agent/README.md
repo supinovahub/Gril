@@ -5,6 +5,7 @@ Esta pasta permite que desenvolvedores usando contas diferentes do Codex reconst
 ## Fontes e responsabilidades
 
 - `AGENTS.md`: protocolo obrigatório carregado automaticamente pelo Codex.
+- `DEVELOPER_HANDOFF.md`: ponto de entrada para a transição do desenvolvimento principal, com contexto, estado vivo verificado e prioridades do sucessor.
 - `CURRENT_STATE.md`: retrato curto do estado atual; é atualizado, não usado como diário.
 - `ONBOARDING_PROMPTS.md`: sequência pronta para preparar um novo Codex em outra conta ou computador.
 - `CHANGE_TEMPLATE.md`: contrato mínimo de um registro de mudança.
@@ -12,12 +13,13 @@ Esta pasta permite que desenvolvedores usando contas diferentes do Codex reconst
 - `../product/`: escopo e regras de produto consolidadas.
 - `../decisions/`: decisões duráveis por fase.
 - `../operations/`: homologação, evidências e runbooks.
+- `../operations/AI_CONVERSATION_RUNBOOK.md`: arquitetura, diagnóstico, homologação e publicação segura do núcleo conversacional do Pedro.
 
 ## Início de uma tarefa
 
 1. Atualize referências remotas com `git fetch origin`.
 2. Confirme branch e working tree com `git status --short --branch`.
-3. Leia `CURRENT_STATE.md` inteiro.
+3. Em uma entrada nova no projeto, leia `DEVELOPER_HANDOFF.md`; em qualquer tarefa, leia `CURRENT_STATE.md` inteiro.
 4. Leia os registros de mudança relacionados à tarefa; para orientação geral, comece pelos mais recentes.
 5. Leia a decisão e o documento de produto aplicáveis.
 6. Verifique ao vivo qualquer fato que possa ter mudado desde o último registro.
