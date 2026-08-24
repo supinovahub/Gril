@@ -14,6 +14,7 @@ Leia integralmente:
 - AGENTS.md
 - docs/agent/README.md
 - docs/agent/DEVELOPER_HANDOFF.md
+- docs/agent/ACCESS_AND_SUCCESSION_GUIDE.md
 - docs/agent/CURRENT_STATE.md
 - os registros mais recentes e relevantes em docs/agent/changes/
 - docs/product/README-Pacote-Tecnico-v1.md
@@ -116,7 +117,7 @@ Consulte o fluxo canônico conforme o protocolo do AGENTS.md. Se houver lacuna o
 ```text
 Estou assumindo a responsabilidade principal pelo Gril.
 
-Depois de concluir os cinco prompts de onboarding, releia docs/agent/DEVELOPER_HANDOFF.md e docs/operations/AI_CONVERSATION_RUNBOOK.md. Revalide em modo leitura todos os fatos marcados como mutáveis, principalmente branch padrão, PR #66, migrations, deployment, modo da IA, allowlist e filas pendentes.
+Depois de concluir os cinco prompts de onboarding, releia docs/agent/DEVELOPER_HANDOFF.md, docs/agent/ACCESS_AND_SUCCESSION_GUIDE.md e docs/operations/AI_CONVERSATION_RUNBOOK.md. Revalide em modo leitura todos os fatos marcados como mutáveis, principalmente branch padrão, PR #66, migrations, deployment, modo da IA, allowlist e filas pendentes.
 
 Entregue um plano de assunção com:
 

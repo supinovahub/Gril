@@ -226,6 +226,8 @@ Branches antigas contêm partes já integradas por cherry-pick e partes superada
 
 ## Transferência de acessos e responsabilidade
 
+O inventário detalhado de serviços, identidades confirmadas, projetos legados e roteiro de retirada está em `docs/agent/ACCESS_AND_SUCCESSION_GUIDE.md`.
+
 O sucessor não está operacionalmente pronto até conseguir, em modo leitura, confirmar:
 
 - acesso ao repositório e às configurações necessárias do GitHub;

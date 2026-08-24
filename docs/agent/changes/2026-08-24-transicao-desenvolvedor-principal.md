@@ -18,6 +18,7 @@ Permitir que outro desenvolvedor assuma o Gril sem depender de histórico de cha
 
 - Arquivos:
   - `docs/agent/DEVELOPER_HANDOFF.md`;
+  - `docs/agent/ACCESS_AND_SUCCESSION_GUIDE.md`;
   - `docs/operations/AI_CONVERSATION_RUNBOOK.md`;
   - `docs/agent/README.md`;
   - `docs/agent/ONBOARDING_PROMPTS.md`;
@@ -27,8 +28,8 @@ Permitir que outro desenvolvedor assuma o Gril sem depender de histórico de cha
 
 ## Validação
 
-- Comandos/testes executados: `git diff --check`; verificação dos caminhos de código, testes e migrations citados; verificação de links Markdown locais; leitura UTF-8 dos cinco documentos alterados; preflight de concorrência contra a branch padrão e as PRs abertas; checks `quality` e Vercel Preview da PR #79.
-- Evidência observada: todos os caminhos documentados existem, nenhum link local está quebrado, os arquivos não contêm caractere de substituição de encoding e nenhuma PR aberta altera os mesmos cinco caminhos. Os checks do primeiro head publicado passaram e o preview automático ficou `Ready`; o head final deve ser confirmado pelos checks da própria PR. O handoff diferencia estado comprovado, trabalho pendente e decisões de produto; o runbook mapeia entrada, runtime, saída estruturada, assisted, diagnóstico, homologação, publicação e rollback.
+- Comandos/testes executados: `git diff --check`; verificação dos caminhos de código, testes e migrations citados; verificação de links Markdown locais; leitura UTF-8 dos seis documentos alterados; preflight de concorrência contra a branch padrão e as PRs abertas; checks `quality` e Vercel Preview da PR #79.
+- Evidência observada: todos os caminhos documentados existem, nenhum link local está quebrado, os arquivos não contêm caractere de substituição de encoding e nenhuma PR aberta altera os mesmos seis caminhos. Os checks dos heads publicados passaram e o preview automático ficou `Ready`; o head final deve ser confirmado pelos checks da própria PR. O handoff diferencia estado comprovado, trabalho pendente e decisões de produto; o guia de acessos separa contas canônicas, projetos legados e informações privadas; o runbook mapeia entrada, runtime, saída estruturada, assisted, diagnóstico, homologação, publicação e rollback.
 - Validações não executadas e motivo: lint, testes e build da aplicação não foram executados porque a mudança é exclusivamente Markdown e não altera código, dependências, banco ou runtime.
 
 ## Impacto operacional
