@@ -2,7 +2,7 @@
 
 - Data: 2026-08-24
 - Responsável: Codex, a pedido do desenvolvedor principal em transição
-- Branch/PR: `docs/developer-transition-handoff` / PR deste branch
+- Branch/PR: `docs/developer-transition-handoff` / PR #79
 - Commit: o commit que contém este arquivo
 
 ## Objetivo
