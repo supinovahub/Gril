@@ -23,17 +23,17 @@ Permitir que outro desenvolvedor assuma o Gril sem depender de histórico de cha
   - `docs/agent/ONBOARDING_PROMPTS.md`;
   - este registro.
 - Migrations: nenhuma.
-- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: nenhuma. GitHub, Supabase e Vercel foram consultados somente em modo leitura para formar o retrato de 24/08/2026.
+- Mudanças externas em Supabase, Vercel, GitHub ou fornecedores: a PR #79 foi aberta no GitHub e gerou o Vercel Preview automático associado ao head da PR. Produção, Supabase, variáveis, modo da IA e allowlist não foram alterados. As consultas usadas para formar o retrato de 24/08/2026 foram somente leitura.
 
 ## Validação
 
-- Comandos/testes executados: `git diff --check`; verificação dos caminhos de código, testes e migrations citados; verificação de links Markdown locais; leitura UTF-8 dos cinco documentos alterados; preflight de concorrência contra a branch padrão e as PRs abertas.
-- Evidência observada: todos os caminhos documentados existem, nenhum link local está quebrado, os arquivos não contêm caractere de substituição de encoding e nenhuma PR aberta altera os mesmos cinco caminhos. O handoff diferencia estado comprovado, trabalho pendente e decisões de produto; o runbook mapeia entrada, runtime, saída estruturada, assisted, diagnóstico, homologação, publicação e rollback.
+- Comandos/testes executados: `git diff --check`; verificação dos caminhos de código, testes e migrations citados; verificação de links Markdown locais; leitura UTF-8 dos cinco documentos alterados; preflight de concorrência contra a branch padrão e as PRs abertas; checks `quality` e Vercel Preview da PR #79.
+- Evidência observada: todos os caminhos documentados existem, nenhum link local está quebrado, os arquivos não contêm caractere de substituição de encoding e nenhuma PR aberta altera os mesmos cinco caminhos. Os checks do primeiro head publicado passaram e o preview automático ficou `Ready`; o head final deve ser confirmado pelos checks da própria PR. O handoff diferencia estado comprovado, trabalho pendente e decisões de produto; o runbook mapeia entrada, runtime, saída estruturada, assisted, diagnóstico, homologação, publicação e rollback.
 - Validações não executadas e motivo: lint, testes e build da aplicação não foram executados porque a mudança é exclusivamente Markdown e não altera código, dependências, banco ou runtime.
 
 ## Impacto operacional
 
-- Deploy necessário: não.
+- Deploy necessário: não em produção; a PR cria preview automaticamente.
 - Migração aplicada: não.
 - Compatibilidade/rollback: documentação aditiva; pode ser revertida sem alterar runtime, dados ou produção.
 
